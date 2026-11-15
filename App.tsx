@@ -250,7 +250,15 @@ function resolvePlayableCombatMechId(actorId: string): PlayerMechId {
     actorId === 'unitree_g1' ||
     actorId === 'unitree_go2' ||
     actorId === 'mars2020' ||
-    actorId === 'unitree_z1'
+    actorId === 'unitree_z1' ||
+    actorId === 'unitree_h1' ||
+    actorId === 'unitree_b2' ||
+    actorId === 'fourier_gr1' ||
+    actorId === 'talos_humanoid' ||
+    actorId === 'cassie_biped' ||
+    actorId === 'anymal_c' ||
+    actorId === 'baxter_dual_arm' ||
+    actorId === 'hello_stretch'
   ) {
     return actorId;
   }

@@ -3,7 +3,34 @@ import { sampleLandTerrainHeight, sampleLandChassisSupportHeight } from './actio
 export type GameShellState = 'title' | 'playing' | 'paused' | 'gameover';
 export type GameOutcome = 'none' | 'victory' | 'defeat';
 
-export type PlayerMechId = 'unitree_g1' | 'unitree_go2' | 'sar' | 'mars2020' | 'unitree_z1';
+export type PlayerMechId =
+  | 'unitree_g1'
+  | 'unitree_go2'
+  | 'sar'
+  | 'mars2020'
+  | 'unitree_z1'
+  | 'unitree_h1'
+  | 'unitree_b2'
+  | 'fourier_gr1'
+  | 'talos_humanoid'
+  | 'cassie_biped'
+  | 'anymal_c'
+  | 'baxter_dual_arm'
+  | 'hello_stretch';
+
+const HUMANOID_COMBAT_MECHS = new Set<PlayerMechId>([
+  'unitree_g1',
+  'unitree_h1',
+  'fourier_gr1',
+  'talos_humanoid',
+  'cassie_biped'
+]);
+
+const QUADRUPED_COMBAT_MECHS = new Set<PlayerMechId>([
+  'unitree_go2',
+  'unitree_b2',
+  'anymal_c'
+]);
 export type CombatWeaponId = 'pulse_rifle' | 'railgun' | 'missile_pod';
 export type EnemyArchetypeId = 'go2_hound' | 'g1_vanguard' | 'sar_siege' | 'aero_hunter' | 'ares_boss';
 export type BossAttackKind = 'none' | 'balteus_salvo' | 'coral_laser_sweep' | 'orbital_pillars';
@@ -110,6 +137,118 @@ export const PLAYABLE_MECH_SPECS: PlayableMechSpec[] = [
     cruiseSpeed: 8.2,
     sprintSpeed: 12.8,
     dashImpulse: 21.0
+  },
+  {
+    id: 'unitree_h1',
+    codeName: 'H1-TITAN',
+    title: '宇树 H1 重装人形',
+    roleTag: '全尺寸双足 · 高功率突击',
+    glbUrls: ['/robotics_glb/unitree_h1_humanoid.glb'],
+    urdfUrl: '/baselines/03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/h1_description/urdf/h1_with_hand.urdf',
+    targetMaxDim: 2.55,
+    maxHp: 255,
+    maxShield: 165,
+    cruiseSpeed: 8.8,
+    sprintSpeed: 14.0,
+    dashImpulse: 22.5
+  },
+  {
+    id: 'unitree_b2',
+    codeName: 'B2-JUGGERNAUT',
+    title: '宇树 B2 重载突击犬',
+    roleTag: '工业重载四足 · 装甲冲锋',
+    glbUrls: ['/robotics_glb/unitree_b2_quadruped.glb'],
+    urdfUrl: '/baselines/03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/b2_description/urdf/b2_description.urdf',
+    targetMaxDim: 2.25,
+    maxHp: 245,
+    maxShield: 160,
+    cruiseSpeed: 9.8,
+    sprintSpeed: 15.6,
+    dashImpulse: 24.5
+  },
+  {
+    id: 'fourier_gr1',
+    codeName: 'GR1-SERAPH',
+    title: '傅利叶 GR-1 具身机甲',
+    roleTag: '协同双足 · 精准压制',
+    glbUrls: ['/robotics_glb/fourier_gr1_humanoid.glb'],
+    urdfUrl: '/baselines/06-双足人形具身智能机器人/Wiki-GRx-Models-FourierN1/_首选基准原件_PRIMARY/gr1t1_fourier_hand_6dof.urdf',
+    targetMaxDim: 2.4,
+    maxHp: 230,
+    maxShield: 155,
+    cruiseSpeed: 8.5,
+    sprintSpeed: 13.4,
+    dashImpulse: 21.5
+  },
+  {
+    id: 'talos_humanoid',
+    codeName: 'TALOS-AEGIS',
+    title: 'TALOS 重型双足堡垒',
+    roleTag: '32-DOF 力控 · 重盾反击',
+    glbUrls: ['/robotics_glb/talos_full_humanoid.glb'],
+    urdfUrl: '/baselines/06-双足人形具身智能机器人/talos-data/urdf/talos_full_v2.urdf',
+    targetMaxDim: 2.55,
+    maxHp: 285,
+    maxShield: 190,
+    cruiseSpeed: 7.6,
+    sprintSpeed: 12.2,
+    dashImpulse: 19.5
+  },
+  {
+    id: 'cassie_biped',
+    codeName: 'CASSIE-STRIDER',
+    title: 'Cassie 疾行双足侦察机',
+    roleTag: '反关节疾行 · 极速闪避',
+    glbUrls: ['/robotics_glb/cassie_biped_robot.glb'],
+    urdfUrl: '/baselines/06-双足人形具身智能机器人/cassie_description/urdf/cassie_v4.urdf',
+    targetMaxDim: 2.15,
+    maxHp: 175,
+    maxShield: 135,
+    cruiseSpeed: 10.6,
+    sprintSpeed: 16.8,
+    dashImpulse: 26.0
+  },
+  {
+    id: 'anymal_c',
+    codeName: 'ANYMAL-SENTINEL',
+    title: 'ANYmal C 全天候巡检机甲',
+    roleTag: '全向四足 · 稳态侦察',
+    glbUrls: ['/robotics_glb/anymal_c_quadruped.glb'],
+    urdfUrl: '/baselines/07-四足越野与移动操作复合机器人/anymal_c_simple_description/urdf/anymal.urdf',
+    targetMaxDim: 2.05,
+    maxHp: 225,
+    maxShield: 150,
+    cruiseSpeed: 9.2,
+    sprintSpeed: 14.5,
+    dashImpulse: 23.0
+  },
+  {
+    id: 'baxter_dual_arm',
+    codeName: 'BAXTER-DUALIS',
+    title: 'Baxter 双臂重火力平台',
+    roleTag: '双 7-DOF 臂 · 交叉齐射',
+    glbUrls: ['/robotics_glb/baxter_dual_arm_robot.glb'],
+    urdfUrl: '/baselines/08-工业与协作机械臂及灵巧夹爪/baxter_common/baxter_description/urdf/baxter.urdf',
+    targetMaxDim: 2.5,
+    maxHp: 265,
+    maxShield: 175,
+    cruiseSpeed: 7.4,
+    sprintSpeed: 11.6,
+    dashImpulse: 18.5
+  },
+  {
+    id: 'hello_stretch',
+    codeName: 'STRETCH-SCOUT',
+    title: 'Stretch 移动伸缩狙击台',
+    roleTag: '高架立柱 · 远程狙击',
+    glbUrls: ['/robotics_glb/hello_stretch_mobile_manipulator.glb'],
+    urdfUrl: '/baselines/07-四足越野与移动操作复合机器人/stretch_description/urdf/stretch.urdf',
+    targetMaxDim: 2.25,
+    maxHp: 195,
+    maxShield: 145,
+    cruiseSpeed: 9.0,
+    sprintSpeed: 14.2,
+    dashImpulse: 22.0
   }
 ];
 
@@ -2319,7 +2458,7 @@ export function computeCombatUpperLowerBodyIK(params: CombatUpperLowerIKParams):
   const cmd01 = Math.max(0, Math.min(1, wingmanCommandTimer / 0.18));
   const leanBack12Deg = 0.21 * heavy01; // 12 degrees = 0.2094 rad
 
-  if (mechId === 'unitree_g1') {
+  if (HUMANOID_COMBAT_MECHS.has(mechId)) {
     // 1. LOWER BODY: WASD stride + 0.35s Heavy Skill Wide Horse-Stance Crouch!
     if (n.includes('hip_roll')) {
       const sideSign = n.includes('left') ? 1 : -1;
@@ -2422,7 +2561,7 @@ export function computeCombatUpperLowerBodyIK(params: CombatUpperLowerIKParams):
   if (n.includes('joint3') || n.includes('elbow')) {
     return clampJointLimit(0.45 + recoilPos * 0.28 - 0.2 * heavy01, limitLower, limitUpper);
   }
-  if (mechId === 'unitree_go2' && (n.includes('thigh') || n.includes('calf'))) {
+  if (QUADRUPED_COMBAT_MECHS.has(mechId) && (n.includes('thigh') || n.includes('calf'))) {
     // Go2 crouches into braced predator stance on heavy weapon fire!
     const crouchDelta = n.includes('thigh') ? 0.26 * heavy01 : -0.48 * heavy01;
     return clampJointLimit(baseGaitAngle + crouchDelta, limitLower, limitUpper);

@@ -205,8 +205,150 @@ export const SANDBOX_ACTORS: SandboxActorSpec[] = [
     groundClearanceOffset: 0.0,
     fireActionTitle: '六轴末端锁定 + 高能等离子切割束',
     fireActionDesc: '六轴腕部高速转向锁定靶标，发射高亮度等离子电弧束与采样信标'
+  },
+  {
+    id: 'unitree_h1',
+    name: '宇树通用人形机器人 (Unitree H1)',
+    shortName: 'H1 通用人形',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/unitree_h1_humanoid.glb'],
+    urdfUrl: '/baselines/03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/h1_description/urdf/h1_with_hand.urdf',
+    modelYawOffset: 0,
+    cruiseSpeed: 6.2,
+    boostSpeed: 10.8,
+    turnRate: 2.4,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '双臂灵巧手蓄能 + 战术电磁脉冲',
+    fireActionDesc: '全尺寸双足高速奔袭，挥臂释放全景扫描脉冲与战术信标'
+  },
+  {
+    id: 'unitree_b2',
+    name: '宇树工业重载四足机器人 (Unitree B2)',
+    shortName: 'B2 重载四足',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/unitree_b2_quadruped.glb'],
+    urdfUrl: '/baselines/03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/b2_description/urdf/b2_description.urdf',
+    modelYawOffset: 0,
+    cruiseSpeed: 7.4,
+    boostSpeed: 13.8,
+    turnRate: 2.5,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '工业重载腾跃 + 震地雷达脉冲',
+    fireActionDesc: '高扭矩四足越障飞跃，落地激发大范围地形测绘冲击波'
+  },
+  {
+    id: 'fourier_gr1',
+    name: '傅利叶智能人形机器人 (Fourier GR-1 T2)',
+    shortName: 'GR-1 具身人形',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/fourier_gr1_humanoid.glb'],
+    urdfUrl: '/baselines/06-双足人形具身智能机器人/Wiki-GRx-Models-FourierN1/_首选基准原件_PRIMARY/gr1t1_fourier_hand_6dof.urdf',
+    modelYawOffset: 0,
+    cruiseSpeed: 5.6,
+    boostSpeed: 9.8,
+    turnRate: 2.35,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '协同双臂展开 + 全息脉冲波',
+    fireActionDesc: '通用具身人形动态步态行进，双臂协同展开触发高频探测波'
+  },
+  {
+    id: 'talos_humanoid',
+    name: 'PAL Robotics TALOS 工业双足机器人',
+    shortName: 'TALOS 工业人形',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/talos_full_humanoid.glb'],
+    urdfUrl: '/baselines/06-双足人形具身智能机器人/talos-data/urdf/talos_full_v2.urdf',
+    modelYawOffset: 0,
+    cruiseSpeed: 4.9,
+    boostSpeed: 8.6,
+    turnRate: 2.1,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '工业双臂力控锁定 + 等离子射束',
+    fireActionDesc: '32-DOF 全身力控双足稳态推进，双七轴臂同步前伸锁定靶标'
+  },
+  {
+    id: 'cassie_biped',
+    name: 'Agility Robotics Cassie 动态双足机器人',
+    shortName: 'Cassie 敏捷双足',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/cassie_biped_robot.glb'],
+    urdfUrl: '/baselines/06-双足人形具身智能机器人/cassie_description/urdf/cassie_v4.urdf',
+    modelYawOffset: 0,
+    cruiseSpeed: 6.9,
+    boostSpeed: 12.2,
+    turnRate: 2.8,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '仿生反关节飞跃 + 声学探测脉冲',
+    fireActionDesc: '高敏捷闭链弹簧腿高速奔跑越障，触发低空弹射侦察信标'
+  },
+  {
+    id: 'anymal_c',
+    name: 'ANYbotics ANYmal C 四足巡检机器人',
+    shortName: 'ANYmal C 巡检犬',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/anymal_c_quadruped.glb'],
+    urdfUrl: '/baselines/07-四足越野与移动操作复合机器人/anymal_c_simple_description/urdf/anymal.urdf',
+    modelYawOffset: 0,
+    cruiseSpeed: 6.4,
+    boostSpeed: 11.4,
+    turnRate: 2.4,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '全天候激光雷达扫描 + 震地信标',
+    fireActionDesc: '12-DOF 全向四足稳定爬坡巡检，同步发射工业测绘激光束'
+  },
+  {
+    id: 'baxter_dual_arm',
+    name: 'Rethink Robotics Baxter 双臂协作机器人',
+    shortName: 'Baxter 双臂台',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/baxter_dual_arm_robot.glb'],
+    urdfUrl: '/baselines/08-工业与协作机械臂及灵巧夹爪/baxter_common/baxter_description/urdf/baxter.urdf',
+    modelYawOffset: 0,
+    cruiseSpeed: 4.6,
+    boostSpeed: 8.2,
+    turnRate: 2.0,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '双 7-DOF 协同抓取 + 工业焊弧光束',
+    fireActionDesc: '双臂同步展开执行工业级抓取与高能电弧作业'
+  },
+  {
+    id: 'hello_stretch',
+    name: 'Hello Robot Stretch 移动操作机器人',
+    shortName: 'Stretch 移动臂',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/hello_stretch_mobile_manipulator.glb'],
+    urdfUrl: '/baselines/07-四足越野与移动操作复合机器人/stretch_description/urdf/stretch.urdf',
+    modelYawOffset: 0,
+    cruiseSpeed: 5.8,
+    boostSpeed: 10.2,
+    turnRate: 2.5,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '垂直立柱升降 + 伸缩臂采样激光',
+    fireActionDesc: '差速底盘灵活转向，垂直立柱与伸缩腕部同步前伸采样'
   }
 ];
+
+const HUMANOID_SANDBOX_IDS = new Set([
+  'unitree_g1',
+  'unitree_h1',
+  'fourier_gr1',
+  'talos_humanoid',
+  'cassie_biped'
+]);
+
+const QUADRUPED_SANDBOX_IDS = new Set([
+  'unitree_go2',
+  'unitree_b2',
+  'anymal_c'
+]);
 
 export function getSandboxActorSpec(contextId: string): SandboxActorSpec {
   if (contextId === 'b737_bridge') {
@@ -619,7 +761,7 @@ export function stepSandboxKinematics(
   const groundY = sampleLandChassisSupportHeight(next.x, next.z, next.yaw, spec.id) + spec.groundClearanceOffset;
 
   if (jumpImpulseRequested && next.isGrounded) {
-    next.vy = spec.id === 'unitree_go2' || spec.id === 'unitree_g1' ? 6.8 : 4.6;
+    next.vy = HUMANOID_SANDBOX_IDS.has(spec.id) || QUADRUPED_SANDBOX_IDS.has(spec.id) ? 6.8 : 4.6;
     next.isGrounded = false;
   }
 
@@ -649,7 +791,7 @@ export function stepSandboxKinematics(
   const slopeForward = (nx * fx + nz * fz) / Math.max(0.25, ny);
   const slopeRight = (nx * rx + nz * rz) / Math.max(0.25, ny);
 
-  const isLegged = spec.id === 'unitree_g1' || spec.id === 'unitree_go2';
+  const isLegged = HUMANOID_SANDBOX_IDS.has(spec.id) || QUADRUPED_SANDBOX_IDS.has(spec.id);
   const bankRoll = isLegged
     ? next.turnVel * (Math.abs(next.speed) / Math.max(1, spec.cruiseSpeed)) * 0.16
     : -next.turnVel * (Math.abs(next.speed) / Math.max(1, spec.cruiseSpeed)) * 0.05;
@@ -710,8 +852,8 @@ export function computeSandboxUrdfJointAngle(
     return clamp(0.18 * Math.sin(simTime * 1.3 + jointIndex * 0.6));
   }
 
-  // Unitree Go2 Quadruped — athletic crouched stance + diagonal trot / sprint + airborne pounce pose!
-  if (actorId === 'unitree_go2') {
+  // Quadruped family (Go2 / B2 / ANYmal C) — athletic crouched stance + diagonal trot / sprint!
+  if (QUADRUPED_SANDBOX_IDS.has(actorId)) {
     if (!kin.isGrounded) {
       if (name.includes('hip')) return clamp(0);
       if (name.includes('thigh')) return clamp(name.startsWith('f') ? 0.32 : 1.08);
@@ -732,8 +874,8 @@ export function computeSandboxUrdfJointAngle(
     }
   }
 
-  // Unitree G1 29-DOF Humanoid — athletic knee-bent ready stance + bipedal walk/sprint stride + counter-swinging arms!
-  if (actorId === 'unitree_g1') {
+  // Humanoid / Biped family (G1 / H1 / GR-1 / TALOS / Cassie) — bipedal walk/sprint stride + counter-swinging arms!
+  if (HUMANOID_SANDBOX_IDS.has(actorId)) {
     const isLeft = name.includes('left');
     const ph = stridePhase + (isLeft ? 0 : Math.PI);
     const amp = Math.min(1.18, speedNorm * 1.05);
