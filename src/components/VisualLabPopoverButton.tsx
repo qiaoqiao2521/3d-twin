@@ -207,7 +207,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
       {open && (
         <div
           data-testid="visual-lab-popover-panel"
-          className="fixed right-4 bottom-16 w-[356px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-7.5rem)] overflow-y-auto bg-[#12141a]/[0.97] border border-white/[0.10] rounded-xl p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_48px_rgba(0,0,0,0.68)] z-50 space-y-2.5 whitespace-normal"
+          className="fixed right-2.5 top-14 w-[276px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100vh-8.5rem)] overflow-y-auto bg-[#0f131b]/[0.94] backdrop-blur-md border border-white/[0.10] rounded-xl p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_40px_rgba(0,0,0,0.62)] z-40 space-y-2 whitespace-normal"
         >
           {/* Section 1: Viewport Inspection Layers */}
           <div className="space-y-1.5">

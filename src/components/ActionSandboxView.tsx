@@ -1016,11 +1016,12 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       skyDome.frustumCulled = false;
       envGroup.add(skyDome);
 
-      const segs = 96;
+      const segs = 112;
       const span = 150;
       const vertCount = (segs + 1) * (segs + 1);
       const posArr = new Float32Array(vertCount * 3);
       const uvArr = new Float32Array(vertCount * 2);
+      const colArr = new Float32Array(vertCount * 3);
       const indices: number[] = [];
 
       let vi = 0;
@@ -1032,8 +1033,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           posArr[vi * 3] = x;
           posArr[vi * 3 + 1] = y;
           posArr[vi * 3 + 2] = z;
-          uvArr[vi * 2] = (ix / segs) * 16;
-          uvArr[vi * 2 + 1] = (iz / segs) * 16;
+          uvArr[vi * 2] = (ix / segs) * 18;
+          uvArr[vi * 2 + 1] = (iz / segs) * 18;
           vi++;
         }
       }
@@ -1053,18 +1054,70 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       terrainGeo.setIndex(indices);
       terrainGeo.computeVertexNormals();
 
+      const normAttr = terrainGeo.getAttribute('normal') as THREE.BufferAttribute;
+      for (let i = 0; i < vertCount; i++) {
+        const y = posArr[i * 3 + 1];
+        const ny = normAttr.getY(i);
+        const hNorm = Math.max(0, Math.min(1, (y + 2.8) / 6.2));
+        const slope = 1.0 - Math.max(0, Math.min(1, ny));
+        const r = 0.48 + hNorm * 0.42 - slope * 0.14;
+        const g = 0.25 + hNorm * 0.24 - slope * 0.08;
+        const b = 0.17 + hNorm * 0.14 - slope * 0.05;
+        colArr[i * 3] = Math.max(0.25, Math.min(1.0, r));
+        colArr[i * 3 + 1] = Math.max(0.14, Math.min(0.85, g));
+        colArr[i * 3 + 2] = Math.max(0.10, Math.min(0.70, b));
+      }
+      terrainGeo.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+
       surfaceTex = createProceduralSurfaceTexture('mars');
       primaryTerrainMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
+        vertexColors: true,
         map: surfaceTex,
         bumpMap: surfaceTex,
-        bumpScale: 0.16,
-        roughness: 0.88,
-        metalness: 0.06
+        bumpScale: 0.34,
+        roughness: 0.90,
+        metalness: 0.04
       });
       terrainWaveUniforms = attachTopographicWavefrontToTerrain(primaryTerrainMat, false);
       clickableGroundMesh = new THREE.Mesh(terrainGeo, primaryTerrainMat);
       envGroup.add(clickableGroundMesh);
+
+      const rockGeo = new THREE.DodecahedronGeometry(0.45, 1);
+      const rPos = rockGeo.getAttribute('position') as THREE.BufferAttribute;
+      for (let k = 0; k < rPos.count; k++) {
+        const rx = rPos.getX(k);
+        const ry = rPos.getY(k);
+        const rz = rPos.getZ(k);
+        const warp = 0.78 + 0.36 * Math.sin(rx * 5.3 + ry * 3.7 + rz * 4.1);
+        rPos.setXYZ(k, rx * warp, ry * warp * 0.65, rz * warp);
+      }
+      rockGeo.computeVertexNormals();
+      const rockMat = new THREE.MeshStandardMaterial({
+        color: 0x5c3424,
+        roughness: 0.92,
+        metalness: 0.08
+      });
+      const rockCount = 90;
+      const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
+      const rDummy = new THREE.Object3D();
+      for (let i = 0; i < rockCount; i++) {
+        const angle = i * 2.39996;
+        const rad = 7.5 + ((i * 19.37) % 52.0);
+        const rx = Math.cos(angle) * rad;
+        const rz = Math.sin(angle) * rad;
+        const ry = sampleLandTerrainHeight(rx, rz);
+        const sx = 0.38 + ((i * 0.47) % 1.45);
+        const sy = 0.28 + ((i * 0.31) % 0.95);
+        const sz = 0.38 + ((i * 0.59) % 1.35);
+        rDummy.position.set(rx, ry + sy * 0.12, rz);
+        rDummy.rotation.set((i * 0.7) % 0.5, angle, (i * 1.1) % 0.5);
+        rDummy.scale.set(sx, sy, sz);
+        rDummy.updateMatrix();
+        rockInst.setMatrixAt(i, rDummy.matrix);
+      }
+      rockInst.instanceMatrix.needsUpdate = true;
+      envGroup.add(rockInst);
 
       // Analytical natural terrain ridges & crater rims ONLY — zero fake chocolate-cone rocks!
       for (const feat of buildNaturalLandTerrainFeatures()) {

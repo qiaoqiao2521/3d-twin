@@ -946,15 +946,23 @@ export default function App() {
     setActiveSubAssembly(null);
     setIsolatedPart(null);
     if (lvl === 'L0') {
+      setExplosion(0);
       triggerSmoothCameraFocus(new THREE.Vector3(0, 0, 0), new THREE.Vector3(2.35, 1.65, 2.75));
     } else {
+      // Auto-apply subtle structural separation if currently unexploded so L1/L2/L3 produce immediate visual hierarchy
+      if (explosion < 0.05) {
+        const autoExp = lvl === 'L1' ? 0.14 : lvl === 'L2' ? 0.28 : 0.42;
+        setExplosion(autoExp);
+      }
       const layerMeshes = partsRef.current.filter((p) => p.layer === lvl).map((p) => p.mesh);
       if (layerMeshes.length > 0) {
         const box = new THREE.Box3();
         layerMeshes.forEach((m) => box.expandByObject(m));
         if (!box.isEmpty()) {
           const center = box.getCenter(new THREE.Vector3());
-          triggerSmoothCameraFocus(center, new THREE.Vector3(1.75, 1.15, 2.0));
+          const size = box.getSize(new THREE.Vector3());
+          const d = Math.max(0.75, Math.min(2.4, size.length() * 1.15));
+          triggerSmoothCameraFocus(center, new THREE.Vector3(d * 0.72, d * 0.48, d * 0.82));
         }
       }
     }
@@ -978,7 +986,9 @@ export default function App() {
       });
       if (!box.isEmpty()) {
         const center = box.getCenter(new THREE.Vector3());
-        triggerSmoothCameraFocus(center, new THREE.Vector3(1.5, 0.96, 1.72));
+        const size = box.getSize(new THREE.Vector3());
+        const d = Math.max(0.52, Math.min(2.1, size.length() * 1.35));
+        triggerSmoothCameraFocus(center, new THREE.Vector3(d * 0.70, d * 0.46, d * 0.80));
       }
     }
   };
@@ -2519,12 +2529,32 @@ export default function App() {
           s.xrayMode && !s.isolatedPart
         );
 
+        if (!s.isolatedPart && !activeSubObj && s.activeDrillLevel !== 'L0' && !isHighlighted && !anyHighlighted && !s.xrayMode) {
+          if (p.layer !== s.activeDrillLevel) {
+            ghostState = {
+              transparent: true,
+              opacity: 0.045,
+              depthWrite: false,
+              wireframe: false,
+              emissiveHex: 0x000000
+            };
+          } else {
+            ghostState = {
+              transparent: false,
+              opacity: 1.0,
+              depthWrite: true,
+              wireframe: false,
+              emissiveHex: 0x08344f
+            };
+          }
+        }
+
         if (!s.isolatedPart && activeSubObj && !isHighlighted && !s.hoveredPart && !lastViewportHoverName) {
           const inSub = activeSubObj.partNames.includes(p.partName);
           if (!inSub) {
             ghostState = {
               transparent: true,
-              opacity: 0.11,
+              opacity: 0.045,
               depthWrite: false,
               wireframe: s.xrayMode,
               emissiveHex: 0x000000
@@ -2535,7 +2565,7 @@ export default function App() {
               opacity: s.xrayMode ? 0.35 : 1.0,
               depthWrite: !s.xrayMode,
               wireframe: s.xrayMode,
-              emissiveHex: 0x072840
+              emissiveHex: 0x0c4a6e
             };
           }
         }

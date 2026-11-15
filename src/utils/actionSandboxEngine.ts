@@ -131,7 +131,7 @@ export const SANDBOX_ACTORS: SandboxActorSpec[] = [
       '/twins/models/L2_turret_mast_robotics.glb',
       '/twins/models/L3_chassis_mmrtg_lab.glb'
     ],
-    modelYawOffset: 0,
+    modelYawOffset: Math.PI / 2,
     cruiseSpeed: 5.2,
     boostSpeed: 9.2,
     turnRate: 1.75,
@@ -362,31 +362,31 @@ export function getSandboxActorSpec(contextId: string): SandboxActorSpec {
  * O(1) pure math, zero physics engine overhead, smooth undulating dunes, craters, and ridges.
  */
 export function sampleLandTerrainHeight(x: number, z: number): number {
-  // Multi-frequency wind-scoured Martian dunes + asymmetric barchan ridges (zero primitive rock cones needed)
+  // Multi-frequency wind-scoured Martian dunes, canyon swells, and asymmetric barchan ridges
   const primaryDunes =
-    Math.sin(x * 0.095) * Math.cos(z * 0.092) * 1.12 +
-    Math.cos(x * 0.055 - z * 0.075) * 0.78;
+    Math.sin(x * 0.085) * Math.cos(z * 0.082) * 2.15 +
+    Math.cos(x * 0.048 - z * 0.068) * 1.65;
   const barchanRidges =
-    Math.sin(x * 0.22 + z * 0.16 + 0.65 * Math.sin(z * 0.14)) * 0.34 +
-    (1.0 - Math.abs(Math.sin(x * 0.13 - z * 0.11))) * 0.28;
-  const microRipples = Math.sin(x * 0.62 + z * 0.48) * 0.035;
+    Math.sin(x * 0.20 + z * 0.15 + 0.72 * Math.sin(z * 0.13)) * 0.62 +
+    (1.0 - Math.abs(Math.sin(x * 0.12 - z * 0.10))) * 0.55;
+  const microRipples = Math.sin(x * 0.58 + z * 0.44) * 0.065;
 
-  // Keep central spawn pad (r < 5.2m) gently graded so initial spawn framing is rock-solid
+  // Keep central spawn pad (r <= 4.0m) flat and smoothly transition outward into dramatic dunes
   const r2 = x * x + z * z;
-  const spawnFlatten = Math.min(1.0, r2 / 28.0);
+  const spawnFlatten = Math.min(1.0, Math.max(0.0, (r2 - 16.0) / 36.0));
 
-  // Primary impact crater around (18, -14) with raised ejecta rim + bowl depression
+  // Primary impact crater around (18, -14) with raised ejecta rim + deep bowl depression
   const dxC = x - 18;
   const dzC = z + 14;
   const dC = Math.hypot(dxC, dzC);
   let crater = 0;
-  if (dC < 11.5) {
-    const u = dC / 9.0;
+  if (dC < 12.5) {
+    const u = dC / 9.5;
     if (u < 1.0) {
-      crater = -1.05 * Math.cos(u * Math.PI * 0.5) + 0.32 * Math.pow(u, 2.2);
+      crater = -2.15 * Math.cos(u * Math.PI * 0.5) + 0.65 * Math.pow(u, 2.2);
     } else {
-      const rimFade = 1.0 - (dC - 9.0) / 2.5;
-      crater = 0.32 * rimFade * rimFade;
+      const rimFade = 1.0 - (dC - 9.5) / 3.0;
+      crater = 0.65 * rimFade * rimFade;
     }
   }
 
@@ -394,9 +394,13 @@ export function sampleLandTerrainHeight(x: number, z: number): number {
   const dxS = x + 19;
   const dzS = z - 12;
   const dS = Math.hypot(dxS, dzS);
-  const scarp = dS < 9.5 ? 0.88 * Math.exp(-(dS * dS) / 26.0) : 0;
+  const scarp = dS < 11.0 ? 1.85 * Math.exp(-(dS * dS) / 32.0) : 0;
 
-  return (primaryDunes + barchanRidges + microRipples + crater + scarp) * spawnFlatten;
+  // Tertiary crater basin around (-14, -18)
+  const dC2 = Math.hypot(x + 14, z + 18);
+  const crater2 = dC2 < 9.0 ? -1.35 * Math.cos((dC2 / 9.0) * Math.PI * 0.5) : 0;
+
+  return (primaryDunes + barchanRidges + microRipples + crater + scarp + crater2) * spawnFlatten;
 }
 
 /**
