@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   SlidersHorizontal,
   Eye,
@@ -118,6 +119,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   const updateOpen = (next: boolean) => {
     setOpen(next);
@@ -127,7 +129,12 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (ev: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(ev.target as Node)) {
+      const target = ev.target as Node;
+      if (
+        rootRef.current &&
+        !rootRef.current.contains(target) &&
+        (!panelRef.current || !panelRef.current.contains(target))
+      ) {
         updateOpen(false);
       }
     };
@@ -204,11 +211,13 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
         />
       </button>
 
-      {open && (
-        <div
-          data-testid="visual-lab-popover-panel"
-          className="fixed right-2.5 top-14 w-[276px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100vh-8.5rem)] overflow-y-auto bg-[#0f131b]/[0.94] backdrop-blur-md border border-white/[0.10] rounded-xl p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_40px_rgba(0,0,0,0.62)] z-40 space-y-2 whitespace-normal"
-        >
+      {open &&
+        createPortal(
+          <div
+            ref={panelRef}
+            data-testid="visual-lab-popover-panel"
+            className="fixed right-3 top-14 w-[280px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100vh-8.5rem)] overflow-y-auto bg-[#0f131b]/[0.94] backdrop-blur-md border border-white/[0.10] rounded-xl p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_40px_rgba(0,0,0,0.62)] z-50 space-y-2 whitespace-normal"
+          >
           {/* Section 1: Viewport Inspection Layers */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 px-0.5">
@@ -525,8 +534,9 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
               </button>
             </div>
           </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

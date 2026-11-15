@@ -200,7 +200,7 @@ function parseColladaDae(filePath, externalScale = 1.0) {
 
       const pushVertex = (vIdx, nIdx) => {
         const pBase = vIdx * 3;
-        triPos.push(posArr[pBase] * totalScale, posArr[pBase + 1] * totalScale, posArr[pBase + 2] * totalScale);
+        triPos.push(posArr[pBase], posArr[pBase + 1], posArr[pBase + 2]);
         if (normArr && nIdx >= 0) {
           const nBase = nIdx * 3;
           triNorm.push(normArr[nBase], normArr[nBase + 1], normArr[nBase + 2]);
@@ -258,16 +258,63 @@ function parseColladaDae(filePath, externalScale = 1.0) {
     if (subMeshes.length > 0) geomMap.set(gid, subMeshes);
   }
 
-  const allParts = [];
-  for (const parts of geomMap.values()) {
-    for (const p of parts) {
-      if (upAxis === 'Y_UP') {
-        // Convert Collada Y_UP to URDF Z_UP before root urdf_yup_root rotates back
-        const rot = new THREE.Matrix4().makeRotationX(Math.PI / 2);
-        allParts.push({ ...applyMatrix4ToGeometry(p, rot), color: p.color, name: p.name });
-      } else {
-        allParts.push(p);
+  const instances = [];
+  const vsRe = /<visual_scene\b[^>]*>([\s\S]*?)<\/visual_scene>/g;
+  let vsm;
+  while ((vsm = vsRe.exec(xml)) !== null) {
+    const vsBody = vsm[1];
+    const stack = [new THREE.Matrix4()];
+    const tokRe = /<\/node\s*>|<node\b[^>]*>|<(matrix|translate|rotate|scale)\b[^>]*>([\s\S]*?)<\/\1>|<instance_geometry\b([^>]*)(?:\/>|>[\s\S]*?<\/instance_geometry>)/g;
+    let tm;
+    while ((tm = tokRe.exec(vsBody)) !== null) {
+      const full = tm[0];
+      if (full.startsWith('</node')) {
+        if (stack.length > 1) stack.pop();
+      } else if (full.startsWith('<node')) {
+        stack.push(stack[stack.length - 1].clone());
+      } else if (tm[1]) {
+        const tag = tm[1];
+        const nums = tm[2].trim().split(/\s+/).map(Number);
+        const cur = stack[stack.length - 1];
+        if (tag === 'matrix' && nums.length >= 16) {
+          const m4 = new THREE.Matrix4().set(
+            nums[0], nums[1], nums[2], nums[3],
+            nums[4], nums[5], nums[6], nums[7],
+            nums[8], nums[9], nums[10], nums[11],
+            nums[12], nums[13], nums[14], nums[15]
+          );
+          cur.multiply(m4);
+        } else if (tag === 'translate' && nums.length >= 3) {
+          cur.multiply(new THREE.Matrix4().makeTranslation(nums[0], nums[1], nums[2]));
+        } else if (tag === 'rotate' && nums.length >= 4) {
+          const axis = new THREE.Vector3(nums[0], nums[1], nums[2]).normalize();
+          cur.multiply(new THREE.Matrix4().makeRotationAxis(axis, (nums[3] * Math.PI) / 180));
+        } else if (tag === 'scale' && nums.length >= 3) {
+          cur.multiply(new THREE.Matrix4().makeScale(nums[0], nums[1], nums[2]));
+        }
+      } else if (tm[3]) {
+        const urlM = tm[3].match(/url="#([^"]+)"/);
+        if (urlM) {
+          instances.push({ geomId: urlM[1], mat: stack[stack.length - 1].clone() });
+        }
       }
+    }
+  }
+
+  const allParts = [];
+  const baseScaleMat = new THREE.Matrix4().makeScale(totalScale, totalScale, totalScale);
+  const upRotMat = upAxis === 'Y_UP' ? new THREE.Matrix4().makeRotationX(Math.PI / 2) : null;
+  const entries = instances.length > 0
+    ? instances
+    : Array.from(geomMap.keys()).map((geomId) => ({ geomId, mat: new THREE.Matrix4() }));
+
+  for (const inst of entries) {
+    const parts = geomMap.get(inst.geomId);
+    if (!parts) continue;
+    const finalMat = new THREE.Matrix4().copy(baseScaleMat).multiply(inst.mat);
+    if (upRotMat) finalMat.premultiply(upRotMat);
+    for (const p of parts) {
+      allParts.push({ ...applyMatrix4ToGeometry(p, finalMat), color: p.color, name: p.name });
     }
   }
   return allParts;
@@ -285,6 +332,14 @@ function applyMatrix4ToGeometry(geom, mat4) {
     outPos[i] = v.x; outPos[i + 1] = v.y; outPos[i + 2] = v.z;
     n.set(normals[i], normals[i + 1], normals[i + 2]).applyMatrix3(normalMatrix).normalize();
     outNorm[i] = n.x; outNorm[i + 1] = n.y; outNorm[i + 2] = n.z;
+  }
+  if (mat4.determinant() < 0) {
+    for (let i = 0; i < outPos.length; i += 9) {
+      for (let k = 0; k < 3; k++) {
+        const tp = outPos[i + 3 + k]; outPos[i + 3 + k] = outPos[i + 6 + k]; outPos[i + 6 + k] = tp;
+        const tn = outNorm[i + 3 + k]; outNorm[i + 3 + k] = outNorm[i + 6 + k]; outNorm[i + 6 + k] = tn;
+      }
+    }
   }
   return { positions: outPos, normals: outNorm, numTris };
 }
@@ -441,14 +496,14 @@ function writeIndexedBinaryGlb(outputPath, nodesDef, rootNodeIndices) {
 }
 
 function rpyToQuatArray(rpy) {
-  const e = new THREE.Euler(rpy[0] || 0, rpy[1] || 0, rpy[2] || 0, 'XYZ');
+  const e = new THREE.Euler(rpy[0] || 0, rpy[1] || 0, rpy[2] || 0, 'ZYX');
   const q = new THREE.Quaternion().setFromEuler(e);
   return [q.x, q.y, q.z, q.w];
 }
 
 function rpyXyzScaleToMatrix4(xyz, rpy, scale) {
   const pos = new THREE.Vector3(xyz[0] || 0, xyz[1] || 0, xyz[2] || 0);
-  const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(rpy[0] || 0, rpy[1] || 0, rpy[2] || 0, 'XYZ'));
+  const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(rpy[0] || 0, rpy[1] || 0, rpy[2] || 0, 'ZYX'));
   const scl = new THREE.Vector3(scale[0] ?? 1, scale[1] ?? 1, scale[2] ?? 1);
   return new THREE.Matrix4().compose(pos, quat, scl);
 }
