@@ -167,6 +167,134 @@ export const ROBOT_PACKS: RobotPack[] = [
       { label: '网格精度', value: '244,392 Tris / 9 STL CAD 部件' },
       { label: '现实基准', value: 'z1.urdf + robot.xacro' }
     ]
+  },
+  {
+    id: 'unitree_h1',
+    name: '宇树通用人形机器人 (Unitree H1 + Dexterous Hands)',
+    subtitle: '全尺寸双足通用人形平台 + 双臂灵巧手 (Draco GLB)',
+    category: '双足具身人形',
+    glbUrl: '/robotics_glb/unitree_h1_humanoid.glb',
+    previewUrl: '/robotics_glb/unitree_h1_humanoid.png',
+    baselineRepo: '03-宇树Unitree四足与人形全系_URDF/unitree_ros',
+    primaryUrdf: 'robots/h1_description/urdf/h1_with_hand.urdf',
+    upstreamUrl: 'https://github.com/unitreerobotics/unitree_ros',
+    specs: [
+      { label: '网格精度', value: '634,936 Tris / 49 CAD 部件 (Draco 2.4MB)' },
+      { label: '驱动结构', value: '全尺寸双足 + 双灵巧手' },
+      { label: '现实基准', value: 'h1_with_hand.urdf' }
+    ]
+  },
+  {
+    id: 'unitree_b2',
+    name: '宇树工业重载四足机器人 (Unitree B2)',
+    subtitle: '工业级巡检四足机器狗 + 高扭矩关节模组 (Draco GLB)',
+    category: '四足越野机器人',
+    glbUrl: '/robotics_glb/unitree_b2_quadruped.glb',
+    previewUrl: '/robotics_glb/unitree_b2_quadruped.png',
+    baselineRepo: '03-宇树Unitree四足与人形全系_URDF/unitree_ros',
+    primaryUrdf: 'robots/b2_description/urdf/b2_description.urdf',
+    upstreamUrl: 'https://github.com/unitreerobotics/unitree_ros',
+    specs: [
+      { label: '网格精度', value: '242,429 Tris / 13 DAE 部件 (Draco 643KB)' },
+      { label: '运动关节', value: '12-DOF 工业重载四足' },
+      { label: '现实基准', value: 'b2_description.urdf' }
+    ]
+  },
+  {
+    id: 'fourier_gr1',
+    name: '傅利叶智能人形机器人 (Fourier GR-1 T2)',
+    subtitle: '全尺寸具身智能通用双足机器人 (Draco GLB)',
+    category: '双足具身人形',
+    glbUrl: '/robotics_glb/fourier_gr1_humanoid.glb',
+    previewUrl: '/robotics_glb/fourier_gr1_humanoid.png',
+    baselineRepo: '06-双足人形具身智能机器人/Wiki-GRx-Models-FourierN1',
+    primaryUrdf: '_首选基准原件_PRIMARY/gr1t1_fourier_hand_6dof.urdf',
+    upstreamUrl: 'https://github.com/FFTAI/Wiki-GRx-Models',
+    specs: [
+      { label: '网格精度', value: '370,109 Tris / 35 STL 部件 (Draco 2.0MB)' },
+      { label: '驱动结构', value: '全身多自由度双足 + 上肢' },
+      { label: '现实基准', value: 'gr1t2.urdf / gr1t1_fourier_hand_6dof.urdf' }
+    ]
+  },
+  {
+    id: 'talos_humanoid',
+    name: 'PAL Robotics TALOS 工业双足机器人',
+    subtitle: '全尺寸工业重型双足人形平台 + 双七轴机械臂 (Draco GLB)',
+    category: '双足具身人形',
+    glbUrl: '/robotics_glb/talos_full_humanoid.glb',
+    previewUrl: '/robotics_glb/talos_full_humanoid.png',
+    baselineRepo: '06-双足人形具身智能机器人/talos-data',
+    primaryUrdf: 'urdf/talos_full_v2.urdf',
+    upstreamUrl: 'https://github.com/stack-of-tasks/talos-data',
+    specs: [
+      { label: '网格精度', value: '205,175 Tris / 48 CAD 部件 (Draco 1.1MB)' },
+      { label: '运动自由度', value: '32-DOF 全身力控双足' },
+      { label: '现实基准', value: 'talos_full_v2.urdf' }
+    ]
+  },
+  {
+    id: 'cassie_biped',
+    name: 'Agility Robotics Cassie 双足动态机器人',
+    subtitle: '标志性反关节仿生鸵鸟腿双足动态步行平台 (Draco GLB)',
+    category: '双足具身人形',
+    glbUrl: '/robotics_glb/cassie_biped_robot.glb',
+    previewUrl: '/robotics_glb/cassie_biped_robot.png',
+    baselineRepo: '06-双足人形具身智能机器人/cassie_description',
+    primaryUrdf: 'urdf/cassie_v4.urdf',
+    upstreamUrl: 'https://github.com/robot-descriptions/cassie_description',
+    specs: [
+      { label: '网格精度', value: '868,945 Tris / 17 STL 部件 (Draco 3.1MB)' },
+      { label: '腿部拓扑', value: '双足闭链弹簧连杆机构' },
+      { label: '现实基准', value: 'cassie_v4.urdf' }
+    ]
+  },
+  {
+    id: 'anymal_c',
+    name: 'ANYbotics ANYmal C 四足巡检机器人',
+    subtitle: '瑞士 ETH 工业全天候四足自主巡检平台 (Draco GLB)',
+    category: '四足越野机器人',
+    glbUrl: '/robotics_glb/anymal_c_quadruped.glb',
+    previewUrl: '/robotics_glb/anymal_c_quadruped.png',
+    baselineRepo: '07-四足越野与移动操作复合机器人/anymal_c_simple_description',
+    primaryUrdf: 'urdf/anymal.urdf',
+    upstreamUrl: 'https://github.com/ANYbotics/anymal_c_simple_description',
+    specs: [
+      { label: '网格精度', value: '58,320 Tris / 45 DAE 部件 (Draco 216KB)' },
+      { label: '运动关节', value: '12-DOF 全向旋转驱动四足' },
+      { label: '现实基准', value: 'anymal.urdf' }
+    ]
+  },
+  {
+    id: 'baxter_dual_arm',
+    name: 'Rethink Robotics Baxter 双臂协作机器人',
+    subtitle: '经典工业双七轴弹性驱动器协作机器人 (Draco GLB)',
+    category: '工业与协作机械臂',
+    glbUrl: '/robotics_glb/baxter_dual_arm_robot.glb',
+    previewUrl: '/robotics_glb/baxter_dual_arm_robot.png',
+    baselineRepo: '08-工业与协作机械臂及灵巧夹爪/baxter_common',
+    primaryUrdf: 'baxter_description/urdf/baxter.urdf',
+    upstreamUrl: 'https://github.com/RethinkRobotics/baxter_common',
+    specs: [
+      { label: '网格精度', value: '395,574 Tris / 18 DAE 部件 (Draco 1.2MB)' },
+      { label: '驱动结构', value: '双 7-DOF 串联机械臂 + 头部显示屏' },
+      { label: '现实基准', value: 'baxter.urdf' }
+    ]
+  },
+  {
+    id: 'hello_stretch',
+    name: 'Hello Robot Stretch 移动操作机器人',
+    subtitle: '轻量级室内轮式底盘 + 垂直升降立柱 + 伸缩机械臂 (Draco GLB)',
+    category: '四足越野与移动操作',
+    glbUrl: '/robotics_glb/hello_stretch_mobile_manipulator.glb',
+    previewUrl: '/robotics_glb/hello_stretch_mobile_manipulator.png',
+    baselineRepo: '07-四足越野与移动操作复合机器人/stretch_description',
+    primaryUrdf: 'urdf/stretch.urdf',
+    upstreamUrl: 'https://github.com/robot-descriptions/stretch_description',
+    specs: [
+      { label: '网格精度', value: '515,428 Tris / 30 STL 部件 (Draco 1.7MB)' },
+      { label: '操作构型', value: '差速移动底盘 + 升降伸缩腕部夹爪' },
+      { label: '现实基准', value: 'stretch.urdf' }
+    ]
   }
 ];
 

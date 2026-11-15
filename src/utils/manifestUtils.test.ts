@@ -15,8 +15,8 @@ import {
 } from './manifestUtils';
 
 describe('manifestUtils pure logic suite', () => {
-  it('exposes all 6 flagship robot packs with valid .glb and .png asset paths on disk', () => {
-    assert.equal(ROBOT_PACKS.length, 6);
+  it('exposes all 14 flagship robot packs with valid .glb and .png asset paths on disk', () => {
+    assert.equal(ROBOT_PACKS.length, 14);
     for (const pack of ROBOT_PACKS) {
       assert.ok(pack.glbUrl.startsWith('/robotics_glb/'));
       assert.ok(pack.glbUrl.endsWith('.glb'));
