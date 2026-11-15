@@ -1,22 +1,25 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { loadGltfResilient, fetchTextAssetResilient } from './src/utils/resilientGlbLoader';
 import {
   Layers,
-  Compass,
   Box,
   FileCode,
   Search,
   ExternalLink,
   Sliders,
   RotateCcw,
-  Database,
   Activity,
-  Rocket,
-  Plane,
-  Bot
+  Bot,
+  Zap,
+  Gamepad2,
+  Grid3x3,
+  Minimize2,
+  X,
+  ChevronDown,
+  Swords,
+  Crosshair
 } from 'lucide-react';
 import manifestDataRaw from './src/robotics_manifest.json';
 import {
@@ -33,7 +36,146 @@ import {
   computeGhostMaterialState,
   computeClipPlaneConstant
 } from './src/utils/manifestUtils';
+import {
+  HangarRegime,
+  HANGAR_REGIMES,
+  computeRobotLiveJointTarget,
+  computeThermalIrColor,
+  estimatePartThermalNormalized,
+  buildSpatialTelemetryProbes,
+  dampValue,
+  computeFresnelPulseIntensity
+} from './src/utils/liveTwinEngine';
+import {
+  TwinMaterialUniforms,
+  attachTwinShaderEffects,
+  createOpticalSectionAssembly,
+  createFlowAndSensorField,
+  FlowAndSensorFieldController
+} from './src/utils/liveTwinSceneFX';
+import {
+  SubAssemblyDef,
+  OrthogonalExplosionPlan,
+  PartBlueprintMetadata,
+  AutoDisassemblyState,
+  buildSubAssemblyMatrix,
+  computePartOrthogonalExplosionPlan,
+  stepAutoDisassemblyDemo,
+  computePartBlueprintMetadata
+} from './src/utils/cadDisassemblyEngine';
+import {
+  createExplodedTraceLinesController,
+  createBlueprintDimensionRig
+} from './src/utils/cadBlueprintSceneFX';
 import { WorkstationTwinView } from './src/components/WorkstationTwinView';
+import { ActionSandboxView } from './src/components/ActionSandboxView';
+import { MarsSciFiCombatGame } from './src/components/MarsSciFiCombatGame';
+import { PlayerMechId } from './src/utils/marsCombatEngine';
+import {
+  PartBlueprintCapsule,
+  BlueprintAxisScreenLabels
+} from './src/components/PartBlueprintCapsule';
+import {
+  SpatialTelemetryOverlay,
+  ProjectedTelemetryItem
+} from './src/components/SpatialTelemetryOverlay';
+import { LiveBusSparklines } from './src/components/LiveBusSparklines';
+import { PathTracingHudBar } from './src/components/PathTracingHudBar';
+import { ViewportSettingsMenu } from './src/components/ViewportSettingsMenu';
+import { DissectionControlsPopover } from './src/components/DissectionControlsPopover';
+import {
+  HangarCameraPresetId,
+  IkJointLinkSpec,
+  MoltenKerfNode,
+  getHangarCameraPreset,
+  extractManipulatorJointIndices,
+  solveCcdIkChain,
+  stepMoltenKerfTrail
+} from './src/utils/ccdIkSolver';
+import {
+  ActiveFaultRecord,
+  classifyFaultSubsystem,
+  applyFaultToUrdfJointAngle
+} from './src/utils/hallOfFameEngine';
+import { createIkAndPlasmaFXController } from './src/utils/hallOfFameSceneFX';
+import {
+  DirectorCameraMode,
+  UltimateSkillState,
+  createInitialUltimateSkillState,
+  triggerUltimateSkill,
+  stepUltimateSkill,
+  computeUltimateUrdfJointDelta,
+  getRobotUltimateMeta,
+  cycleDirectorCameraMode,
+  computeDirectorCameraPose
+} from './src/utils/signatureShowcaseEngine';
+import { createSignatureShowcaseSceneFXController } from './src/utils/signatureShowcaseSceneFX';
+import {
+  EmissiveAreaLightSource,
+  DynamicEmissivePoint,
+  DualGearRayTracingController,
+  detectSoftwareWebGL,
+  createStudioLightboxPmrem,
+  upgradeGlbPbrAndBuildStaticBvh,
+  createSaltlineReflectorDeck,
+  createDualGearRayTracingPipeline
+} from './src/utils/hybridRayTracing';
+import { VisualLabPopoverButton } from './src/components/VisualLabPopoverButton';
+import { FloatingSceneGraphSection } from './src/components/FloatingSceneGraphSection';
+import {
+  HoveredPartCalloutOverlay,
+  HoveredPartCalloutInfo
+} from './src/components/HoveredPartCalloutOverlay';
+import {
+  SlsMaterializationState,
+  WindTunnelDisasterConfig,
+  createInitialSlsState,
+  triggerSlsMaterialization,
+  stepSlsMaterializationState,
+  clampMagLensRadius,
+  computeMpcRolloutFan,
+  createDefaultWindTunnelConfig,
+  buildMicroFpvCavityWaypoints,
+  evaluateMicroFpvSplinePose
+} from './src/utils/sciTechEngine';
+import {
+  createMagLensAndSlsRigController,
+  createMpcAndPowerArteriesController,
+  createWindTunnelDisasterFXController
+} from './src/utils/sciTechSceneFX';
+import { proceduralAudioSynth } from './src/utils/proceduralAudioSynth';
+import {
+  SpringDamperVec3State,
+  SurfaceWeatheringState,
+  classifyShipbreakerPartRole,
+  stepSpringDamperVec3,
+  stepDynamicWeathering,
+  computeHorizonFocusMode
+} from './src/utils/aaaGameVfxEngine';
+import { createShipbreakerSalvageController } from './src/utils/aaaGameSceneFX';
+import {
+  HangarGazeState,
+  PushRecoveryState,
+  AssemblySnapShakeState,
+  HangarMpcWalkState,
+  MICRO_FPV_SAFE_EXPLOSION_RATIO,
+  createInitialHangarGazeState,
+  stepHangarGazeTracking,
+  computeHangarGazeUrdfDelta,
+  createInitialPushRecoveryState,
+  triggerPushRecoveryImpulse,
+  stepPushRecoveryState,
+  computePushRecoveryUrdfDelta,
+  isHighLoadPushJointPart,
+  triggerAssemblySnapShake,
+  stepAssemblySnapShake,
+  createInitialHangarMpcWalkState,
+  setMpcFloorTarget,
+  stepHangarMpcWalk,
+  reconcileHangarStateTransition,
+  shouldAutoRevealInternalSkeleton,
+  buildSafeWorldBBoxFpvWaypoints
+} from './src/utils/hangarLivingPhysicsEngine';
 
 const manifestData = manifestDataRaw as ManifestRepo[];
 
@@ -41,10 +183,25 @@ type MainTab = 'hangar_3d' | 'mars2020' | 'b737_cfm56' | 'b737_bridge' | 'urdf_e
 
 interface LoadedRobotPart {
   mesh: THREE.Mesh;
+  partName: string;
   layer: 'L1' | 'L2' | 'L3';
+  tris: number;
+  vertices: number;
   basePos: THREE.Vector3;
-  explodeDir: THREE.Vector3;
+  geomLocalCenter: THREE.Vector3;
+  socketInParentLocal: THREE.Vector3;
+  localOrthoVec: THREE.Vector3;
+  localPeelVec: THREE.Vector3;
+  normSize: [number, number, number];
+  orthoPlan: OrthogonalExplosionPlan;
+  mountOriginWorld: THREE.Vector3;
+  currentCenterWorld: THREE.Vector3;
+  peelAmount: number;
+  normAxialX: number;
   origMat: THREE.MeshStandardMaterial;
+  origSide: THREE.Side;
+  origColor: THREE.Color;
+  twinUniforms: TwinMaterialUniforms;
 }
 
 interface BoundUrdfJoint {
@@ -52,6 +209,15 @@ interface BoundUrdfJoint {
   targetNode: THREE.Object3D;
   basePos: THREE.Vector3;
   baseQuat: THREE.Quaternion;
+  axisVec: THREE.Vector3;
+  currentVal: number;
+  omegaRadS: number;
+}
+
+interface SkeletonDynamicNode {
+  target: THREE.Object3D;
+  axes: THREE.AxesHelper;
+  ring: THREE.LineLoop;
 }
 
 const HANGAR_DRILL_LEVELS: { level: DrillLevel; label: string; desc: string }[] = [
@@ -61,22 +227,161 @@ const HANGAR_DRILL_LEVELS: { level: DrillLevel; label: string; desc: string }[] 
   { level: 'L3', label: 'L3 · 关节电机/激光雷达/声呐末端', desc: '下钻至 motor 电机、LiDAR 雷达、Ping360 声呐与灵巧手末端' }
 ];
 
+const _tmpVec3 = new THREE.Vector3();
+const _tmpVec3B = new THREE.Vector3();
+const _tmpParentVec3 = new THREE.Vector3();
+const _tmpGrappleOriginW = new THREE.Vector3();
+const _tmpGrappleTargetW = new THREE.Vector3();
+const _tmpCamRight = new THREE.Vector3();
+const _tmpCamUp = new THREE.Vector3();
+const _tmpCamFwd = new THREE.Vector3();
+const _tmpEmitterW = new THREE.Vector3();
+const _tmpQuat = new THREE.Quaternion();
+const _tmpBox3 = new THREE.Box3();
+const _raycaster = new THREE.Raycaster();
+const _pointerNdc = new THREE.Vector2();
+const _tmpThermalSpikeColor = new THREE.Color(0xfb923c);
+
+type AppMode = 'mars_combat' | 'sandbox' | 'cad_hub';
+
+function resolvePlayableCombatMechId(actorId: string): PlayerMechId {
+  if (actorId === 'sar_tracked' || actorId === 'sar') return 'sar';
+  if (
+    actorId === 'unitree_g1' ||
+    actorId === 'unitree_go2' ||
+    actorId === 'mars2020' ||
+    actorId === 'unitree_z1'
+  ) {
+    return actorId;
+  }
+  return 'unitree_g1';
+}
+
 export default function App() {
+  const [appMode, setAppMode] = useState<AppMode>(() => {
+    if (typeof window === 'undefined') return 'mars_combat';
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('sandbox') === '1') return 'sandbox';
+    if (params.get('mode') === 'hangar') return 'cad_hub';
+    return 'mars_combat';
+  });
+  const [combatAutostart] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('autostart') === '1';
+  });
+  const [sandboxActorId, setSandboxActorId] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'unitree_g1';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('actor') || 'unitree_g1';
+  });
+  const sandboxMode = appMode === 'sandbox';
+
   const [activeTab, setActiveTab] = useState<MainTab>('hangar_3d');
   const [selectedPack, setSelectedPack] = useState<RobotPack>(ROBOT_PACKS[0]);
   const [activeDrillLevel, setActiveDrillLevel] = useState<DrillLevel>('L0');
   const [explosion, setExplosion] = useState<number>(0);
   const [clipRatio, setClipRatio] = useState<number>(1.0);
+  const [autoSectionScan, setAutoSectionScan] = useState<boolean>(false);
   const [xrayMode, setXrayMode] = useState<boolean>(false);
-  const [showSkeleton, setShowSkeleton] = useState<boolean>(true);
+  const [thermalMode, setThermalMode] = useState<boolean>(false);
+  const [flowSensorMode, setFlowSensorMode] = useState<boolean>(false);
+  const [showProbes, setShowProbes] = useState<boolean>(false);
+  const [showSkeleton, setShowSkeleton] = useState<boolean>(false);
   const [autoRotate, setAutoRotate] = useState<boolean>(false);
+
+  // Module 1: Live Twin Operating Regimes & Manual FK Override
+  const [liveSim, setLiveSim] = useState<boolean>(true);
+  const [hangarRegime, setHangarRegime] = useState<HangarRegime>('patrol');
+
   const [meshNodes, setMeshNodes] = useState<{ name: string; tris: number; layer: 'L1' | 'L2' | 'L3' }[]>([]);
+  const meshNodesRef = useRef<{ name: string; tris: number; layer: 'L1' | 'L2' | 'L3' }[]>([]);
   const [highlightedPart, setHighlightedPart] = useState<string | null>(null);
+  const [hoveredPart, setHoveredPart] = useState<string | null>(null);
+  const [viewportHoveredPart, setViewportHoveredPart] = useState<string | null>(null);
+  const [hoveredCallout, setHoveredCallout] = useState<HoveredPartCalloutInfo | null>(null);
+  const [leftAcc, setLeftAcc] = useState<{ subs: boolean; bus: boolean }>({
+    subs: true,
+    bus: true
+  });
   const [isLoadingGlb, setIsLoadingGlb] = useState<boolean>(true);
+  const [glbLoadError, setGlbLoadError] = useState<string | null>(null);
+  const [glbReloadNonce, setGlbReloadNonce] = useState<number>(0);
+
+  // System 1: 8-12 Sub-Assembly Matrix + Single-Part Blueprint Workbench + 4-Stage Auto Disassembly
+  const [subAssemblies, setSubAssemblies] = useState<SubAssemblyDef[]>([]);
+  const [activeSubAssembly, setActiveSubAssembly] = useState<string | null>(null);
+  const [isolatedPart, setIsolatedPart] = useState<string | null>(null);
+  const [peeledParts, setPeeledParts] = useState<Record<string, boolean>>({});
+  const [hiddenParts, setHiddenParts] = useState<Record<string, boolean>>({});
+  const [autoDisassembly, setAutoDisassembly] = useState<boolean>(false);
+  const [autoStageLabel, setAutoStageLabel] = useState<string>('');
+  const [selectedBlueprintMeta, setSelectedBlueprintMeta] = useState<PartBlueprintMetadata | null>(null);
+  const [selectedAnchorScreen, setSelectedAnchorScreen] = useState<[number, number] | null>(null);
+  const [blueprintAxisScreens, setBlueprintAxisScreens] = useState<BlueprintAxisScreenLabels>({
+    xScreen: null,
+    yScreen: null,
+    zScreen: null
+  });
 
   // Parsed URDF Joints & FK Slider Angles (rad)
   const [urdfJoints, setUrdfJoints] = useState<UrdfJointDef[]>([]);
   const [jointAngles, setJointAngles] = useState<Record<string, number>>({});
+
+  // Projected 3D Spatial Telemetry Callouts
+  const [projectedProbes, setProjectedProbes] = useState<ProjectedTelemetryItem[]>([]);
+  const [viewportSize, setViewportSize] = useState<{ w: number; h: number }>({ w: 960, h: 640 });
+
+  // Hangar Camera Presets, Dual-Gear Hybrid Ray-Tracing, Fault Injection & 6-DOF CCD IK State
+  const [activeCamPreset, setActiveCamPreset] = useState<HangarCameraPresetId | null>(null);
+  const [pathTracingEnabled, setPathTracingEnabled] = useState<boolean>(false);
+  const [ptSpp, setPtSpp] = useState<number>(0);
+  const [bvhStats, setBvhStats] = useState<{ meshes: number; emissives: number }>({ meshes: 0, emissives: 0 });
+  const [isExporting4K, setIsExporting4K] = useState<boolean>(false);
+  const [faultInjectMode, setFaultInjectMode] = useState<boolean>(false);
+  const [activeFaults, setActiveFaults] = useState<ActiveFaultRecord[]>([]);
+  const [ikEnabled, setIkEnabled] = useState<boolean>(false);
+  const [plasmaCutting, setPlasmaCutting] = useState<boolean>(false);
+
+  // Five Hardcore Sci-Tech & Audiovisual Modules State
+  const [audioSynthEnabled, setAudioSynthEnabled] = useState<boolean>(() =>
+    proceduralAudioSynth.isEnabled()
+  );
+  const [magLensEnabled, setMagLensEnabled] = useState<boolean>(false);
+  const [magLensRadius, setMagLensRadius] = useState<number>(0.44);
+  const [slsActive, setSlsActive] = useState<boolean>(false);
+  const [mpcEnabled, setMpcEnabled] = useState<boolean>(false);
+  const [totalPowerWatts, setTotalPowerWatts] = useState<number>(0);
+  const [windTunnelConfig, setWindTunnelConfig] = useState<WindTunnelDisasterConfig>(() =>
+    createDefaultWindTunnelConfig()
+  );
+  const [microFpvActive, setMicroFpvActive] = useState<boolean>(false);
+  const [microFpvSegmentLabel, setMicroFpvSegmentLabel] = useState<string>('');
+
+  // AAA Hangar Systems: Hardspace: Shipbreaker Magnetic Grapple, Horizon Focus Weakpoint & Dynamic Weathering
+  const [shipbreakerEnabled, setShipbreakerEnabled] = useState<boolean>(false);
+  const [floatingPartsCount, setFloatingPartsCount] = useState<number>(0);
+  const [focusWeakpointEnabled, setFocusWeakpointEnabled] = useState<boolean>(false);
+  const [weatheringActive, setWeatheringActive] = useState<boolean>(false);
+  const resetGrappledPartsRef = useRef<(() => void) | null>(null);
+  const [zenMode, setZenMode] = useState<boolean>(false);
+  const [visualPopoverOpen, setVisualPopoverOpen] = useState<boolean>(false);
+  const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
+  const [dissectOpen, setDissectOpen] = useState<boolean>(false);
+  const [activeDrawer, setActiveDrawer] = useState<
+    'robots' | 'structure' | 'kinematics' | 'scenegraph' | null
+  >(null);
+  const [directorCamMode, setDirectorCamMode] = useState<DirectorCameraMode>('off');
+  const [ultimateActiveUI, setUltimateActiveUI] = useState<boolean>(false);
+  const [ultimatePhaseLabelUI, setUltimatePhaseLabelUI] = useState<string>('');
+  const [pushTestArmed, setPushTestArmed] = useState<boolean>(false);
+  const [pushTorqueSpikeNm, setPushTorqueSpikeNm] = useState<number>(0);
+  const [pushCalloutHud, setPushCalloutHud] = useState<{
+    screenX: number;
+    screenY: number;
+    forceN: number;
+    partName: string;
+  } | null>(null);
 
   // URDF / XML Baseline Explorer state
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -87,8 +392,11 @@ export default function App() {
   const [fileContent, setFileContent] = useState<string>('正在加载原始基准文件...');
 
   const mountRef = useRef<HTMLDivElement | null>(null);
-  const renderNowRef = useRef<(() => void) | null>(null);
+  const rayTracerRef = useRef<DualGearRayTracingController | null>(null);
+  const renderOnceRef = useRef<(() => void) | null>(null);
   const partsRef = useRef<LoadedRobotPart[]>([]);
+  const subAssembliesRef = useRef<SubAssemblyDef[]>([]);
+  const assemblyNormMaxDimRef = useRef<number>(2.05);
   const boundJointsRef = useRef<BoundUrdfJoint[]>([]);
   const rebuildSkeletonRef = useRef<(() => void) | null>(null);
   const skeletonGroupRef = useRef<THREE.Group | null>(null);
@@ -97,21 +405,494 @@ export default function App() {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const bboxMaxYRef = useRef<number>(2.0);
   const bboxMinYRef = useRef<number>(-2.0);
+  const bboxMinVecRef = useRef<[number, number, number]>([-1, -0.8, -1]);
+  const bboxMaxVecRef = useRef<[number, number, number]>([1, 0.8, 1]);
+  const urdfJointsRef = useRef<UrdfJointDef[]>([]);
+
+  const stateRef = useRef({
+    activeDrillLevel: 'L0' as DrillLevel,
+    targetExplosion: 0,
+    curExplosion: 0,
+    targetClipRatio: 1.0,
+    curClipRatio: 1.0,
+    autoSectionScan: false,
+    xrayMode: false,
+    thermalMode: false,
+    flowSensorMode: false,
+    showProbes: false,
+    showSkeleton: false,
+    autoRotate: false,
+    liveSim: true,
+    hangarRegime: 'patrol' as HangarRegime,
+    manualJointAngles: {} as Record<string, number>,
+    highlightedPart: null as string | null,
+    hoveredPart: null as string | null,
+    highlightSelectTime: -10,
+    activeSubAssembly: null as string | null,
+    isolatedPart: null as string | null,
+    peeledParts: {} as Record<string, boolean>,
+    hiddenParts: {} as Record<string, boolean>,
+    autoDisassemblyState: {
+      active: false,
+      progress: 0,
+      direction: 1 as 1 | -1,
+      holdTimer: 0,
+      currentStage: 0 as 0 | 1 | 2 | 3 | 4,
+      stageLabel: ''
+    } as AutoDisassemblyState,
+    camGlideActive: false,
+    camTargetPos: new THREE.Vector3(2.35, 1.65, 2.75),
+    camTargetLook: new THREE.Vector3(0, 0, 0),
+    activeCamPreset: null as HangarCameraPresetId | null,
+    pathTracingEnabled: false,
+    faultInjectMode: false,
+    activeFaults: [] as ActiveFaultRecord[],
+    ikEnabled: false,
+    plasmaCutting: false,
+    ikTargetWorld: new THREE.Vector3(0.68, 0.25, 0.35),
+    kerfNodes: [] as MoltenKerfNode[],
+    audioSynthEnabled: false,
+    magLensEnabled: false,
+    magLensRadius: 0.44,
+    magLensHoverValid: false,
+    magLensCenter: new THREE.Vector3(0, 999, 0),
+    slsState: createInitialSlsState(1.8) as SlsMaterializationState,
+    mpcEnabled: false,
+    windTunnelConfig: createDefaultWindTunnelConfig(),
+    microFpvActive: false,
+    microFpvPhase: 0,
+    shipbreakerEnabled: false,
+    focusWeakpointEnabled: false,
+    weathering: { marsDust: 0.22, intakeFrost: 0.08, titaniumHeatBluing: 0.18 } as SurfaceWeatheringState,
+    directorCamMode: 'off' as DirectorCameraMode,
+    ultimateSkill: createInitialUltimateSkillState() as UltimateSkillState,
+    pushTestArmed: false,
+    cursorValid: false,
+    pointerNdcX: 0,
+    pointerNdcY: 0,
+    gazeState: createInitialHangarGazeState() as HangarGazeState,
+    pushState: createInitialPushRecoveryState() as PushRecoveryState,
+    snapShake: { timer: 0, amplitude: 0 } as AssemblySnapShakeState,
+    mpcWalkState: createInitialHangarMpcWalkState() as HangarMpcWalkState
+  });
+
+  useEffect(() => {
+    const s = stateRef.current;
+    s.activeDrillLevel = activeDrillLevel;
+    if (!autoDisassembly) {
+      s.targetExplosion = explosion;
+    }
+    s.targetClipRatio = clipRatio;
+    s.autoSectionScan = autoSectionScan;
+    s.xrayMode = xrayMode;
+    s.thermalMode = thermalMode;
+    s.flowSensorMode = flowSensorMode;
+    s.showProbes = showProbes;
+    s.showSkeleton = showSkeleton;
+    s.autoRotate = autoRotate;
+    s.liveSim = liveSim;
+    s.hangarRegime = hangarRegime;
+    s.activeSubAssembly = activeSubAssembly;
+    s.isolatedPart = isolatedPart;
+    s.peeledParts = peeledParts;
+    s.hiddenParts = hiddenParts;
+    s.autoDisassemblyState.active = autoDisassembly;
+    s.activeCamPreset = activeCamPreset;
+    s.pathTracingEnabled = pathTracingEnabled;
+    s.faultInjectMode = faultInjectMode;
+    s.activeFaults = activeFaults;
+    s.ikEnabled = ikEnabled;
+    s.plasmaCutting = plasmaCutting;
+    s.audioSynthEnabled = audioSynthEnabled;
+    s.magLensEnabled = magLensEnabled;
+    s.magLensRadius = magLensRadius;
+    s.mpcEnabled = mpcEnabled;
+    s.windTunnelConfig = windTunnelConfig;
+    s.microFpvActive = microFpvActive;
+    s.shipbreakerEnabled = shipbreakerEnabled;
+    s.focusWeakpointEnabled = focusWeakpointEnabled;
+    s.directorCamMode = directorCamMode;
+    s.pushTestArmed = pushTestArmed;
+    if (controlsRef.current && !activeCamPreset && !microFpvActive && directorCamMode === 'off') {
+      controlsRef.current.enableZoom = !magLensEnabled;
+    }
+    if (!liveSim) {
+      s.manualJointAngles = jointAngles;
+    }
+  }, [
+    activeDrillLevel,
+    explosion,
+    clipRatio,
+    autoSectionScan,
+    xrayMode,
+    thermalMode,
+    flowSensorMode,
+    showProbes,
+    showSkeleton,
+    autoRotate,
+    liveSim,
+    hangarRegime,
+    activeSubAssembly,
+    isolatedPart,
+    peeledParts,
+    hiddenParts,
+    autoDisassembly,
+    activeCamPreset,
+    pathTracingEnabled,
+    faultInjectMode,
+    activeFaults,
+    ikEnabled,
+    plasmaCutting,
+    audioSynthEnabled,
+    magLensEnabled,
+    magLensRadius,
+    mpcEnabled,
+    windTunnelConfig,
+    microFpvActive,
+    shipbreakerEnabled,
+    focusWeakpointEnabled,
+    directorCamMode,
+    pushTestArmed,
+    jointAngles
+  ]);
+
+  const handleTriggerUltimateShowcase = () => {
+    setPathTracingEnabled(false);
+    setIsolatedPart(null);
+    stateRef.current.isolatedPart = null;
+    stateRef.current.slsState.active = false;
+    stateRef.current.curClipRatio = 0.34;
+    stateRef.current.ultimateSkill = triggerUltimateSkill();
+    setUltimateActiveUI(true);
+    setUltimatePhaseLabelUI('镜头 I · 俯掠推轨 + 激光断层内窥蓄力');
+    setLiveSim(true);
+    proceduralAudioSynth.playMechanicalLatchClick(760);
+  };
+
+  const handleCycleDirectorCamera = () => {
+    setDirectorCamMode((prev) => {
+      const next = cycleDirectorCameraMode(prev);
+      stateRef.current.directorCamMode = next;
+      if (next === 'off' && cameraRef.current && controlsRef.current && !stateRef.current.microFpvActive) {
+        cameraRef.current.fov = 42;
+        cameraRef.current.up.set(0, 1, 0);
+        cameraRef.current.updateProjectionMatrix();
+        controlsRef.current.enabled = !stateRef.current.activeCamPreset;
+      }
+      return next;
+    });
+  };
+
+  const handleResetGrappledParts = () => {
+    if (resetGrappledPartsRef.current) {
+      resetGrappledPartsRef.current();
+    }
+    stateRef.current.snapShake = triggerAssemblySnapShake(1.15);
+    setFloatingPartsCount(0);
+    proceduralAudioSynth.playMechanicalLatchClick(880);
+  };
+
+  const handleCleanWeathering = () => {
+    stateRef.current.weathering = { marsDust: 0, intakeFrost: 0, titaniumHeatBluing: 0 };
+    setWeatheringActive(false);
+    proceduralAudioSynth.playMechanicalLatchClick(960);
+  };
+
+  const handleToggleAudioSynth = () => {
+    setAudioSynthEnabled((prev) => {
+      const next = !prev;
+      proceduralAudioSynth.setEnabled(next);
+      return next;
+    });
+  };
+
+  const handleTriggerPushImpulse = (customHit?: {
+    point: [number, number, number];
+    dir: [number, number, number];
+    partName: string;
+    forceN?: number;
+  }) => {
+    // Module 4 Coordinator: standalone physical test smoothly resets any active Optical Sectioning plane
+    setClipRatio(1.0);
+    setAutoSectionScan(false);
+    setIsolatedPart(null);
+    setPathTracingEnabled(false);
+    setLiveSim(true);
+    stateRef.current.targetClipRatio = 1.0;
+    stateRef.current.autoSectionScan = false;
+    stateRef.current.isolatedPart = null;
+    stateRef.current.liveSim = true;
+
+    let contactPt: [number, number, number] = [0.06, 0.24, 0.14];
+    let pushDir: [number, number, number] = [-0.62, -0.05, -0.78];
+    let partLabel = 'torso_link';
+    if (customHit) {
+      contactPt = customHit.point;
+      pushDir = customHit.dir;
+      partLabel = customHit.partName;
+    } else {
+      const torsoPart =
+        partsRef.current.find((p) => {
+          const n = p.partName.toLowerCase();
+          return n.includes('torso') || n.includes('pelvis') || n.includes('base') || n.includes('chassis');
+        }) || partsRef.current[0];
+      if (torsoPart && torsoPart.mesh.visible) {
+        const wc = torsoPart.geomLocalCenter.clone();
+        torsoPart.mesh.localToWorld(wc);
+        const sideSign = Math.sin(performance.now() * 0.0031) >= 0 ? 1 : -1;
+        contactPt = [wc.x + sideSign * 0.16, wc.y + 0.08, wc.z + 0.08];
+        partLabel = torsoPart.partName;
+        // Crisp lateral-frontal impulse vector so 3D Force Arrow reads clearly in profile
+        pushDir = [-sideSign * 0.88, -0.06, -0.46];
+      } else {
+        const angle = (performance.now() * 0.0017) % (Math.PI * 2);
+        pushDir = [-Math.cos(angle) * 0.84, -0.05, -0.52];
+      }
+    }
+
+    const forceN = customHit?.forceN ?? 225;
+    stateRef.current.pushState = triggerPushRecoveryImpulse(stateRef.current.pushState, {
+      contactWorld: contactPt,
+      pushDirWorld: pushDir,
+      forceNewtons: forceN,
+      impactPartName: partLabel,
+      robotYaw: stateRef.current.mpcWalkState.yaw
+    });
+    setPushTorqueSpikeNm(stateRef.current.pushState.telemetryTorqueSpikeNm);
+    proceduralAudioSynth.playPushImpactThud(forceN, true);
+  };
+
+  const handleTriggerSlsPrint = () => {
+    setClipRatio(1.0);
+    setAutoSectionScan(false);
+    stateRef.current.targetClipRatio = 1.0;
+    stateRef.current.autoSectionScan = false;
+    stateRef.current.slsState = triggerSlsMaterialization(bboxMinYRef.current, 1.8);
+    setSlsActive(true);
+    proceduralAudioSynth.playSubBassImpact('sls_print');
+  };
+
+  const handleToggleMicroFpv = () => {
+    setMicroFpvActive((prev) => {
+      const next = !prev;
+      const coord = reconcileHangarStateTransition(
+        {
+          explosion: stateRef.current.targetExplosion,
+          clipRatio: stateRef.current.targetClipRatio,
+          autoSectionScan: stateRef.current.autoSectionScan,
+          autoDisassembly: stateRef.current.autoDisassemblyState.active,
+          microFpvActive: prev,
+          isolatedPart: stateRef.current.isolatedPart
+        },
+        next ? { type: 'enter_micro_fpv' } : { type: 'exit_micro_fpv' }
+      );
+      stateRef.current.microFpvActive = coord.microFpvActive;
+      stateRef.current.targetExplosion = coord.explosion;
+      stateRef.current.targetClipRatio = coord.clipRatio;
+      stateRef.current.autoSectionScan = coord.autoSectionScan;
+      stateRef.current.autoDisassemblyState.active = coord.autoDisassembly;
+      stateRef.current.isolatedPart = coord.isolatedPart;
+      setExplosion(coord.explosion);
+      setClipRatio(coord.clipRatio);
+      setAutoSectionScan(coord.autoSectionScan);
+      setAutoDisassembly(coord.autoDisassembly);
+      setIsolatedPart(coord.isolatedPart);
+
+      const cam = cameraRef.current;
+      const ctrl = controlsRef.current;
+      if (cam && ctrl) {
+        if (next) {
+          setPathTracingEnabled(false);
+          cam.near = 0.002;
+          cam.fov = 64;
+          cam.updateProjectionMatrix();
+          ctrl.enabled = false;
+        } else {
+          cam.near = 0.01;
+          cam.fov = 42;
+          cam.up.set(0, 1, 0);
+          cam.updateProjectionMatrix();
+          ctrl.enabled = !stateRef.current.activeCamPreset;
+          if (!stateRef.current.activeCamPreset) {
+            cam.position.set(2.35, 1.65, 2.75);
+            ctrl.target.set(0, 0, 0);
+            ctrl.update();
+          }
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleSelectCameraPreset = (presetId: HangarCameraPresetId | null) => {
+    if (microFpvActive) {
+      setMicroFpvActive(false);
+      stateRef.current.microFpvActive = false;
+      if (cameraRef.current) {
+        cameraRef.current.near = 0.01;
+        cameraRef.current.fov = 42;
+        cameraRef.current.updateProjectionMatrix();
+      }
+    }
+    setActiveCamPreset(presetId);
+    stateRef.current.activeCamPreset = presetId;
+    const cam = cameraRef.current;
+    const ctrl = controlsRef.current;
+    if (!cam || !ctrl) return;
+
+    if (!presetId) {
+      cam.up.set(0, 1, 0);
+      ctrl.enabled = true;
+      stateRef.current.camGlideActive = false;
+      ctrl.update();
+      return;
+    }
+
+    const spec = getHangarCameraPreset(presetId);
+    // Bypass OrbitControls temporarily while locked to fixed camera preset
+    ctrl.enabled = false;
+    stateRef.current.camGlideActive = false;
+    cam.up.set(spec.up[0], spec.up[1], spec.up[2]);
+    ctrl.target.set(0, 0, 0);
+    cam.position.set(spec.offset[0], spec.offset[1], spec.offset[2]);
+    cam.lookAt(0, 0, 0);
+    cam.updateMatrixWorld();
+  };
+
+  const handleInjectFaultOnPart = (partNameOverride?: string) => {
+    const domain =
+      selectedPack.id === 'bluerov2' || selectedPack.id === 'rexrov2' ? 'sea' : 'land';
+    const candidatePart =
+      partNameOverride ||
+      highlightedPart ||
+      partsRef.current.find((p) => {
+        const n = p.partName.toLowerCase();
+        return n.includes('fl_') || n.includes('thruster') || n.includes('flipper') || n.includes('thigh');
+      })?.partName ||
+      partsRef.current[0]?.partName;
+    if (!candidatePart) return;
+
+    const info = classifyFaultSubsystem(selectedPack.id, candidatePart, domain);
+    const rec: ActiveFaultRecord = {
+      partName: candidatePart,
+      kind: info.kind,
+      injectedAtSimTime: performance.now() / 1000,
+      alertTitle: info.alertTitle,
+      compensationLaw: info.compensationLaw
+    };
+    setActiveFaults((prev) => [...prev.filter((f) => f.partName !== candidatePart), rec]);
+    setLiveSim(true);
+  };
+
+  const handleSelfHealAllFaults = () => {
+    setActiveFaults([]);
+    setFaultInjectMode(false);
+  };
+
+  const handleExport4K = async () => {
+    if (!rayTracerRef.current || !renderOnceRef.current || isExporting4K) return;
+    setIsExporting4K(true);
+    try {
+      await rayTracerRef.current.export4KFrame(
+        `${selectedPack.id}_hangar_raytraced_4k_${Date.now()}.png`,
+        renderOnceRef.current
+      );
+    } finally {
+      setIsExporting4K(false);
+    }
+  };
+
+  const handleEnterSandbox = (actorOverride?: string) => {
+    const resolvedActor =
+      actorOverride ||
+      (activeTab === 'mars2020'
+        ? 'mars2020'
+        : activeTab === 'b737_cfm56' || activeTab === 'b737_bridge'
+          ? 'b737_cfm56'
+          : selectedPack.id);
+    setSandboxActorId(resolvedActor);
+    setAppMode('sandbox');
+  };
+
+  const handleExitSandbox = (lastActorId: string) => {
+    setAppMode('cad_hub');
+    if (lastActorId === 'mars2020') {
+      setActiveTab('mars2020');
+    } else if (lastActorId === 'b737_cfm56') {
+      setActiveTab('b737_cfm56');
+    } else {
+      const matchedPack = ROBOT_PACKS.find((p) => p.id === lastActorId);
+      if (matchedPack) {
+        setSelectedPack(matchedPack);
+      }
+      setActiveTab('hangar_3d');
+    }
+  };
+
+  const handleEnterMarsCombat = (actorOverride?: string) => {
+    const resolvedActor =
+      actorOverride ||
+      (activeTab === 'mars2020'
+        ? 'mars2020'
+        : activeTab === 'b737_cfm56' || activeTab === 'b737_bridge'
+          ? 'unitree_g1'
+          : selectedPack.id);
+    setSandboxActorId(resolvedActor);
+    setAppMode('mars_combat');
+  };
+
+  // Global KeyG (Action Sandbox) and KeyR (Hangar Progressive Path Tracing) shortcuts while in CAD Hub
+  useEffect(() => {
+    if (appMode !== 'cad_hub') return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.code === 'KeyG' && !e.repeat) {
+        const actor =
+          activeTab === 'mars2020'
+            ? 'mars2020'
+            : activeTab === 'b737_cfm56' || activeTab === 'b737_bridge'
+              ? 'b737_cfm56'
+              : selectedPack.id;
+        setSandboxActorId(actor);
+        setAppMode('sandbox');
+      } else if (e.code === 'KeyR' && !e.repeat && activeTab === 'hangar_3d') {
+        setPathTracingEnabled((prev) => !prev);
+      } else if (e.code === 'KeyQ' && !e.repeat && activeTab === 'hangar_3d') {
+        handleTriggerUltimateShowcase();
+      } else if (e.code === 'KeyK' && !e.repeat && activeTab === 'hangar_3d') {
+        handleCycleDirectorCamera();
+      } else if (e.code === 'KeyC' && !e.repeat && activeTab === 'hangar_3d') {
+        handleToggleMicroFpv();
+      } else if (e.code === 'KeyP' && !e.repeat && activeTab === 'hangar_3d') {
+        setPushTestArmed(true);
+        handleTriggerPushImpulse();
+      } else if (e.code === 'KeyN' && !e.repeat && activeTab === 'hangar_3d') {
+        handleResetGrappledParts();
+      } else if (e.code === 'KeyH' && !e.repeat) {
+        setZenMode((z) => !z);
+      } else if (e.code === 'Escape') {
+        setActiveDrawer(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [appMode, activeTab, selectedPack.id]);
 
   // Fetch and parse real .urdf / .xacro file for the selected robot pack
   useEffect(() => {
-    const urdfPath = encodeURI(`/baselines/${selectedPack.baselineRepo}/${selectedPack.primaryUrdf}`);
+    const urdfPath = `/baselines/${selectedPack.baselineRepo}/${selectedPack.primaryUrdf}`;
     let cancelled = false;
-    fetch(urdfPath)
-      .then((r) => (r.ok ? r.text() : ''))
+    fetchTextAssetResilient(urdfPath)
       .then((xmlText) => {
         if (cancelled) return;
         const parsed = parseUrdfJoints(xmlText);
+        urdfJointsRef.current = parsed;
         setUrdfJoints(parsed);
         setJointAngles({});
       })
       .catch(() => {
         if (!cancelled) {
+          urdfJointsRef.current = [];
           setUrdfJoints([]);
           setJointAngles({});
         }
@@ -125,29 +906,18 @@ export default function App() {
   useEffect(() => {
     if (!selectedRepo || !selectedFileRel) return;
     const rawPath = `/baselines/${selectedRepo.category}/${selectedRepo.repository}/${selectedFileRel}`;
-    const url = encodeURI(rawPath);
     let cancelled = false;
     setFileContent(`正在读取原装基准文件: ${rawPath} ...`);
 
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.text();
-      })
+    fetchTextAssetResilient(rawPath)
       .then((txt) => {
         if (cancelled) return;
-        if (txt.trim().startsWith('<!DOCTYPE html>')) {
-          setFileContent(
-            `<?xml version="1.0" encoding="utf-8"?>\n<!-- 原装基准索引: ${selectedRepo.repository} / ${selectedFileRel} -->\n<!-- 分类: ${selectedRepo.category} | 拓扑统计: ${selectedRepo.linksAndJoints || '标准运动学基准'} -->\n<!-- GitHub 源库: ${selectedRepo.upstreamUrl} -->\n<robot name="${selectedRepo.repository}">\n  <link name="base_link"/>\n</robot>`
-          );
-        } else {
-          setFileContent(txt.slice(0, 120000));
-        }
+        setFileContent(txt.slice(0, 120000));
       })
       .catch((err) => {
         if (cancelled) return;
         setFileContent(
-          `读取提示 (${err.message})：可从右侧直接打开或从 GitHub 仓库查看完整文件。\n路径: ${rawPath}`
+          `读取提示 (${err instanceof Error ? err.message : '网络重试已耗尽'})：可从右侧直接打开或从 GitHub 仓库查看完整文件。\n路径: ${rawPath}`
         );
       });
 
@@ -156,13 +926,19 @@ export default function App() {
     };
   }, [selectedRepo, selectedFileRel]);
 
+  const triggerSmoothCameraFocus = (targetLook: THREE.Vector3, offset: THREE.Vector3) => {
+    stateRef.current.camTargetLook.copy(targetLook);
+    stateRef.current.camTargetPos.copy(targetLook).add(offset);
+    stateRef.current.camGlideActive = true;
+  };
+
   // Smooth camera framing when switching L0 -> L1 -> L2 -> L3 in Hangar
   const handleSelectDrillLevel = (lvl: DrillLevel) => {
     setActiveDrillLevel(lvl);
-    if (!controlsRef.current || !cameraRef.current) return;
+    setActiveSubAssembly(null);
+    setIsolatedPart(null);
     if (lvl === 'L0') {
-      controlsRef.current.target.set(0, 0, 0);
-      cameraRef.current.position.set(2.35, 1.65, 2.75);
+      triggerSmoothCameraFocus(new THREE.Vector3(0, 0, 0), new THREE.Vector3(2.35, 1.65, 2.75));
     } else {
       const layerMeshes = partsRef.current.filter((p) => p.layer === lvl).map((p) => p.mesh);
       if (layerMeshes.length > 0) {
@@ -170,66 +946,344 @@ export default function App() {
         layerMeshes.forEach((m) => box.expandByObject(m));
         if (!box.isEmpty()) {
           const center = box.getCenter(new THREE.Vector3());
-          controlsRef.current.target.copy(center);
-          cameraRef.current.position.set(center.x + 1.75, center.y + 1.15, center.z + 2.0);
+          triggerSmoothCameraFocus(center, new THREE.Vector3(1.75, 1.15, 2.0));
         }
       }
     }
-    controlsRef.current.update();
-    if (renderNowRef.current) renderNowRef.current();
+  };
+
+  const handleSelectSubAssembly = (subId: string) => {
+    setIsolatedPart(null);
+    const nextId = activeSubAssembly === subId ? null : subId;
+    setActiveSubAssembly(nextId);
+    if (!nextId) {
+      triggerSmoothCameraFocus(new THREE.Vector3(0, 0, 0), new THREE.Vector3(2.35, 1.65, 2.75));
+      return;
+    }
+    const subDef = subAssembliesRef.current.find((sa) => sa.id === subId);
+    if (subDef) {
+      const box = new THREE.Box3();
+      partsRef.current.forEach((p) => {
+        if (subDef.partNames.includes(p.partName) && !hiddenParts[p.partName]) {
+          box.expandByObject(p.mesh);
+        }
+      });
+      if (!box.isEmpty()) {
+        const center = box.getCenter(new THREE.Vector3());
+        triggerSmoothCameraFocus(center, new THREE.Vector3(1.5, 0.96, 1.72));
+      }
+    }
+  };
+
+  const handleSelectSubPart = (partName: string | null) => {
+    setHighlightedPart(partName);
+    stateRef.current.highlightedPart = partName;
+    if (!partName) {
+      setIsolatedPart(null);
+      setSelectedBlueprintMeta(null);
+      setSelectedAnchorScreen(null);
+      return;
+    }
+
+    stateRef.current.highlightSelectTime = performance.now() / 1000;
+    const found = partsRef.current.find((p) => p.partName === partName);
+    if (found) {
+      const matchedSub = subAssembliesRef.current.find((sa) => sa.partNames.includes(partName));
+      const meta = computePartBlueprintMetadata(
+        selectedPack.id,
+        found.partName,
+        found.layer,
+        matchedSub?.label || `${found.layer} 运动子总成`,
+        found.normSize,
+        assemblyNormMaxDimRef.current,
+        found.tris,
+        found.vertices,
+        urdfJointsRef.current
+      );
+      setSelectedBlueprintMeta(meta);
+
+      const box = new THREE.Box3().setFromObject(found.mesh);
+      if (!box.isEmpty()) {
+        const center = box.getCenter(new THREE.Vector3());
+        triggerSmoothCameraFocus(center, new THREE.Vector3(1.38, 0.9, 1.58));
+      }
+    }
+  };
+
+  const handleToggleIsolateBlueprint = () => {
+    if (!highlightedPart) return;
+    const nextIso = isolatedPart === highlightedPart ? null : highlightedPart;
+    setIsolatedPart(nextIso);
+    const found = partsRef.current.find((p) => p.partName === highlightedPart);
+    if (found) {
+      const box = new THREE.Box3().setFromObject(found.mesh);
+      if (!box.isEmpty()) {
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        const d = Math.max(0.72, Math.max(size.x, size.y, size.z) * 2.1);
+        triggerSmoothCameraFocus(
+          center,
+          nextIso ? new THREE.Vector3(d * 0.95, d * 0.65, d * 1.1) : new THREE.Vector3(2.35, 1.65, 2.75)
+        );
+      }
+    }
+  };
+
+  const handleTogglePeelPart = () => {
+    if (!highlightedPart) return;
+    if (peeledParts[highlightedPart]) {
+      stateRef.current.snapShake = triggerAssemblySnapShake(0.95);
+    }
+    proceduralAudioSynth.playMechanicalLatchClick(820);
+    setPeeledParts((prev) => {
+      const next = { ...prev };
+      if (next[highlightedPart]) delete next[highlightedPart];
+      else next[highlightedPart] = true;
+      return next;
+    });
+  };
+
+  const handleHideSelectedPart = () => {
+    if (!highlightedPart) return;
+    setHiddenParts((prev) => ({ ...prev, [highlightedPart]: true }));
+    setIsolatedPart(null);
+    setHighlightedPart(null);
+    stateRef.current.highlightedPart = null;
+    setSelectedBlueprintMeta(null);
+    setSelectedAnchorScreen(null);
+  };
+
+  const handleToggleHidePartInGraph = (partName: string) => {
+    setHiddenParts((prev) => {
+      const next = { ...prev };
+      if (next[partName]) {
+        delete next[partName];
+      } else {
+        next[partName] = true;
+      }
+      return next;
+    });
+    if (isolatedPart === partName) {
+      setIsolatedPart(null);
+    }
+    if (highlightedPart === partName && !hiddenParts[partName]) {
+      setHighlightedPart(null);
+      stateRef.current.highlightedPart = null;
+      setSelectedBlueprintMeta(null);
+      setSelectedAnchorScreen(null);
+    }
+  };
+
+  const handleHoverSceneGraphPart = (partName: string | null) => {
+    setHoveredPart(partName);
+    stateRef.current.hoveredPart = partName;
+    if (!partName) {
+      setHoveredCallout(null);
+      return;
+    }
+    const cam = cameraRef.current;
+    const container = mountRef.current;
+    const idx = partsRef.current.findIndex((p) => p.partName === partName);
+    if (cam && container && idx >= 0) {
+      const hovP = partsRef.current[idx];
+      const graphIdx = meshNodesRef.current.findIndex((n) => n.name === hovP.partName);
+      if (hovP.mesh.visible) {
+        const worldPos = hovP.geomLocalCenter.clone();
+        hovP.mesh.localToWorld(worldPos);
+        const proj = worldPos.clone().project(cam);
+        if (proj.z >= -1 && proj.z <= 1) {
+          const w = container.clientWidth || 960;
+          const h = container.clientHeight || 640;
+          setHoveredCallout({
+            partName: hovP.partName,
+            index: graphIdx >= 0 ? graphIdx : idx,
+            layer: hovP.layer,
+            tris: hovP.tris,
+            screenX: (proj.x * 0.5 + 0.5) * w,
+            screenY: (-proj.y * 0.5 + 0.5) * h,
+            worldMm: [worldPos.x * 1000, worldPos.y * 1000, worldPos.z * 1000]
+          });
+        }
+      }
+    }
+  };
+
+  const handleResetAllParts = () => {
+    setIsolatedPart(null);
+    setPeeledParts({});
+    setHiddenParts({});
+    setHoveredPart(null);
+    setViewportHoveredPart(null);
+    setHoveredCallout(null);
+    stateRef.current.hoveredPart = null;
+    setActiveSubAssembly(null);
+    setAutoDisassembly(false);
+    setAutoStageLabel('');
+    setExplosion(0);
+    stateRef.current.autoDisassemblyState.active = false;
+    stateRef.current.autoDisassemblyState.progress = 0;
+    stateRef.current.targetExplosion = 0;
+    triggerSmoothCameraFocus(new THREE.Vector3(0, 0, 0), new THREE.Vector3(2.35, 1.65, 2.75));
   };
 
   // Initialize Three.js Mega-Hangar Viewport & Load Real GLB via GLTFLoader
   useEffect(() => {
-    if (activeTab !== 'hangar_3d' || !mountRef.current) return;
+    if (appMode !== 'cad_hub' || activeTab !== 'hangar_3d' || !mountRef.current) return;
     let disposed = false;
     const container = mountRef.current;
     const width = container.clientWidth || 960;
     const height = container.clientHeight || 640;
+    setViewportSize({ w: width, h: height });
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060a12);
-    scene.fog = new THREE.FogExp2(0x060a12, 0.045);
+    scene.background = new THREE.Color(0x0d1017);
+    scene.fog = new THREE.FogExp2(0x0d1017, 0.036);
 
     const camera = new THREE.PerspectiveCamera(42, width / height, 0.01, 200);
     camera.position.set(2.35, 1.65, 2.75);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    const gl = renderer.getContext();
-    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-    const rendererStr = debugInfo ? String(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)) : '';
-    const isSoftwareGl = /SwiftShader|llvmpipe|Software/i.test(rendererStr);
+    const isSoftwareGl = detectSoftwareWebGL();
 
+    const renderer = new THREE.WebGLRenderer({
+      antialias: !isSoftwareGl,
+      powerPreference: 'high-performance'
+    });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setSize(width, height);
     renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
     renderer.localClippingEnabled = true;
+    renderer.shadowMap.enabled = !isSoftwareGl;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.06;
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
+
+    // Procedural HDR Industrial Studio Lightbox PMREM Environment
+    const envTex = createStudioLightboxPmrem(renderer);
+    scene.environment = envTex;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = !isSoftwareGl;
     controls.dampingFactor = 0.06;
     controlsRef.current = controls;
 
-    // Warm/Cool Hangar Lighting & Floor Grid
-    const hemi = new THREE.HemisphereLight(0xdbeafe, 0x0f172a, 1.2);
+    const onControlStart = () => {
+      stateRef.current.camGlideActive = false;
+      if (stateRef.current.directorCamMode !== 'off') {
+        stateRef.current.directorCamMode = 'off';
+        setDirectorCamMode('off');
+        camera.fov = 42;
+        camera.up.set(0, 1, 0);
+        camera.updateProjectionMatrix();
+      }
+    };
+    controls.addEventListener('start', onControlStart);
+
+    // Calibrated CAD / Digital Twin Key-Fill-Rim Studio Lighting (prevents white-shell clipping while carving volumetric form)
+    const hemi = new THREE.HemisphereLight(0xdbeafe, 0x11151d, 0.62);
     scene.add(hemi);
-    const keyLight = new THREE.DirectionalLight(0xfff7ed, 2.55);
-    keyLight.position.set(5, 8, 6);
+    const keyLight = new THREE.DirectionalLight(0xfff7ed, 1.28);
+    keyLight.position.set(4.6, 7.6, 5.4);
+    if (!isSoftwareGl) {
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.set(1024, 1024);
+      keyLight.shadow.camera.near = 1.0;
+      keyLight.shadow.camera.far = 20.0;
+      keyLight.shadow.camera.left = -2.4;
+      keyLight.shadow.camera.right = 2.4;
+      keyLight.shadow.camera.top = 2.4;
+      keyLight.shadow.camera.bottom = -2.4;
+      keyLight.shadow.bias = -0.0005;
+      keyLight.shadow.normalBias = 0.015;
+    }
     scene.add(keyLight);
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.65);
-    rimLight.position.set(-6, 4, -5);
+    const rimLight = new THREE.DirectionalLight(0x7dd3fc, 0.78);
+    rimLight.position.set(-5.8, 3.8, -4.8);
     scene.add(rimLight);
-    const bottomLight = new THREE.DirectionalLight(0x0ea5e9, 0.75);
+    const bottomLight = new THREE.DirectionalLight(0x38bdf8, 0.26);
     bottomLight.position.set(0, -5, 2);
     scene.add(bottomLight);
 
-    const grid = new THREE.GridHelper(16, 32, 0x0284c7, 0x1e293b);
-    grid.position.y = -0.85;
-    scene.add(grid);
+    // Infinite Matte Space-Gray Industrial Deck with Soft Near-Ground Contact Shadow & Subtle Grazing Reflection
+    const saltlineDeck = createSaltlineReflectorDeck(isSoftwareGl, -0.86);
+    scene.add(saltlineDeck.mesh);
+
+    // Dual-Gear Hybrid Ray-Tracing & Progressive Monte Carlo Path-Tracing Pipeline
+    const rayTracer = createDualGearRayTracingPipeline(renderer, width, height, isSoftwareGl);
+    rayTracerRef.current = rayTracer;
+    let emissiveSources: EmissiveAreaLightSource[] = [];
+
+    // Soft radial sprite texture for Hangar Fault Sparks / Smoke & Plasma Kerf Beads
+    const sparkCanvas = document.createElement('canvas');
+    sparkCanvas.width = 64;
+    sparkCanvas.height = 64;
+    const sCtx = sparkCanvas.getContext('2d')!;
+    const sGrad = sCtx.createRadialGradient(32, 32, 2, 32, 32, 30);
+    sGrad.addColorStop(0, 'rgba(255,255,255,1)');
+    sGrad.addColorStop(0.4, 'rgba(255,255,255,0.68)');
+    sGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    sCtx.fillStyle = sGrad;
+    sCtx.fillRect(0, 0, 64, 64);
+    const softSpriteTex = new THREE.CanvasTexture(sparkCanvas);
+    softSpriteTex.colorSpace = THREE.SRGBColorSpace;
+
+    // 6-DOF CCD IK Holographic Target Gizmo & Plasma Cutting Torch FX
+    const ikPlasmaFx = createIkAndPlasmaFXController(softSpriteTex);
+    scene.add(ikPlasmaFx.group);
+
+    // Pooled Spark / Smoke Particle System for Fault Injection & Plasma Cutting
+    const sparkPoolCount = 120;
+    const sparkPos = new Float32Array(sparkPoolCount * 3);
+    const sparkCol = new Float32Array(sparkPoolCount * 3);
+    const sparkVel = new Float32Array(sparkPoolCount * 3);
+    const sparkLife = new Float32Array(sparkPoolCount);
+    let sparkCursor = 0;
+    for (let i = 0; i < sparkPoolCount; i++) sparkPos[i * 3 + 1] = -999;
+    const sparkGeo = new THREE.BufferGeometry();
+    sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+    sparkGeo.setAttribute('color', new THREE.BufferAttribute(sparkCol, 3));
+    const sparkPoints = new THREE.Points(
+      sparkGeo,
+      new THREE.PointsMaterial({
+        map: softSpriteTex,
+        size: 0.16,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.92,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
+    );
+    sparkPoints.frustumCulled = false;
+    scene.add(sparkPoints);
+
+    const spawnHangarSpark = (
+      x: number,
+      y: number,
+      z: number,
+      vx: number,
+      vy: number,
+      vz: number,
+      r: number,
+      g: number,
+      b: number,
+      life: number
+    ) => {
+      const idx = sparkCursor % sparkPoolCount;
+      sparkCursor++;
+      sparkPos[idx * 3] = x;
+      sparkPos[idx * 3 + 1] = y;
+      sparkPos[idx * 3 + 2] = z;
+      sparkVel[idx * 3] = vx;
+      sparkVel[idx * 3 + 1] = vy;
+      sparkVel[idx * 3 + 2] = vz;
+      sparkCol[idx * 3] = r;
+      sparkCol[idx * 3 + 1] = g;
+      sparkCol[idx * 3 + 2] = b;
+      sparkLife[idx] = life;
+    };
 
     // Hangar Bay Calibration Perimeter Ring (pure LineLoop, zero primitive geometry)
     const bayRingPts: THREE.Vector3[] = [];
@@ -239,7 +1293,7 @@ export default function App() {
     }
     const bayRing = new THREE.LineLoop(
       new THREE.BufferGeometry().setFromPoints(bayRingPts),
-      new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.48 })
+      new THREE.LineBasicMaterial({ color: 0x2c3646, transparent: true, opacity: 0.18 })
     );
     bayRing.position.y = -0.83;
     scene.add(bayRing);
@@ -251,22 +1305,404 @@ export default function App() {
     scene.add(skelGroup);
     skeletonGroupRef.current = skelGroup;
 
-    const renderFrame = () => {
-      if (!disposed) renderer.render(scene, camera);
+    // Module 5: Precision Optical Laser Section Plane
+    const opticalSection = createOpticalSectionAssembly(1.42);
+    scene.add(opticalSection.group);
+
+    // System 1: Exploded Trace Dashed Lines & CAD Engineering Dimension Wireframe Rig
+    const traceController = createExplodedTraceLinesController(260);
+    scene.add(traceController.group);
+    const blueprintRig = createBlueprintDimensionRig();
+    scene.add(blueprintRig.group);
+
+    // Five Hardcore Sci-Tech 3D Scene FX Controllers (Mag-Lens + SLS, MPC + Power Arteries, Wind-Tunnel Disaster)
+    const magSlsRig = createMagLensAndSlsRigController();
+    scene.add(magSlsRig.group);
+    const mpcPowerCtrl = createMpcAndPowerArteriesController();
+    scene.add(mpcPowerCtrl.group);
+    const disasterFx = createWindTunnelDisasterFXController();
+    scene.add(disasterFx.group);
+    const salvageFx = createShipbreakerSalvageController();
+    scene.add(salvageFx.group);
+    const signatureFx = createSignatureShowcaseSceneFXController(0);
+    scene.add(signatureFx.rootGroup);
+    const _ultEuler = new THREE.Euler();
+
+    // Module 3A: Unitree-Signature 3D Push-Recovery Impact Force Vector Arrow Rig
+    const pushArrowGroup = new THREE.Group();
+    pushArrowGroup.visible = false;
+    const pushShaftGeo = new THREE.CylinderGeometry(0.019, 0.019, 0.64, 14);
+    const pushHeadGeo = new THREE.ConeGeometry(0.058, 0.165, 16);
+    const pushRingGeo = new THREE.RingGeometry(0.05, 0.105, 28);
+    const pushArrowMat = new THREE.MeshBasicMaterial({
+      color: 0xf97316,
+      transparent: true,
+      opacity: 0.96,
+      depthTest: false,
+      blending: THREE.AdditiveBlending
+    });
+    const pushRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00e5ff,
+      transparent: true,
+      opacity: 0.88,
+      side: THREE.DoubleSide,
+      depthTest: false,
+      blending: THREE.AdditiveBlending
+    });
+    // Orient along local +Z pointing into origin (0,0,0): shaft at z = -0.40, cone tip at z = 0
+    const pushShaftMesh = new THREE.Mesh(pushShaftGeo, pushArrowMat);
+    pushShaftMesh.rotation.x = Math.PI * 0.5;
+    pushShaftMesh.position.set(0, 0, -0.40);
+    pushShaftMesh.renderOrder = 14;
+    const pushHeadMesh = new THREE.Mesh(pushHeadGeo, pushArrowMat);
+    pushHeadMesh.rotation.x = Math.PI * 0.5;
+    pushHeadMesh.position.set(0, 0, -0.085);
+    pushHeadMesh.renderOrder = 14;
+    const pushContactRing = new THREE.Mesh(pushRingGeo, pushRingMat);
+    pushContactRing.renderOrder = 15;
+    pushArrowGroup.add(pushShaftMesh, pushHeadMesh, pushContactRing);
+    scene.add(pushArrowGroup);
+    const _pushLookTarget = new THREE.Vector3();
+
+    // Module 3B: 3D MPC Floor-Click Target Beacon Ring
+    const mpcBeaconGroup = new THREE.Group();
+    mpcBeaconGroup.visible = false;
+    const mpcOuterRingGeo = new THREE.RingGeometry(0.12, 0.155, 36);
+    const mpcInnerDiscGeo = new THREE.CircleGeometry(0.05, 24);
+    const mpcBeaconMat = new THREE.MeshBasicMaterial({
+      color: 0x00e5ff,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    const mpcOuterRing = new THREE.Mesh(mpcOuterRingGeo, mpcBeaconMat);
+    mpcOuterRing.rotation.x = -Math.PI * 0.5;
+    const mpcInnerDisc = new THREE.Mesh(mpcInnerDiscGeo, mpcBeaconMat);
+    mpcInnerDisc.rotation.x = -Math.PI * 0.5;
+    mpcBeaconGroup.add(mpcOuterRing, mpcInnerDisc);
+    scene.add(mpcBeaconGroup);
+
+    // Hardspace: Shipbreaker 2nd-Order Spring-Damper Grapple State per .glb sub-part
+    const grappleSprings = new Map<string, SpringDamperVec3State>();
+    let draggingGrapplePart: string | null = null;
+    let lastGrappledPart: string | null = null;
+    let grappleGrabStartTarget: [number, number, number] = [0, 0, 0];
+    const grappleGrabPointWorld = new THREE.Vector3();
+    const grappleDragPlane = new THREE.Plane();
+    const grappleDragHit = new THREE.Vector3();
+
+    resetGrappledPartsRef.current = () => {
+      grappleSprings.forEach((sp) => {
+        sp.target = [0, 0, 0];
+      });
+      draggingGrapplePart = null;
+      lastGrappledPart = null;
     };
-    renderNowRef.current = renderFrame;
-    controls.addEventListener('change', renderFrame);
-    renderFrame();
+    setFloatingPartsCount(0);
+
+    // 3D Viewport Mouse Click Raycasting + 6-DOF IK Holographic Target Dragging + Shipbreaker Grapple + 3D Mag-Lens Hover!
+    let pointerDownPos: [number, number] | null = null;
+    let draggingIkGizmo = false;
+    let lastMagRaycastAt = 0;
+    let lastHoverRaycastAt = 0;
+    let lastViewportHoverName: string | null = null;
+    const ikDragPlane = new THREE.Plane();
+    const ikDragHit = new THREE.Vector3();
+
+    const onPointerDown = (ev: PointerEvent) => {
+      if (ev.button !== 0) return;
+      pointerDownPos = [ev.clientX, ev.clientY];
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width <= 10 || rect.height <= 10) return;
+      _pointerNdc.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+      _pointerNdc.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+      _raycaster.setFromCamera(_pointerNdc, camera);
+
+      if (stateRef.current.ikEnabled) {
+        const gizmoHits = _raycaster.intersectObject(ikPlasmaFx.hitProxyMesh, false);
+        if (gizmoHits.length > 0) {
+          draggingIkGizmo = true;
+          controls.enabled = false;
+          const camDir = new THREE.Vector3();
+          camera.getWorldDirection(camDir);
+          ikDragPlane.setFromNormalAndCoplanarPoint(
+            camDir.negate(),
+            stateRef.current.ikTargetWorld
+          );
+          return;
+        }
+      }
+
+      if (stateRef.current.shipbreakerEnabled && !stateRef.current.isolatedPart) {
+        const pickables = partsRef.current
+          .filter((p) => p.mesh.visible && !stateRef.current.hiddenParts[p.partName])
+          .map((p) => p.mesh);
+        const hits = _raycaster.intersectObjects(pickables, false);
+        if (hits.length > 0) {
+          const hitMesh = hits[0].object as THREE.Mesh;
+          const hitPart = partsRef.current.find((p) => p.mesh === hitMesh);
+          if (hitPart) {
+            draggingGrapplePart = hitPart.partName;
+            lastGrappledPart = hitPart.partName;
+            controls.enabled = false;
+            grappleGrabPointWorld.copy(hits[0].point);
+            const camDir = new THREE.Vector3();
+            camera.getWorldDirection(camDir);
+            grappleDragPlane.setFromNormalAndCoplanarPoint(camDir.negate(), hits[0].point);
+            let existing = grappleSprings.get(hitPart.partName);
+            if (!existing) {
+              existing = { pos: [0, 0, 0], vel: [0, 0, 0], target: [0, 0, 0] };
+              grappleSprings.set(hitPart.partName, existing);
+            }
+            grappleGrabStartTarget = [...existing.target];
+            proceduralAudioSynth.playMechanicalLatchClick(540);
+          }
+        }
+      }
+    };
+
+    const onPointerMove = (ev: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width < 10 || rect.height < 10) return;
+
+      const curNdcX = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+      const curNdcY = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+      stateRef.current.cursorValid = true;
+      stateRef.current.pointerNdcX = curNdcX;
+      stateRef.current.pointerNdcY = curNdcY;
+
+      if (draggingIkGizmo) {
+        _pointerNdc.set(curNdcX, curNdcY);
+        _raycaster.setFromCamera(_pointerNdc, camera);
+        if (_raycaster.ray.intersectPlane(ikDragPlane, ikDragHit)) {
+          ikDragHit.clampLength(0.18, 1.85);
+          stateRef.current.ikTargetWorld.copy(ikDragHit);
+        }
+        return;
+      }
+
+      if (draggingGrapplePart) {
+        _pointerNdc.set(curNdcX, curNdcY);
+        _raycaster.setFromCamera(_pointerNdc, camera);
+        if (_raycaster.ray.intersectPlane(grappleDragPlane, grappleDragHit)) {
+          const dx = grappleDragHit.x - grappleGrabPointWorld.x;
+          const dy = grappleDragHit.y - grappleGrabPointWorld.y;
+          const dz = grappleDragHit.z - grappleGrabPointWorld.z;
+          const sp = grappleSprings.get(draggingGrapplePart);
+          if (sp) {
+            const tx = Math.max(-1.85, Math.min(1.85, grappleGrabStartTarget[0] + dx));
+            const ty = Math.max(-1.25, Math.min(1.85, grappleGrabStartTarget[1] + dy));
+            const tz = Math.max(-1.85, Math.min(1.85, grappleGrabStartTarget[2] + dz));
+            sp.target = [tx, ty, tz];
+          }
+        }
+        return;
+      }
+
+      if (stateRef.current.magLensEnabled) {
+        const nowMs = performance.now();
+        if (nowMs - lastMagRaycastAt < 28) return;
+        lastMagRaycastAt = nowMs;
+        _pointerNdc.set(curNdcX, curNdcY);
+        _raycaster.setFromCamera(_pointerNdc, camera);
+        const pickables = partsRef.current
+          .filter((p) => p.mesh.visible && !stateRef.current.hiddenParts[p.partName])
+          .map((p) => p.mesh);
+        const hits = _raycaster.intersectObjects(pickables, false);
+        if (hits.length > 0) {
+          stateRef.current.magLensHoverValid = true;
+          stateRef.current.magLensCenter.copy(hits[0].point);
+        } else {
+          stateRef.current.magLensHoverValid = false;
+        }
+        return;
+      }
+
+      if (ev.buttons === 0 && !stateRef.current.isolatedPart) {
+        const nowMs = performance.now();
+        if (nowMs - lastHoverRaycastAt >= 55) {
+          lastHoverRaycastAt = nowMs;
+          _pointerNdc.set(curNdcX, curNdcY);
+          _raycaster.setFromCamera(_pointerNdc, camera);
+          const pickables = partsRef.current
+            .filter((p) => p.mesh.visible && !stateRef.current.hiddenParts[p.partName])
+            .map((p) => p.mesh);
+          const hits = _raycaster.intersectObjects(pickables, false);
+          const hitName = hits.length > 0
+            ? partsRef.current.find((p) => p.mesh === (hits[0].object as THREE.Mesh))?.partName || null
+            : null;
+          if (hitName !== lastViewportHoverName) {
+            lastViewportHoverName = hitName;
+            setViewportHoveredPart(hitName);
+          }
+        }
+      }
+    };
+
+    const onPointerLeave = () => {
+      stateRef.current.cursorValid = false;
+      stateRef.current.magLensHoverValid = false;
+      if (lastViewportHoverName !== null) {
+        lastViewportHoverName = null;
+        setViewportHoveredPart(null);
+      }
+    };
+
+    const onWheel = (ev: WheelEvent) => {
+      if (!stateRef.current.magLensEnabled) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      setMagLensRadius((prev) => {
+        const next = clampMagLensRadius(prev, ev.deltaY);
+        stateRef.current.magLensRadius = next;
+        return next;
+      });
+    };
+
+    const onPointerUp = (ev: PointerEvent) => {
+      if (draggingIkGizmo) {
+        draggingIkGizmo = false;
+        if (!stateRef.current.activeCamPreset && !stateRef.current.microFpvActive) {
+          controls.enabled = true;
+        }
+        pointerDownPos = null;
+        return;
+      }
+      if (draggingGrapplePart) {
+        const releasedPartName = draggingGrapplePart;
+        draggingGrapplePart = null;
+        if (!stateRef.current.activeCamPreset && !stateRef.current.microFpvActive) {
+          controls.enabled = true;
+        }
+        const clickDist = pointerDownPos
+          ? Math.hypot(ev.clientX - pointerDownPos[0], ev.clientY - pointerDownPos[1])
+          : 99;
+        pointerDownPos = null;
+        const sp = grappleSprings.get(releasedPartName);
+        const hitPart = partsRef.current.find((p) => p.partName === releasedPartName);
+        if (sp && hitPart && clickDist < 5) {
+          // Single-click in Shipbreaker mode pops the part outward along its peel vector onto the magnetic tether!
+          const curMag = Math.hypot(sp.target[0], sp.target[1], sp.target[2]);
+          if (curMag < 0.06) {
+            const pv = hitPart.orthoPlan.peelVector;
+            sp.target = [pv[0] * 1.45, Math.max(0.18, pv[1] * 1.45 + 0.14), pv[2] * 1.45];
+          } else {
+            sp.target = [0, 0, 0];
+            stateRef.current.snapShake = triggerAssemblySnapShake(1.1);
+            proceduralAudioSynth.playMechanicalLatchClick(920);
+          }
+          handleSelectSubPart(releasedPartName);
+        }
+        let floatCnt = 0;
+        grappleSprings.forEach((st) => {
+          if (Math.hypot(st.target[0], st.target[1], st.target[2]) > 0.03) floatCnt++;
+        });
+        setFloatingPartsCount(floatCnt);
+        if (floatCnt === 0) lastGrappledPart = null;
+        return;
+      }
+      if (!pointerDownPos || ev.button !== 0) return;
+      const dist = Math.hypot(ev.clientX - pointerDownPos[0], ev.clientY - pointerDownPos[1]);
+      pointerDownPos = null;
+      if (dist >= 5) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width < 10 || rect.height < 10) return;
+      _pointerNdc.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+      _pointerNdc.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+      _raycaster.setFromCamera(_pointerNdc, camera);
+
+      const pickables = partsRef.current
+        .filter((p) => p.mesh.visible && !stateRef.current.hiddenParts[p.partName])
+        .map((p) => p.mesh);
+      const hits = _raycaster.intersectObjects(pickables, false);
+      if (hits.length > 0) {
+        const hitMesh = hits[0].object as THREE.Mesh;
+        const hitPart = partsRef.current.find((p) => p.mesh === hitMesh);
+        if (hitPart) {
+          if (stateRef.current.pushTestArmed || ev.altKey) {
+            const hp = hits[0].point;
+            const rayDir = _raycaster.ray.direction;
+            const forceVal = 215 + Math.round(Math.random() * 45);
+            handleTriggerPushImpulse({
+              point: [hp.x, hp.y, hp.z],
+              dir: [rayDir.x, rayDir.y * 0.25, rayDir.z],
+              partName: hitPart.partName,
+              forceN: forceVal
+            });
+            for (let sp = 0; sp < 8; sp++) {
+              spawnHangarSpark(
+                hp.x,
+                hp.y,
+                hp.z,
+                (Math.random() - 0.5) * 2.4,
+                0.5 + Math.random() * 1.3,
+                (Math.random() - 0.5) * 2.4,
+                1.0,
+                0.58,
+                0.15,
+                0.35
+              );
+            }
+          } else if (stateRef.current.ikEnabled && !stateRef.current.faultInjectMode) {
+            // Snap 6-DOF IK target directly onto clicked 3D surface point ("指哪伸哪")!
+            stateRef.current.ikTargetWorld.copy(hits[0].point);
+          } else if (stateRef.current.faultInjectMode) {
+            handleInjectFaultOnPart(hitPart.partName);
+          } else {
+            proceduralAudioSynth.playMechanicalLatchClick(740);
+            handleSelectSubPart(hitPart.partName);
+          }
+        }
+      } else {
+        // Module 3B: Floor-Click MPC Predictive Walk when MPC is active!
+        if (stateRef.current.mpcEnabled && !stateRef.current.isolatedPart) {
+          const floorHits = _raycaster.intersectObject(saltlineDeck.mesh, false);
+          if (floorHits.length > 0) {
+            const fp = floorHits[0].point;
+            stateRef.current.mpcWalkState = setMpcFloorTarget(
+              stateRef.current.mpcWalkState,
+              fp.x,
+              fp.z,
+              2.55
+            );
+            setLiveSim(true);
+            stateRef.current.liveSim = true;
+            proceduralAudioSynth.playMechanicalLatchClick(680);
+            return;
+          }
+        }
+        if (!stateRef.current.isolatedPart && !stateRef.current.ikEnabled) {
+          handleSelectSubPart(null);
+        }
+      }
+    };
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    renderer.domElement.addEventListener('pointermove', onPointerMove);
+    renderer.domElement.addEventListener('pointerleave', onPointerLeave);
+    renderer.domElement.addEventListener('pointerup', onPointerUp);
+    renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
+
+    let flowController: FlowAndSensorFieldController | null = null;
+    let fpvWaypoints = buildSafeWorldBBoxFpvWaypoints(selectedPack.id, [-1, -0.8, -1], [1, 0.8, 1]);
+    void buildMicroFpvCavityWaypoints;
+    let skelNodes: SkeletonDynamicNode[] = [];
+    let skelRootAxes: THREE.AxesHelper | null = null;
+    let skelTopoLinesGeo: THREE.BufferGeometry | null = null;
+    let ikChainIndices: number[] = [];
+    let ikChainSpecs: IkJointLinkSpec[] = [];
+    let ikAngles: number[] = [];
+    let ikChainRootInv = new THREE.Matrix4();
+    let ikTipOffset: [number, number, number] = [0.18, 0, 0];
 
     // Load Real High-Poly GLB Asset via GLTFLoader (Y-up native, no rotation.x override)
     setIsLoadingGlb(true);
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/draco/');
-    const gltfLoader = new GLTFLoader();
-    gltfLoader.setDRACOLoader(dracoLoader);
-    gltfLoader.load(
-      selectedPack.glbUrl,
-      (gltf) => {
+    setGlbLoadError(null);
+    loadGltfResilient(selectedPack.glbUrl)
+      .then((gltf) => {
         if (disposed) return;
         const root = gltf.scene;
         root.updateMatrixWorld(true);
@@ -282,14 +1718,48 @@ export default function App() {
         root.updateMatrixWorld(true);
 
         const normBox = new THREE.Box3().setFromObject(root);
+        const normAssemblySize = normBox.getSize(new THREE.Vector3());
+        assemblyNormMaxDimRef.current = Math.max(
+          normAssemblySize.x,
+          normAssemblySize.y,
+          normAssemblySize.z,
+          0.2
+        );
         bboxMinYRef.current = normBox.min.y;
         bboxMaxYRef.current = normBox.max.y;
-        grid.position.y = normBox.min.y - 0.04;
-        bayRing.position.y = normBox.min.y - 0.02;
+        const minX = normBox.min.x;
+        const spanX = Math.max(0.01, normBox.max.x - normBox.min.x);
+        saltlineDeck.setFloorY(normBox.min.y - 0.022);
+        saltlineDeck.setContactFootprint(
+          (normBox.min.x + normBox.max.x) * 0.5,
+          (normBox.min.z + normBox.max.z) * 0.5,
+          Math.max(0.42, (normBox.max.x - normBox.min.x) * 0.54),
+          Math.max(0.42, (normBox.max.z - normBox.min.z) * 0.54)
+        );
+        bayRing.position.y = normBox.min.y - 0.018;
 
-        const loadedParts: LoadedRobotPart[] = [];
+        // Module 3: 3D Flow Streamlines & Sensor Perception Cones
+        flowController = createFlowAndSensorField(selectedPack.id, normBox.min.y - 0.03);
+        scene.add(flowController.group);
+
+        interface TempHangarMesh {
+          mesh: THREE.Mesh;
+          partName: string;
+          layer: 'L1' | 'L2' | 'L3';
+          tris: number;
+          vertices: number;
+          worldCenter: THREE.Vector3;
+          normSize: [number, number, number];
+          geomLocalCenter: THREE.Vector3;
+          socketInParentLocal: THREE.Vector3;
+          stdMat: THREE.MeshStandardMaterial;
+          twinUniforms: TwinMaterialUniforms;
+        }
+
+        const tempMeshes: TempHangarMesh[] = [];
         const nodeList: { name: string; tris: number; layer: 'L1' | 'L2' | 'L3' }[] = [];
         const objectByName = new Map<string, THREE.Object3D>();
+        const usedNames = new Set<string>();
 
         root.traverse((obj) => {
           if (obj.name) {
@@ -299,49 +1769,174 @@ export default function App() {
           if ((obj as THREE.Mesh).isMesh) {
             const m = obj as THREE.Mesh;
             const geom = m.geometry;
-            const tris = geom.index
-              ? Math.round(geom.index.count / 3)
-              : Math.round((geom.attributes.position?.count || 0) / 3);
+            const verts = geom.attributes.position?.count || 0;
+            const tris = geom.index ? Math.round(geom.index.count / 3) : Math.round(verts / 3);
             if (tris < 10) return;
 
-            const worldPos = new THREE.Vector3();
-            m.getWorldPosition(worldPos);
-            const dir = worldPos.clone().normalize();
-            if (dir.lengthSq() < 0.01) dir.set(0, 1, 0);
+            if (!geom.boundingBox) geom.computeBoundingBox();
+            const geomLocalCenter = geom.boundingBox
+              ? geom.boundingBox.getCenter(new THREE.Vector3())
+              : new THREE.Vector3();
 
+            const partBox = new THREE.Box3().setFromObject(m);
+            const worldCenter = partBox.isEmpty()
+              ? m.getWorldPosition(new THREE.Vector3())
+              : partBox.getCenter(new THREE.Vector3());
+            const partSizeVec = partBox.isEmpty()
+              ? new THREE.Vector3(0.05, 0.05, 0.05)
+              : partBox.getSize(new THREE.Vector3());
+
+            const socketInParentLocal = m.parent
+              ? m.parent.worldToLocal(worldCenter.clone())
+              : worldCenter.clone();
+
+            let partName = m.name || `cad_mesh_${tempMeshes.length}`;
+            if (usedNames.has(partName)) {
+              partName = `${partName}_${tempMeshes.length}`;
+            }
+            usedNames.add(partName);
+            m.name = partName;
+
+            const layer = classifyMeshLayer(partName);
             const baseMat = Array.isArray(m.material) ? m.material[0] : m.material;
             const stdMat = (
               baseMat ? baseMat.clone() : new THREE.MeshStandardMaterial({ color: 0x94a3b8 })
             ) as THREE.MeshStandardMaterial;
             stdMat.clippingPlanes = [clipPlaneRef.current];
             stdMat.clipShadows = true;
+            // Module 1: Pass layer === 'L1' + layer code so outer armor dissolves under Mag-Lens & sliced faces show alloy cross-hatching!
+            const twinUniforms = attachTwinShaderEffects(stdMat, layer === 'L1', layer);
             m.material = stdMat;
+            m.castShadow = !isSoftwareGl;
+            m.receiveShadow = !isSoftwareGl;
 
-            const partName = m.name || `cad_mesh_${loadedParts.length}`;
-            const layer = classifyMeshLayer(partName);
             if (tris >= 150) {
               nodeList.push({ name: partName, tris, layer });
             }
 
-            loadedParts.push({
+            tempMeshes.push({
               mesh: m,
+              partName,
               layer,
-              basePos: m.position.clone(),
-              explodeDir: dir,
-              origMat: stdMat
+              tris,
+              vertices: verts,
+              worldCenter,
+              normSize: [partSizeVec.x, partSizeVec.y, partSizeVec.z],
+              geomLocalCenter,
+              socketInParentLocal,
+              stdMat,
+              twinUniforms
             });
           }
         });
 
+        // Build 8-12 Fine-Grained Sub-Assembly Matrix from actual loaded GLB meshes
+        const computedSubs = buildSubAssemblyMatrix(
+          selectedPack.id,
+          tempMeshes.map((tm) => ({
+            name: tm.partName,
+            tris: tm.tris,
+            layer: tm.layer,
+            center: [tm.worldCenter.x, tm.worldCenter.y, tm.worldCenter.z]
+          }))
+        );
+        subAssembliesRef.current = computedSubs;
+        setSubAssemblies(computedSubs);
+
+        const loadedParts: LoadedRobotPart[] = tempMeshes.map((tm) => {
+          const m = tm.mesh;
+          const orthoPlan = computePartOrthogonalExplosionPlan(
+            selectedPack.id,
+            tm.partName,
+            tm.layer,
+            [tm.worldCenter.x, tm.worldCenter.y, tm.worldCenter.z],
+            computedSubs
+          );
+
+          const parentNode = m.parent;
+          const originParentLocal = parentNode
+            ? parentNode.worldToLocal(tm.worldCenter.clone())
+            : tm.worldCenter.clone();
+          const orthoTargetWorld = tm.worldCenter
+            .clone()
+            .add(new THREE.Vector3(...orthoPlan.orthoVector));
+          const peelTargetWorld = tm.worldCenter
+            .clone()
+            .add(new THREE.Vector3(...orthoPlan.peelVector));
+          const localOrthoVec = parentNode
+            ? parentNode.worldToLocal(orthoTargetWorld).sub(originParentLocal)
+            : new THREE.Vector3(...orthoPlan.orthoVector);
+          const localPeelVec = parentNode
+            ? parentNode.worldToLocal(peelTargetWorld).sub(originParentLocal)
+            : new THREE.Vector3(...orthoPlan.peelVector);
+
+          const normAxialX = ((tm.worldCenter.x - minX) / spanX) * 2 - 1;
+
+          return {
+            mesh: m,
+            partName: tm.partName,
+            layer: tm.layer,
+            tris: tm.tris,
+            vertices: tm.vertices,
+            basePos: m.position.clone(),
+            geomLocalCenter: tm.geomLocalCenter,
+            socketInParentLocal: tm.socketInParentLocal,
+            localOrthoVec,
+            localPeelVec,
+            normSize: tm.normSize,
+            orthoPlan,
+            mountOriginWorld: tm.worldCenter.clone(),
+            currentCenterWorld: tm.worldCenter.clone(),
+            peelAmount: 0,
+            normAxialX,
+            origMat: tm.stdMat,
+            origSide: tm.stdMat.side,
+            origColor: tm.stdMat.color ? tm.stdMat.color.clone() : new THREE.Color(0x94a3b8),
+            twinUniforms: tm.twinUniforms
+          };
+        });
+
+        nodeList.sort((a, b) => b.tris - a.tris);
         modelRoot.add(root);
         partsRef.current = loadedParts;
+        meshNodesRef.current = nodeList;
         setMeshNodes(nodeList);
+
+        // Build Static per-mesh BLAS (MeshBVH) once & upgrade PBR microfacet / Emissive Area Light tags!
+        const bvhInfo = upgradeGlbPbrAndBuildStaticBvh(root, selectedPack.id, classifyMeshLayer);
+        emissiveSources = bvhInfo.emissiveSources;
+        setBvhStats({ meshes: bvhInfo.bvhMeshCount, emissives: bvhInfo.emissiveSources.length });
+        rayTracer.resetAccumulation();
+
+        // Bind Sci-Tech Module 1 (1.8s Dual-Laser SLS Genesis Print), Module 2 (MPC Future Ghosts), Module 3 (GLB Skin Vertices), Module 4 (Micro-FPV Cavity Spline)
+        bboxMinVecRef.current = [normBox.min.x, normBox.min.y, normBox.min.z];
+        bboxMaxVecRef.current = [normBox.max.x, normBox.max.y, normBox.max.z];
+        fpvWaypoints = buildSafeWorldBBoxFpvWaypoints(
+          selectedPack.id,
+          bboxMinVecRef.current,
+          bboxMaxVecRef.current
+        );
+        mpcPowerCtrl.bindFutureGhostModel(root);
+        disasterFx.bindRealGlbSurfaceVertices(root);
+        stateRef.current.slsState = {
+          ...createInitialSlsState(1.8),
+          active: false,
+          laserY: normBox.max.y + 0.5,
+          progress: 1
+        };
+        setSlsActive(false);
+
         setIsLoadingGlb(false);
 
-        // Bind parsed URDF joints to the real gltf.scene nodes & build L0 Coordinate Skeleton
+        // Bind parsed URDF joints to the real gltf.scene nodes & build dynamic L0 Coordinate Skeleton + CCD IK Chain
+        // NOTE: skelGroup materials are intentionally UNCLIPPED so Optical Sectioning exposes the full internal URDF skeleton inside sliced regions!
         const buildSkeletonAndBindJoints = () => {
           skelGroup.clear();
+          skelNodes = [];
+          skelTopoLinesGeo = null;
+
           const rootAxes = new THREE.AxesHelper(1.25);
+          skelRootAxes = rootAxes;
           skelGroup.add(rootAxes);
 
           const circlePts: THREE.Vector3[] = [];
@@ -356,121 +1951,1304 @@ export default function App() {
             opacity: 0.88
           });
 
-          const linePts: THREE.Vector3[] = [];
           root.updateMatrixWorld(true);
+          const jointsToBind = urdfJointsRef.current;
 
-          if (boundJointsRef.current.length === 0 && urdfJoints.length > 0) {
+          if (jointsToBind.length > 0) {
             const bindings: BoundUrdfJoint[] = [];
-            for (const j of urdfJoints) {
+            for (const j of jointsToBind) {
               const cleanChild = j.child.replace(/^\//, '');
               const target =
                 objectByName.get(cleanChild) ||
                 objectByName.get(cleanChild.toLowerCase()) ||
-                Array.from(objectByName.entries()).find(([k]) => k.toLowerCase().includes(cleanChild.toLowerCase()))?.[1];
+                Array.from(objectByName.entries()).find(([k]) =>
+                  k.toLowerCase().includes(cleanChild.toLowerCase())
+                )?.[1];
               if (target) {
+                const ax = new THREE.Vector3(j.axis[0], j.axis[1], j.axis[2]);
+                if (ax.lengthSq() < 1e-5) ax.set(1, 0, 0);
+                else ax.normalize();
                 bindings.push({
                   def: j,
                   targetNode: target,
                   basePos: target.position.clone(),
-                  baseQuat: target.quaternion.clone()
+                  baseQuat: target.quaternion.clone(),
+                  axisVec: ax,
+                  currentVal: 0,
+                  omegaRadS: 0
                 });
               }
             }
             boundJointsRef.current = bindings;
-          }
 
-          if (boundJointsRef.current.length > 0) {
-            for (const b of boundJointsRef.current) {
-              const childWorld = new THREE.Vector3();
-              b.targetNode.getWorldPosition(childWorld);
+            // Extract 6-DOF / 7-DOF Serial Manipulator Chain for Real-Time CCD IK!
+            ikChainIndices = extractManipulatorJointIndices(
+              selectedPack.id,
+              bindings.map((b) => b.def)
+            );
+            ikChainSpecs = [];
+            ikAngles = new Array(ikChainIndices.length).fill(0);
+            if (ikChainIndices.length > 0) {
+              const firstBind = bindings[ikChainIndices[0]];
+              const chainParent = firstBind.targetNode.parent || root;
+              chainParent.updateMatrixWorld(true);
+              ikChainRootInv.copy(chainParent.matrixWorld).invert();
 
-              const localAxes = new THREE.AxesHelper(0.12);
-              localAxes.position.copy(childWorld);
-              skelGroup.add(localAxes);
+              let prevWorldPos = new THREE.Vector3();
+              let prevWorldQuat = new THREE.Quaternion();
+              chainParent.getWorldPosition(prevWorldPos);
+              chainParent.getWorldQuaternion(prevWorldQuat);
 
-              const jointRing = new THREE.LineLoop(ringGeo, ringMat);
-              jointRing.position.copy(childWorld);
-              const worldQuat = new THREE.Quaternion();
-              b.targetNode.getWorldQuaternion(worldQuat);
-              jointRing.quaternion.copy(worldQuat);
-              skelGroup.add(jointRing);
-
-              if (b.targetNode.parent) {
-                const parentWorld = new THREE.Vector3();
-                b.targetNode.parent.getWorldPosition(parentWorld);
-                linePts.push(parentWorld, childWorld);
+              for (let k = 0; k < ikChainIndices.length; k++) {
+                const b = bindings[ikChainIndices[k]];
+                const wPos = b.targetNode.getWorldPosition(new THREE.Vector3());
+                const wQuat = b.targetNode.getWorldQuaternion(new THREE.Quaternion());
+                const invPrevQ = prevWorldQuat.clone().invert();
+                const locOff = wPos.clone().sub(prevWorldPos).applyQuaternion(invPrevQ);
+                const origQ = invPrevQ.multiply(wQuat);
+                ikChainSpecs.push({
+                  name: b.def.name,
+                  axis: [b.axisVec.x, b.axisVec.y, b.axisVec.z],
+                  localOffset: [locOff.x, locOff.y, locOff.z],
+                  originQuat: [origQ.x, origQ.y, origQ.z, origQ.w],
+                  lower: b.def.lower,
+                  upper: b.def.upper
+                });
+                prevWorldPos = wPos;
+                prevWorldQuat = wQuat;
               }
+              ikTipOffset = [0.16, 0.02, 0.0];
+              stateRef.current.ikTargetWorld.set(
+                prevWorldPos.x + 0.24,
+                prevWorldPos.y + 0.14,
+                prevWorldPos.z + 0.18
+              );
             }
-          } else {
-            loadedParts.slice(0, 36).forEach((p, idx) => {
-              const wp = new THREE.Vector3();
-              p.mesh.getWorldPosition(wp);
-              const localAxes = new THREE.AxesHelper(0.11);
-              localAxes.position.copy(wp);
-              skelGroup.add(localAxes);
-              const jointRing = new THREE.LineLoop(ringGeo, ringMat);
-              jointRing.position.copy(wp);
-              skelGroup.add(jointRing);
-              if (idx > 0) {
-                const prevWp = new THREE.Vector3();
-                loadedParts[idx - 1].mesh.getWorldPosition(prevWp);
-                linePts.push(prevWp, wp);
-              }
-            });
           }
 
-          if (linePts.length >= 2) {
-            const lineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
+          const targetsForSkel: THREE.Object3D[] =
+            boundJointsRef.current.length > 0
+              ? boundJointsRef.current.map((b) => b.targetNode)
+              : loadedParts.slice(0, 32).map((p) => p.mesh);
+
+          for (const tNode of targetsForSkel) {
+            const localAxes = new THREE.AxesHelper(0.11);
+            const jointRing = new THREE.LineLoop(ringGeo, ringMat);
+            skelGroup.add(localAxes);
+            skelGroup.add(jointRing);
+            skelNodes.push({ target: tNode, axes: localAxes, ring: jointRing });
+          }
+
+          if (skelNodes.length >= 2) {
+            const posBuf = new Float32Array(skelNodes.length * 6);
+            skelTopoLinesGeo = new THREE.BufferGeometry();
+            skelTopoLinesGeo.setAttribute('position', new THREE.BufferAttribute(posBuf, 3));
             const lineMat = new THREE.LineBasicMaterial({
               color: 0xf59e0b,
               transparent: true,
               opacity: 0.82
             });
-            skelGroup.add(new THREE.LineSegments(lineGeo, lineMat));
+            skelGroup.add(new THREE.LineSegments(skelTopoLinesGeo, lineMat));
           }
         };
 
         boundJointsRef.current = [];
         rebuildSkeletonRef.current = buildSkeletonAndBindJoints;
         buildSkeletonAndBindJoints();
-        renderFrame();
-      },
-      undefined,
-      (err) => {
-        console.error('Failed to load robot GLB:', err);
+      })
+      .catch((err) => {
+        if (disposed) return;
+        console.warn('[Hangar] 真机 GLB 资产网络重试已耗尽:', err);
+        setGlbLoadError(err instanceof Error ? err.message : '网络传输中断');
         setIsLoadingGlb(false);
-      }
-    );
+      });
 
-    let reqId = 0;
-    const animate = () => {
-      if (controlsRef.current && controlsRef.current.autoRotate) {
-        controlsRef.current.update();
-        renderFrame();
+    // Software-WebGL guarded continuous live digital twin loop
+    let frameId = 0;
+    let lastTime = performance.now() / 1000;
+    let simElapsed = 0;
+    let lastUiSync = 0;
+
+    function afterDraw(cb: () => void) {
+      const gl = renderer.getContext() as WebGL2RenderingContext;
+      if (gl && typeof gl.fenceSync === 'function') {
+        const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+        gl.flush();
+        const poll = () => {
+          if (disposed) return;
+          const status = sync && gl.getSyncParameter(sync, gl.SYNC_STATUS);
+          if (status === gl.UNSIGNALED) {
+            frameId = window.setTimeout(poll, 5);
+          } else {
+            if (sync) gl.deleteSync(sync);
+            frameId = window.setTimeout(cb, 80);
+          }
+        };
+        frameId = window.setTimeout(poll, 5);
+      } else {
+        frameId = window.setTimeout(cb, 80);
       }
-      reqId = requestAnimationFrame(animate);
-    };
-    reqId = requestAnimationFrame(animate);
+    }
+
+    function tick() {
+      if (disposed) return;
+      const now = performance.now() / 1000;
+      const rawDt = Math.max(0.001, now - lastTime);
+      const dt = Math.min(0.08, rawDt);
+      const wallDt = Math.min(0.65, rawDt);
+      lastTime = now;
+
+      const s = stateRef.current;
+      // Pause continuous time advance during stationary Gear-2 DSLR Path-Tracing exposure so SPP converges to 256!
+      if (s.liveSim && !s.pathTracingEnabled) {
+        simElapsed += dt;
+      }
+
+      if (s.shipbreakerEnabled || s.focusWeakpointEnabled || s.windTunnelConfig.schlierenMode) {
+        s.slsState.active = false;
+      }
+
+      // Module 1B: Advance 1.8s Dual-Laser SLS Metal 3D Printing Materialization Sweep
+      if (s.slsState.active && !s.pathTracingEnabled) {
+        s.slsState = stepSlsMaterializationState(
+          s.slsState,
+          wallDt,
+          bboxMinYRef.current,
+          bboxMaxYRef.current
+        );
+      }
+
+      // System 1: Step 4-Stage Auto Disassembly Demo if active
+      if (s.autoDisassemblyState.active && !s.pathTracingEnabled) {
+        s.autoDisassemblyState = stepAutoDisassemblyDemo(s.autoDisassemblyState, dt);
+        s.targetExplosion = s.autoDisassemblyState.progress;
+      }
+
+      // Step 4-Phase Signature Ultimate Skill Visual Showcase [Key Q]
+      if (s.ultimateSkill.active && !s.pathTracingEnabled) {
+        s.ultimateSkill = stepUltimateSkill(s.ultimateSkill, wallDt, selectedPack.id);
+        if (s.ultimateSkill.justFinished) {
+          modelRoot.position.set(0, 0, 0);
+          modelRoot.rotation.set(0, 0, 0);
+          if (s.directorCamMode === 'off') {
+            camera.fov = 42;
+            camera.up.set(0, 1, 0);
+            camera.updateProjectionMatrix();
+          }
+        }
+      }
+
+      // Step Module 3 Embodied Living Physics: Gaze Tracking, Push-Recovery Impulse, Snap-Back Shake & Floor-Click MPC Walk
+      if (!s.pathTracingEnabled) {
+        s.gazeState = stepHangarGazeTracking(s.gazeState, {
+          dt,
+          cursorValid: s.cursorValid,
+          pointerNdcX: s.pointerNdcX,
+          pointerNdcY: s.pointerNdcY,
+          explosion: s.curExplosion,
+          isolatedPart: s.isolatedPart,
+          microFpvActive: s.microFpvActive,
+          ultimateActive: s.ultimateSkill.active
+        });
+        s.pushState = stepPushRecoveryState(s.pushState, dt);
+        if (s.mpcEnabled && !s.isolatedPart && s.curExplosion < 0.05) {
+          s.mpcWalkState = stepHangarMpcWalk(s.mpcWalkState, dt);
+        } else if (s.mpcWalkState.hasTarget || Math.hypot(s.mpcWalkState.x, s.mpcWalkState.z) > 1e-4) {
+          s.mpcWalkState = createInitialHangarMpcWalkState();
+        }
+      }
+      const snapVib = stepAssemblySnapShake(s.snapShake, dt);
+      s.snapShake = snapVib.next;
+
+      if (s.ultimateSkill.active) {
+        modelRoot.position.set(
+          s.mpcWalkState.x + s.pushState.rootShiftX,
+          s.ultimateSkill.altitudeOffset * 0.42 + snapVib.offsetY,
+          s.mpcWalkState.z + s.pushState.rootShiftZ
+        );
+        _ultEuler.set(
+          s.ultimateSkill.rollOffset + snapVib.pitchRad,
+          s.ultimateSkill.yawSpinOffset + s.mpcWalkState.yaw,
+          s.ultimateSkill.pitchOffset + snapVib.rollRad,
+          'YXZ'
+        );
+        modelRoot.quaternion.setFromEuler(_ultEuler);
+      } else {
+        const rx = s.mpcWalkState.x + s.pushState.rootShiftX;
+        const ry = snapVib.offsetY;
+        const rz = s.mpcWalkState.z + s.pushState.rootShiftZ;
+        const pitch = s.pushState.tiltPitch * 0.28 + snapVib.pitchRad;
+        const yaw = s.mpcWalkState.yaw;
+        const roll = s.pushState.tiltRoll * 0.28 + snapVib.rollRad;
+        modelRoot.position.set(rx, ry, rz);
+        _ultEuler.set(pitch, yaw, roll, 'YXZ');
+        modelRoot.quaternion.setFromEuler(_ultEuler);
+      }
+
+      // Update 3D Push-Recovery Impact Force Vector Arrow & MPC Floor Target Beacon
+      if (s.pushState.arrowVisibleTimer > 0 && !s.isolatedPart) {
+        pushArrowGroup.visible = true;
+        const [cx, cy, cz] = s.pushState.contactWorld;
+        const [dx, dy, dz] = s.pushState.pushDirWorld;
+        pushArrowGroup.position.set(cx, cy, cz);
+        _pushLookTarget.set(cx + dx, cy + dy, cz + dz);
+        pushArrowGroup.lookAt(_pushLookTarget);
+        const fade = Math.min(1, s.pushState.arrowVisibleTimer / 0.35);
+        const pulse = 1.0 + 0.14 * Math.sin(now * 22.0);
+        pushArrowGroup.scale.setScalar((0.85 + 0.35 * fade) * pulse);
+        pushArrowMat.opacity = 0.94 * fade;
+        pushRingMat.opacity = 0.85 * fade;
+        pushContactRing.scale.setScalar(0.85 + (1 - fade) * 1.45);
+      } else {
+        pushArrowGroup.visible = false;
+      }
+
+      if (s.mpcEnabled && s.mpcWalkState.hasTarget && !s.isolatedPart) {
+        mpcBeaconGroup.visible = true;
+        mpcBeaconGroup.position.set(
+          s.mpcWalkState.targetX,
+          bboxMinYRef.current - 0.014,
+          s.mpcWalkState.targetZ
+        );
+        const bp = 1.0 + 0.24 * Math.sin(now * 6.5);
+        mpcOuterRing.scale.setScalar(bp);
+        mpcBeaconMat.opacity = s.mpcWalkState.isWalking ? 0.88 : 0.42;
+      } else {
+        mpcBeaconGroup.visible = false;
+      }
+
+      // Smooth exponential damping for Explosion ([C] Micro-FPV clamped to safe 18% micro-gap!) & Optical Section Clipping
+      const effectiveTargetExplosion = s.ultimateSkill.active
+        ? Math.max(s.targetExplosion, s.ultimateSkill.armorExplosionRatio)
+        : s.microFpvActive
+          ? MICRO_FPV_SAFE_EXPLOSION_RATIO
+          : s.targetExplosion;
+      const uiStepDt = Math.min(0.28, rawDt);
+      s.curExplosion = dampValue(s.curExplosion, effectiveTargetExplosion, 10.5, uiStepDt);
+      if (s.ultimateSkill.active && s.ultimateSkill.showcaseClipRatio < 0.995 && !s.pathTracingEnabled) {
+        s.curClipRatio = dampValue(
+          s.curClipRatio,
+          Math.min(s.targetClipRatio, s.ultimateSkill.showcaseClipRatio),
+          11.0,
+          uiStepDt
+        );
+      } else if (s.autoSectionScan && !s.pathTracingEnabled) {
+        const sweepTarget = 0.54 + 0.38 * Math.sin(now * 0.95);
+        s.curClipRatio = dampValue(s.curClipRatio, sweepTarget, 6.0, dt);
+      } else {
+        s.curClipRatio = dampValue(s.curClipRatio, s.targetClipRatio, 10.5, uiStepDt);
+      }
+
+      // Module 4: Millimeter-Scale Micro-FPV Cavity Fly-Through vs Signature Director Camera [K] vs OrbitControls
+      let activeFpvSegLabel = '';
+      if (s.microFpvActive && !s.pathTracingEnabled) {
+        s.microFpvPhase = (s.microFpvPhase + dt * 0.085) % 1.0;
+        const fpvPose = evaluateMicroFpvSplinePose(fpvWaypoints, s.microFpvPhase, 0.72);
+        activeFpvSegLabel = fpvPose.segmentLabel;
+        if (camera.near !== 0.002) {
+          camera.near = 0.002;
+          camera.updateProjectionMatrix();
+        }
+        camera.position.set(fpvPose.position[0], fpvPose.position[1], fpvPose.position[2]);
+        camera.up.set(fpvPose.up[0], fpvPose.up[1], fpvPose.up[2]);
+        camera.lookAt(fpvPose.lookAt[0], fpvPose.lookAt[1], fpvPose.lookAt[2]);
+      } else if ((s.directorCamMode !== 'off' || s.ultimateSkill.active) && !s.pathTracingEnabled) {
+        if (camera.near !== 0.01) {
+          camera.near = 0.01;
+        }
+        const dirPose = computeDirectorCameraPose({
+          mode: s.directorCamMode,
+          anchorX: 0,
+          anchorY: (bboxMinYRef.current + bboxMaxYRef.current) * 0.45 + modelRoot.position.y * 0.5,
+          anchorZ: 0,
+          actorYaw: 0,
+          modelRadius: Math.max(1.15, assemblyNormMaxDimRef.current * 0.62),
+          elapsed: now,
+          ultimateActive: s.ultimateSkill.active,
+          ultimateProgress01: s.ultimateSkill.progress01
+        });
+        const kLerp = 1 - Math.exp(-6.5 * dt);
+        camera.position.x += (dirPose.position[0] - camera.position.x) * kLerp;
+        camera.position.y += (dirPose.position[1] - camera.position.y) * kLerp;
+        camera.position.z += (dirPose.position[2] - camera.position.z) * kLerp;
+        camera.up.set(dirPose.up[0], dirPose.up[1], dirPose.up[2]);
+        controls.target.set(dirPose.lookAt[0], dirPose.lookAt[1], dirPose.lookAt[2]);
+        camera.lookAt(controls.target);
+        camera.fov += (dirPose.fovDeg - camera.fov) * kLerp;
+        camera.updateProjectionMatrix();
+      } else {
+        // Smooth camera focus glide (when not locked to a fixed preset)
+        if (s.camGlideActive && !s.activeCamPreset) {
+          camera.position.x = dampValue(camera.position.x, s.camTargetPos.x, 5.5, dt);
+          camera.position.y = dampValue(camera.position.y, s.camTargetPos.y, 5.5, dt);
+          camera.position.z = dampValue(camera.position.z, s.camTargetPos.z, 5.5, dt);
+          controls.target.x = dampValue(controls.target.x, s.camTargetLook.x, 6.5, dt);
+          controls.target.y = dampValue(controls.target.y, s.camTargetLook.y, 6.5, dt);
+          controls.target.z = dampValue(controls.target.z, s.camTargetLook.z, 6.5, dt);
+          if (camera.position.distanceTo(s.camTargetPos) < 0.015) {
+            s.camGlideActive = false;
+          }
+        }
+
+        if (!s.activeCamPreset) {
+          controls.autoRotate = !isSoftwareGl && s.autoRotate && !s.pathTracingEnabled;
+          controls.autoRotateSpeed = 1.8;
+          controls.update();
+        }
+      }
+
+      const regimeSpec = HANGAR_REGIMES.find((r) => r.id === s.hangarRegime) || HANGAR_REGIMES[1];
+      const loadFactor = s.liveSim ? regimeSpec.loadFactor : 0.35;
+
+      // 1. Update Optical Laser Clipping Plane
+      const clipY = computeClipPlaneConstant(bboxMinYRef.current, bboxMaxYRef.current, s.curClipRatio);
+      clipPlaneRef.current.constant = clipY;
+      const isSectionCutVisible = (s.curClipRatio < 0.985 || s.autoSectionScan) && !s.isolatedPart;
+      opticalSection.updateSection(clipY, isSectionCutVisible, now);
+
+      // 2. Update 3D Flow Streamlines & Sensor Cones (pause downward LiDAR cones during active CAD section cut & 4-shot showcase so sliced interior stays crystal clear!)
+      if (flowController) {
+        flowController.group.visible =
+          s.flowSensorMode &&
+          !isSectionCutVisible &&
+          !s.ultimateSkill.active &&
+          !s.isolatedPart &&
+          !s.windTunnelConfig.schlierenMode;
+        flowController.update(simElapsed, loadFactor);
+      }
+
+      // 3. Apply Real URDF Forward Kinematics + Fault-Tolerant Limp-Home + Real-Time 6-DOF CCD IK!
+      const bindings = boundJointsRef.current;
+      let poseChecksum = 0;
+
+      // Solve 6-DOF CCD IK if active
+      let endEffectorWorld = new THREE.Vector3(0.45, 0.2, 0.25);
+      if (s.ikEnabled && ikChainSpecs.length > 0 && bindings.length > 0) {
+        const firstBind = bindings[ikChainIndices[0]];
+        const chainParent = firstBind.targetNode.parent || modelRoot;
+        chainParent.updateMatrixWorld(true);
+        ikChainRootInv.copy(chainParent.matrixWorld).invert();
+        const targetLocal = s.ikTargetWorld.clone().applyMatrix4(ikChainRootInv);
+        const solved = solveCcdIkChain(
+          ikChainSpecs,
+          ikAngles,
+          [targetLocal.x, targetLocal.y, targetLocal.z],
+          ikTipOffset,
+          10,
+          0.32
+        );
+        ikAngles = solved.angles;
+        endEffectorWorld
+          .set(solved.endEffectorPos[0], solved.endEffectorPos[1], solved.endEffectorPos[2])
+          .applyMatrix4(chainParent.matrixWorld);
+      }
+
+      let sumJointSpeedRadS = 0;
+      for (let i = 0; i < bindings.length; i++) {
+        const b = bindings[i];
+        if (b.def.type === 'fixed') continue;
+        const prevVal = b.currentVal;
+
+        const ikSlot = s.ikEnabled ? ikChainIndices.indexOf(i) : -1;
+        if (ikSlot >= 0) {
+          b.currentVal = dampValue(b.currentVal, ikAngles[ikSlot], 16.0, dt);
+        } else if (s.liveSim) {
+          const effectiveRegime = s.mpcWalkState.isWalking ? 'patrol' : s.hangarRegime;
+          const gaitPhaseTime = s.mpcWalkState.isWalking
+            ? simElapsed + s.mpcWalkState.gaitDistance * 0.85
+            : simElapsed;
+          let targetVal = computeRobotLiveJointTarget(
+            selectedPack.id,
+            b.def,
+            i,
+            effectiveRegime,
+            gaitPhaseTime
+          );
+          targetVal += computeHangarGazeUrdfDelta(selectedPack.id, b.def, s.gazeState);
+          targetVal += computePushRecoveryUrdfDelta(selectedPack.id, b.def, s.pushState);
+          if (s.ultimateSkill.active) {
+            targetVal += computeUltimateUrdfJointDelta(selectedPack.id, b.def, s.ultimateSkill);
+          }
+          if (s.activeFaults.length > 0) {
+            targetVal = applyFaultToUrdfJointAngle(
+              targetVal,
+              b.def.name,
+              i,
+              s.activeFaults,
+              simElapsed,
+              simElapsed * 2.4
+            );
+          }
+          if (b.def.type === 'continuous') {
+            b.currentVal = targetVal;
+          } else {
+            const respLambda = s.pushState.active
+              ? 16.5
+              : s.ultimateSkill.active
+                ? 14.0
+                : 8.5;
+            b.currentVal = dampValue(b.currentVal, targetVal, respLambda, dt);
+          }
+        } else {
+          const manualTarget =
+            (s.manualJointAngles[b.def.name] || 0) +
+            computeHangarGazeUrdfDelta(selectedPack.id, b.def, s.gazeState) +
+            computePushRecoveryUrdfDelta(selectedPack.id, b.def, s.pushState) +
+            (s.ultimateSkill.active
+              ? computeUltimateUrdfJointDelta(selectedPack.id, b.def, s.ultimateSkill)
+              : 0);
+          b.currentVal = dampValue(b.currentVal, manualTarget, 13.5, dt);
+        }
+
+        b.omegaRadS = Math.min(25.0, Math.abs(b.currentVal - prevVal) / Math.max(0.004, dt));
+        sumJointSpeedRadS += b.omegaRadS;
+        poseChecksum += b.currentVal * (i + 1);
+
+        if (b.def.type === 'prismatic') {
+          b.targetNode.position.copy(b.basePos).addScaledVector(b.axisVec, b.currentVal);
+        } else {
+          _tmpQuat.setFromAxisAngle(b.axisVec, b.currentVal);
+          b.targetNode.quaternion.copy(b.baseQuat).multiply(_tmpQuat);
+        }
+      }
+
+      // Module 5: Procedural WebAudio FOC Brushless Servo & Subsea Ping360 Sonar Telemetry
+      if (s.audioSynthEnabled) {
+        proceduralAudioSynth.updateFocServoTelemetry(
+          sumJointSpeedRadS,
+          selectedPack.id === 'bluerov2' || selectedPack.id === 'rexrov2',
+          simElapsed
+        );
+      }
+
+      // 4. Apply 4-Stage Orthogonal CAD Explosion, Peel, Isolate Blueprint, Ghost Context, Thermal IR & Fresnel Pulse
+      const activeSubObj = s.activeSubAssembly
+        ? subAssembliesRef.current.find((sa) => sa.id === s.activeSubAssembly) || null
+        : null;
+      const activeFocusPart = s.hoveredPart || lastViewportHoverName || s.highlightedPart;
+      const anyHighlighted = Boolean(activeFocusPart) && !s.isolatedPart;
+      const pulseStrength = s.hoveredPart || lastViewportHoverName
+        ? 0.92
+        : s.highlightedPart
+          ? computeFresnelPulseIntensity(now - s.highlightSelectTime)
+          : 0.0;
+
+      const parts = partsRef.current;
+      let anyPartDisplaced = s.curExplosion > 0.012;
+
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        const m = p.mesh;
+
+        if (s.isolatedPart) {
+          m.visible = p.partName === s.isolatedPart;
+        } else {
+          m.visible = !s.hiddenParts[p.partName];
+        }
+        if (!m.visible) continue;
+
+        const targetPeel = s.peeledParts[p.partName] ? 1 : 0;
+        p.peelAmount = dampValue(p.peelAmount, targetPeel, 9.0, dt);
+        if (p.peelAmount > 0.012) anyPartDisplaced = true;
+
+        const windows: Record<1 | 2 | 3 | 4, [number, number]> = {
+          1: [0.0, 0.3],
+          2: [0.22, 0.56],
+          3: [0.48, 0.82],
+          4: [0.72, 1.0]
+        };
+        const [w0, w1] = windows[p.orthoPlan.stage];
+        const rawU = s.curExplosion <= w0 ? 0 : s.curExplosion >= w1 ? 1 : (s.curExplosion - w0) / (w1 - w0);
+        const stageU = rawU * rawU * (3 - 2 * rawU);
+        const peelEase = p.peelAmount * p.peelAmount * (3 - 2 * p.peelAmount);
+
+        if (!bindings.some((b) => b.targetNode === m && b.def.type === 'prismatic')) {
+          m.position.copy(p.basePos);
+        }
+        m.position
+          .addScaledVector(p.localOrthoVec, stageU)
+          .addScaledVector(p.localPeelVec, peelEase);
+
+        // Hardspace: Shipbreaker 2nd-Order Spring-Damper 3D Floating Offset
+        const grappleSp = grappleSprings.get(p.partName);
+        if (grappleSp) {
+          const stepped = stepSpringDamperVec3(grappleSp, dt, 95.0, 12.5);
+          grappleSprings.set(p.partName, stepped);
+          const dispMag = Math.hypot(stepped.pos[0], stepped.pos[1], stepped.pos[2]);
+          if (dispMag > 0.002) {
+            anyPartDisplaced = true;
+            const hoverBob =
+              draggingGrapplePart === p.partName
+                ? 0
+                : Math.sin(now * 2.8 + p.normAxialX * 3.1) * 0.014 * Math.min(1, dispMag * 4);
+            const wx = stepped.pos[0];
+            const wy = stepped.pos[1] + hoverBob;
+            const wz = stepped.pos[2];
+            if (m.parent) {
+              _tmpGrappleOriginW.set(0, 0, 0);
+              m.parent.localToWorld(_tmpGrappleOriginW);
+              _tmpGrappleTargetW.set(
+                _tmpGrappleOriginW.x + wx,
+                _tmpGrappleOriginW.y + wy,
+                _tmpGrappleOriginW.z + wz
+              );
+              m.parent.worldToLocal(_tmpGrappleTargetW);
+              m.position.add(_tmpGrappleTargetW);
+            } else {
+              m.position.x += wx;
+              m.position.y += wy;
+              m.position.z += wz;
+            }
+          }
+        }
+
+        const isHighlighted = Boolean(activeFocusPart && p.partName === activeFocusPart);
+        let ghostState = computeGhostMaterialState(
+          p.layer,
+          s.isolatedPart ? 'L0' : s.activeDrillLevel,
+          isHighlighted,
+          anyHighlighted,
+          s.xrayMode && !s.isolatedPart
+        );
+
+        if (!s.isolatedPart && activeSubObj && !isHighlighted && !s.hoveredPart && !lastViewportHoverName) {
+          const inSub = activeSubObj.partNames.includes(p.partName);
+          if (!inSub) {
+            ghostState = {
+              transparent: true,
+              opacity: 0.11,
+              depthWrite: false,
+              wireframe: s.xrayMode,
+              emissiveHex: 0x000000
+            };
+          } else {
+            ghostState = {
+              transparent: s.xrayMode,
+              opacity: s.xrayMode ? 0.35 : 1.0,
+              depthWrite: !s.xrayMode,
+              wireframe: s.xrayMode,
+              emissiveHex: 0x072840
+            };
+          }
+        }
+
+        const mat = p.origMat;
+        const targetSide = isSectionCutVisible ? THREE.DoubleSide : p.origSide;
+        if (mat.side !== targetSide) {
+          mat.side = targetSide;
+        }
+        mat.wireframe = ghostState.wireframe;
+        if (isSectionCutVisible && !s.xrayMode && !activeSubObj && !anyHighlighted) {
+          // Keep sliced L1/L2/L3 metal solids crisp & opaque during section cuts so 45-deg CNC cross-hatched caps read cleanly!
+          mat.transparent = false;
+          mat.opacity = 1.0;
+          mat.depthWrite = true;
+        } else {
+          mat.transparent = ghostState.transparent;
+          mat.opacity = ghostState.opacity;
+          mat.depthWrite = ghostState.depthWrite;
+        }
+
+        const isFaulted = s.activeFaults.some((f) => f.partName === p.partName);
+        if (isFaulted) {
+          const flash = 0.5 + 0.5 * Math.sin(now * 24.0);
+          mat.color.setRGB(0.95, 0.14 + 0.15 * flash, 0.14);
+          if (mat.emissive) {
+            mat.emissive.setRGB(0.85 * flash, 0.06, 0.04);
+          }
+        } else if (s.thermalMode) {
+          const baseT = estimatePartThermalNormalized(
+            selectedPack.id,
+            p.partName,
+            p.layer,
+            loadFactor,
+            p.normAxialX
+          );
+          const pushBoost =
+            s.pushState.thermalSpike01 > 0.02 && isHighLoadPushJointPart(p.partName)
+              ? s.pushState.thermalSpike01 * 0.45
+              : 0;
+          const normT = Math.min(1, baseT + pushBoost);
+          const [tr, tg, tb] = computeThermalIrColor(normT);
+          mat.color.setRGB(tr, tg, tb);
+          if (mat.emissive) {
+            mat.emissive.setRGB(tr * 0.42 * normT, tg * 0.35 * normT, tb * 0.25 * normT);
+          }
+        } else if (s.pushState.thermalSpike01 > 0.04 && isHighLoadPushJointPart(p.partName)) {
+          // Cross-module physical coupling: stressed hip/knee/waist joints flare orange-red thermal overload during push recovery!
+          const spike = s.pushState.thermalSpike01;
+          mat.color.copy(p.origColor).lerp(_tmpThermalSpikeColor, spike * 0.48);
+          if (mat.emissive) {
+            mat.emissive.setRGB(0.76 * spike, 0.24 * spike, 0.04 * spike);
+          }
+        } else {
+          mat.color.copy(p.origColor);
+          if (mat.emissive) {
+            mat.emissive.setHex(ghostState.emissiveHex);
+          }
+        }
+
+        const salvageCode =
+          s.shipbreakerEnabled && !s.isolatedPart
+            ? classifyShipbreakerPartRole(p.partName, p.layer).code
+            : 0;
+        const focusCode = computeHorizonFocusMode(
+          s.focusWeakpointEnabled && !s.isolatedPart,
+          p.partName,
+          p.layer
+        );
+
+        p.twinUniforms.uFresnelPulse.value = isHighlighted ? pulseStrength : 0.0;
+        p.twinUniforms.uLaserClipY.value = clipY;
+        p.twinUniforms.uLaserActive.value = isSectionCutVisible ? 1.0 : 0.0;
+        p.twinUniforms.uMagLensActive.value =
+          s.magLensEnabled && s.magLensHoverValid && !s.isolatedPart ? 1.0 : 0.0;
+        p.twinUniforms.uMagLensCenter.value.copy(s.magLensCenter);
+        p.twinUniforms.uMagLensRadius.value = s.magLensRadius;
+        p.twinUniforms.uSlsActive.value = s.slsState.active ? 1.0 : 0.0;
+        p.twinUniforms.uSlsLaserY.value = s.slsState.laserY;
+        p.twinUniforms.uSalvageRole.value = salvageCode;
+        p.twinUniforms.uSalvagePulse.value = now;
+        p.twinUniforms.uFocusMode.value = focusCode;
+        p.twinUniforms.uDustAmount.value = s.weathering.marsDust;
+        p.twinUniforms.uFrostAmount.value = s.weathering.intakeFrost;
+        p.twinUniforms.uHeatBluing.value = s.weathering.titaniumHeatBluing;
+        p.twinUniforms.uOverheatCoreGlow.value = s.ultimateSkill.coreGlowIntensity * 0.85;
+        p.twinUniforms.uModelMinY.value = bboxMinYRef.current;
+        p.twinUniforms.uModelSpanY.value = Math.max(0.4, bboxMaxYRef.current - bboxMinYRef.current);
+      }
+
+      if (s.liveSim && !s.pathTracingEnabled) {
+        const hangarDomain =
+          selectedPack.id === 'bluerov2' || selectedPack.id === 'rexrov2' ? 'sea' : 'land';
+        s.weathering = stepDynamicWeathering(s.weathering, {
+          dt: dt * 0.25,
+          domain: hangarDomain,
+          speedMetersPerSec: 1.2 + loadFactor * 2.4,
+          throttlePct: 45 + loadFactor * 45
+        });
+      }
+
+      modelRoot.updateMatrixWorld(true);
+
+      // Update Exploded Assembly Dashed Trace Lines
+      if (anyPartDisplaced && !s.isolatedPart && parts.length > 0) {
+        const traceAnchors = parts.map((p) => {
+          if (p.mesh.visible) {
+            if (p.mesh.parent) {
+              p.mountOriginWorld.copy(p.socketInParentLocal);
+              p.mesh.parent.localToWorld(p.mountOriginWorld);
+            }
+            p.currentCenterWorld.copy(p.geomLocalCenter);
+            p.mesh.localToWorld(p.currentCenterWorld);
+          }
+          return {
+            originWorld: p.mountOriginWorld,
+            currentWorld: p.currentCenterWorld,
+            visible: p.mesh.visible
+          };
+        });
+        traceController.updateTraces(traceAnchors, true);
+      } else {
+        traceController.updateTraces([], false);
+      }
+
+      // Update 3D CAD Engineering Dimension Wireframe Rig when Isolate Blueprint is active
+      let isoLabelWorlds: { xLabelWorld: THREE.Vector3; yLabelWorld: THREE.Vector3; zLabelWorld: THREE.Vector3 } | null = null;
+      if (s.isolatedPart) {
+        const isoPart = parts.find((p) => p.partName === s.isolatedPart);
+        if (isoPart && isoPart.mesh.visible) {
+          _tmpBox3.setFromObject(isoPart.mesh);
+          isoLabelWorlds = blueprintRig.updateForBox(_tmpBox3, true, now);
+        } else {
+          blueprintRig.updateForBox(_tmpBox3.makeEmpty(), false, now);
+        }
+      } else {
+        blueprintRig.updateForBox(_tmpBox3.makeEmpty(), false, now);
+      }
+
+      // 5. Update L0 Engineering Coordinate Skeleton dynamically in place
+      // Module 4 Fix: Optical Sectioning (`isSectionCutVisible`) automatically reveals the FULL internal URDF skeleton
+      // across the entire robot (including above clipY!) so slicing never leaves empty air above two severed feet!
+      if (skeletonGroupRef.current) {
+        const showSkel = shouldAutoRevealInternalSkeleton(
+          s.showSkeleton,
+          s.curClipRatio,
+          s.autoSectionScan,
+          s.isolatedPart,
+          s.windTunnelConfig.schlierenMode
+        );
+        skeletonGroupRef.current.visible = showSkel;
+        if (skelRootAxes) {
+          skelRootAxes.visible = !isSectionCutVisible;
+        }
+        if (showSkel && skelNodes.length > 0) {
+          const posAttr = skelTopoLinesGeo?.getAttribute('position') as THREE.BufferAttribute | undefined;
+          let lineIdx = 0;
+
+          for (let i = 0; i < skelNodes.length; i++) {
+            const sn = skelNodes[i];
+            sn.target.getWorldPosition(_tmpVec3);
+            sn.target.getWorldQuaternion(_tmpQuat);
+            sn.axes.visible = true;
+            sn.ring.visible = true;
+            sn.axes.position.copy(_tmpVec3);
+            sn.ring.position.copy(_tmpVec3);
+            sn.ring.quaternion.copy(_tmpQuat);
+
+            if (posAttr && sn.target.parent) {
+              sn.target.parent.getWorldPosition(_tmpParentVec3);
+              posAttr.array[lineIdx] = _tmpParentVec3.x;
+              posAttr.array[lineIdx + 1] = _tmpParentVec3.y;
+              posAttr.array[lineIdx + 2] = _tmpParentVec3.z;
+              posAttr.array[lineIdx + 3] = _tmpVec3.x;
+              posAttr.array[lineIdx + 4] = _tmpVec3.y;
+              posAttr.array[lineIdx + 5] = _tmpVec3.z;
+              lineIdx += 6;
+            }
+          }
+          if (posAttr) {
+            posAttr.needsUpdate = true;
+          }
+        }
+      }
+
+      // Update 6-DOF CCD IK & Plasma Torch + Molten Kerf Trail + Fault Sparks
+      const dynamicEmissives: DynamicEmissivePoint[] = [];
+      if (s.ikEnabled && s.plasmaCutting && !s.pathTracingEnabled) {
+        const swingPt: [number, number, number] = [
+          s.ikTargetWorld.x + Math.sin(now * 2.8) * 0.14,
+          s.ikTargetWorld.y + Math.cos(now * 2.1) * 0.08,
+          s.ikTargetWorld.z + Math.cos(now * 2.8) * 0.14
+        ];
+        s.kerfNodes = stepMoltenKerfTrail(s.kerfNodes, dt, swingPt, 84);
+        for (let sp = 0; sp < 2; sp++) {
+          spawnHangarSpark(
+            swingPt[0],
+            swingPt[1],
+            swingPt[2],
+            (Math.random() - 0.5) * 1.9,
+            0.7 + Math.random() * 1.2,
+            (Math.random() - 0.5) * 1.9,
+            0.65,
+            0.92,
+            1.0,
+            0.42
+          );
+        }
+      } else if (!s.pathTracingEnabled && s.kerfNodes.length > 0) {
+        s.kerfNodes = stepMoltenKerfTrail(s.kerfNodes, dt, null, 84);
+      }
+
+      if (s.ikEnabled && s.plasmaCutting) {
+        dynamicEmissives.push({
+          pos: s.ikTargetWorld.clone(),
+          color: new THREE.Color(0x67e8f9),
+          radiance: 3.6
+        });
+      }
+
+      if (s.activeFaults.length > 0 && !s.pathTracingEnabled) {
+        const fp = parts.find((pt) => pt.partName === s.activeFaults[s.activeFaults.length - 1].partName);
+        if (fp && fp.mesh.visible) {
+          _tmpVec3B.copy(fp.geomLocalCenter);
+          fp.mesh.localToWorld(_tmpVec3B);
+          // Electric arc sparks + dark rising smoke
+          spawnHangarSpark(
+            _tmpVec3B.x,
+            _tmpVec3B.y,
+            _tmpVec3B.z,
+            (Math.random() - 0.5) * 2.1,
+            0.6 + Math.random() * 1.4,
+            (Math.random() - 0.5) * 2.1,
+            1.0,
+            0.68,
+            0.18,
+            0.38
+          );
+          spawnHangarSpark(
+            _tmpVec3B.x,
+            _tmpVec3B.y + 0.06,
+            _tmpVec3B.z,
+            (Math.random() - 0.5) * 0.35,
+            0.85,
+            (Math.random() - 0.5) * 0.35,
+            0.22,
+            0.24,
+            0.28,
+            0.75
+          );
+          dynamicEmissives.push({
+            pos: _tmpVec3B.clone(),
+            color: new THREE.Color(0xf97316),
+            radiance: 2.5
+          });
+        }
+      }
+
+      if (!s.pathTracingEnabled) {
+        for (let i = 0; i < sparkPoolCount; i++) {
+          if (sparkLife[i] > 0) {
+            sparkLife[i] -= dt;
+            if (sparkLife[i] <= 0) {
+              sparkPos[i * 3 + 1] = -999;
+            } else {
+              sparkPos[i * 3] += sparkVel[i * 3] * dt;
+              sparkPos[i * 3 + 1] += sparkVel[i * 3 + 1] * dt;
+              sparkPos[i * 3 + 2] += sparkVel[i * 3 + 2] * dt;
+              sparkVel[i * 3 + 1] -= 2.4 * dt;
+            }
+          }
+        }
+        sparkGeo.attributes.position.needsUpdate = true;
+        sparkGeo.attributes.color.needsUpdate = true;
+      }
+
+      ikPlasmaFx.updateIkAndPlasma(
+        s.ikEnabled,
+        s.ikTargetWorld,
+        endEffectorWorld,
+        s.ikEnabled && s.plasmaCutting,
+        s.kerfNodes,
+        now
+      );
+
+      // Update Sci-Tech Modules 1, 2 & 3 Scene FX Controllers
+      _tmpVec3.set(0, (bboxMinYRef.current + bboxMaxYRef.current) * 0.5, 0);
+      magSlsRig.update({
+        magLensEnabled: s.magLensEnabled && !s.isolatedPart,
+        magLensHoverValid: s.magLensHoverValid,
+        magLensCenter: s.magLensCenter,
+        magLensRadius: s.magLensRadius,
+        slsState: s.slsState,
+        modelCenter: _tmpVec3,
+        yMax: bboxMaxYRef.current,
+        simTime: now
+      });
+
+      const ultMeta = getRobotUltimateMeta(selectedPack.id);
+      signatureFx.updateHangarShowcase({
+        skill: s.ultimateSkill,
+        anchorWorld: _tmpVec3,
+        floorY: -0.84,
+        modelRadius: Math.max(0.9, assemblyNormMaxDimRef.current * 0.55),
+        accentHex: ultMeta.accentHex,
+        simTime: now
+      });
+
+      _tmpVec3.set(
+        modelRoot.position.x,
+        (bboxMinYRef.current + bboxMaxYRef.current) * 0.5 + modelRoot.position.y,
+        modelRoot.position.z
+      );
+
+      let mpcPowerWatts = 0;
+      const showInternalArteries =
+        (s.mpcEnabled || s.ultimateSkill.active || isSectionCutVisible || s.pushState.active) &&
+        !s.isolatedPart;
+      if (showInternalArteries) {
+        const floorY = bboxMinYRef.current;
+        const mpcFan =
+          s.mpcEnabled || s.ultimateSkill.active
+            ? computeMpcRolloutFan(
+                s.mpcWalkState.x,
+                floorY,
+                s.mpcWalkState.z,
+                s.mpcWalkState.hasTarget
+                  ? s.mpcWalkState.yaw
+                  : Math.sin(simElapsed * 0.65) * 0.28,
+                s.mpcWalkState.isWalking
+                  ? Math.max(0.85, s.mpcWalkState.speed * 1.65)
+                  : 1.75 + loadFactor * 1.45,
+                s.mpcWalkState.isWalking
+                  ? s.mpcWalkState.turnVel * 0.35
+                  : Math.cos(simElapsed * 1.05) * 0.42,
+                () => floorY,
+                simElapsed,
+                2.0,
+                16
+              )
+            : null;
+        const pushArteryExtraNm = s.pushState.powerArteryBoost * 58.0;
+        const jointArteryInputs =
+          bindings.length > 0
+            ? bindings.map((b) => ({
+                def: b.def,
+                node: b.targetNode,
+                omegaRadS: b.omegaRadS + s.pushState.powerArteryBoost * 2.4,
+                torqueNm:
+                  14.0 +
+                  loadFactor * 22.0 +
+                  (isHighLoadPushJointPart(b.def.name) ? pushArteryExtraNm : pushArteryExtraNm * 0.35)
+              }))
+            : parts.slice(0, 18).map((pt, idx) => ({
+                def: { name: pt.partName, type: 'revolute' },
+                node: pt.mesh,
+                omegaRadS:
+                  (s.liveSim ? 0.8 + loadFactor * (1.2 + (idx % 3) * 0.6) : 0.1) +
+                  s.pushState.powerArteryBoost * 2.2,
+                torqueNm: 15.0 + pushArteryExtraNm * 0.6
+              }));
+        const resMpc = mpcPowerCtrl.updateMpcAndPower({
+          enabled: true,
+          mpcResult: mpcFan,
+          powerCoreWorld: _tmpVec3,
+          jointNodes: jointArteryInputs,
+          simTime: now
+        });
+        mpcPowerWatts = resMpc.totalPowerWatts;
+      } else {
+        mpcPowerCtrl.updateMpcAndPower({
+          enabled: false,
+          mpcResult: null,
+          powerCoreWorld: _tmpVec3,
+          jointNodes: [],
+          simTime: now
+        });
+      }
+
+      disasterFx.updateDisasterFX({
+        config: s.windTunnelConfig,
+        anchorWorld: _tmpVec3,
+        headingYaw: 0,
+        modelScaleRadius: assemblyNormMaxDimRef.current * 0.52,
+        simTime: now
+      });
+
+      // Update Hardspace: Shipbreaker URDF Joint Assembly Lock-Rings & Curved Bézier Magnetic Grapple Tether
+      if (s.shipbreakerEnabled && !s.isolatedPart) {
+        const jointWorldAnchors = (bindings.length > 0
+          ? bindings.slice(0, 28).map((b) => {
+              const pPos = new THREE.Vector3();
+              const qRot = new THREE.Quaternion();
+              b.targetNode.getWorldPosition(pPos);
+              b.targetNode.getWorldQuaternion(qRot);
+              const axisW = b.axisVec.clone().applyQuaternion(qRot).normalize();
+              return { pos: pPos, axisWorld: axisW };
+            })
+          : parts.slice(0, 16).map((pt) => {
+              const pPos = pt.geomLocalCenter.clone();
+              pt.mesh.localToWorld(pPos);
+              return { pos: pPos, axisWorld: new THREE.Vector3(0, 1, 0) };
+            }));
+
+        camera.matrixWorld.extractBasis(_tmpCamRight, _tmpCamUp, _tmpCamFwd);
+        _tmpEmitterW
+          .copy(camera.position)
+          .addScaledVector(_tmpCamRight, 0.52)
+          .addScaledVector(_tmpCamUp, -0.38)
+          .addScaledVector(_tmpCamFwd, -0.62);
+
+        const activeBeamPartName = draggingGrapplePart || lastGrappledPart;
+        let grappledCenter: THREE.Vector3 | null = null;
+        let grappledRadius = 0.22;
+        if (activeBeamPartName) {
+          const gp = parts.find((pt) => pt.partName === activeBeamPartName);
+          if (gp && gp.mesh.visible) {
+            grappledCenter = gp.geomLocalCenter.clone();
+            gp.mesh.localToWorld(grappledCenter);
+            grappledRadius = Math.max(gp.normSize[0], gp.normSize[1], gp.normSize[2]) * 0.58;
+          }
+        }
+
+        salvageFx.updateSalvageFX({
+          enabled: true,
+          simTime: now,
+          jointWorldAnchors,
+          grappleActive: Boolean(grappledCenter),
+          emitterWorld: _tmpEmitterW,
+          grappledPartCenterWorld: grappledCenter,
+          grappledPartRadius: grappledRadius
+        });
+      } else {
+        salvageFx.updateSalvageFX({
+          enabled: false,
+          simTime: now,
+          jointWorldAnchors: [],
+          grappleActive: false,
+          emitterWorld: _tmpEmitterW,
+          grappledPartCenterWorld: null,
+          grappledPartRadius: 0.2
+        });
+      }
+
+      const showDeck = !s.isolatedPart && !s.windTunnelConfig.schlierenMode;
+      saltlineDeck.mesh.visible = showDeck;
+      bayRing.visible = showDeck;
+      // Skip 630k-triangle floor reflection pass immediately when Path-Tracing [R] is active for 0ms instant response!
+      if (showDeck && !s.pathTracingEnabled) {
+        saltlineDeck.updateReflection(renderer, scene, camera);
+      }
+
+      const executePipelineRender = () =>
+        rayTracer.renderFrame({
+          scene,
+          camera,
+          keyLight,
+          rimLight,
+          pathTracingEnabled: s.pathTracingEnabled,
+          explosionProgress: s.curExplosion,
+          clipRatio: s.curClipRatio,
+          poseChecksum:
+            poseChecksum +
+            (s.hoveredPart ? 41 : 0) +
+            (s.thermalMode ? 7 : 0) +
+            (s.xrayMode ? 13 : 0) +
+            (s.slsState.active ? s.slsState.laserY * 31 : 0) +
+            (s.ikEnabled ? s.ikTargetWorld.x * 19 + s.ikTargetWorld.y * 23 : 0),
+          emissiveSources,
+          dynamicEmissives,
+          schlierenMode: s.windTunnelConfig.schlierenMode,
+          simTime: now
+        });
+
+      renderOnceRef.current = () => {
+        executePipelineRender();
+      };
+      const ptRes = executePipelineRender();
+
+      // 6. Throttled ~10Hz HUD Sync for FK Sliders, SPP Counter, SLS, MPC Power, Micro-FPV, Auto-Disassembly, Blueprint Capsule & 3D Telemetry Callouts
+      if (now - lastUiSync > 0.1) {
+        lastUiSync = now;
+        const w = container.clientWidth || 960;
+        const h = container.clientHeight || 640;
+        setPtSpp(ptRes.spp);
+        setSlsActive(s.slsState.active);
+        setUltimateActiveUI(s.ultimateSkill.active);
+        if (s.ultimateSkill.active) {
+          setUltimatePhaseLabelUI(s.ultimateSkill.phaseLabel);
+        }
+        setWeatheringActive(
+          s.weathering.marsDust > 0.05 ||
+            s.weathering.intakeFrost > 0.05 ||
+            s.weathering.titaniumHeatBluing > 0.05
+        );
+        if (s.mpcEnabled || s.pushState.active) {
+          setTotalPowerWatts(mpcPowerWatts);
+        }
+        setPushTorqueSpikeNm(s.pushState.telemetryTorqueSpikeNm);
+        if (s.pushState.arrowVisibleTimer > 0 && !s.isolatedPart) {
+          _tmpVec3B.set(
+            s.pushState.contactWorld[0],
+            s.pushState.contactWorld[1] + 0.14,
+            s.pushState.contactWorld[2]
+          );
+          _tmpVec3B.project(camera);
+          if (_tmpVec3B.z >= -1 && _tmpVec3B.z <= 1) {
+            setPushCalloutHud({
+              screenX: (_tmpVec3B.x * 0.5 + 0.5) * w,
+              screenY: (-_tmpVec3B.y * 0.5 + 0.5) * h,
+              forceN: s.pushState.forceNewtons,
+              partName: s.pushState.impactPartName
+            });
+          } else {
+            setPushCalloutHud(null);
+          }
+        } else {
+          setPushCalloutHud(null);
+        }
+        if (s.microFpvActive) {
+          setMicroFpvSegmentLabel(activeFpvSegLabel);
+        }
+
+        if (s.liveSim && bindings.length > 0) {
+          const synced: Record<string, number> = {};
+          for (let i = 0; i < Math.min(20, bindings.length); i++) {
+            const b = bindings[i];
+            if (b.def.type !== 'fixed') {
+              synced[b.def.name] = Number(b.currentVal.toFixed(2));
+            }
+          }
+          setJointAngles(synced);
+        }
+        if (s.autoSectionScan) {
+          setClipRatio(Number(s.curClipRatio.toFixed(2)));
+        }
+        if (s.autoDisassemblyState.active) {
+          setExplosion(Number(s.autoDisassemblyState.progress.toFixed(2)));
+          setAutoStageLabel(s.autoDisassemblyState.stageLabel);
+        }
+
+        if (s.highlightedPart) {
+          const selP = parts.find((pt) => pt.partName === s.highlightedPart);
+          if (selP && selP.mesh.visible) {
+            _tmpVec3B.copy(selP.geomLocalCenter);
+            selP.mesh.localToWorld(_tmpVec3B);
+            _tmpVec3B.project(camera);
+            if (_tmpVec3B.z >= -1 && _tmpVec3B.z <= 1) {
+              setSelectedAnchorScreen([
+                (_tmpVec3B.x * 0.5 + 0.5) * w,
+                (-_tmpVec3B.y * 0.5 + 0.5) * h
+              ]);
+            }
+          }
+        }
+
+        const activeHoverTarget = s.hoveredPart || lastViewportHoverName;
+        if (activeHoverTarget && !s.isolatedPart) {
+          const hovIdx = parts.findIndex((pt) => pt.partName === activeHoverTarget);
+          if (hovIdx >= 0 && parts[hovIdx].mesh.visible) {
+            const hovP = parts[hovIdx];
+            const graphIdx = meshNodesRef.current.findIndex((n) => n.name === hovP.partName);
+            _tmpVec3.copy(hovP.geomLocalCenter);
+            hovP.mesh.localToWorld(_tmpVec3);
+            const wxMm = _tmpVec3.x * 1000;
+            const wyMm = _tmpVec3.y * 1000;
+            const wzMm = _tmpVec3.z * 1000;
+            _tmpVec3B.copy(_tmpVec3).project(camera);
+            if (_tmpVec3B.z >= -1 && _tmpVec3B.z <= 1) {
+              setHoveredCallout({
+                partName: hovP.partName,
+                index: graphIdx >= 0 ? graphIdx : hovIdx,
+                layer: hovP.layer,
+                tris: hovP.tris,
+                screenX: (_tmpVec3B.x * 0.5 + 0.5) * w,
+                screenY: (-_tmpVec3B.y * 0.5 + 0.5) * h,
+                worldMm: [wxMm, wyMm, wzMm]
+              });
+            } else {
+              setHoveredCallout(null);
+            }
+          } else {
+            setHoveredCallout(null);
+          }
+        } else {
+          setHoveredCallout(null);
+        }
+
+        if (s.isolatedPart && isoLabelWorlds) {
+          const projPt = (v: THREE.Vector3): [number, number] | null => {
+            _tmpVec3B.copy(v).project(camera);
+            if (_tmpVec3B.z < -1 || _tmpVec3B.z > 1) return null;
+            return [(_tmpVec3B.x * 0.5 + 0.5) * w, (-_tmpVec3B.y * 0.5 + 0.5) * h];
+          };
+          setBlueprintAxisScreens({
+            xScreen: projPt(isoLabelWorlds.xLabelWorld),
+            yScreen: projPt(isoLabelWorlds.yLabelWorld),
+            zScreen: projPt(isoLabelWorlds.zLabelWorld)
+          });
+        }
+
+        if (s.showProbes && !s.isolatedPart && partsRef.current.length > 0) {
+          const rawProbes = buildSpatialTelemetryProbes(selectedPack.id, now, loadFactor);
+          const nextProjected: ProjectedTelemetryItem[] = rawProbes.map((pr) => {
+            const matched = partsRef.current.find((pt) =>
+              pr.partKeywords.some((kw) => pt.partName.toLowerCase().includes(kw))
+            );
+            let anchorName = pr.partKeywords[0];
+            if (matched) {
+              anchorName = matched.partName;
+              _tmpVec3.copy(matched.geomLocalCenter);
+              matched.mesh.localToWorld(_tmpVec3);
+            } else {
+              _tmpVec3.set(pr.fallbackLocalPos[0], pr.fallbackLocalPos[1], pr.fallbackLocalPos[2]);
+            }
+            const probeWorldY = _tmpVec3.y;
+            _tmpVec3.project(camera);
+            const sx = (_tmpVec3.x * 0.5 + 0.5) * w;
+            const sy = (-_tmpVec3.y * 0.5 + 0.5) * h;
+            const inFront =
+              _tmpVec3.z >= -1 &&
+              _tmpVec3.z <= 1 &&
+              (!isSectionCutVisible || probeWorldY <= clipY + 0.025);
+            return {
+              probe: pr,
+              partName: anchorName,
+              screenX: sx,
+              screenY: sy,
+              visible: inFront
+            };
+          });
+
+          // Prepend Crimson CRITICAL FAULT 3D Probe if any part has active battle damage / actuator fault!
+          if (s.activeFaults.length > 0) {
+            const latestFault = s.activeFaults[s.activeFaults.length - 1];
+            const fPart = partsRef.current.find((pt) => pt.partName === latestFault.partName);
+            if (fPart) {
+              _tmpVec3.copy(fPart.geomLocalCenter);
+              fPart.mesh.localToWorld(_tmpVec3);
+              _tmpVec3.project(camera);
+              if (_tmpVec3.z >= -1 && _tmpVec3.z <= 1) {
+                nextProjected.unshift({
+                  probe: {
+                    id: 'hangar_critical_fault',
+                    label: latestFault.alertTitle,
+                    partKeywords: [latestFault.partName],
+                    fallbackLocalPos: [0, 0.4, 0],
+                    primaryValue: `LOCKED · ${latestFault.partName}`,
+                    secondaryValue: latestFault.compensationLaw,
+                    status: 'ELEVATED'
+                  },
+                  partName: latestFault.partName,
+                  screenX: (_tmpVec3.x * 0.5 + 0.5) * w,
+                  screenY: (-_tmpVec3.y * 0.5 + 0.5) * h,
+                  visible: true
+                });
+              }
+            }
+          }
+
+          setProjectedProbes(nextProjected);
+        }
+      }
+
+      if (isSoftwareGl) afterDraw(tick);
+      else frameId = requestAnimationFrame(tick);
+    }
+
+    frameId = requestAnimationFrame(tick);
 
     const handleResize = () => {
       if (!container) return;
       const w = container.clientWidth || 960;
       const h = container.clientHeight || 640;
+      setViewportSize({ w, h });
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
-      renderFrame();
+      rayTracer.setSize(w, h);
     };
     window.addEventListener('resize', handleResize);
+    const resizeObs =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(handleResize) : null;
+    resizeObs?.observe(container);
 
     return () => {
       disposed = true;
-      cancelAnimationFrame(reqId);
-      controls.removeEventListener('change', renderFrame);
+      cancelAnimationFrame(frameId);
+      clearTimeout(frameId);
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointermove', onPointerMove);
+      renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
+      renderer.domElement.removeEventListener('wheel', onWheel);
+      controls.removeEventListener('start', onControlStart);
       window.removeEventListener('resize', handleResize);
+      resizeObs?.disconnect();
+      magSlsRig.dispose();
+      mpcPowerCtrl.dispose();
+      disasterFx.dispose();
+      salvageFx.dispose();
+      signatureFx.dispose();
+      ikPlasmaFx.dispose();
+      sparkGeo.dispose();
+      (sparkPoints.material as THREE.Material).dispose();
+      pushShaftGeo.dispose();
+      pushHeadGeo.dispose();
+      pushRingGeo.dispose();
+      pushArrowMat.dispose();
+      pushRingMat.dispose();
+      mpcOuterRingGeo.dispose();
+      mpcInnerDiscGeo.dispose();
+      mpcBeaconMat.dispose();
+      softSpriteTex.dispose();
+      saltlineDeck.dispose();
+      rayTracer.dispose();
+      rayTracerRef.current = null;
+      envTex.dispose();
       renderer.dispose();
     };
-  }, [activeTab, selectedPack]);
+  }, [appMode, activeTab, selectedPack, glbReloadNonce]);
 
   // Re-bind URDF joints whenever urdfJoints finishes loading
   useEffect(() => {
@@ -478,71 +3256,7 @@ export default function App() {
     if (rebuildSkeletonRef.current) {
       rebuildSkeletonRef.current();
     }
-    if (renderNowRef.current) {
-      renderNowRef.current();
-    }
   }, [urdfJoints]);
-
-  // Reactive update for L0->L3 Ghost Context, Joint FK Sliders, Explosion, Clipping, X-Ray, and Part Highlight
-  useEffect(() => {
-    clipPlaneRef.current.constant = computeClipPlaneConstant(
-      bboxMinYRef.current,
-      bboxMaxYRef.current,
-      clipRatio
-    );
-
-    if (skeletonGroupRef.current) {
-      skeletonGroupRef.current.visible = showSkeleton;
-    }
-    if (controlsRef.current) {
-      controlsRef.current.autoRotate = autoRotate;
-      controlsRef.current.autoRotateSpeed = 2.0;
-    }
-
-    const anyHighlighted = Boolean(highlightedPart);
-
-    // 1. Apply Explosion & L0->L3 Ghost Context Material State to all loaded GLB meshes
-    partsRef.current.forEach(({ mesh, layer, basePos, explodeDir, origMat }) => {
-      mesh.position.copy(basePos).addScaledVector(explodeDir, explosion * 0.45);
-      const isHighlighted = Boolean(highlightedPart && mesh.name === highlightedPart);
-      const ghostState = computeGhostMaterialState(
-        layer,
-        activeDrillLevel,
-        isHighlighted,
-        anyHighlighted,
-        xrayMode
-      );
-
-      origMat.wireframe = ghostState.wireframe;
-      origMat.transparent = ghostState.transparent;
-      origMat.opacity = ghostState.opacity;
-      origMat.depthWrite = ghostState.depthWrite;
-      if (origMat.emissive) {
-        origMat.emissive.setHex(ghostState.emissiveHex);
-      }
-      origMat.needsUpdate = true;
-    });
-
-    // 2. Apply Real URDF Forward Kinematics (Joint FK Sliders) to bound GLB nodes
-    boundJointsRef.current.forEach(({ def, targetNode, basePos, baseQuat }) => {
-      const val = jointAngles[def.name] || 0;
-      const axisVec = new THREE.Vector3(def.axis[0], def.axis[1], def.axis[2]).normalize();
-      if (def.type === 'prismatic') {
-        targetNode.position.copy(basePos).addScaledVector(axisVec, val);
-      } else if (def.type === 'revolute' || def.type === 'continuous') {
-        const deltaQ = new THREE.Quaternion().setFromAxisAngle(axisVec, val);
-        targetNode.quaternion.copy(baseQuat).multiply(deltaQ);
-      }
-    });
-
-    if (rebuildSkeletonRef.current) {
-      rebuildSkeletonRef.current();
-    }
-
-    if (renderNowRef.current) {
-      renderNowRef.current();
-    }
-  }, [activeDrillLevel, explosion, clipRatio, xrayMode, showSkeleton, autoRotate, highlightedPart, jointAngles, selectedPack]);
 
   const movableJoints = useMemo(() => {
     const nonFixed = urdfJoints.filter((j) => j.type !== 'fixed');
@@ -568,439 +3282,1099 @@ export default function App() {
     [fileContent, selectedFileRel]
   );
 
+  const activeRegimeLoad =
+    HANGAR_REGIMES.find((r) => r.id === hangarRegime)?.loadFactor ?? 0.68;
+
+  const hangarSparklineLabels: [string, string, string] =
+    selectedPack.id === 'bluerov2' || selectedPack.id === 'rexrov2'
+      ? ['母线总功率', 'IMU 姿态振动', '矢量推进合力']
+      : ['母线总功率', '关节角速度包络', '伺服峰值力矩'];
+
+  if (appMode === 'mars_combat') {
+    return (
+      <div className="h-screen w-screen bg-[#0c0807] text-slate-100 overflow-hidden">
+        <MarsSciFiCombatGame
+          initialAutostart={combatAutostart}
+          initialMechId={resolvePlayableCombatMechId(sandboxActorId)}
+          audioEnabled={audioSynthEnabled}
+          onToggleAudio={handleToggleAudioSynth}
+          onOpenFreeSandbox={(mechId) => {
+            setSandboxActorId(mechId);
+            setAppMode('sandbox');
+          }}
+          onOpenCadHangar={(mechId) => {
+            handleExitSandbox(mechId);
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (sandboxMode) {
+    return (
+      <div className="h-screen w-screen bg-[#050912] text-slate-100 overflow-hidden">
+        <ActionSandboxView
+          initialActorId={sandboxActorId}
+          onExitSandbox={handleExitSandbox}
+          onEnterMarsCombat={(lastId) => handleEnterMarsCombat(lastId)}
+          audioSynthEnabled={audioSynthEnabled}
+          onChangeAudioSynth={(next) => {
+            setAudioSynthEnabled(next);
+            proceduralAudioSynth.setEnabled(next);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#060a12] text-slate-100 select-none overflow-hidden">
-      {/* Top Sci-Fi Mega-Hangar Navigation Header */}
-      <header className="flex items-center justify-between gap-4 px-4 py-2 bg-slate-950 border-b border-sky-500/25 z-20">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-400/40 flex items-center justify-center text-sky-400 shrink-0">
-            <Compass className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="font-bold tracking-wider text-xs sm:text-sm text-sky-50 truncate">
-                MEGA-HANGAR · 陆海空天与具身智能数字孪生总控穹顶
-              </h1>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30 font-mono whitespace-nowrap shrink-0">
-                GLB + URDF L0→L3
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 truncate">
-              100% GLTFLoader 真机高精度 GLB 资产 · URDF 关节运动学驱动 · L0→L3 幽灵上下文四级下钻 · 39库 (1,138个 URDF/XML)
-            </p>
-          </div>
-        </div>
+    <div className="flex flex-col h-screen w-screen bg-[#0d1017] text-slate-100 select-none overflow-hidden">
+      {/* Clean 3-Zone Top Navigation Bar */}
+      <header className="flex items-center justify-between gap-8 px-5 py-2.5 bg-[#12141a]/[0.96] border-b border-white/[0.08] z-30">
+        <span className="font-semibold tracking-tight text-sm text-slate-100 whitespace-nowrap shrink-0">
+          数字孪生与具身机器人基准台
+        </span>
 
-        {/* 5 Workstation Bay Switcher */}
-        <nav aria-label="主工作站切换" className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 shrink-0">
+        {/* 5 Concise Single-Line Workstation Navigation Links */}
+        <nav
+          aria-label="主工作站切换"
+          className="flex items-center gap-1 bg-[#161922] p-1 rounded-xl border border-white/[0.08] shrink-0 overflow-x-auto"
+        >
           <button
-            onClick={() => setActiveTab('hangar_3d')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+            type="button"
+            onClick={() => {
+              setActiveDrawer(null);
+              setActiveTab('hangar_3d');
+            }}
+            className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 border transition cursor-pointer ${
               activeTab === 'hangar_3d'
-                ? 'bg-sky-500 text-slate-950 shadow-lg shadow-sky-500/25 font-semibold'
-                : 'text-slate-300 hover:bg-slate-800'
+                ? 'bg-cyan-500/[0.14] border-[#00e5ff]/70 text-cyan-100 font-semibold'
+                : 'border-transparent text-slate-300 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
-            <Bot className="w-3.5 h-3.5 shrink-0" />
-            <span>具身与特种机库 (6大真机GLB)</span>
+            具身机库
           </button>
 
           <button
-            onClick={() => setActiveTab('mars2020')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+            type="button"
+            onClick={() => {
+              setActiveDrawer(null);
+              setActiveTab('mars2020');
+            }}
+            className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 border transition cursor-pointer ${
               activeTab === 'mars2020'
-                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 font-semibold'
-                : 'text-slate-300 hover:bg-slate-800'
+                ? 'bg-cyan-500/[0.14] border-[#00e5ff]/70 text-cyan-100 font-semibold'
+                : 'border-transparent text-slate-300 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
-            <Rocket className="w-3.5 h-3.5 shrink-0" />
-            <span>深空工位 · 毅力号火星车 (L0→L3)</span>
+            毅力号火星车
           </button>
 
           <button
-            onClick={() => setActiveTab('b737_cfm56')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+            type="button"
+            onClick={() => {
+              setActiveDrawer(null);
+              setActiveTab('b737_cfm56');
+            }}
+            className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 border transition cursor-pointer ${
               activeTab === 'b737_cfm56'
-                ? 'bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-400/25 font-semibold'
-                : 'text-slate-300 hover:bg-slate-800'
+                ? 'bg-cyan-500/[0.14] border-[#00e5ff]/70 text-cyan-100 font-semibold'
+                : 'border-transparent text-slate-300 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
-            <Plane className="w-3.5 h-3.5 shrink-0" />
-            <span>航空工位 · B737与CFM56涡扇 (L0→L3)</span>
+            CFM56 涡扇
           </button>
 
           <button
-            onClick={() => setActiveTab('b737_bridge')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+            type="button"
+            onClick={() => {
+              setActiveDrawer(null);
+              setActiveTab('b737_bridge');
+            }}
+            className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 border transition cursor-pointer ${
               activeTab === 'b737_bridge'
-                ? 'bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-400/25 font-semibold'
-                : 'text-slate-300 hover:bg-slate-800'
+                ? 'bg-cyan-500/[0.14] border-[#00e5ff]/70 text-cyan-100 font-semibold'
+                : 'border-transparent text-slate-300 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
-            <Activity className="w-3.5 h-3.5 shrink-0" />
-            <span>工程骨架母树 · 航空传力拓扑</span>
+            传力拓扑
           </button>
 
           <button
-            onClick={() => setActiveTab('urdf_explorer')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+            type="button"
+            onClick={() => {
+              setActiveDrawer(null);
+              setActiveTab('urdf_explorer');
+            }}
+            className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 border transition cursor-pointer ${
               activeTab === 'urdf_explorer'
-                ? 'bg-purple-400 text-slate-950 shadow-lg shadow-purple-400/25 font-semibold'
-                : 'text-slate-300 hover:bg-slate-800'
+                ? 'bg-cyan-500/[0.14] border-[#00e5ff]/70 text-cyan-100 font-semibold'
+                : 'border-transparent text-slate-300 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
-            <Database className="w-3.5 h-3.5 shrink-0" />
-            <span>39库 URDF/XML 现实基准源码仓</span>
+            URDF 仓库
           </button>
         </nav>
+
+        {/* Single Primary Action: Return / Jump to Mars Combat Game */}
+        <div className="flex items-center shrink-0">
+          <button
+            type="button"
+            onClick={() => handleEnterMarsCombat()}
+            data-testid="header-enter-combat-btn"
+            className="px-3.5 py-1.5 rounded-lg bg-amber-500/[0.16] hover:bg-amber-500/[0.26] border border-amber-400/70 text-amber-100 font-semibold text-xs whitespace-nowrap shrink-0 flex items-center gap-1.5 transition cursor-pointer"
+            title="进入赤星战区 · 火星科幻机甲战斗与泰坦 Boss 突袭"
+          >
+            <Swords className="w-3.5 h-3.5 text-amber-300 shrink-0" strokeWidth={1.5} />
+            <span>赤星战区</span>
+          </button>
+        </div>
       </header>
 
       {/* Main Content Area */}
       <main className="flex-1 relative overflow-hidden">
-        {/* TAB 1: 6 Embodied & Subsea Robotics 3D Digital Twin Hangar */}
+        {/* TAB 1: Zero-Occlusion Flex-Docked 3D Digital Twin Hangar */}
         {activeTab === 'hangar_3d' && (
-          <div className="flex h-full w-full">
-            {/* Left Sidebar: L0->L3 Drill-Down + 6 Flagship Robotics Testbed Bays */}
-            <aside className="w-80 bg-slate-950 border-r border-slate-800 flex flex-col z-10">
-              {/* Pinned L0 -> L3 Four-Stage Drill-Down Switcher */}
-              <div className="p-2.5 border-b border-slate-800 bg-slate-900/50 space-y-1.5">
-                <div className="text-[11px] font-semibold text-amber-300 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-sky-400" />
-                    <span>四级工程下钻 (L0 → L3 Ghost Context)</span>
-                  </span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">
-                    {activeDrillLevel}
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 gap-1">
-                  {HANGAR_DRILL_LEVELS.map((d) => {
-                    const isAct = activeDrillLevel === d.level;
-                    return (
+          <div className="flex h-full w-full bg-[#0d1017] overflow-hidden">
+            {/* LEFT FLEX-DOCKED INSPECTOR PANEL (shrinks & re-centers 3D viewport instead of covering the robot!) */}
+            {!zenMode && activeDrawer && (
+              <div className="w-[296px] shrink-0 h-full bg-[#10131a] border-r border-white/[0.08] flex flex-col overflow-hidden z-20">
+                {/* Drawer 0: 6 Flagship Robot Assets Switcher */}
+                {activeDrawer === 'robots' && (
+                  <aside
+                    data-testid="hangar-robots-drawer"
+                    className="flex-1 flex flex-col overflow-hidden"
+                  >
+                    <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between gap-2 shrink-0">
+                      <span className="text-xs font-semibold text-slate-100">
+                        切换机库真机资产 (6)
+                      </span>
                       <button
-                        key={d.level}
-                        data-testid={`hangar-drill-${d.level}`}
-                        onClick={() => handleSelectDrillLevel(d.level)}
-                        className={`py-1 px-2 rounded-lg text-xs font-mono font-bold border transition ${
-                          isAct
-                            ? 'bg-amber-500/25 border-amber-400 text-amber-200 shadow-sm'
-                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                        }`}
+                        type="button"
+                        aria-label="关闭真机列表"
+                        onClick={() => setActiveDrawer(null)}
+                        className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/[0.06] cursor-pointer"
                       >
-                        {d.level}
+                        <X className="w-3.5 h-3.5" strokeWidth={1.5} />
                       </button>
-                    );
-                  })}
-                </div>
-                <p className="text-[10px] text-slate-400 leading-snug">
-                  {HANGAR_DRILL_LEVELS.find((d) => d.level === activeDrillLevel)?.desc}
-                </p>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-                {ROBOT_PACKS.map((pack) => {
-                  const active = pack.id === selectedPack.id;
-                  return (
-                    <button
-                      key={pack.id}
-                      onClick={() => {
-                        setSelectedPack(pack);
-                        setActiveDrillLevel('L0');
-                        setHighlightedPart(null);
-                      }}
-                      className={`w-full text-left p-2 rounded-xl border transition flex gap-2.5 items-center ${
-                        active
-                          ? 'bg-sky-500/15 border-sky-400/60 shadow-md shadow-sky-950/50'
-                          : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700'
-                      }`}
-                    >
-                      <img
-                        src={pack.previewUrl}
-                        alt={pack.name}
-                        className="w-14 h-10 object-cover rounded-lg bg-slate-950 border border-slate-800 shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-sky-300 font-mono">
-                            {pack.category}
-                          </span>
-                        </div>
-                        <div className="text-xs font-semibold text-slate-100 truncate mt-0.5">{pack.name}</div>
-                        <div className="text-[11px] text-slate-400 truncate">{pack.subtitle}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Selected Robot Reality Baseline Spec Card */}
-              <div className="p-2.5 border-t border-slate-800 bg-slate-900/60 space-y-1">
-                <div className="text-xs font-semibold text-amber-300 flex items-center justify-between">
-                  <span>现实基准真值 (Reality Baseline)</span>
-                  <a
-                    href={selectedPack.upstreamUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[11px] text-sky-400 hover:underline flex items-center gap-1"
-                  >
-                    <span>GitHub 源库</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-                {selectedPack.specs.map((s) => (
-                  <div key={s.label} className="flex justify-between text-[11px]">
-                    <span className="text-slate-400">{s.label}</span>
-                    <span className="text-slate-200 font-mono">{s.value}</span>
-                  </div>
-                ))}
-                <button
-                  onClick={() => {
-                    const found = manifestData.find((r) =>
-                      selectedPack.baselineRepo.includes(r.repository)
-                    );
-                    if (found) {
-                      setSelectedRepo(found);
-                      setSelectedFileRel(found.primaryBaselineFile || '');
-                    }
-                    setActiveTab('urdf_explorer');
-                  }}
-                  className="w-full mt-1 py-1 px-2.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 text-xs font-medium flex items-center justify-center gap-1.5 transition"
-                >
-                  <FileCode className="w-3.5 h-3.5" />
-                  <span>查看原装 URDF / XML 运动学源码</span>
-                </button>
-              </div>
-            </aside>
-
-            {/* Center 3D WebGL Viewport */}
-            <div className="flex-1 relative bg-[#060a12]">
-              <div ref={mountRef} className="w-full h-full" data-testid="hangar-viewport" />
-
-              {/* Top-Left Active Robot Telemetry Badge */}
-              <div className="absolute top-3 left-3 bg-slate-950/95 border border-slate-800 rounded-xl px-3 py-2 max-w-md pointer-events-none">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-sky-500/20 border border-sky-400/40 text-sky-300 text-[11px] font-mono">
-                    {selectedPack.category} · {activeDrillLevel}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-100">{selectedPack.name}</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">{selectedPack.subtitle}</p>
-                <div className="text-[10px] font-mono text-emerald-400 mt-0.5">
-                  GLB 资产: {selectedPack.glbUrl} ({urdfJoints.length} URDF Joints 已绑定)
-                </div>
-                {isLoadingGlb && (
-                  <div className="text-[11px] text-amber-300 font-mono mt-0.5">
-                    正在通过 GLTFLoader 加载高精度 GLB 网格...
-                  </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
+                      {ROBOT_PACKS.map((pack) => {
+                        const active = pack.id === selectedPack.id;
+                        return (
+                          <button
+                            key={pack.id}
+                            type="button"
+                            data-testid={`pack-card-${pack.id}`}
+                            onClick={() => {
+                              setSelectedPack(pack);
+                              setActiveDrillLevel('L0');
+                              handleResetAllParts();
+                              handleSelectSubPart(null);
+                              setActiveDrawer(null);
+                            }}
+                            className={`w-full text-left p-2 rounded-lg border transition flex gap-2.5 items-center cursor-pointer ${
+                              active
+                                ? 'bg-cyan-500/[0.14] border-[#00e5ff]/65'
+                                : 'bg-[#161922]/85 border-white/[0.06] hover:border-white/20'
+                            }`}
+                          >
+                            <img
+                              src={pack.previewUrl}
+                              alt={pack.name}
+                              referrerPolicy="no-referrer"
+                              className="w-12 h-9 object-cover rounded bg-[#0d1017] border border-white/[0.08] shrink-0"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[10px] text-slate-400 truncate">
+                                {pack.category}
+                              </div>
+                              <div className="text-xs font-medium text-slate-100 truncate">
+                                {pack.name}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </aside>
                 )}
-              </div>
 
-              {/* Bottom Floating Twin Control HUD */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-[calc(100%-1.5rem)] bg-slate-950/95 border border-sky-500/30 rounded-2xl px-3 py-2 flex items-center gap-2 shadow-2xl whitespace-nowrap">
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Sliders className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <label htmlFor="hangar-explosion-range" className="text-[11px] text-slate-300 whitespace-nowrap">
-                    爆炸拆解
-                  </label>
-                  <input
-                    id="hangar-explosion-range"
-                    aria-label="爆炸拆解"
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={explosion}
-                    onChange={(e) => setExplosion(parseFloat(e.target.value))}
-                    className="w-16 accent-sky-400"
-                  />
-                  <span className="text-[11px] font-mono text-sky-300 w-7 text-right">{Math.round(explosion * 100)}%</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <label htmlFor="hangar-clip-range" className="text-[11px] text-slate-300 whitespace-nowrap">
-                    剖切面
-                  </label>
-                  <input
-                    id="hangar-clip-range"
-                    aria-label="激光剖切面"
-                    type="range"
-                    min={0.05}
-                    max={1}
-                    step={0.01}
-                    value={clipRatio}
-                    onChange={(e) => setClipRatio(parseFloat(e.target.value))}
-                    className="w-16 accent-amber-400"
-                  />
-                  <span className="text-[11px] font-mono text-amber-300 w-7 text-right">{Math.round(clipRatio * 100)}%</span>
-                </div>
-
-                <button
-                  onClick={() => setShowSkeleton(!showSkeleton)}
-                  className={`px-2 py-1 rounded-lg text-[11px] border whitespace-nowrap shrink-0 transition ${
-                    showSkeleton
-                      ? 'bg-amber-500/20 border-amber-400/50 text-amber-300'
-                      : 'bg-slate-900 border-slate-700 text-slate-400'
-                  }`}
-                >
-                  L0 骨架: {showSkeleton ? '开' : '关'}
-                </button>
-
-                <button
-                  onClick={() => setXrayMode(!xrayMode)}
-                  className={`px-2 py-1 rounded-lg text-[11px] border whitespace-nowrap shrink-0 transition ${
-                    xrayMode
-                      ? 'bg-sky-500/20 border-sky-400/50 text-sky-300'
-                      : 'bg-slate-900 border-slate-700 text-slate-400'
-                  }`}
-                >
-                  X-Ray: {xrayMode ? '开' : '关'}
-                </button>
-
-                <button
-                  onClick={() => setAutoRotate(!autoRotate)}
-                  className={`px-2 py-1 rounded-lg text-[11px] border whitespace-nowrap shrink-0 transition ${
-                    autoRotate
-                      ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300'
-                      : 'bg-slate-900 border-slate-700 text-slate-400'
-                  }`}
-                >
-                  环绕巡检
-                </button>
-
-                <button
-                  onClick={() => {
-                    setActiveDrillLevel('L0');
-                    setExplosion(0);
-                    setClipRatio(1.0);
-                    setXrayMode(false);
-                    setHighlightedPart(null);
-                    setJointAngles({});
-                  }}
-                  aria-label="复位视图"
-                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 shrink-0"
-                  title="复位视图"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Right Sidebar: Real URDF Joint FK Sliders + GLB Sub-Parts Hierarchy Tree */}
-            <aside className="w-80 bg-slate-950 border-l border-slate-800 flex flex-col z-10">
-              {/* Real URDF Joint FK Control Panel */}
-              <div className="p-3 border-b border-slate-800 bg-slate-900/40 flex flex-col max-h-64">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
-                    <Activity className="w-3.5 h-3.5" />
-                    <span>URDF 关节运动学驱动 (Joint FK)</span>
-                  </div>
-                  <button
-                    onClick={() => setJointAngles({})}
-                    className="text-[10px] text-sky-400 hover:underline font-mono"
+                {/* Drawer 1: Structure (L0-L3 Drill + Sub-Assemblies + Telemetry Bus) */}
+                {activeDrawer === 'structure' && (
+                  <aside
+                    data-testid="hangar-floating-left-hud"
+                    className="flex-1 flex flex-col overflow-hidden"
                   >
-                    全部归零
-                  </button>
-                </div>
-                <div className="overflow-y-auto space-y-2 pr-1">
-                  {movableJoints.map((j) => {
-                    const val = jointAngles[j.name] || 0;
-                    const min = j.type === 'continuous' ? -Math.PI : j.lower;
-                    const max = j.type === 'continuous' ? Math.PI : j.upper;
-                    return (
-                      <div key={j.name} className="space-y-0.5">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-mono text-slate-200 truncate" title={`${j.name} (${j.parent} -> ${j.child})`}>
-                            {j.name}
-                          </span>
-                          <span className="font-mono text-amber-300 text-[10px] shrink-0">
-                            {val.toFixed(2)} rad
-                          </span>
+                    <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between gap-2 shrink-0">
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-slate-100 truncate">
+                          结构层级与遥测总线
                         </div>
-                        <input
-                          type="range"
-                          aria-label={`关节 ${j.name}`}
-                          min={min}
-                          max={max}
-                          step={0.02}
-                          value={val}
-                          onChange={(e) =>
-                            setJointAngles((prev) => ({
-                              ...prev,
-                              [j.name]: parseFloat(e.target.value)
-                            }))
-                          }
-                          className="w-full accent-amber-400 h-1.5"
-                        />
+                        <div className="text-[11px] text-slate-400 truncate">
+                          {selectedPack.category} · {urdfJoints.length} 自由度
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+                      <button
+                        type="button"
+                        aria-label="关闭结构面板"
+                        onClick={() => setActiveDrawer(null)}
+                        className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/[0.06] cursor-pointer shrink-0"
+                      >
+                        <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+                      </button>
+                    </div>
 
-              {/* Real GLB Mesh Hierarchy Tree */}
-              <div className="p-3 border-b border-slate-800 flex items-center justify-between">
-                <div className="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
-                  <Box className="w-3.5 h-3.5" />
-                  <span>整机子部件层级树 ({meshNodes.length})</span>
-                </div>
-                {highlightedPart && (
-                  <button
-                    onClick={() => setHighlightedPart(null)}
-                    className="text-[11px] text-amber-400 hover:underline"
-                  >
-                    取消高亮
-                  </button>
+                    <div className="p-3 border-b border-white/[0.06] space-y-1.5 shrink-0">
+                      <div className="flex items-center justify-between text-xs text-slate-300">
+                        <span>四级工程下钻</span>
+                        <span className="font-mono tabular-nums text-cyan-300">
+                          {activeDrillLevel}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-1 bg-[#0d1017]/80 p-0.5 rounded-lg border border-white/[0.06]">
+                        {HANGAR_DRILL_LEVELS.map((d) => {
+                          const isAct = activeDrillLevel === d.level && !activeSubAssembly;
+                          return (
+                            <button
+                              key={d.level}
+                              type="button"
+                              data-testid={`hangar-drill-${d.level}`}
+                              onClick={() => handleSelectDrillLevel(d.level)}
+                              title={d.desc}
+                              className={`py-1 px-1.5 rounded-md text-xs font-mono font-semibold border transition cursor-pointer ${
+                                isAct
+                                  ? 'bg-cyan-500/[0.16] border-[#00e5ff]/70 text-cyan-100'
+                                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
+                              }`}
+                            >
+                              {d.level}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {autoDisassembly && autoStageLabel && (
+                        <div className="text-[11px] text-cyan-300 truncate pt-0.5">
+                          {autoStageLabel}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto divide-y divide-white/[0.06]">
+                      <div data-testid="hangar-sub-assembly-matrix">
+                        <div className="px-3 py-2 flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setLeftAcc((p) => ({ ...p, subs: !p.subs }))}
+                            aria-expanded={leftAcc.subs}
+                            className="flex items-center gap-1.5 text-left cursor-pointer min-w-0"
+                          >
+                            <Grid3x3
+                              className="w-3.5 h-3.5 text-slate-400 shrink-0"
+                              strokeWidth={1.5}
+                            />
+                            <span className="text-xs font-medium text-slate-200 truncate">
+                              子总成矩阵
+                            </span>
+                            <span className="text-[11px] font-mono tabular-nums text-slate-500 shrink-0">
+                              ({subAssemblies.length})
+                            </span>
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 text-slate-500 transition-transform shrink-0 ${
+                                leftAcc.subs ? 'rotate-0' : '-rotate-90'
+                              }`}
+                              strokeWidth={1.5}
+                            />
+                          </button>
+                          {activeSubAssembly && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveSubAssembly(null)}
+                              className="text-[11px] text-cyan-300 hover:underline cursor-pointer shrink-0"
+                            >
+                              全部
+                            </button>
+                          )}
+                        </div>
+                        {leftAcc.subs && (
+                          <div className="px-3 pb-2.5 grid grid-cols-2 gap-1">
+                            {subAssemblies.map((sa) => {
+                              const isAct = activeSubAssembly === sa.id;
+                              return (
+                                <button
+                                  key={sa.id}
+                                  type="button"
+                                  data-testid={`hangar-sub-chip-${sa.id}`}
+                                  onClick={() => handleSelectSubAssembly(sa.id)}
+                                  className={`text-left px-2 py-1 rounded-md border transition cursor-pointer ${
+                                    isAct
+                                      ? 'bg-cyan-500/[0.14] border-[#00e5ff]/70 text-cyan-100'
+                                      : 'bg-[#161922]/80 border-white/[0.06] hover:border-white/20 text-slate-200'
+                                  }`}
+                                  title={`${sa.label} (${sa.partNames.length} 件 · ${sa.totalTris.toLocaleString()} tris)`}
+                                >
+                                  <div className="flex items-center justify-between text-[10px] font-mono tabular-nums">
+                                    <span className="text-cyan-300 font-semibold">
+                                      {sa.shortCode}
+                                    </span>
+                                    <span className="text-slate-500">
+                                      S{sa.stage}·{sa.partNames.length}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] font-medium truncate mt-0.5">
+                                    {sa.label}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setLeftAcc((p) => ({ ...p, bus: !p.bus }))}
+                          aria-expanded={leftAcc.bus}
+                          className="w-full px-3 py-2 flex items-center justify-between text-left cursor-pointer hover:bg-white/[0.03] transition"
+                        >
+                          <span className="flex items-center gap-1.5 text-xs font-medium text-slate-200">
+                            <Activity className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.5} />
+                            <span>实时遥测波形总线</span>
+                          </span>
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
+                              leftAcc.bus ? 'rotate-0' : '-rotate-90'
+                            }`}
+                            strokeWidth={1.5}
+                          />
+                        </button>
+                        {leftAcc.bus && (
+                          <LiveBusSparklines
+                            contextId={selectedPack.id}
+                            loadFactor={liveSim ? activeRegimeLoad : 0.25}
+                            liveSim={liveSim}
+                            channelLabels={hangarSparklineLabels}
+                            faultActive={activeFaults.length > 0}
+                            faultLabel={activeFaults[activeFaults.length - 1]?.alertTitle}
+                            torqueSpikeNm={pushTorqueSpikeNm}
+                          >
+                            <div className="space-y-1 pt-1.5 border-t border-white/[0.06]">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="text-slate-400">开源基准源</span>
+                                <a
+                                  href={selectedPack.upstreamUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-cyan-300 hover:underline flex items-center gap-1"
+                                >
+                                  <span>GitHub</span>
+                                  <ExternalLink className="w-3 h-3" strokeWidth={1.5} />
+                                </a>
+                              </div>
+                              {selectedPack.specs.slice(0, 2).map((s) => (
+                                <div key={s.label} className="flex justify-between text-[11px] gap-2">
+                                  <span className="text-slate-400 shrink-0">{s.label}</span>
+                                  <span className="text-slate-200 font-mono tabular-nums truncate">
+                                    {s.value}
+                                  </span>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const found = manifestData.find((r) =>
+                                    selectedPack.baselineRepo.includes(r.repository)
+                                  );
+                                  if (found) {
+                                    setSelectedRepo(found);
+                                    setSelectedFileRel(found.primaryBaselineFile || '');
+                                  }
+                                  setActiveDrawer(null);
+                                  setActiveTab('urdf_explorer');
+                                }}
+                                className="w-full mt-1 py-1.5 px-2.5 rounded-lg bg-[#161922] hover:border-cyan-400/55 border border-white/[0.08] text-slate-200 text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                              >
+                                <FileCode className="w-3.5 h-3.5 text-cyan-300" strokeWidth={1.5} />
+                                <span>查看原装 URDF 运动学源码</span>
+                              </button>
+                            </div>
+                          </LiveBusSparklines>
+                        )}
+                      </div>
+                    </div>
+                  </aside>
                 )}
-              </div>
-              <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {meshNodes.map((node, idx) => {
-                  const isSel = highlightedPart === node.name;
-                  const isGhost = activeDrillLevel !== 'L0' && node.layer !== activeDrillLevel;
-                  return (
-                    <button
-                      key={`${node.name}_${idx}`}
-                      onClick={() => setHighlightedPart(isSel ? null : node.name)}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition ${
-                        isSel
-                          ? 'bg-sky-500/25 border border-sky-400/50 text-sky-200'
-                          : isGhost
-                            ? 'opacity-45 hover:bg-slate-900 text-slate-400'
-                            : 'hover:bg-slate-900 text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span
-                          className={`text-[10px] font-mono px-1 py-0.2 rounded shrink-0 ${
-                            node.layer === 'L1'
-                              ? 'bg-sky-500/20 text-sky-300'
-                              : node.layer === 'L2'
-                                ? 'bg-amber-500/20 text-amber-300'
-                                : 'bg-rose-500/20 text-rose-300'
+
+                {/* Drawer 2: Operating Regimes & URDF Joint FK Sliders */}
+                {activeDrawer === 'kinematics' && (
+                  <aside
+                    data-testid="hangar-kinematics-drawer"
+                    className="flex-1 flex flex-col overflow-hidden"
+                  >
+                    <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between gap-2 shrink-0">
+                      <span className="text-xs font-semibold text-slate-100">
+                        仿真工况与关节驱动
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setLiveSim(!liveSim)}
+                          className={`px-2 py-0.5 rounded border text-[10px] font-mono font-semibold transition whitespace-nowrap cursor-pointer ${
+                            liveSim
+                              ? 'bg-cyan-500/[0.14] border-[#00e5ff]/70 text-cyan-100'
+                              : 'bg-[#161922] border-white/[0.12] text-slate-300'
                           }`}
                         >
-                          {node.layer}
-                        </span>
-                        <span className="truncate font-mono text-[11px]">{node.name}</span>
+                          {liveSim ? '实时运行' : '手动驱动'}
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="关闭关节面板"
+                          onClick={() => setActiveDrawer(null)}
+                          className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/[0.06] cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+                        </button>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono shrink-0 ml-2">
-                        {node.tris.toLocaleString()} tris
-                      </span>
-                    </button>
-                  );
-                })}
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-200">
+                          <Zap className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.5} />
+                          <span>预设仿真工况</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1">
+                          {HANGAR_REGIMES.map((r) => {
+                            const active = liveSim && hangarRegime === r.id;
+                            return (
+                              <button
+                                key={r.id}
+                                type="button"
+                                onClick={() => {
+                                  setHangarRegime(r.id);
+                                  setLiveSim(true);
+                                }}
+                                className={`py-1.5 px-1.5 rounded-md text-[11px] border transition truncate cursor-pointer ${
+                                  active
+                                    ? 'bg-cyan-500/[0.14] border-[#00e5ff]/70 text-cyan-100 font-semibold'
+                                    : 'bg-[#161922]/85 border-white/[0.07] text-slate-300 hover:border-white/20'
+                                }`}
+                                title={r.label}
+                              >
+                                {r.shortLabel}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="pt-2.5 border-t border-white/[0.06] space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-slate-200">
+                            URDF 关节驱动 ({movableJoints.length})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLiveSim(false);
+                              setJointAngles({});
+                            }}
+                            className="text-[11px] text-slate-400 hover:text-cyan-300 border border-white/[0.08] rounded px-2 py-0.5 cursor-pointer"
+                          >
+                            归零
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          {movableJoints.map((j) => {
+                            const val = jointAngles[j.name] || 0;
+                            const min = j.type === 'continuous' ? -Math.PI : j.lower;
+                            const max = j.type === 'continuous' ? Math.PI : j.upper;
+                            return (
+                              <div key={j.name} className="space-y-0.5">
+                                <div className="flex items-center justify-between text-[11px]">
+                                  <span
+                                    className="font-mono text-slate-300 truncate"
+                                    title={`${j.name} (${j.parent} -> ${j.child})`}
+                                  >
+                                    {j.name}
+                                  </span>
+                                  <span className="font-mono tabular-nums text-cyan-300 text-[10px] shrink-0">
+                                    {val >= 0 ? `+${val.toFixed(2)}` : val.toFixed(2)} rad
+                                  </span>
+                                </div>
+                                <input
+                                  type="range"
+                                  aria-label={`关节 ${j.name}`}
+                                  min={min}
+                                  max={max}
+                                  step={0.02}
+                                  value={val}
+                                  onChange={(e) => {
+                                    const nextVal = parseFloat(e.target.value);
+                                    setLiveSim(false);
+                                    setJointAngles((prev) => ({
+                                      ...prev,
+                                      [j.name]: nextVal
+                                    }));
+                                  }}
+                                  className="w-full accent-[#00e5ff] h-1.5 cursor-pointer"
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </aside>
+                )}
+
+                {/* Drawer 3: Bidirectional Interactive CAD Scene Graph */}
+                {activeDrawer === 'scenegraph' && (
+                  <aside
+                    data-testid="hangar-floating-right-hud"
+                    onMouseLeave={() => handleHoverSceneGraphPart(null)}
+                    className="flex-1 flex flex-col overflow-hidden"
+                  >
+                    <FloatingSceneGraphSection
+                      nodes={meshNodes}
+                      isOpen={true}
+                      onToggleOpen={() => setActiveDrawer(null)}
+                      onClose={() => {
+                        handleHoverSceneGraphPart(null);
+                        setActiveDrawer(null);
+                      }}
+                      selectedPart={highlightedPart}
+                      hoveredPart={hoveredPart}
+                      viewportHoveredPart={viewportHoveredPart}
+                      activeDrillLevel={activeDrillLevel}
+                      hiddenParts={hiddenParts}
+                      onSelectPart={handleSelectSubPart}
+                      onFocusPart={(name) => handleSelectSubPart(name)}
+                      onToggleHidePart={handleToggleHidePartInGraph}
+                      onShowAllHidden={() => setHiddenParts({})}
+                      onHoverPart={handleHoverSceneGraphPart}
+                      rowTestIdPrefix="hangar-part-row"
+                    />
+                  </aside>
+                )}
               </div>
-            </aside>
+            )}
+
+            {/* 3D VIEWPORT CONTAINER (100% Unoccluded Center Robot) */}
+            <div className="relative flex-1 h-full overflow-hidden">
+              <div
+                ref={mountRef}
+                className="absolute inset-0 w-full h-full cursor-crosshair"
+                data-testid="hangar-viewport"
+              />
+
+              {/* SpaceX / Isaac Style 3D Spatial Telemetry Callouts (opt-in via Settings) */}
+              <SpatialTelemetryOverlay
+                items={projectedProbes}
+                viewportWidth={viewportSize.w}
+                viewportHeight={viewportSize.h}
+                visible={!zenMode && showProbes && !isLoadingGlb && !isolatedPart}
+                dimmed={
+                  visualPopoverOpen ||
+                  settingsOpen ||
+                  dissectOpen ||
+                  Boolean(hoveredPart || viewportHoveredPart)
+                }
+                sideHudInsetPx={28}
+              />
+
+              {/* Bidirectional Hover 3D Spatial Anchor + 45° Bent-Polyline HUD Callout */}
+              <HoveredPartCalloutOverlay
+                callout={!zenMode && !isolatedPart ? hoveredCallout : null}
+                viewportWidth={viewportSize.w}
+                viewportHeight={viewportSize.h}
+              />
+
+              {/* Surgical Single-Part Precision Capsule & CAD Dimension Callouts */}
+              <PartBlueprintCapsule
+                metadata={selectedBlueprintMeta}
+                anchorScreen={selectedAnchorScreen}
+                viewportWidth={viewportSize.w}
+                viewportHeight={viewportSize.h}
+                isIsolated={Boolean(isolatedPart && isolatedPart === highlightedPart)}
+                isPeeled={Boolean(highlightedPart && peeledParts[highlightedPart])}
+                peeledCount={Object.keys(peeledParts).length}
+                hiddenCount={Object.keys(hiddenParts).length}
+                axisLabels={blueprintAxisScreens}
+                onToggleIsolate={handleToggleIsolateBlueprint}
+                onTogglePeel={handleTogglePeelPart}
+                onHidePart={handleHideSelectedPart}
+                onResetAllParts={handleResetAllParts}
+                onCloseSelection={() => handleSelectSubPart(null)}
+              />
+
+              {/* Module 3A: Projected 3D Push-Recovery Impulse Force Badge */}
+              {!zenMode && !microFpvActive && pushCalloutHud && (
+                <div
+                  data-testid="hangar-push-impulse-callout"
+                  style={{
+                    left: `${Math.max(140, Math.min(viewportSize.w - 180, pushCalloutHud.screenX))}px`,
+                    top: `${Math.max(124, Math.min(viewportSize.h - 96, pushCalloutHud.screenY - 26))}px`
+                  }}
+                  className="pointer-events-none absolute -translate-x-1/2 -translate-y-full z-20 px-2.5 py-1 rounded-lg bg-[#12141a]/[0.92] border border-amber-400/75 shadow-xl"
+                >
+                  <div className="text-[11px] font-mono font-bold text-amber-300 whitespace-nowrap">
+                    IMPULSE: {pushCalloutHud.forceN} N · 全身抗扰恢复
+                  </div>
+                  <div className="text-[10px] font-mono text-cyan-300 truncate max-w-[210px]">
+                    受力连杆: {pushCalloutHud.partName} · 峰值力矩 +{pushTorqueSpikeNm} N·m
+                  </div>
+                </div>
+              )}
+
+              {/* MPC Floor-Click Walk Hint Pill */}
+              {!zenMode && mpcEnabled && !isolatedPart && (
+                <div
+                  data-testid="hangar-mpc-floor-walk-hint"
+                  className="pointer-events-none absolute bottom-16 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-lg bg-[#12141a]/[0.88] border border-[#00e5ff]/55 text-[11px] font-mono text-cyan-200 whitespace-nowrap"
+                >
+                  MPC 地面导航已就绪：点击机库地面任意位置，真机将实时滚动规划并步行前往目标信标
+                </div>
+              )}
+
+              {/* TOP-LEFT COMPACT INSPECTOR BAR (Single thin bar at perimeter edge) */}
+              {!zenMode && (
+                <div className="pointer-events-none absolute top-4 left-4 z-20 flex flex-col items-start gap-2">
+                  <div
+                    data-testid="hangar-compact-bar"
+                    className="pointer-events-auto flex items-center gap-1 p-1 rounded-xl bg-[#12141a]/[0.88] border border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_12px_28px_rgba(0,0,0,0.45)]"
+                  >
+                    <button
+                      type="button"
+                      data-testid="hangar-robot-switcher-btn"
+                      aria-expanded={activeDrawer === 'robots'}
+                      onClick={() =>
+                        setActiveDrawer((d) => (d === 'robots' ? null : 'robots'))
+                      }
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap max-w-[200px] ${
+                        activeDrawer === 'robots'
+                          ? 'bg-cyan-500/[0.16] border border-[#00e5ff]/70 text-cyan-100'
+                          : 'border border-transparent text-slate-100 hover:bg-white/[0.05]'
+                      }`}
+                      title="切换机库真机资产"
+                    >
+                      <Bot className="w-3.5 h-3.5 text-cyan-300 shrink-0" strokeWidth={1.5} />
+                      <span className="truncate">{selectedPack.name.split('(')[0].trim()}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${
+                          activeDrawer === 'robots' ? 'rotate-180' : ''
+                        }`}
+                        strokeWidth={1.5}
+                      />
+                    </button>
+
+                    <div className="h-4 w-px bg-white/[0.08]" />
+
+                    <button
+                      type="button"
+                      data-testid="drawer-btn-structure"
+                      aria-expanded={activeDrawer === 'structure'}
+                      onClick={() =>
+                        setActiveDrawer((d) => (d === 'structure' ? null : 'structure'))
+                      }
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                        activeDrawer === 'structure'
+                          ? 'bg-cyan-500/[0.16] border border-[#00e5ff]/70 text-cyan-100'
+                          : 'border border-transparent text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.5} />
+                      <span>结构</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      data-testid="drawer-btn-kinematics"
+                      aria-expanded={activeDrawer === 'kinematics'}
+                      onClick={() =>
+                        setActiveDrawer((d) => (d === 'kinematics' ? null : 'kinematics'))
+                      }
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                        activeDrawer === 'kinematics'
+                          ? 'bg-cyan-500/[0.16] border border-[#00e5ff]/70 text-cyan-100'
+                          : 'border border-transparent text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                      }`}
+                    >
+                      <Sliders className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.5} />
+                      <span>关节</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      data-testid="drawer-btn-scenegraph"
+                      aria-expanded={activeDrawer === 'scenegraph'}
+                      onClick={() =>
+                        setActiveDrawer((d) => (d === 'scenegraph' ? null : 'scenegraph'))
+                      }
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                        activeDrawer === 'scenegraph'
+                          ? 'bg-cyan-500/[0.16] border border-[#00e5ff]/70 text-cyan-100'
+                          : 'border border-transparent text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                      }`}
+                    >
+                      <Box className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.5} />
+                      <span>部件</span>
+                      {meshNodes.length > 0 && (
+                        <span className="text-[10px] font-mono tabular-nums text-slate-400">
+                          {meshNodes.length}
+                        </span>
+                      )}
+                    </button>
+
+                    <div className="h-4 w-px bg-white/[0.08]" />
+
+                    <button
+                      type="button"
+                      data-testid="header-enter-sandbox-btn"
+                      onClick={() => handleEnterSandbox()}
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-transparent text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/[0.12] flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
+                      title="进入陆海空自由动态行动沙盒 [快捷键 G]"
+                    >
+                      <Gamepad2 className="w-3.5 h-3.5 text-cyan-300 shrink-0" strokeWidth={1.5} />
+                      <span>自由沙盒 [G]</span>
+                    </button>
+                  </div>
+
+                  {isLoadingGlb && (
+                    <div className="pointer-events-none px-3 py-1.5 rounded-lg bg-[#12141a]/[0.90] border border-white/[0.08] text-[11px] font-mono text-cyan-300">
+                      正在流式解码真机网格...
+                    </div>
+                  )}
+
+                  {glbLoadError && !isLoadingGlb && (
+                    <div className="pointer-events-auto flex items-center gap-2 bg-[#1a1418] border border-amber-500/50 rounded-lg px-3 py-1.5 text-xs text-amber-200">
+                      <span>网格资产加载中断</span>
+                      <button
+                        type="button"
+                        data-testid="hangar-retry-glb-btn"
+                        onClick={() => setGlbReloadNonce((n) => n + 1)}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-500 text-white font-semibold cursor-pointer"
+                      >
+                        <RotateCcw className="w-3 h-3" strokeWidth={1.5} />
+                        重试
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {/* TOP-RIGHT SETTINGS MENU (Camera Presets, Director Cam, 3D Probes, Audio, Zen Mode, 4K Export) */}
+            <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-1.5 pointer-events-none">
+              {zenMode ? (
+                <button
+                  type="button"
+                  onClick={() => setZenMode(false)}
+                  className="pointer-events-auto px-3 py-1.5 rounded-xl bg-[#12141a]/[0.90] border border-[#00e5ff]/70 text-cyan-100 text-xs font-medium flex items-center gap-1.5 shadow-xl cursor-pointer"
+                >
+                  <Minimize2 className="w-3.5 h-3.5 text-cyan-300" strokeWidth={1.5} />
+                  <span>退出纯净全屏 [H]</span>
+                </button>
+              ) : (
+                <ViewportSettingsMenu
+                  activePreset={activeCamPreset}
+                  onSelectPreset={handleSelectCameraPreset}
+                  directorCamMode={directorCamMode}
+                  onCycleDirectorCam={handleCycleDirectorCamera}
+                  showProbes={showProbes}
+                  onToggleProbes={() => setShowProbes((v) => !v)}
+                  audioSynthEnabled={audioSynthEnabled}
+                  onToggleAudioSynth={handleToggleAudioSynth}
+                  zenMode={zenMode}
+                  onToggleZenMode={() => setZenMode((z) => !z)}
+                  isExporting4K={isExporting4K}
+                  onExport4K={handleExport4K}
+                  onOpenChange={setSettingsOpen}
+                />
+              )}
+
+              {!zenMode && thermalMode && (
+                <div className="bg-[#12141a]/[0.88] border border-amber-500/40 rounded-lg px-3 py-1.5 pointer-events-none">
+                  <div className="text-[10px] font-mono tabular-nums text-amber-300 flex items-center justify-between gap-4">
+                    <span>红外伺服热力场</span>
+                    <span>+18 °C → +85 °C</span>
+                  </div>
+                  <div className="h-1.5 w-40 rounded-sm mt-1 bg-gradient-to-r from-blue-900 via-cyan-500 to-amber-300" />
+                </div>
+              )}
+            </div>
+
+            {/* Top-Center Signature Ultimate Skill Visual Showcase Banner */}
+            {ultimateActiveUI && (
+              <div
+                data-testid="hangar-ultimate-showcase-banner"
+                className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 bg-[#12141a]/[0.92] border border-[#00e5ff]/70 rounded-xl px-3.5 py-1.5 z-30 shadow-2xl text-center max-w-[460px]"
+              >
+                <div className="text-xs font-semibold text-cyan-100 tracking-wide truncate">
+                  {getRobotUltimateMeta(selectedPack.id).skillName}
+                </div>
+                <div className="text-[11px] text-cyan-300 mt-0.5 truncate">
+                  {ultimatePhaseLabelUI} ·{' '}
+                  {getRobotUltimateMeta(selectedPack.id).showcaseSystems.join(' / ')}
+                </div>
+              </div>
+            )}
+
+            {/* ULTRA-COMPACT BOTTOM DOCK (Sliders stowed inside 拆解剖切 & 实验设置 popovers) */}
+            {!zenMode && (
+              <div
+                data-testid="hangar-single-bottom-dock"
+                className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 max-w-[calc(100%-2rem)] bg-[#12141a]/[0.88] border border-white/[0.08] rounded-xl p-1.5 flex items-center gap-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_18px_42px_rgba(0,0,0,0.6)] z-30 whitespace-nowrap"
+              >
+                <DissectionControlsPopover
+                  explosionInputId="hangar-explosion-range"
+                  clipInputId="hangar-clip-range"
+                  explosion={explosion}
+                  onChangeExplosion={(val) => {
+                    handleHoverSceneGraphPart(null);
+                    setAutoDisassembly(false);
+                    setExplosion(val);
+                  }}
+                  autoDisassembly={autoDisassembly}
+                  onToggleAutoDisassembly={() => {
+                    handleHoverSceneGraphPart(null);
+                    const next = !autoDisassembly;
+                    setAutoDisassembly(next);
+                    if (next) {
+                      setIsolatedPart(null);
+                      stateRef.current.autoDisassemblyState = {
+                        active: true,
+                        progress: explosion,
+                        direction: explosion >= 0.95 ? -1 : 1,
+                        holdTimer: 0,
+                        currentStage: 1,
+                        stageLabel: '工序 I · 顶罩与感知舱垂直剥离'
+                      };
+                    }
+                  }}
+                  autoDisassemblyBtnTestId="hangar-auto-disassembly-btn"
+                  clipRatio={clipRatio}
+                  onChangeClipRatio={(val) => {
+                    handleHoverSceneGraphPart(null);
+                    if (microFpvActive) handleToggleMicroFpv();
+                    setAutoSectionScan(false);
+                    setClipRatio(val);
+                  }}
+                  autoSectionScan={autoSectionScan}
+                  onToggleAutoSectionScan={() => {
+                    if (microFpvActive) handleToggleMicroFpv();
+                    setAutoSectionScan((v) => !v);
+                  }}
+                  onOpenChange={setDissectOpen}
+                />
+
+                <button
+                  type="button"
+                  data-testid="hangar-push-recovery-btn"
+                  onClick={() => {
+                    setPushTestArmed((prev) => {
+                      const next = !prev;
+                      if (next || pushTorqueSpikeNm <= 0) {
+                        handleTriggerPushImpulse();
+                      }
+                      return next;
+                    });
+                  }}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border whitespace-nowrap shrink-0 flex items-center gap-1.5 transition cursor-pointer ${
+                    pushTestArmed || pushTorqueSpikeNm > 0
+                      ? 'bg-amber-500/[0.16] border-amber-400/75 text-amber-100 font-semibold'
+                      : 'bg-[#161922]/90 border-white/[0.08] text-slate-200 hover:border-white/20 hover:text-white'
+                  }`}
+                  title="抗扰推搡脉冲测试：点击立即施加外力冲量，亦可开启后直接点击机器人任意部位（或按住 Alt+左键）触发全身平衡恢复 [快捷键 P]"
+                >
+                  <Crosshair className="w-3.5 h-3.5 text-amber-300 shrink-0" strokeWidth={1.5} />
+                  <span>{pushTestArmed ? '点选推搡中 [P]' : '抗扰推搡 [P]'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="hangar-ultimate-showcase-btn"
+                  onClick={handleTriggerUltimateShowcase}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border whitespace-nowrap shrink-0 flex items-center gap-1.5 transition cursor-pointer ${
+                    ultimateActiveUI
+                      ? 'bg-cyan-500/[0.16] border-[#00e5ff]/80 text-cyan-100 font-semibold'
+                      : 'bg-[#161922]/90 border-white/[0.08] text-slate-200 hover:border-white/20 hover:text-white'
+                  }`}
+                  title="四镜到底联动展演：激光断层内窥 + L1–L3 拆解 + URDF 动作 + 变焦运镜 [快捷键 Q]"
+                >
+                  <Zap className="w-3.5 h-3.5 text-cyan-300 shrink-0" strokeWidth={1.5} />
+                  <span>{ultimateActiveUI ? '展演中' : '联动展演 [Q]'}</span>
+                </button>
+
+                <PathTracingHudBar
+                  inlineDock
+                  pathTracingEnabled={pathTracingEnabled}
+                  spp={ptSpp}
+                  bvhMeshCount={bvhStats.meshes}
+                  emissiveLightCount={bvhStats.emissives}
+                  isExporting4K={isExporting4K}
+                  onTogglePathTracing={() => setPathTracingEnabled((p) => !p)}
+                  onExport4K={handleExport4K}
+                />
+
+                <VisualLabPopoverButton
+                  thermalMode={thermalMode}
+                  onToggleThermal={() => setThermalMode((v) => !v)}
+                  flowSensorMode={flowSensorMode}
+                  onToggleFlowSensor={() => setFlowSensorMode((v) => !v)}
+                  showSkeleton={showSkeleton}
+                  onToggleSkeleton={() => {
+                    setShowSkeleton((v) => {
+                      const next = !v;
+                      if (next) {
+                        setClipRatio(1.0);
+                        setAutoSectionScan(false);
+                      }
+                      return next;
+                    });
+                  }}
+                  xrayMode={xrayMode}
+                  onToggleXray={() => setXrayMode((v) => !v)}
+                  autoRotate={autoRotate}
+                  onToggleAutoRotate={() => setAutoRotate((v) => !v)}
+                  magLensEnabled={magLensEnabled}
+                  magLensRadius={magLensRadius}
+                  onToggleMagLens={() => setMagLensEnabled((v) => !v)}
+                  slsActive={slsActive}
+                  onTriggerSlsPrint={handleTriggerSlsPrint}
+                  mpcEnabled={mpcEnabled}
+                  totalPowerWatts={totalPowerWatts}
+                  onToggleMpc={() => {
+                    setMpcEnabled((v) => {
+                      const next = !v;
+                      if (next) {
+                        setClipRatio(1.0);
+                        setAutoSectionScan(false);
+                      }
+                      return next;
+                    });
+                  }}
+                  windTunnelConfig={windTunnelConfig}
+                  onChangeWindTunnel={setWindTunnelConfig}
+                  microFpvActive={microFpvActive}
+                  microFpvSegmentLabel={microFpvSegmentLabel}
+                  onToggleMicroFpv={handleToggleMicroFpv}
+                  shipbreakerEnabled={shipbreakerEnabled}
+                  onToggleShipbreaker={() => {
+                    setShipbreakerEnabled((v) => {
+                      const next = !v;
+                      if (next) {
+                        setClipRatio(1.0);
+                        setAutoSectionScan(false);
+                      }
+                      return next;
+                    });
+                  }}
+                  floatingPartsCount={floatingPartsCount}
+                  onResetGrappledParts={handleResetGrappledParts}
+                  focusModeEnabled={focusWeakpointEnabled}
+                  onToggleFocusMode={() => setFocusWeakpointEnabled((v) => !v)}
+                  weatheringActive={weatheringActive}
+                  onCleanWeathering={handleCleanWeathering}
+                  faultCount={activeFaults.length}
+                  faultInjectMode={faultInjectMode}
+                  onToggleFaultInject={() => {
+                    if (activeFaults.length === 0) {
+                      handleInjectFaultOnPart();
+                      setFaultInjectMode(true);
+                    } else {
+                      setFaultInjectMode((v) => !v);
+                    }
+                  }}
+                  onSelfHealFaults={handleSelfHealAllFaults}
+                  ikEnabled={ikEnabled}
+                  onToggleIk={() => {
+                    const next = !ikEnabled;
+                    setIkEnabled(next);
+                    if (!next) setPlasmaCutting(false);
+                  }}
+                  plasmaCutting={plasmaCutting}
+                  onTogglePlasma={() => setPlasmaCutting((v) => !v)}
+                  isExporting4K={isExporting4K}
+                  onExport4K={handleExport4K}
+                  onOpenChange={setVisualPopoverOpen}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSelectDrillLevel('L0');
+                    handleResetAllParts();
+                    handleSelectCameraPreset(null);
+                    handleSelfHealAllFaults();
+                    setPushTestArmed(false);
+                    stateRef.current.pushState = createInitialPushRecoveryState();
+                    stateRef.current.mpcWalkState = createInitialHangarMpcWalkState();
+                    setPushTorqueSpikeNm(0);
+                    setPushCalloutHud(null);
+                    setIkEnabled(false);
+                    setPlasmaCutting(false);
+                    setPathTracingEnabled(false);
+                    setMagLensEnabled(false);
+                    setMpcEnabled(false);
+                    setWindTunnelConfig(createDefaultWindTunnelConfig());
+                    if (microFpvActive) handleToggleMicroFpv();
+                    setClipRatio(1.0);
+                    setAutoSectionScan(false);
+                    setXrayMode(false);
+                    setThermalMode(false);
+                    handleSelectSubPart(null);
+                    setLiveSim(true);
+                  }}
+                  aria-label="复位视图"
+                  className="p-1.5 rounded-lg bg-[#161922]/90 hover:border-white/20 border border-white/[0.08] text-slate-300 hover:text-white shrink-0 cursor-pointer"
+                  title="复位视图"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.5} />
+                </button>
+              </div>
+            )}
+            </div>
           </div>
         )}
 
         {/* TAB 2: NASA Mars 2020 Perseverance L0-L3 Digital Twin */}
-        {activeTab === 'mars2020' && <WorkstationTwinView config={TWIN_WORKSTATIONS.mars2020} />}
+        {activeTab === 'mars2020' && (
+          <WorkstationTwinView
+            config={TWIN_WORKSTATIONS.mars2020}
+            onEnterSandbox={handleEnterSandbox}
+            audioSynthEnabled={audioSynthEnabled}
+            onToggleAudioSynth={handleToggleAudioSynth}
+            zenMode={zenMode}
+            onToggleZenMode={() => setZenMode((z) => !z)}
+          />
+        )}
 
         {/* TAB 3: Boeing 737-800 & CFM56-7B Turbofan L0-L3 Digital Twin */}
-        {activeTab === 'b737_cfm56' && <WorkstationTwinView config={TWIN_WORKSTATIONS.b737_cfm56} />}
+        {activeTab === 'b737_cfm56' && (
+          <WorkstationTwinView
+            config={TWIN_WORKSTATIONS.b737_cfm56}
+            onEnterSandbox={handleEnterSandbox}
+            audioSynthEnabled={audioSynthEnabled}
+            onToggleAudioSynth={handleToggleAudioSynth}
+            zenMode={zenMode}
+            onToggleZenMode={() => setZenMode((z) => !z)}
+          />
+        )}
 
         {/* TAB 4: Aerospace Structural Load Master Skeleton */}
-        {activeTab === 'b737_bridge' && <WorkstationTwinView config={TWIN_WORKSTATIONS.b737_bridge} />}
+        {activeTab === 'b737_bridge' && (
+          <WorkstationTwinView
+            config={TWIN_WORKSTATIONS.b737_bridge}
+            onEnterSandbox={handleEnterSandbox}
+            audioSynthEnabled={audioSynthEnabled}
+            onToggleAudioSynth={handleToggleAudioSynth}
+            zenMode={zenMode}
+            onToggleZenMode={() => setZenMode((z) => !z)}
+          />
+        )}
 
         {/* TAB 5: 39 Open-Source Robotics Repositories URDF / XML Reality Baseline Explorer */}
         {activeTab === 'urdf_explorer' && (
@@ -1040,8 +4414,8 @@ export default function App() {
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-xs font-bold text-purple-300">{repo.repository}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
-                          {repo.kinematicFileCount} 基准 / {repo.docFileCount} 文档
+                        <span className="text-[10px] text-slate-400 font-mono tabular-nums">
+                          {repo.kinematicFileCount} 基准 · {repo.docFileCount} 文档
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-400 line-clamp-2 mt-1">{repo.description}</p>
@@ -1070,17 +4444,15 @@ export default function App() {
                     </div>
                     <p className="text-[11px] text-slate-400">{selectedRepo.description}</p>
                     {selectedRepo.primaryBaselineFile && (
-                      <div className="pt-1">
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
-                          首选基准: {selectedRepo.primaryBaselineFile}
-                        </span>
+                      <div className="pt-1 text-[10px] text-emerald-300 font-mono">
+                        首选基准: {selectedRepo.primaryBaselineFile}
                       </div>
                     )}
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-2 space-y-3">
                     <div>
-                      <div className="px-2 py-1 text-[11px] font-semibold text-sky-400 uppercase">
+                      <div className="px-2 py-1 text-[11px] font-semibold text-sky-400">
                         原装运动学基准文件 (.urdf / .xml / .xacro) [{selectedRepo.kinematicFiles?.length || 0}]
                       </div>
                       <div className="space-y-0.5 mt-1">
@@ -1101,7 +4473,7 @@ export default function App() {
                     </div>
 
                     <div>
-                      <div className="px-2 py-1 text-[11px] font-semibold text-amber-400 uppercase">
+                      <div className="px-2 py-1 text-[11px] font-semibold text-amber-400">
                         结构说明文档与关节配置 (README / YAML) [{selectedRepo.docFiles?.length || 0}]
                       </div>
                       <div className="space-y-0.5 mt-1">
@@ -1134,13 +4506,13 @@ export default function App() {
                     {selectedRepo?.category} / {selectedRepo?.repository} / {selectedFileRel}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3 text-[11px]">
                   {fileKinematicStats.format !== 'DOC' && (
-                    <span className="text-[11px] px-2 py-0.5 rounded bg-sky-500/15 border border-sky-400/30 text-sky-300 font-mono">
+                    <span className="text-sky-300 font-mono tabular-nums">
                       {fileKinematicStats.format} · {fileKinematicStats.linkCount} 连杆 / {fileKinematicStats.jointCount} 关节
                     </span>
                   )}
-                  <span className="text-[11px] text-slate-400">100% 原厂运动学基准原件 · 零修改</span>
+                  <span className="text-slate-400">100% 原厂运动学基准原件 · 零修改</span>
                 </div>
               </div>
               <pre className="flex-1 overflow-auto p-4 text-xs font-mono text-slate-200 leading-relaxed whitespace-pre-wrap">
