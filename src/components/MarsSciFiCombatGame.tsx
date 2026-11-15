@@ -4,6 +4,12 @@ import { loadGlbSceneResilient, fetchTextAssetResilient } from '../utils/resilie
 import { UrdfJointDef, parseUrdfJoints } from '../utils/manifestUtils';
 import { computeSandboxUrdfJointAngle, SandboxKinematicState } from '../utils/actionSandboxEngine';
 import { detectSoftwareWebGL, createStudioLightboxPmrem } from '../utils/hybridRayTracing';
+import { createCombatAnamorphicPostPipeline } from '../utils/cinemaOpticsPipeline';
+import {
+  createInitialCameraMicroImpulse,
+  triggerCameraMicroImpulse,
+  stepCameraMicroImpulse
+} from '../utils/tactileCameraRig';
 import { proceduralAudioSynth } from '../utils/proceduralAudioSynth';
 import {
   GameShellState,
@@ -499,6 +505,10 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     const envTex = createStudioLightboxPmrem(renderer);
     scene.environment = envTex;
 
+    const combatPost = createCombatAnamorphicPostPipeline(renderer, initW, initH, isSoftwareGl);
+    let camMicroImpulse = createInitialCameraMicroImpulse();
+    let extraHitstopTimer = 0;
+
     // Warm Martian Sun Key Light + Cool Sky/Canyon Hemisphere Fill + Rim Light
     const hemi = new THREE.HemisphereLight(0xffcfb3, 0x1c1218, 0.72);
     scene.add(hemi);
@@ -837,6 +847,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
         renderer.setSize(w, h);
+        combatPost.setSize(w, h);
       }
     });
     resizeObs.observe(container);
@@ -1007,7 +1018,53 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         if (hub.keysHeld.has('ArrowLeft')) hub.camYaw -= 1.8 * dt;
         if (hub.keysHeld.has('ArrowRight')) hub.camYaw += 1.8 * dt;
 
-        stepMarsCombatWorld(wState, dt, stepInput);
+        // 40ms Combat Hitstop Freeze: render & camera micro-impulse continue while simulation dt pauses!
+        const hasPendingOneShot =
+          stepInput.missileJustPressed ||
+          stepInput.jumpJustPressed ||
+          stepInput.dashJustPressed ||
+          stepInput.empJustPressed ||
+          stepInput.wingmanCommandJustPressed ||
+          stepInput.ultimateJustPressed ||
+          stepInput.summonBossJustPressed;
+        if (extraHitstopTimer > 0 && !hasPendingOneShot) {
+          extraHitstopTimer = Math.max(0, extraHitstopTimer - dt);
+          wState.events.firedWeapon = null;
+          wState.events.hitConfirmed = null;
+          wState.events.bossCue = null;
+          wState.events.wingmanPounced = false;
+          wState.events.ejectedShell = null;
+          wState.events.sparkImpacts = [];
+          wState.events.explosions = [];
+        } else {
+          extraHitstopTimer = Math.max(0, extraHitstopTimer - dt);
+          stepMarsCombatWorld(wState, dt, stepInput);
+        }
+
+        // Trigger 40ms Hitstop + Micro Camera Impulse on heavy weapons, explosions, Boss ACS stagger & shield shatter
+        if (wState.events.firedWeapon === 'railgun' || wState.events.firedWeapon === 'orbital_ion') {
+          extraHitstopTimer = Math.max(extraHitstopTimer, 0.04);
+          camMicroImpulse = triggerCameraMicroImpulse(
+            wState.events.firedWeapon === 'orbital_ion' ? 1.05 : 0.78,
+            [-Math.cos(hub.camYaw), 0.25, -Math.sin(hub.camYaw)],
+            0.14
+          );
+        } else if (wState.events.firedWeapon === 'missile_pod') {
+          camMicroImpulse = triggerCameraMicroImpulse(0.52, [0, -0.8, 0.2], 0.11);
+        }
+        if (wState.events.explosions.length > 0) {
+          extraHitstopTimer = Math.max(extraHitstopTimer, 0.04);
+          camMicroImpulse = triggerCameraMicroImpulse(0.82, [0, -1, 0], 0.14);
+        }
+        if (
+          wState.events.hitConfirmed?.shieldShattered ||
+          wState.events.hitConfirmed?.kill ||
+          wState.events.bossCue === 'acs_stagger_break' ||
+          wState.events.bossCue === 'emp_nova'
+        ) {
+          extraHitstopTimer = Math.max(extraHitstopTimer, 0.04);
+          camMicroImpulse = triggerCameraMicroImpulse(0.92, [0.18, -0.95, 0.12], 0.15);
+        }
 
         // Trigger procedural WebAudio cues & pooled 3D shell/spark VFX from emitted events
         if (wState.events.ejectedShell) {
@@ -1421,7 +1478,24 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         }
       }
 
-      renderer.render(scene, camera);
+      const impStep = stepCameraMicroImpulse(camMicroImpulse, dt);
+      camMicroImpulse = impStep.next;
+      const [impX, impY, impZ] = impStep.offsetMeters;
+      camera.position.x += impX;
+      camera.position.y += impY;
+      camera.position.z += impZ;
+
+      combatPost.render(scene, camera, {
+        rawDt: Math.max(0.001, rawDt),
+        simTime: simElapsed,
+        anamorphicStrength: 0.44,
+        impulseIntensity01: Math.max(impStep.vignette01, worldRef.current.cameraTrauma * 0.45)
+      });
+
+      camera.position.x -= impX;
+      camera.position.y -= impY;
+      camera.position.z -= impZ;
+
       if (isSoftwareGl) {
         afterDraw(tick);
       } else {
@@ -1450,6 +1524,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       shieldSphereGeo.dispose();
       marsEnv.dispose();
       vfxCtrl.dispose();
+      combatPost.dispose();
       envTex.dispose();
       renderer.dispose();
     };

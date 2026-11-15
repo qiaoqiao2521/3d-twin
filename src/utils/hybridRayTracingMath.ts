@@ -3,6 +3,7 @@ export type PbrSurfaceMaterialClass =
   | 'anodized_aluminum'
   | 'carbon_fiber_weave'
   | 'acrylic_pressure_dome'
+  | 'elastomer_rubber_tire'
   | 'emissive_combustor_core'
   | 'emissive_mmrtg_core'
   | 'emissive_lumen_spotlight'
@@ -261,6 +262,28 @@ export function classifyPbrMaterialEnhancement(
       clearcoat: 0.06,
       clearcoatRoughness: 0.16,
       anisotropy: 0.58,
+      isEmissiveAreaLight: false,
+      emissiveHex: 0x000000,
+      emissiveRadiance: 0
+    };
+  }
+
+  // 5b. High-Roughness (0.88–0.94) Elastomer Rubber Tires, Treads, Gaskets & Foot Pads
+  if (
+    n.includes('tire') ||
+    n.includes('rubber') ||
+    n.includes('foot_pad') ||
+    n.includes('tread') ||
+    n.includes('gasket')
+  ) {
+    return {
+      surfaceClass: 'elastomer_rubber_tire',
+      metalness: 0.04,
+      roughness: 0.91,
+      envMapIntensity: 0.42,
+      clearcoat: 0.0,
+      clearcoatRoughness: 0.85,
+      anisotropy: 0.0,
       isEmissiveAreaLight: false,
       emissiveHex: 0x000000,
       emissiveRadiance: 0

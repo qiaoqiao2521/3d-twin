@@ -8,6 +8,7 @@ export interface HoveredPartCalloutInfo {
   screenX: number;
   screenY: number;
   worldMm: [number, number, number];
+  telemetryBadge?: string;
 }
 
 interface HoveredPartCalloutOverlayProps {
@@ -94,6 +95,11 @@ export const HoveredPartCalloutOverlay: React.FC<HoveredPartCalloutOverlayProps>
         <div className="text-[11px] font-mono font-semibold text-slate-100 truncate mt-0.5">
           {callout.partName}
         </div>
+        {callout.telemetryBadge && (
+          <div className="text-[10px] font-mono tabular-nums text-amber-300 mt-0.5 truncate">
+            {callout.telemetryBadge}
+          </div>
+        )}
         <div className="text-[10px] font-mono tabular-nums text-slate-400 mt-0.5 truncate border-t border-white/[0.06] pt-0.5">
           POS [{formatMm(callout.worldMm[0])}, {formatMm(callout.worldMm[1])}, {formatMm(callout.worldMm[2])}] mm
         </div>

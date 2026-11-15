@@ -8,6 +8,8 @@ import {
   VolumeX,
   Maximize2,
   Download,
+  Film,
+  Move,
   X
 } from 'lucide-react';
 import { HANGAR_CAMERA_PRESETS, HangarCameraPresetId } from '../utils/ccdIkSolver';
@@ -22,10 +24,16 @@ interface ViewportSettingsMenuProps {
   onToggleProbes: () => void;
   audioSynthEnabled: boolean;
   onToggleAudioSynth?: () => void;
+  audioVolume?: number;
+  onChangeAudioVolume?: (vol01: number) => void;
+  handheldMicroSway?: boolean;
+  onToggleHandheldMicroSway?: () => void;
   zenMode: boolean;
   onToggleZenMode?: () => void;
   isExporting4K?: boolean;
   onExport4K?: () => void;
+  isRecordingWebm?: boolean;
+  onToggleRecordWebm?: () => void;
   onOpenChange?: (open: boolean) => void;
 }
 
@@ -38,10 +46,16 @@ export const ViewportSettingsMenu: React.FC<ViewportSettingsMenuProps> = ({
   onToggleProbes,
   audioSynthEnabled,
   onToggleAudioSynth,
+  audioVolume = 0.85,
+  onChangeAudioVolume,
+  handheldMicroSway = false,
+  onToggleHandheldMicroSway,
   zenMode,
   onToggleZenMode,
   isExporting4K = false,
   onExport4K,
+  isRecordingWebm = false,
+  onToggleRecordWebm,
   onOpenChange
 }) => {
   const [open, setOpen] = useState(false);
@@ -75,8 +89,10 @@ export const ViewportSettingsMenu: React.FC<ViewportSettingsMenuProps> = ({
   const activeBadgeCount =
     (activePreset ? 1 : 0) +
     (directorCamMode !== 'off' ? 1 : 0) +
+    (handheldMicroSway ? 1 : 0) +
     (showProbes ? 1 : 0) +
-    (audioSynthEnabled ? 1 : 0);
+    (audioSynthEnabled ? 1 : 0) +
+    (isRecordingWebm ? 1 : 0);
 
   const toggleRowClass = (active: boolean) =>
     `w-full px-2.5 py-1.5 rounded-lg text-xs border flex items-center justify-between gap-2 transition cursor-pointer ${
@@ -101,7 +117,7 @@ export const ViewportSettingsMenu: React.FC<ViewportSettingsMenuProps> = ({
             ? 'bg-[#12141a]/[0.90] border-[#00e5ff]/65 text-cyan-100'
             : 'bg-[#12141a]/[0.82] border-white/[0.08] text-slate-200 hover:border-white/20 hover:text-white'
         }`}
-        title="视角预设、3D 遥测探针、物理声效与全屏设置"
+        title="视角预设、阻尼呼吸微晃、3D 遥测探针、物理声效与录制设置"
       >
         <Settings className="w-3.5 h-3.5 text-cyan-300 shrink-0" strokeWidth={1.5} />
         <span>设置</span>
@@ -186,11 +202,28 @@ export const ViewportSettingsMenu: React.FC<ViewportSettingsMenuProps> = ({
                 {directorCamMode === 'off' ? '关' : '运行中'}
               </span>
             </button>
+
+            {onToggleHandheldMicroSway && (
+              <button
+                type="button"
+                data-testid="settings-toggle-microsway-btn"
+                onClick={onToggleHandheldMicroSway}
+                className={toggleRowClass(handheldMicroSway)}
+              >
+                <span className="flex items-center gap-1.5 truncate">
+                  <Move className="w-3.5 h-3.5 text-cyan-300 shrink-0" strokeWidth={1.5} />
+                  <span>手持云台微呼吸感</span>
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  {handheldMicroSway ? '开启' : '关闭'}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* 2. Viewport Overlays, Audio & Export */}
           <div className="pt-2 border-t border-white/[0.06] space-y-1.5">
-            <div className="text-[11px] text-slate-400">界面叠加与声效</div>
+            <div className="text-[11px] text-slate-400">界面叠加、声效与输出</div>
 
             <button
               type="button"
@@ -208,24 +241,45 @@ export const ViewportSettingsMenu: React.FC<ViewportSettingsMenuProps> = ({
             </button>
 
             {onToggleAudioSynth && (
-              <button
-                type="button"
-                data-testid="header-audio-synth-btn"
-                onClick={onToggleAudioSynth}
-                className={toggleRowClass(audioSynthEnabled)}
-              >
-                <span className="flex items-center gap-1.5">
-                  {audioSynthEnabled ? (
-                    <Volume2 className="w-3.5 h-3.5 text-cyan-300 shrink-0" strokeWidth={1.5} />
-                  ) : (
-                    <VolumeX className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.5} />
-                  )}
-                  <span>程序化物理声效</span>
-                </span>
-                <span className="text-[10px] font-mono text-slate-400">
-                  {audioSynthEnabled ? '开启' : '静音'}
-                </span>
-              </button>
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  data-testid="header-audio-synth-btn"
+                  onClick={onToggleAudioSynth}
+                  className={toggleRowClass(audioSynthEnabled)}
+                >
+                  <span className="flex items-center gap-1.5">
+                    {audioSynthEnabled ? (
+                      <Volume2 className="w-3.5 h-3.5 text-cyan-300 shrink-0" strokeWidth={1.5} />
+                    ) : (
+                      <VolumeX className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.5} />
+                    )}
+                    <span>程序化物理声效</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {audioSynthEnabled ? '开启' : '静音'}
+                  </span>
+                </button>
+
+                {onChangeAudioVolume && (
+                  <div className="px-2 py-1 flex items-center gap-2 bg-[#161922]/80 rounded-lg border border-white/[0.06]">
+                    <span className="text-[10px] font-mono text-slate-400">音量</span>
+                    <input
+                      type="range"
+                      aria-label="视口声效总音量"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={audioVolume}
+                      onChange={(e) => onChangeAudioVolume(parseFloat(e.target.value))}
+                      className="flex-1 h-1 accent-[#00e5ff] cursor-pointer"
+                    />
+                    <span className="text-[10px] font-mono text-slate-300 tabular-nums w-8 text-right">
+                      {Math.round(audioVolume * 100)}%
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
 
             {onToggleZenMode && (
@@ -258,6 +312,20 @@ export const ViewportSettingsMenu: React.FC<ViewportSettingsMenuProps> = ({
                   <span>{isExporting4K ? '正在渲染 4K...' : '导出 4K 离线帧'}</span>
                 </span>
                 <span className="text-[10px] font-mono text-slate-400">PNG</span>
+              </button>
+            )}
+
+            {onToggleRecordWebm && (
+              <button
+                type="button"
+                onClick={onToggleRecordWebm}
+                className={toggleRowClass(isRecordingWebm)}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Film className="w-3.5 h-3.5 text-amber-300 shrink-0" strokeWidth={1.5} />
+                  <span>{isRecordingWebm ? '停止并下载 WebM' : '录制 WebM 高清短片'}</span>
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">WebM</span>
               </button>
             )}
           </div>

@@ -15,6 +15,11 @@ import {
   PathTracerAccumulatorState,
   stepPathTracerAccumulatorState
 } from './hybridRayTracingMath';
+import {
+  CinemaOpticsConfig,
+  evToLinearExposureMultiplier,
+  stepFrameBudgetGuard
+} from './cinemaOpticsPipeline';
 
 let _cachedIsSoftwareGl: boolean | null = null;
 
@@ -227,16 +232,36 @@ export function upgradeGlbPbrAndBuildStaticBvh(
     const isMachinedMetal =
       profile.surfaceClass === 'precision_steel_machined' ||
       profile.surfaceClass === 'titanium_anisotropic';
+    const isRubberElastomer = profile.surfaceClass === 'elastomer_rubber_tire';
+    const isOpticalGlass = profile.surfaceClass === 'acrylic_pressure_dome';
+
+    const microSurfaceClass = isMachinedMetal
+      ? 1
+      : profile.surfaceClass === 'carbon_fiber_weave'
+        ? 2
+        : isOpticalGlass
+          ? 3
+          : isRubberElastomer
+            ? 4
+            : 0;
 
     for (const rawMat of mats) {
       const std = rawMat as THREE.MeshStandardMaterial & {
         clearcoat?: number;
         clearcoatRoughness?: number;
         anisotropy?: number;
+        ior?: number;
+        iridescence?: number;
+        iridescenceIOR?: number;
       };
       if (!std || !('roughness' in std)) continue;
 
-      if (isMatteCasting) {
+      std.userData = { ...std.userData, microSurfaceClass };
+
+      if (isRubberElastomer) {
+        std.metalness = 0.04;
+        std.roughness = 0.91;
+      } else if (isMatteCasting) {
         // Enforce matte bead-blasted / industrial powder-coat finish on outer shells & castings (never mirror-oily!)
         std.metalness = THREE.MathUtils.clamp(
           THREE.MathUtils.lerp(std.metalness ?? 0.3, profile.metalness, 0.8),
@@ -282,6 +307,11 @@ export function upgradeGlbPbrAndBuildStaticBvh(
       if ('anisotropy' in std) {
         std.anisotropy = profile.anisotropy;
       }
+      if (isOpticalGlass) {
+        if ('ior' in std) std.ior = 1.52;
+        if ('iridescence' in std) std.iridescence = 0.85;
+        if ('iridescenceIOR' in std) std.iridescenceIOR = 1.38;
+      }
 
       if (profile.isEmissiveAreaLight && std.emissive) {
         std.emissive.setHex(profile.emissiveHex);
@@ -311,6 +341,15 @@ export interface SaltlineReflectorDeckController {
   mesh: THREE.Mesh;
   setFloorY: (y: number) => void;
   setContactFootprint: (centerX: number, centerZ: number, radiusX: number, radiusZ: number) => void;
+  setExplosionFade: (explosion01: number) => void;
+  setDeckStyle: (params: {
+    baseHex: number;
+    horizonHex: number;
+    reflectIntensity: number;
+    wetness: number;
+    seamGlowHex: number;
+    seamGlowStrength: number;
+  }) => void;
   updateReflection: (
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
@@ -393,7 +432,11 @@ export function createSaltlineReflectorDeck(
       uTextureMatrix: { value: textureMatrix },
       uBaseColor: { value: new THREE.Color(0x141820) },
       uHorizonColor: { value: new THREE.Color(0x0d1017) },
-      uReflectIntensity: { value: 0.16 },
+      uReflectIntensity: { value: 0.18 },
+      uWetness: { value: 0.15 },
+      uSeamGlowColor: { value: new THREE.Color(0x38bdf8) },
+      uSeamGlowStrength: { value: 0.12 },
+      uExplosionFade: { value: 0.0 },
       uContactFootprint: { value: contactFootprint }
     },
     vertexShader: `
@@ -415,6 +458,10 @@ export function createSaltlineReflectorDeck(
       uniform vec3 uBaseColor;
       uniform vec3 uHorizonColor;
       uniform float uReflectIntensity;
+      uniform float uWetness;
+      uniform vec3 uSeamGlowColor;
+      uniform float uSeamGlowStrength;
+      uniform float uExplosionFade;
       uniform vec4 uContactFootprint;
       varying vec4 vReflectUv;
       varying vec2 vUv;
@@ -422,16 +469,16 @@ export function createSaltlineReflectorDeck(
 
       void main() {
         vec4 nr = texture2D(tNormalRough, vUv);
-        vec2 microGrain = (nr.rg - 0.5) * 0.025;
-        float matteRoughness = clamp(nr.b, 0.58, 0.84);
+        vec2 microGrain = (nr.rg - 0.5) * mix(0.024, 0.008, uWetness);
+        float surfaceRoughness = mix(clamp(nr.b, 0.58, 0.84), 0.12, uWetness * 0.82);
 
         vec2 projUv = vReflectUv.xy / max(0.0001, vReflectUv.w);
         float radialDist = length(vWorldPos.xz);
-        float horizonBlend = smoothstep(3.4, 15.5, radialDist);
-        float reflFade = 1.0 - smoothstep(2.4, 8.2, radialDist);
+        float horizonBlend = smoothstep(3.8, 16.5, radialDist);
+        float reflFade = 1.0 - smoothstep(2.8, 9.8, radialDist);
 
-        // Wide 9-Tap Roughness-Diffused Reflection (subtle low-intensity matte reflection, zero mirror distraction!)
-        float blurRadius = (0.011 + matteRoughness * 0.018) * (1.0 + radialDist * 0.18);
+        // Roughness-modulated 9-Tap Planar Reflection (sharp mirror streaks when wet, soft diffused sheen when matte!)
+        float blurRadius = (0.003 + surfaceRoughness * 0.022) * (1.0 + radialDist * 0.16);
         vec2 p0 = clamp(projUv + microGrain, 0.003, 0.997);
         vec2 p1 = clamp(projUv + microGrain + vec2(-0.61, 0.42) * blurRadius, 0.003, 0.997);
         vec2 p2 = clamp(projUv + microGrain + vec2(0.58, 0.39) * blurRadius, 0.003, 0.997);
@@ -456,26 +503,29 @@ export function createSaltlineReflectorDeck(
 
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
         float NoV = clamp(viewDir.y, 0.0, 1.0);
-        float fresnel = 0.05 + 0.45 * pow(1.0 - NoV, 3.8);
+        float fresnel = 0.06 + 0.64 * pow(1.0 - NoV, 3.6);
 
-        // Subtle radial stage spotlight falloff + whisper-faint architectural expansion joints (no harsh blue grid!)
+        // Industrial self-leveling epoxy + brushed-metal expansion seams + precision coordinate reticle ring
         float stageFalloff = exp(-radialDist * radialDist * 0.055);
         vec2 metricCell = abs(fract(vWorldPos.xz * 0.5) - 0.5);
-        float hairlineSeam = (1.0 - smoothstep(0.0, 0.008, min(metricCell.x, metricCell.y))) * (1.0 - smoothstep(1.8, 6.2, radialDist));
-        vec3 floorAlbedo = mix(uHorizonColor, uBaseColor + vec3(0.018, 0.021, 0.028) * stageFalloff, 1.0 - horizonBlend);
-        floorAlbedo = mix(floorAlbedo, vec3(0.11, 0.14, 0.19), hairlineSeam * 0.24);
+        float metalSeam = (1.0 - smoothstep(0.0, 0.009, min(metricCell.x, metricCell.y))) * (1.0 - smoothstep(2.2, 7.8, radialDist));
+        float coordRing = (1.0 - smoothstep(0.0, 0.014, abs(radialDist - 1.65))) + (1.0 - smoothstep(0.0, 0.014, abs(radialDist - 2.85))) * 0.6;
+        vec3 floorAlbedo = mix(uHorizonColor, uBaseColor + vec3(0.018, 0.022, 0.030) * stageFalloff, 1.0 - horizonBlend);
+        floorAlbedo = mix(floorAlbedo, vec3(0.16, 0.20, 0.26), metalSeam * 0.34);
+        floorAlbedo += uSeamGlowColor * (metalSeam * 0.32 + coordRing * 0.45) * uSeamGlowStrength * (1.0 - horizonBlend);
 
-        // Multi-Layered Soft Near-Ground Contact Shadow directly beneath the machine's footprint!
-        vec2 relFoot = (vWorldPos.xz - uContactFootprint.xy) / max(vec2(0.18), uContactFootprint.zw);
+        // Multi-Layered Soft Contact Shadow directly beneath footprint, fading smoothly as exploded parts lift!
+        vec2 relFoot = (vWorldPos.xz - uContactFootprint.xy) / max(vec2(0.18), uContactFootprint.zw * (1.0 + uExplosionFade * 0.38));
         float ellipDistSq = dot(relFoot, relFoot);
-        float tightCoreAo = exp(-ellipDistSq * 2.35) * 0.62;
-        float softPenumbraAo = exp(-ellipDistSq * 0.72) * 0.28;
-        float contactShadow = clamp(tightCoreAo + softPenumbraAo, 0.0, 0.76);
+        float tightCoreAo = exp(-ellipDistSq * 2.35) * 0.66;
+        float softPenumbraAo = exp(-ellipDistSq * 0.72) * 0.30;
+        float contactShadow = clamp(tightCoreAo + softPenumbraAo, 0.0, 0.80) * (1.0 - uExplosionFade * 0.55);
 
         floorAlbedo *= (1.0 - contactShadow);
 
-        float reflWeight = uReflectIntensity * reflFade * (0.42 + 0.58 * fresnel) * (1.0 - contactShadow * 0.55);
-        vec3 composed = mix(floorAlbedo, reflCol * 0.68 + floorAlbedo * 0.52, clamp(reflWeight, 0.0, 0.24));
+        float maxReflClamp = mix(0.26, 0.68, uWetness);
+        float reflWeight = uReflectIntensity * reflFade * (0.42 + 0.58 * fresnel) * (1.0 - contactShadow * 0.52);
+        vec3 composed = mix(floorAlbedo, reflCol * mix(0.68, 0.92, uWetness) + floorAlbedo * mix(0.52, 0.25, uWetness), clamp(reflWeight, 0.0, maxReflClamp));
         vec3 finalCol = mix(composed, uHorizonColor, horizonBlend);
 
         gl_FragColor = vec4(finalCol, 1.0);
@@ -514,12 +564,22 @@ export function createSaltlineReflectorDeck(
       );
       swFrameCounter = 0;
     },
+    setExplosionFade(explosion01: number) {
+      deckMat.uniforms.uExplosionFade.value = Math.max(0, Math.min(1, explosion01));
+    },
+    setDeckStyle(params) {
+      deckMat.uniforms.uBaseColor.value.setHex(params.baseHex);
+      deckMat.uniforms.uHorizonColor.value.setHex(params.horizonHex);
+      deckMat.uniforms.uReflectIntensity.value = params.reflectIntensity;
+      deckMat.uniforms.uWetness.value = params.wetness;
+      deckMat.uniforms.uSeamGlowColor.value.setHex(params.seamGlowHex);
+      deckMat.uniforms.uSeamGlowStrength.value = params.seamGlowStrength;
+    },
     updateReflection(renderer, scene, camera) {
-      if (isSoftwareGl) {
-        const shouldRender = swFrameCounter % 4 === 0;
-        swFrameCounter++;
-        if (!shouldRender) return;
-      }
+      const stride = isSoftwareGl ? 4 : 2;
+      const shouldRender = swFrameCounter % stride === 0;
+      swFrameCounter++;
+      if (!shouldRender) return;
 
       mesh.updateMatrixWorld();
       reflectorWorldPos.setFromMatrixPosition(mesh.matrixWorld);
@@ -609,6 +669,11 @@ export interface DualGearRayTracingController {
     dynamicEmissives?: DynamicEmissivePoint[];
     schlierenMode?: boolean;
     simTime?: number;
+    cinemaOptics?: CinemaOpticsConfig;
+    focusDistanceMeters?: number;
+    bulletTimeScale?: number;
+    impulseVignette01?: number;
+    rawDt?: number;
   }) => { spp: number; converged: boolean };
   setSize: (width: number, height: number) => void;
   resetAccumulation: () => void;
@@ -734,7 +799,14 @@ export function createDualGearRayTracingPipeline(
       uBloomStrength: { value: RESTRAINED_BLOOM_CONFIG.strength },
       uGtaoIntensity: { value: GTAO_CONFIG.intensity },
       uSchlierenMode: { value: 0 },
-      uSimTime: { value: 0.0 }
+      uSimTime: { value: 0.0 },
+      uAnamorphicStreak: { value: 0.0 },
+      uSmartBokeh: { value: 0.0 },
+      uFocusDepth: { value: 2.5 },
+      uFilmGrain: { value: 0.0 },
+      uChromaticVignette: { value: 0.0 },
+      uBulletTimeActive: { value: 0.0 },
+      uImpulseVignette: { value: 0.0 }
     },
     side: THREE.DoubleSide,
     depthTest: false,
@@ -770,6 +842,13 @@ export function createDualGearRayTracingPipeline(
       uniform float uGtaoIntensity;
       uniform int uSchlierenMode;
       uniform float uSimTime;
+      uniform float uAnamorphicStreak;
+      uniform float uSmartBokeh;
+      uniform float uFocusDepth;
+      uniform float uFilmGrain;
+      uniform float uChromaticVignette;
+      uniform float uBulletTimeActive;
+      uniform float uImpulseVignette;
       varying vec2 vUv;
 
       vec3 acesFilmicAndSrgb(vec3 linearHdr) {
@@ -828,7 +907,7 @@ export function createDualGearRayTracingPipeline(
         float dU = texture2D(tDepth, vUv + vec2(0.0, texel.y)).r;
         float dD = texture2D(tDepth, vUv - vec2(0.0, texel.y)).r;
 
-        // 4-Tap Cross-Diagonal High-Threshold Selective Bloom Reads (strictly > 0.88 threshold!)
+        // 4-Tap Cross-Diagonal High-Threshold Selective Bloom Reads
         vec2 bOff = texel * 2.8;
         vec3 bC1 = texture2D(tColor, clamp(vUv + vec2(bOff.x, bOff.y), vec2(0.002), vec2(0.998))).rgb;
         vec3 bC2 = texture2D(tColor, clamp(vUv + vec2(-bOff.x, bOff.y), vec2(0.002), vec2(0.998))).rgb;
@@ -838,6 +917,21 @@ export function createDualGearRayTracingPipeline(
           extractSelectiveHighPass(baseSample.rgb) * 0.28 +
           (extractSelectiveHighPass(bC1) + extractSelectiveHighPass(bC2) + extractSelectiveHighPass(bC3) + extractSelectiveHighPass(bC4)) * 0.18
         ) * uBloomStrength;
+
+        // Panavision Horizontal Anamorphic Flare Streaks (6-Tap Wide Horizontal High-Pass)
+        vec3 anamorphicFlare = vec3(0.0);
+        if (uAnamorphicStreak > 0.005) {
+          vec3 aL1 = extractSelectiveHighPass(texture2D(tColor, clamp(vUv - vec2(texel.x * 7.0, 0.0), vec2(0.002), vec2(0.998))).rgb);
+          vec3 aR1 = extractSelectiveHighPass(texture2D(tColor, clamp(vUv + vec2(texel.x * 7.0, 0.0), vec2(0.002), vec2(0.998))).rgb);
+          vec3 aL2 = extractSelectiveHighPass(texture2D(tColor, clamp(vUv - vec2(texel.x * 19.0, 0.0), vec2(0.002), vec2(0.998))).rgb);
+          vec3 aR2 = extractSelectiveHighPass(texture2D(tColor, clamp(vUv + vec2(texel.x * 19.0, 0.0), vec2(0.002), vec2(0.998))).rgb);
+          vec3 aL3 = extractSelectiveHighPass(texture2D(tColor, clamp(vUv - vec2(texel.x * 38.0, 0.0), vec2(0.002), vec2(0.998))).rgb);
+          vec3 aR3 = extractSelectiveHighPass(texture2D(tColor, clamp(vUv + vec2(texel.x * 38.0, 0.0), vec2(0.002), vec2(0.998))).rgb);
+          vec3 rawStreak = (aL1 + aR1) * 0.25 + (aL2 + aR2) * 0.16 + (aL3 + aR3) * 0.09;
+          vec3 panavisionTint = vec3(0.28, 0.84, 1.0) * max(rawStreak.b, rawStreak.g * 0.8) + vec3(1.0, 0.62, 0.24) * rawStreak.r * 0.55;
+          anamorphicFlare = (rawStreak * 0.35 + panavisionTint * 0.72) * uAnamorphicStreak;
+        }
+        selectiveBloom += anamorphicFlare;
 
         if (uSchlierenMode == 1) {
           float edgeGradX = clamp((dR - dL) * 42.0, -1.0, 1.0);
@@ -988,10 +1082,48 @@ export function createDualGearRayTracingPipeline(
           * fresnelSsr * metallicReceptivity * ssrScreenFade * 0.34;
 
         if (uMode == 0) {
-          vec3 bgOut = acesFilmicAndSrgb(baseSample.rgb + selectiveBloom * 0.65);
-          vec3 surfLinear = baseSample.rgb * shadowAtten + realtimeSsr + selectiveBloom;
+          vec3 baseLinear = baseSample.rgb;
+          // Smart Focus Macro Bokeh Depth of Field (blurs out-of-focus foreground/background around focused CAD part)
+          if (uSmartBokeh > 0.5) {
+            float viewDist = abs(vp.z);
+            float coc = clamp(abs(viewDist - uFocusDepth) / max(0.55, uFocusDepth * 0.55) - 0.14, 0.0, 1.0);
+            if (coc > 0.02) {
+              vec2 dofR = texel * (2.0 + coc * 6.5);
+              vec3 d1 = texture2D(tColor, clamp(vUv + vec2(dofR.x, 0.35 * dofR.y), vec2(0.002), vec2(0.998))).rgb;
+              vec3 d2 = texture2D(tColor, clamp(vUv + vec2(-dofR.x, -0.35 * dofR.y), vec2(0.002), vec2(0.998))).rgb;
+              vec3 d3 = texture2D(tColor, clamp(vUv + vec2(-0.35 * dofR.x, dofR.y), vec2(0.002), vec2(0.998))).rgb;
+              vec3 d4 = texture2D(tColor, clamp(vUv + vec2(0.35 * dofR.x, -dofR.y), vec2(0.002), vec2(0.998))).rgb;
+              baseLinear = mix(baseLinear, (d1 + d2 + d3 + d4) * 0.25, coc * 0.85);
+            }
+          }
+
+          vec3 bgOut = acesFilmicAndSrgb(baseLinear + selectiveBloom * 0.65);
+          vec3 surfLinear = baseLinear * shadowAtten + realtimeSsr + selectiveBloom;
           vec3 surfOut = acesFilmicAndSrgb(surfLinear);
-          gl_FragColor = vec4(mix(bgOut, surfOut, isSurface), 1.0);
+          vec3 outCol = mix(bgOut, surfOut, isSurface);
+
+          // Peripheral Chromatic Dispersion, Cinema Vignette, Bullet-Time Grade & Organic 35mm Film Grain
+          vec2 cDir = vUv - 0.5;
+          float cDist = length(cDir);
+          if (uChromaticVignette > 0.5 || uImpulseVignette > 0.01) {
+            float caShift = (uChromaticVignette * 0.0012 + uImpulseVignette * 0.0048) * cDist;
+            float caR = acesFilmicAndSrgb(texture2D(tColor, clamp(vUv - cDir * caShift, vec2(0.002), vec2(0.998))).rgb).r;
+            float caB = acesFilmicAndSrgb(texture2D(tColor, clamp(vUv + cDir * caShift, vec2(0.002), vec2(0.998))).rgb).b;
+            outCol.r = mix(outCol.r, caR, 0.55);
+            outCol.b = mix(outCol.b, caB, 0.55);
+            float vig = 1.0 - smoothstep(0.42, 0.96, cDist) * (uChromaticVignette * 0.16 + uImpulseVignette * 0.18);
+            outCol *= vig;
+          }
+          if (uBulletTimeActive > 0.5) {
+            float lumaBt = dot(outCol, vec3(0.299, 0.587, 0.114));
+            outCol = mix(vec3(lumaBt) * vec3(0.88, 0.98, 1.08), outCol, 0.76);
+          }
+          if (uFilmGrain > 0.002) {
+            float gr = hash12(gl_FragCoord.xy + vec2(uSimTime * 47.0, uSimTime * 19.0)) - 0.5;
+            outCol = clamp(outCol + gr * uFilmGrain * 0.18, 0.0, 1.0);
+          }
+
+          gl_FragColor = vec4(outCol, 1.0);
           return;
         }
 
@@ -1095,6 +1227,7 @@ export function createDualGearRayTracingPipeline(
   }
 
   const _tmpWorldPos = new THREE.Vector3();
+  let rollingFrameMs = 14.0;
 
   return {
     renderFrame({
@@ -1108,8 +1241,38 @@ export function createDualGearRayTracingPipeline(
       emissiveSources,
       dynamicEmissives,
       schlierenMode,
-      simTime
+      simTime,
+      cinemaOptics,
+      focusDistanceMeters,
+      bulletTimeScale,
+      impulseVignette01,
+      rawDt
     }) {
+      const budget = stepFrameBudgetGuard(
+        rollingFrameMs,
+        rawDt ?? 0.016,
+        cinemaOptics ? cinemaOptics.frameBudgetGuard : true,
+        isSoftwareGl
+      );
+      rollingFrameMs = budget.rollingMs;
+
+      if (cinemaOptics) {
+        hybridPostMat.uniforms.uExposure.value =
+          1.06 * evToLinearExposureMultiplier(cinemaOptics.exposureEv);
+        hybridPostMat.uniforms.uBloomThreshold.value = cinemaOptics.bloomThreshold;
+        hybridPostMat.uniforms.uBloomStrength.value = cinemaOptics.bloomStrength;
+        hybridPostMat.uniforms.uAnamorphicStreak.value =
+          cinemaOptics.anamorphicStreak * budget.anamorphicTapScale;
+        hybridPostMat.uniforms.uSmartBokeh.value =
+          cinemaOptics.smartBokehEnabled && !budget.isThrottled ? 1.0 : 0.0;
+        hybridPostMat.uniforms.uFilmGrain.value = cinemaOptics.filmGrain;
+        hybridPostMat.uniforms.uChromaticVignette.value = cinemaOptics.chromaticVignette ? 1.0 : 0.0;
+      }
+      hybridPostMat.uniforms.uFocusDepth.value = focusDistanceMeters ?? 2.4;
+      hybridPostMat.uniforms.uBulletTimeActive.value =
+        bulletTimeScale !== undefined && bulletTimeScale < 0.9 ? 1.0 : 0.0;
+      hybridPostMat.uniforms.uImpulseVignette.value = impulseVignette01 ?? 0.0;
+
       camera.updateMatrixWorld();
       const sig = computeSceneStateSignature(
         camera.matrixWorld.elements,
@@ -1118,7 +1281,7 @@ export function createDualGearRayTracingPipeline(
         poseChecksum
       );
 
-      const samplesPerFrame = 16;
+      const samplesPerFrame = budget.isThrottled ? 4 : 8;
       const stepped = stepPathTracerAccumulatorState(
         accumState,
         pathTracingEnabled,
@@ -1210,7 +1373,9 @@ export function createDualGearRayTracingPipeline(
       );
       hybridPostMat.uniforms.uBlendWeight.value = stepped.didReset ? 1.0 : stepped.blendWeight;
       hybridPostMat.uniforms.uSampleSeed.value = accumState.spp;
-      hybridPostMat.uniforms.uMode.value = 1;
+      // Use fast 60fps Gear-1 shader on camera-motion/reset frames to eliminate click/glide GPU stalls;
+      // accumulate Monte Carlo GI (uMode=1) on stationary frames.
+      hybridPostMat.uniforms.uMode.value = stepped.didReset ? 0 : 1;
 
       renderer.setRenderTarget(nextTarget);
       renderer.render(postScene, orthoCam);

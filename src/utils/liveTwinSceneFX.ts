@@ -25,19 +25,28 @@ export interface TwinMaterialUniforms {
   uSectionLayerCode: { value: number };
   uModelMinY: { value: number };
   uModelSpanY: { value: number };
+  /** Stratified PBR micro-surface class: 0=std, 1=anisotropic CNC+edgewear, 2=carbon weave, 3=AR optical lens, 4=rubber grain */
+  uMicroSurfaceClass: { value: number };
+  /** Scientific Real-Time Von Mises FEA Stress Cloud */
+  uFeaActive: { value: number };
+  uFeaSigma: { value: number };
+  uFeaColorMap: { value: number };
+  uFeaContours: { value: number };
+  /** Hard-Surface Sci-Fi Nanite Dissolve & Holographic Spawn Reconstruction */
+  uNaniteActive: { value: number };
+  uNaniteSweepY: { value: number };
+  uNaniteDissolve: { value: number };
 }
 
 /**
  * Enhances a real GLB MeshStandardMaterial via onBeforeCompile to add:
- * 1) 1.2s Cyan Fresnel Rim Scan Pulse when a real CAD sub-part is selected.
- * 2) Precision glowing laser kerf + Solid 45-deg CNC-Machined CAD Cross-Section Caps (!gl_FrontFacing) along the optical clipping plane.
- * 3) 3D Mag-Lens X-Ray Sphere: dissolves ONLY outer L1 armor inside radius R into a glowing cyan wireframe lattice.
- * 4) Dual-Laser SLS Metal 3D Printing Materialization.
- * 5) Hardspace: Shipbreaker Engineering Role Color-Coding (Black-Yellow Hazard Stripes / Crimson / Cyan / Amber).
- * 6) Horizon Focus Weakpoint X-Ray Silhouette & Blazing Amber-Gold Weakpoint Core.
- * 7) Star Citizen / Ace Combat 7 Dynamic Mars Regolith Dust, Leading-Edge Frost & Titanium Heat Bluing.
- * 8) Armored Core 6 Overheat Cherry-Red Core Incandescence.
- * Zero geometry modification; preserves 100% of real GLB PBR properties and clipping planes.
+ * 1) Stratified PBR Micro-Surface Detail (CNC toolpaths + edge wear, carbon weave, AR lens iridescence, elastomer grain)
+ * 2) 1.2s Cyan Fresnel Rim Scan Pulse when a real CAD sub-part is selected
+ * 3) Precision glowing laser kerf + Solid 45-deg CNC-Machined CAD Cross-Section Caps (!gl_FrontFacing)
+ * 4) 3D Mag-Lens X-Ray Sphere & Dual-Laser SLS Metal 3D Printing
+ * 5) Real-Time FEA Von Mises Structural Stress Cloud (Turbo/Viridis/Jet + Iso-Stress Contours + Peak Pulse)
+ * 6) Nanite Hex-Lattice Dissolve / 0.65s Holographic Spawn Materialization
+ * Zero geometry modification; preserves 100% of real GLB PBR maps and restores cleanly when modes toggle off.
  */
 export function attachTwinShaderEffects(
   mat: THREE.MeshStandardMaterial,
@@ -45,10 +54,12 @@ export function attachTwinShaderEffects(
   layerKey: 'L1' | 'L2' | 'L3' = isOuterArmor ? 'L1' : 'L2'
 ): TwinMaterialUniforms {
   const layerCode = layerKey === 'L1' ? 1.0 : layerKey === 'L2' ? 2.0 : 3.0;
+  const microClass = Number(mat.userData?.microSurfaceClass ?? 0);
   const existing = mat.userData?.twinUniforms as TwinMaterialUniforms | undefined;
   if (existing) {
     existing.uIsOuterArmor.value = isOuterArmor ? 1.0 : 0.0;
     existing.uSectionLayerCode.value = layerCode;
+    if (microClass > 0) existing.uMicroSurfaceClass.value = microClass;
     return existing;
   }
 
@@ -71,11 +82,19 @@ export function attachTwinShaderEffects(
     uOverheatCoreGlow: { value: 0.0 },
     uSectionLayerCode: { value: layerCode },
     uModelMinY: { value: 0.0 },
-    uModelSpanY: { value: 1.8 }
+    uModelSpanY: { value: 1.8 },
+    uMicroSurfaceClass: { value: microClass },
+    uFeaActive: { value: 0.0 },
+    uFeaSigma: { value: 0.18 },
+    uFeaColorMap: { value: 0.0 },
+    uFeaContours: { value: 1.0 },
+    uNaniteActive: { value: 0.0 },
+    uNaniteSweepY: { value: 999.0 },
+    uNaniteDissolve: { value: 0.0 }
   };
 
   mat.userData = { ...mat.userData, twinUniforms };
-  mat.customProgramCacheKey = () => 'mega_hangar_twin_fresnel_maglens_sls_aaa_v4_solidcap';
+  mat.customProgramCacheKey = () => 'mega_hangar_twin_master_v5_pbr_fea_nanite';
 
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uFresnelPulse = twinUniforms.uFresnelPulse;
@@ -97,6 +116,14 @@ export function attachTwinShaderEffects(
     shader.uniforms.uSectionLayerCode = twinUniforms.uSectionLayerCode;
     shader.uniforms.uModelMinY = twinUniforms.uModelMinY;
     shader.uniforms.uModelSpanY = twinUniforms.uModelSpanY;
+    shader.uniforms.uMicroSurfaceClass = twinUniforms.uMicroSurfaceClass;
+    shader.uniforms.uFeaActive = twinUniforms.uFeaActive;
+    shader.uniforms.uFeaSigma = twinUniforms.uFeaSigma;
+    shader.uniforms.uFeaColorMap = twinUniforms.uFeaColorMap;
+    shader.uniforms.uFeaContours = twinUniforms.uFeaContours;
+    shader.uniforms.uNaniteActive = twinUniforms.uNaniteActive;
+    shader.uniforms.uNaniteSweepY = twinUniforms.uNaniteSweepY;
+    shader.uniforms.uNaniteDissolve = twinUniforms.uNaniteDissolve;
 
     shader.vertexShader =
       `varying vec3 vTwinWorldPos;\nvarying vec3 vTwinLocalPos;\nvarying vec3 vTwinViewPos;\nvarying vec3 vTwinViewNorm;\n` +
@@ -129,10 +156,44 @@ uniform float uOverheatCoreGlow;
 uniform float uSectionLayerCode;
 uniform float uModelMinY;
 uniform float uModelSpanY;
+uniform float uMicroSurfaceClass;
+uniform float uFeaActive;
+uniform float uFeaSigma;
+uniform float uFeaColorMap;
+uniform float uFeaContours;
+uniform float uNaniteActive;
+uniform float uNaniteSweepY;
+uniform float uNaniteDissolve;
 varying vec3 vTwinWorldPos;
 varying vec3 vTwinLocalPos;
 varying vec3 vTwinViewPos;
-varying vec3 vTwinViewNorm;\n` +
+varying vec3 vTwinViewNorm;
+
+vec3 twinEvalFeaLut(float x, float mode) {
+  float t = clamp(x, 0.0, 1.0);
+  if (mode > 0.5 && mode < 1.5) {
+    // Viridis
+    return clamp(vec3(
+      0.267 + t * (0.004 + t * (2.78 - t * 2.06)),
+      0.005 + t * (1.38 - t * 0.48),
+      0.329 + t * (1.42 - t * (2.68 - t * 1.08))
+    ), 0.0, 1.0);
+  }
+  if (mode >= 1.5) {
+    // Jet
+    return clamp(vec3(
+      1.5 - abs(4.0 * t - 3.0),
+      1.5 - abs(4.0 * t - 2.0),
+      1.5 - abs(4.0 * t - 1.0)
+    ), 0.0, 1.0);
+  }
+  // Google Turbo
+  return clamp(vec3(
+    0.13572 + t * (4.61539 + t * (-42.6603 + t * (132.131 + t * (-152.942 + t * 59.2864)))),
+    0.09140 + t * (2.19419 + t * (4.84297 + t * (-14.1850 + t * (4.2773 + t * 2.82957)))),
+    0.10667 + t * (12.6419 + t * (-60.5820 + t * (110.363 + t * (-89.9031 + t * 27.3482))))
+  ), 0.0, 1.0);
+}\n` +
       shader.fragmentShader
         .replace(
           '#include <clipping_planes_fragment>',
@@ -141,6 +202,8 @@ varying vec3 vTwinViewNorm;\n` +
           float twinMagRingGlow = 0.0;
           float twinSlsMeltGlow = 0.0;
           float twinSlsPowderHolo = 0.0;
+          float twinNaniteRimGlow = 0.0;
+          float twinNaniteHexGlow = 0.0;
 
           if (uMagLensActive > 0.5 && uIsOuterArmor > 0.5) {
             float dMag = distance(vTwinWorldPos, uMagLensCenter);
@@ -172,6 +235,27 @@ varying vec3 vTwinViewNorm;\n` +
             }
           }
 
+          // Hard-Surface Nanite Hex-Lattice Dissolve & 0.65s Spawn Reconstruction
+          if (uNaniteActive > 0.5) {
+            float n3 = 0.5 + 0.5 * sin(vTwinWorldPos.x * 29.0) * cos(vTwinWorldPos.z * 31.0 + vTwinWorldPos.y * 19.0);
+            float dyNan = (vTwinWorldPos.y - uNaniteSweepY) + (n3 - 0.5) * 0.11;
+            if (abs(dyNan) < 0.042) {
+              twinNaniteRimGlow = 1.0 - smoothstep(0.0, 0.042, abs(dyNan));
+            }
+            if (dyNan > 0.015) {
+              // Dissolve upper region into glowing hexagonal wireframe lattice before vanishing
+              if (dyNan > 0.26 + (1.0 - uNaniteDissolve) * 0.18) {
+                discard;
+              }
+              vec2 hp = vTwinWorldPos.xz * 22.0 + vTwinWorldPos.y * 11.0;
+              vec2 hCell = abs(fract(hp) - 0.5);
+              if (min(hCell.x, hCell.y) > 0.075) {
+                discard;
+              }
+              twinNaniteHexGlow = 1.0 - smoothstep(0.015, 0.34, dyNan);
+            }
+          }
+
           // Horizon Focus Mode 1: Outer L1 Armor becomes a translucent dark-steel dithered X-Ray silhouette!
           if (uFocusMode > 0.5 && uFocusMode < 1.5) {
             vec2 screenCell = fract(gl_FragCoord.xy * 0.5);
@@ -183,6 +267,22 @@ varying vec3 vTwinViewNorm;\n` +
         .replace(
           '#include <roughnessmap_fragment>',
           `#include <roughnessmap_fragment>
+          // Stratified Micro-Surface PBR Roughness Perturbation (preserves 100% of original roughnessMap)
+          if (uMicroSurfaceClass > 0.5 && uMicroSurfaceClass < 1.5) {
+            // Class 1: Anisotropic Brushed Titanium / CNC Tool Marks
+            float cncGrooves = sin((vTwinLocalPos.x * 160.0 + vTwinLocalPos.y * 45.0)) * 0.032;
+            roughnessFactor = clamp(roughnessFactor + cncGrooves, 0.08, 0.92);
+          } else if (uMicroSurfaceClass >= 1.5 && uMicroSurfaceClass < 2.5) {
+            // Class 2: Twill 2x2 Carbon-Fiber Micro-Weave + Satin Clearcoat Contrast
+            float weaveA = step(0.5, fract((vTwinLocalPos.x + vTwinLocalPos.y) * 95.0));
+            float weaveB = step(0.5, fract((vTwinLocalPos.x - vTwinLocalPos.z) * 95.0));
+            float twill = abs(weaveA - weaveB);
+            roughnessFactor = clamp(mix(roughnessFactor - 0.07, roughnessFactor + 0.09, twill), 0.14, 0.85);
+          } else if (uMicroSurfaceClass >= 3.5) {
+            // Class 4: High-Roughness Vulcanized Elastomer Tire / Foot Pad Micro-Tread
+            float rubberGrain = 0.5 + 0.5 * sin(vTwinLocalPos.x * 210.0) * cos(vTwinLocalPos.z * 210.0);
+            roughnessFactor = clamp(mix(0.88, 0.95, rubberGrain), 0.84, 0.97);
+          }
           if (uDustAmount > 0.01) {
             float relH = clamp((vTwinWorldPos.y - uModelMinY) / max(0.35, uModelSpanY), 0.0, 1.0);
             float dustMask = (1.0 - smoothstep(0.0, 0.58, relH)) * uDustAmount;
@@ -200,6 +300,34 @@ varying vec3 vTwinViewNorm;\n` +
           vec3 twinV = normalize(vTwinViewPos);
           vec3 twinN = normalize(vTwinViewNorm);
           float twinRim = pow(1.0 - abs(dot(twinV, twinN)), 2.5);
+
+          // Stratified Micro-Surface Edge Wear & Optical Lens Thin-Film AR Iridescence
+          if (uMicroSurfaceClass > 0.5 && uMicroSurfaceClass < 1.5 && uFeaActive < 0.5) {
+            // Curvature / grazing chamfer silver-titanium edge wear highlight
+            float chamferMask = smoothstep(0.55, 0.92, twinRim) * (0.65 + 0.35 * sin(vTwinLocalPos.x * 57.0 + vTwinLocalPos.z * 61.0));
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.82, 0.86, 0.91), chamferMask * 0.16);
+          } else if (uMicroSurfaceClass >= 2.5 && uMicroSurfaceClass < 3.5 && uFeaActive < 0.5) {
+            // Violet-Emerald Multi-Layer Optical AR Coating Iridescence on camera lenses & LiDAR windows
+            vec3 arViolet = vec3(0.46, 0.18, 0.92);
+            vec3 arEmerald = vec3(0.06, 0.88, 0.68);
+            vec3 arFilm = mix(arEmerald, arViolet, clamp(twinRim * 1.35, 0.0, 1.0));
+            totalEmissiveRadiance += arFilm * (0.14 + twinRim * 0.58);
+          }
+
+          // Scientific Real-Time Von Mises FEA Structural Stress Cloud + Iso-Stress Contours
+          if (uFeaActive > 0.5) {
+            float filletGrad = 0.82 + 0.28 * cos(vTwinLocalPos.x * 9.5) * cos(vTwinLocalPos.y * 9.5) + twinRim * 0.14;
+            float localSigma = clamp(uFeaSigma * filletGrad, 0.02, 1.0);
+            vec3 feaCol = twinEvalFeaLut(localSigma, uFeaColorMap);
+            float isoLine = 0.0;
+            if (uFeaContours > 0.5) {
+              float band = abs(fract(localSigma * 12.0) - 0.5);
+              isoLine = 1.0 - smoothstep(0.0, 0.055, band);
+            }
+            float hotPulse = localSigma > 0.78 ? (0.5 + 0.5 * sin(uSalvagePulse * 9.0)) * (localSigma - 0.78) * 3.5 : 0.0;
+            diffuseColor.rgb = mix(feaCol, vec3(0.98, 0.99, 1.0), isoLine * 0.42);
+            totalEmissiveRadiance += feaCol * (0.34 + hotPulse * 0.95) + vec3(isoLine * 0.18);
+          }
 
           // Dynamic Weathering: Martian Red Regolith Dust + High-Alt Crystalline Frost + Titanium Heat Bluing
           if (uDustAmount > 0.01) {
@@ -269,10 +397,10 @@ varying vec3 vTwinViewNorm;\n` +
           }
           if (uLaserActive > 0.5) {
             float distToCut = abs(vTwinWorldPos.y - uLaserClipY);
-            float laserBand = 1.0 - smoothstep(0.0, 0.018, distToCut);
-            float fineCore = 1.0 - smoothstep(0.0, 0.005, distToCut);
-            vec3 laserCol = mix(vec3(0.04, 0.82, 1.0), vec3(1.0, 0.88, 0.42), fineCore);
-            totalEmissiveRadiance += laserCol * laserBand * 3.1;
+            float laserBand = 1.0 - smoothstep(0.0, 0.024, distToCut);
+            float fineCore = 1.0 - smoothstep(0.0, 0.007, distToCut);
+            vec3 laserCol = mix(vec3(0.02, 0.88, 1.0), vec3(1.0, 0.92, 0.46), fineCore);
+            totalEmissiveRadiance += laserCol * laserBand * 3.85;
           }
           if (twinMagWireGlow > 0.5) {
             diffuseColor.rgb = vec3(0.04, 0.82, 0.98);
@@ -289,6 +417,14 @@ varying vec3 vTwinViewNorm;\n` +
           if (twinSlsMeltGlow > 0.01) {
             vec3 meltCol = mix(vec3(1.0, 0.42, 0.06), vec3(1.0, 0.96, 0.72), pow(twinSlsMeltGlow, 2.0));
             totalEmissiveRadiance += meltCol * twinSlsMeltGlow * 4.5;
+          }
+          if (twinNaniteHexGlow > 0.01) {
+            diffuseColor.rgb = vec3(0.02, 0.88, 1.0);
+            totalEmissiveRadiance += mix(vec3(1.0, 0.72, 0.16), vec3(0.04, 0.92, 1.0), twinNaniteHexGlow) * 2.65;
+          }
+          if (twinNaniteRimGlow > 0.01) {
+            vec3 nanRim = mix(vec3(0.04, 0.88, 1.0), vec3(1.0, 0.84, 0.32), pow(twinNaniteRimGlow, 1.6));
+            totalEmissiveRadiance += nanRim * twinNaniteRimGlow * 3.85;
           }`
         )
         .replace(
@@ -308,8 +444,8 @@ varying vec3 vTwinViewNorm;\n` +
               hatchCol = vec3(0.48, 0.95, 1.0);
             }
             float distCut = abs(vTwinWorldPos.y - uLaserClipY);
-            float kerfBevel = 1.0 - smoothstep(0.0, 0.024, distCut);
-            vec3 capLight = alloyBase + hatchCol * (hMain * 0.68 + hCross * 0.30) + mix(hatchCol, vec3(1.0, 0.94, 0.58), kerfBevel) * kerfBevel * 1.85;
+            float kerfBevel = 1.0 - smoothstep(0.0, 0.028, distCut);
+            vec3 capLight = alloyBase + hatchCol * (hMain * 0.68 + hCross * 0.30) + mix(hatchCol, vec3(1.0, 0.95, 0.62), kerfBevel) * kerfBevel * 2.25;
             gl_FragColor = vec4(capLight, 1.0);
           }`
         );
@@ -811,6 +947,31 @@ export function createFlowAndSensorField(
     scanRings.push({ loop: pts, mat: rMat });
   }
 
+  // Aerodynamic Wind-Tunnel Streamline Ribbons with Karman Vortex Street Wake Oscillation
+  const numWakeLines = 7;
+  const wakeSegs = 40;
+  const wakeLines: { line: THREE.Line; geo: THREE.BufferGeometry; zBase: number; yBase: number; phaseOff: number }[] = [];
+  for (let w = 0; w < numWakeLines; w++) {
+    const zBase = (w - (numWakeLines - 1) * 0.5) * 0.26;
+    const yBase = floorY + 0.32 + (w % 3) * 0.24;
+    const wPos = new Float32Array(wakeSegs * 3);
+    const wCol = new Float32Array(wakeSegs * 3);
+    const wGeo = new THREE.BufferGeometry();
+    wGeo.setAttribute('position', new THREE.BufferAttribute(wPos, 3));
+    wGeo.setAttribute('color', new THREE.BufferAttribute(wCol, 3));
+    const wMat = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.62,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    const wLine = new THREE.Line(wGeo, wMat);
+    wLine.frustumCulled = false;
+    group.add(wLine);
+    wakeLines.push({ line: wLine, geo: wGeo, zBase, yBase, phaseOff: w * 0.95 });
+  }
+
   const update = (simTime: number, loadFactor: number) => {
     if (!group.visible) return;
     frustumGroup.rotation.y = Math.sin(simTime * (0.75 + loadFactor * 0.65)) * 0.42;
@@ -820,6 +981,39 @@ export function createFlowAndSensorField(
       const radius = 0.35 + phase * 1.95;
       scanRings[r].loop.scale.set(radius, 1, radius);
       scanRings[r].mat.opacity = (1.0 - phase) * 0.85;
+    }
+
+    const flowSpeed = 3.2 + loadFactor * 2.4;
+    for (let w = 0; w < wakeLines.length; w++) {
+      const wl = wakeLines[w];
+      const posAttr = wl.geo.getAttribute('position') as THREE.BufferAttribute;
+      const colAttr = wl.geo.getAttribute('color') as THREE.BufferAttribute;
+      for (let s = 0; s < wakeSegs; s++) {
+        const u = s / (wakeSegs - 1);
+        const x = -1.55 + u * 3.35;
+        // Upstream laminar -> Obstacle deflection -> Downstream Karman vortex street shedding!
+        const wakeEnv = Math.max(0, (x - 0.08) / 1.72);
+        const deflect = Math.exp(-x * x * 3.2) * Math.sign(wl.zBase || 1) * 0.16;
+        const karmanZ =
+          wakeEnv *
+          Math.sin(u * 13.5 - simTime * flowSpeed * 1.85 + wl.phaseOff) *
+          (0.14 + loadFactor * 0.08);
+        const karmanY =
+          wakeEnv *
+          Math.cos(u * 10.5 - simTime * flowSpeed * 1.45 + wl.phaseOff) *
+          0.055;
+        posAttr.array[s * 3] = x;
+        posAttr.array[s * 3 + 1] = wl.yBase + karmanY;
+        posAttr.array[s * 3 + 2] = wl.zBase + deflect + karmanZ;
+
+        const vort = Math.min(1, wakeEnv * 1.25);
+        // Laminar cyan -> Turbulent emerald/amber wake
+        colAttr.array[s * 3] = 0.15 + vort * 0.72;
+        colAttr.array[s * 3 + 1] = 0.78 - vort * 0.12;
+        colAttr.array[s * 3 + 2] = 0.98 - vort * 0.58;
+      }
+      posAttr.needsUpdate = true;
+      colAttr.needsUpdate = true;
     }
   };
 

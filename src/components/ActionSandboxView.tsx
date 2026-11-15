@@ -84,6 +84,17 @@ import {
 import { PathTracingHudBar } from './PathTracingHudBar';
 import { TwinMaterialUniforms, attachTwinShaderEffects } from '../utils/liveTwinSceneFX';
 import {
+  CinemaOpticsConfig,
+  createDefaultCinemaOpticsConfig
+} from '../utils/cinemaOpticsPipeline';
+import {
+  ScientificVizConfig,
+  createDefaultScientificVizConfig,
+  computeLinkVonMisesStress,
+  feaColorMapToShaderCode,
+  createScientificVizSceneController
+} from '../utils/scientificVizEngine';
+import {
   WindTunnelDisasterConfig,
   SlsMaterializationState,
   createInitialSlsState,
@@ -499,7 +510,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
   // Hall-of-Fame 5 Modules State
   const [strobeEnabled, setStrobeEnabled] = useState<boolean>(true);
   const [bulletTimeActive, setBulletTimeActive] = useState<boolean>(false);
-  const [bulletExplosionTarget, setBulletExplosionTarget] = useState<number>(0.88);
+  const [bulletSlowMoScale, setBulletSlowMoScale] = useState<0.25 | 0.05 | 0.01>(0.05);
   const [faultInjectMode, setFaultInjectMode] = useState<boolean>(false);
   const [activeFaults, setActiveFaults] = useState<ActiveFaultRecord[]>([]);
   const [faultAnchorScreen, setFaultAnchorScreen] = useState<[number, number] | null>(null);
@@ -528,6 +539,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
   );
   const [microFpvActive, setMicroFpvActive] = useState<boolean>(false);
   const [microFpvSegmentLabel, setMicroFpvSegmentLabel] = useState<string>('');
+  const [sandboxLidarPersist, setSandboxLidarPersist] = useState<boolean>(false);
+  const [sandboxFeaEnabled, setSandboxFeaEnabled] = useState<boolean>(false);
 
   // Death Stranding Odradek + Six AAA Game VFX Systems State
   const [odradekActive, setOdradekActive] = useState<boolean>(false);
@@ -596,7 +609,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     autoPatrol: false,
     strobeEnabled: true,
     bulletTimeActive: false,
-    bulletExplosionTarget: 0.88,
+    bulletSlowMoScale: 0.05 as 0.25 | 0.05 | 0.01,
     faultInjectMode: false,
     activeFaults: [] as ActiveFaultRecord[],
     swarmOpsEnabled: false,
@@ -628,7 +641,9 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     triggerFireRequested: false,
     triggerScanRequested: false,
     triggerJumpRequested: false,
-    quickFaultRequested: false
+    quickFaultRequested: false,
+    sandboxLidarPersist: false,
+    sandboxFeaEnabled: false
   });
 
   useEffect(() => {
@@ -638,7 +653,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     r.autoPatrol = autoPatrol;
     r.strobeEnabled = strobeEnabled;
     r.bulletTimeActive = bulletTimeActive;
-    r.bulletExplosionTarget = bulletExplosionTarget;
+    r.bulletSlowMoScale = bulletSlowMoScale;
     r.faultInjectMode = faultInjectMode;
     r.activeFaults = activeFaults;
     r.swarmOpsEnabled = swarmOpsEnabled;
@@ -657,13 +672,15 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     r.diegeticHudActive = diegeticHudActive;
     r.locomotionMode = locomotionMode;
     r.directorCamMode = directorCamMode;
+    r.sandboxLidarPersist = sandboxLidarPersist;
+    r.sandboxFeaEnabled = sandboxFeaEnabled;
   }, [
     camMode,
     visionMode,
     autoPatrol,
     strobeEnabled,
     bulletTimeActive,
-    bulletExplosionTarget,
+    bulletSlowMoScale,
     faultInjectMode,
     activeFaults,
     swarmOpsEnabled,
@@ -681,7 +698,9 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     focusWeakpointEnabled,
     diegeticHudActive,
     locomotionMode,
-    directorCamMode
+    directorCamMode,
+    sandboxLidarPersist,
+    sandboxFeaEnabled
   ]);
 
   const onExitSandboxRef = useRef(onExitSandbox);
@@ -836,8 +855,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       }
       setActiveActionToast(
         next
-          ? '子弹时间悬停爆甲 [0.01x] 已开启 · 4工序装甲正交剥离悬停检视中 (按 R 开启路径追踪)'
-          : '装甲咔嚓咬合收拢 · 1.0x 全速恢复实景机动！'
+          ? `子弹时间慢放 [${runtimeRef.current.bulletSlowMoScale}x] 已开启 · 电影光学细节增强与慢动作检视中 (按 R 开启路径追踪)`
+          : '1.0x 全速机动已恢复！'
       );
       return next;
     });
@@ -1016,12 +1035,11 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       skyDome.frustumCulled = false;
       envGroup.add(skyDome);
 
-      const segs = 112;
+      const segs = 96;
       const span = 150;
       const vertCount = (segs + 1) * (segs + 1);
       const posArr = new Float32Array(vertCount * 3);
       const uvArr = new Float32Array(vertCount * 2);
-      const colArr = new Float32Array(vertCount * 3);
       const indices: number[] = [];
 
       let vi = 0;
@@ -1033,8 +1051,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           posArr[vi * 3] = x;
           posArr[vi * 3 + 1] = y;
           posArr[vi * 3 + 2] = z;
-          uvArr[vi * 2] = (ix / segs) * 18;
-          uvArr[vi * 2 + 1] = (iz / segs) * 18;
+          uvArr[vi * 2] = (ix / segs) * 16;
+          uvArr[vi * 2 + 1] = (iz / segs) * 16;
           vi++;
         }
       }
@@ -1054,70 +1072,18 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       terrainGeo.setIndex(indices);
       terrainGeo.computeVertexNormals();
 
-      const normAttr = terrainGeo.getAttribute('normal') as THREE.BufferAttribute;
-      for (let i = 0; i < vertCount; i++) {
-        const y = posArr[i * 3 + 1];
-        const ny = normAttr.getY(i);
-        const hNorm = Math.max(0, Math.min(1, (y + 2.8) / 6.2));
-        const slope = 1.0 - Math.max(0, Math.min(1, ny));
-        const r = 0.48 + hNorm * 0.42 - slope * 0.14;
-        const g = 0.25 + hNorm * 0.24 - slope * 0.08;
-        const b = 0.17 + hNorm * 0.14 - slope * 0.05;
-        colArr[i * 3] = Math.max(0.25, Math.min(1.0, r));
-        colArr[i * 3 + 1] = Math.max(0.14, Math.min(0.85, g));
-        colArr[i * 3 + 2] = Math.max(0.10, Math.min(0.70, b));
-      }
-      terrainGeo.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
-
       surfaceTex = createProceduralSurfaceTexture('mars');
       primaryTerrainMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
-        vertexColors: true,
         map: surfaceTex,
         bumpMap: surfaceTex,
-        bumpScale: 0.34,
-        roughness: 0.90,
-        metalness: 0.04
+        bumpScale: 0.16,
+        roughness: 0.88,
+        metalness: 0.06
       });
       terrainWaveUniforms = attachTopographicWavefrontToTerrain(primaryTerrainMat, false);
       clickableGroundMesh = new THREE.Mesh(terrainGeo, primaryTerrainMat);
       envGroup.add(clickableGroundMesh);
-
-      const rockGeo = new THREE.DodecahedronGeometry(0.45, 1);
-      const rPos = rockGeo.getAttribute('position') as THREE.BufferAttribute;
-      for (let k = 0; k < rPos.count; k++) {
-        const rx = rPos.getX(k);
-        const ry = rPos.getY(k);
-        const rz = rPos.getZ(k);
-        const warp = 0.78 + 0.36 * Math.sin(rx * 5.3 + ry * 3.7 + rz * 4.1);
-        rPos.setXYZ(k, rx * warp, ry * warp * 0.65, rz * warp);
-      }
-      rockGeo.computeVertexNormals();
-      const rockMat = new THREE.MeshStandardMaterial({
-        color: 0x5c3424,
-        roughness: 0.92,
-        metalness: 0.08
-      });
-      const rockCount = 90;
-      const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
-      const rDummy = new THREE.Object3D();
-      for (let i = 0; i < rockCount; i++) {
-        const angle = i * 2.39996;
-        const rad = 7.5 + ((i * 19.37) % 52.0);
-        const rx = Math.cos(angle) * rad;
-        const rz = Math.sin(angle) * rad;
-        const ry = sampleLandTerrainHeight(rx, rz);
-        const sx = 0.38 + ((i * 0.47) % 1.45);
-        const sy = 0.28 + ((i * 0.31) % 0.95);
-        const sz = 0.38 + ((i * 0.59) % 1.35);
-        rDummy.position.set(rx, ry + sy * 0.12, rz);
-        rDummy.rotation.set((i * 0.7) % 0.5, angle, (i * 1.1) % 0.5);
-        rDummy.scale.set(sx, sy, sz);
-        rDummy.updateMatrix();
-        rockInst.setMatrixAt(i, rDummy.matrix);
-      }
-      rockInst.instanceMatrix.needsUpdate = true;
-      envGroup.add(rockInst);
 
       // Analytical natural terrain ridges & crater rims ONLY — zero fake chocolate-cone rocks!
       for (const feat of buildNaturalLandTerrainFeatures()) {
@@ -1221,6 +1187,57 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         })
       );
       envGroup.add(ambientDrifters);
+
+      // Subsea overhead Tyndall sunlight shafts piercing down from the ocean surface
+      const shaftProfile = [
+        new THREE.Vector2(0.55, 16.0),
+        new THREE.Vector2(1.65, 6.0),
+        new THREE.Vector2(2.85, -4.2)
+      ];
+      const shaftGeo = new THREE.LatheGeometry(shaftProfile, 20);
+      const shaftMat = new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        vertexShader: `
+          varying float vHeight01;
+          varying vec3 vNormW;
+          varying vec3 vPosW;
+          void main() {
+            vHeight01 = clamp((position.y + 4.2) / 20.2, 0.0, 1.0);
+            vNormW = normalize(mat3(modelMatrix) * normal);
+            vec4 wp = modelMatrix * vec4(position, 1.0);
+            vPosW = wp.xyz;
+            gl_Position = projectionMatrix * viewMatrix * wp;
+          }
+        `,
+        fragmentShader: `
+          varying float vHeight01;
+          varying vec3 vNormW;
+          varying vec3 vPosW;
+          void main() {
+            vec3 viewDir = normalize(cameraPosition - vPosW);
+            float softSil = pow(clamp(abs(dot(normalize(vNormW), viewDir)), 0.0, 1.0), 1.9);
+            float vertFade = smoothstep(0.0, 0.28, vHeight01) * smoothstep(1.0, 0.72, vHeight01);
+            float alpha = softSil * vertFade * 0.085;
+            gl_FragColor = vec4(vec3(0.28, 0.82, 0.98) * alpha * 1.4, alpha);
+          }
+        `
+      });
+      const shaftCoords: [number, number, number][] = [
+        [8, -6, 0.14],
+        [-11, 9, 0.16],
+        [18, 12, 0.12],
+        [-16, -12, 0.15]
+      ];
+      for (const [sx, sz, tilt] of shaftCoords) {
+        const shaftMesh = new THREE.Mesh(shaftGeo, shaftMat);
+        shaftMesh.position.set(sx, 0, sz);
+        shaftMesh.rotation.set(0.06, 0, tilt);
+        shaftMesh.frustumCulled = false;
+        envGroup.add(shaftMesh);
+      }
     } else {
       // Multi-layer procedural FBM soft cloud sprites (zero flat UFO discs!)
       fbmCloudTex = createFbmCloudSpriteTexture();
@@ -1354,6 +1371,20 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     scene.add(aaaSandboxFx.worldGroup);
     const signatureSandboxFx = createSignatureShowcaseSceneFXController(4);
     scene.add(signatureSandboxFx.rootGroup);
+    const sciVizCtrl = createScientificVizSceneController();
+    scene.add(sciVizCtrl.group);
+    const sandboxSciConfig: ScientificVizConfig = createDefaultScientificVizConfig();
+    const sandboxCinemaOptics: CinemaOpticsConfig = {
+      ...createDefaultCinemaOpticsConfig(),
+      exposureEv: 0.08,
+      bloomThreshold: 0.85,
+      bloomStrength: 0.22,
+      anamorphicStreak: 0.38,
+      smartBokehEnabled: false,
+      filmGrain: 0.04,
+      chromaticVignette: true,
+      frameBudgetGuard: true
+    };
 
     // =========================================================================
     // LEAD ACTOR RIG + REAL GLB MODEL LOADER + ATTACHED DOMAIN VFX
@@ -2237,8 +2268,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
             audioRef.current.playBulletTimeSnap(next);
             setActiveActionToast(
               next
-                ? '子弹时间悬停爆甲 [0.01x] 已开启 · 4工序装甲正交剥离悬停检视中'
-                : '装甲咔嚓咬合收拢 · 1.0x 全速恢复实景机动！'
+                ? `子弹时间慢放 [${runtimeRef.current.bulletSlowMoScale}x] 已开启 · 电影光学细节增强与慢动作检视中`
+                : '1.0x 全速机动已恢复！'
             );
             return next;
           });
@@ -2696,22 +2727,20 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       }
 
       // =======================================================================
-      // MODULE 1: BULLET-TIME (0.01x) + MID-AIR ORTHOGONAL EXPLOSION CONTROLLER
+      // MODULE 1: PURE CINEMATIC BULLET-TIME SLOW-MOTION CONTROLLER (NO DISASSEMBLY)
       // =======================================================================
       bulletState.active = rt.bulletTimeActive;
-      bulletState.explosionTarget = rt.bulletExplosionTarget;
-      // When Gear-2 Progressive Path Tracing [R] is enabled, freeze time completely (0.0x) so 256 SPP converges cleanly!
+      bulletState.explosionTarget = 0.0;
       if (rt.pathTracingEnabled) {
         bulletState = {
           ...bulletState,
-          explosionProgress: bulletState.active
-            ? bulletState.explosionProgress +
-              (bulletState.explosionTarget - bulletState.explosionProgress) *
-                (1 - Math.exp(-8 * realDt))
-            : bulletState.explosionProgress
+          simTimeScale: 0.0,
+          explosionProgress: 0.0
         };
       } else {
         bulletState = stepBulletTimeController(bulletState, realDt);
+        bulletState.explosionProgress = 0.0;
+        bulletState.simTimeScale = rt.bulletTimeActive ? rt.bulletSlowMoScale : 1.0;
       }
 
       // Advance 1.8s Dual-Laser SLS Materialization Sweep (wall-clock paced)
@@ -3232,7 +3261,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         if (actorSpec.id === 'mars2020') {
           if (cp.role === 'wheel') {
             const locked = rt.activeFaults.some((f) => f.partName === cp.partName);
-            _qA.setFromAxisAngle(_axisX, locked ? 0 : kin.gaitDistance * 1.8);
+            // Match Perseverance 0.525m diameter wheel circumference (ds / R, R = 0.2625m) for zero ground slip
+            _qA.setFromAxisAngle(_axisX, locked ? 0 : kin.gaitDistance / 0.2625);
             m.quaternion.multiply(_qA);
           } else if (cp.role === 'suspension') {
             _qA.setFromAxisAngle(
@@ -3331,6 +3361,22 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         );
         cp.twinUniforms.uModelMinY.value = actorRoot.position.y;
         cp.twinUniforms.uModelSpanY.value = modelHeightSpan;
+        if (rt.sandboxFeaEnabled) {
+          const vm = computeLinkVonMisesStress({
+            partName: cp.partName,
+            layer: cp.layer,
+            cantileverDistMeters: Math.hypot(cp.basePos.x, cp.basePos.z),
+            jointOmegaRadS: Math.abs(kin.speed) * 0.48 + sumJointSpeedRadS * 0.12,
+            loadFactor: Math.max(0.18, kin.throttlePct / 100),
+            pushSpike01: Math.min(1, kin.trauma + dropState.crouchCompression * 0.8)
+          });
+          cp.twinUniforms.uFeaActive.value = 1.0;
+          cp.twinUniforms.uFeaSigma.value = vm.sigma01;
+          cp.twinUniforms.uFeaColorMap.value = feaColorMapToShaderCode('turbo');
+          cp.twinUniforms.uFeaContours.value = 1.0;
+        } else {
+          cp.twinUniforms.uFeaActive.value = 0.0;
+        }
       }
 
       // Live Dynamic Lowest-Foot / Paw / Track / Wheel Grounding (Zero Underground Burial & Zero Floating!)
@@ -4175,6 +4221,23 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         simTime: realElapsed
       });
 
+      sandboxSciConfig.lidarPersistEnabled = rt.sandboxLidarPersist;
+      sandboxSciConfig.feaEnabled = rt.sandboxFeaEnabled;
+      sciVizCtrl.update({
+        config: sandboxSciConfig,
+        contextId: actorSpec.id,
+        floorY: groundHAtActor,
+        simTime: realElapsed,
+        dt: realDt,
+        comZmp: null,
+        torqueSamples: [],
+        workspaceOriginWorld: actorRoot.position,
+        workspaceMaxRadius: 1.2,
+        lidarOriginWorld: odradekSensorWorld,
+        robotBoundsBox: null,
+        hidden: !rt.sandboxLidarPersist
+      });
+
       // =======================================================================
       // DUAL-GEAR HYBRID RAY-TRACING & 256-SPP PROGRESSIVE PATH TRACER RENDER
       // =======================================================================
@@ -4191,7 +4254,11 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           emissiveSources,
           dynamicEmissives,
           schlierenMode: rt.windTunnelConfig.schlierenMode,
-          simTime: realElapsed
+          simTime: realElapsed,
+          cinemaOptics: sandboxCinemaOptics,
+          bulletTimeScale: bulletState.simTimeScale,
+          impulseVignette01: Math.min(1, kin.trauma * 0.65),
+          rawDt
         });
 
       renderOnceRef.current = () => {
@@ -4397,6 +4464,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       odradekCtrl.dispose();
       aaaSandboxFx.dispose();
       signatureSandboxFx.dispose();
+      sciVizCtrl.dispose();
       magSlsRig.dispose();
       mpcPowerCtrl.dispose();
       disasterFx.dispose();
@@ -4900,7 +4968,9 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
                         swarmOpsEnabled ||
                         ikEnabled ||
                         activeFaults.length > 0 ||
-                        windTunnelConfig.schlierenMode
+                        windTunnelConfig.schlierenMode ||
+                        sandboxLidarPersist ||
+                        sandboxFeaEnabled
                           ? 'bg-[#0a101a]/95 border-[#00e5ff]/75 text-cyan-100 font-semibold'
                           : 'bg-[#0a101a]/90 border-white/10 text-slate-200 hover:border-white/25'
                       }`}
@@ -5180,6 +5250,26 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
                               <span>马赫8 等离子鞘</span>
                               {fxDot(windTunnelConfig.mach8PlasmaSheath, true)}
                             </button>
+
+                            <button
+                              type="button"
+                              data-testid="sandbox-toggle-lidar-persist"
+                              onClick={() => setSandboxLidarPersist((v) => !v)}
+                              className={fxItemCls(sandboxLidarPersist)}
+                            >
+                              <span>LiDAR 持续点云</span>
+                              {fxDot(sandboxLidarPersist)}
+                            </button>
+
+                            <button
+                              type="button"
+                              data-testid="sandbox-toggle-fea"
+                              onClick={() => setSandboxFeaEnabled((v) => !v)}
+                              className={fxItemCls(sandboxFeaEnabled)}
+                            >
+                              <span>FEA 应力云图</span>
+                              {fxDot(sandboxFeaEnabled)}
+                            </button>
                           </div>
 
                           <div className="pt-1 flex items-center justify-between gap-2">
@@ -5314,23 +5404,24 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
                 {bulletTimeActive && (
                   <div
                     data-testid="bullet-time-explosion-bar"
-                    className="pointer-events-auto flex items-center gap-2.5 px-3 py-1 rounded-xl bg-[#0a101a]/95 border border-[#00e5ff]/60 text-slate-100 text-[11px] font-mono shadow-2xl"
+                    className="pointer-events-auto flex items-center gap-2 px-3 py-1 rounded-xl bg-[#0a101a]/95 border border-[#00e5ff]/60 text-slate-100 text-[11px] font-mono shadow-2xl"
                   >
                     <Clock className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
-                    <span>0.01x 悬停爆甲拆解</span>
-                    <input
-                      type="range"
-                      aria-label="空中悬停四工序正交爆炸度"
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={bulletExplosionTarget}
-                      onChange={(e) => setBulletExplosionTarget(parseFloat(e.target.value))}
-                      className="w-24 accent-[#00e5ff]"
-                    />
-                    <span className="text-cyan-300 font-bold tabular-nums">
-                      {Math.round(bulletExplosionTarget * 100)}%
-                    </span>
+                    <span>子弹时间慢放倍率</span>
+                    {([0.25, 0.05, 0.01] as const).map((scale) => (
+                      <button
+                        key={scale}
+                        type="button"
+                        onClick={() => setBulletSlowMoScale(scale)}
+                        className={`px-2 py-0.5 rounded border text-[10px] transition cursor-pointer ${
+                          bulletSlowMoScale === scale
+                            ? 'bg-cyan-500/25 border-[#00e5ff] text-cyan-100 font-bold'
+                            : 'bg-slate-900/80 border-white/10 text-slate-300 hover:border-white/30'
+                        }`}
+                      >
+                        {scale}x
+                      </button>
+                    ))}
                   </div>
                 )}
 

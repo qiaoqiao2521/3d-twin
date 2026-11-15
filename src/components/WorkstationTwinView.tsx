@@ -31,7 +31,6 @@ import {
   computeAeroFadecTargets,
   computeMarsLiveTargets,
   computeThermalIrColor,
-  estimatePartThermalNormalized,
   buildSpatialTelemetryProbes,
   dampValue,
   computeFresnelPulseIntensity
@@ -130,6 +129,51 @@ import {
   shouldAutoRevealInternalSkeleton,
   buildSafeWorldBBoxFpvWaypoints
 } from '../utils/hangarLivingPhysicsEngine';
+import {
+  CinemaOpticsConfig,
+  createDefaultCinemaOpticsConfig,
+  computeSmartFocusDistanceMeters,
+  createStudioAtmosphereRig
+} from '../utils/cinemaOpticsPipeline';
+import {
+  ScientificVizConfig,
+  PartMassSample,
+  TorqueJointSample,
+  createDefaultScientificVizConfig,
+  feaColorMapToShaderCode,
+  computeLinkVonMisesStress,
+  computeRobotComAndSupportPolygon,
+  computeCalibratedFlirTemperatureC,
+  createScientificVizSceneController
+} from '../utils/scientificVizEngine';
+import {
+  SciFiVfxConfig,
+  NaniteMaterializeState,
+  TacticalPulseWaveState,
+  createDefaultSciFiVfxConfig,
+  createInitialNaniteState,
+  triggerNaniteSpawnSweep,
+  triggerNaniteDemoCycle,
+  stepNaniteState,
+  createInitialTacticalPulseState,
+  triggerTacticalPulseWave,
+  stepTacticalPulseWave,
+  createSciFiHangarVfxController
+} from '../utils/scifiVfxShaders';
+import {
+  CinemaMacroId,
+  TactileDirectorConfig,
+  CameraMicroImpulseState,
+  CanvasWebmRecorderController,
+  createDefaultTactileDirectorConfig,
+  computeHandheldCameraMicroSway,
+  createInitialCameraMicroImpulse,
+  triggerCameraMicroImpulse,
+  stepCameraMicroImpulse,
+  evaluateCinemaMacroPose,
+  createTactileInteractionSceneController,
+  createCanvasWebmRecorder
+} from '../utils/tactileCameraRig';
 
 interface WorkstationTwinViewProps {
   config: TwinWorkstationConfig;
@@ -172,6 +216,10 @@ const _raycaster = new THREE.Raycaster();
 const _pointerNdc = new THREE.Vector2();
 const _axisX = new THREE.Vector3(1, 0, 0);
 const _axisY = new THREE.Vector3(0, 1, 0);
+const _tmpWorkspaceOrigin = new THREE.Vector3();
+const _tmpLidarOrigin = new THREE.Vector3();
+const _tmpRobotBox = new THREE.Box3();
+const _tmpTransientCamOffset = new THREE.Vector3();
 
 export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
   config,
@@ -273,6 +321,34 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
   const [ultimateActiveUI, setUltimateActiveUI] = useState<boolean>(false);
   const [ultimatePhaseLabelUI, setUltimatePhaseLabelUI] = useState<string>('');
 
+  // Master Dimensions 1-4 State
+  const [cinemaOptics, setCinemaOptics] = useState<CinemaOpticsConfig>(() =>
+    createDefaultCinemaOpticsConfig()
+  );
+  const [scientificConfig, setScientificConfig] = useState<ScientificVizConfig>(() =>
+    createDefaultScientificVizConfig()
+  );
+  const [peakStressMpa, setPeakStressMpa] = useState<number>(0);
+  const [comStabilityStatus, setComStabilityStatus] = useState<'stable' | 'warning' | 'critical'>(
+    'stable'
+  );
+  const [hoverThermalReadout, setHoverThermalReadout] = useState<{
+    tempC: number;
+    zoneLabel: string;
+    partName: string;
+  } | null>(null);
+  const [scifiConfig, setScifiConfig] = useState<SciFiVfxConfig>(() =>
+    createDefaultSciFiVfxConfig()
+  );
+  const [tactileConfig, setTactileConfig] = useState<TactileDirectorConfig>(() =>
+    createDefaultTactileDirectorConfig()
+  );
+  const [audioVolume, setAudioVolume] = useState<number>(() =>
+    proceduralAudioSynth.getVolume()
+  );
+  const [isRecordingWebm, setIsRecordingWebm] = useState<boolean>(false);
+  const webmRecorderRef = useRef<CanvasWebmRecorderController | null>(null);
+
   const mountRef = useRef<HTMLDivElement | null>(null);
   const rayTracerRef = useRef<DualGearRayTracingController | null>(null);
   const renderOnceRef = useRef<(() => void) | null>(null);
@@ -357,13 +433,24 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     } as SurfaceWeatheringState,
     directorCamMode: 'off' as DirectorCameraMode,
     ultimateSkill: createInitialUltimateSkillState() as UltimateSkillState,
-    snapShake: { timer: 0, amplitude: 0 } as AssemblySnapShakeState
+    snapShake: { timer: 0, amplitude: 0 } as AssemblySnapShakeState,
+    cinemaOptics: createDefaultCinemaOpticsConfig() as CinemaOpticsConfig,
+    scientificConfig: createDefaultScientificVizConfig() as ScientificVizConfig,
+    scifiConfig: createDefaultSciFiVfxConfig() as SciFiVfxConfig,
+    naniteState: createInitialNaniteState() as NaniteMaterializeState,
+    tacticalPulse: createInitialTacticalPulseState() as TacticalPulseWaveState,
+    tactileConfig: createDefaultTactileDirectorConfig() as TactileDirectorConfig,
+    macroElapsed: 0,
+    camImpulse: createInitialCameraMicroImpulse() as CameraMicroImpulseState,
+    impactSpike01: 0,
+    impactTargetPart: ''
   });
+  const initialWorkstationLoadedRef = useRef(false);
 
   useEffect(() => {
     const s = stateRef.current;
     s.activeLevel = activeLevel;
-    if (!autoDisassembly) {
+    if (!autoDisassembly && tactileConfig.activeMacro === 'off') {
       s.targetExplosion = explosion;
     }
     s.targetClipRatio = clipRatio;
@@ -394,6 +481,10 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     s.shipbreakerEnabled = shipbreakerEnabled;
     s.focusWeakpointEnabled = focusWeakpointEnabled;
     s.directorCamMode = directorCamMode;
+    s.cinemaOptics = cinemaOptics;
+    s.scientificConfig = scientificConfig;
+    s.scifiConfig = scifiConfig;
+    s.tactileConfig = tactileConfig;
     if (!liveSim) {
       s.fk1 = fkJoint1;
       s.fk2 = fkJoint2;
@@ -430,6 +521,10 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     shipbreakerEnabled,
     focusWeakpointEnabled,
     directorCamMode,
+    cinemaOptics,
+    scientificConfig,
+    scifiConfig,
+    tactileConfig,
     fkJoint1,
     fkJoint2,
     fkJoint3
@@ -466,10 +561,9 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       resetGrappledPartsRef.current();
     }
     stateRef.current.snapShake = triggerAssemblySnapShake(1.15);
+    stateRef.current.camImpulse = triggerCameraMicroImpulse(0.42);
     setFloatingPartsCount(0);
-    if (stateRef.current.audioSynthEnabled) {
-      proceduralAudioSynth.playMechanicalLatchClick(880);
-    }
+    proceduralAudioSynth.playMagneticSnapBackThud(true);
   };
 
   const handleCleanWeathering = () => {
@@ -477,6 +571,60 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     setWeatheringActive(false);
     if (stateRef.current.audioSynthEnabled) {
       proceduralAudioSynth.playMechanicalLatchClick(960);
+    }
+  };
+
+  const handleChangeAudioVolume = (vol01: number) => {
+    const v = Math.max(0, Math.min(1, vol01));
+    setAudioVolume(v);
+    proceduralAudioSynth.setVolume(v);
+  };
+
+  const handleTriggerNaniteDemo = () => {
+    setClipRatio(1.0);
+    setAutoSectionScan(false);
+    stateRef.current.targetClipRatio = 1.0;
+    stateRef.current.autoSectionScan = false;
+    stateRef.current.naniteState = triggerNaniteDemoCycle(2.4);
+    if (stateRef.current.audioSynthEnabled) {
+      proceduralAudioSynth.playSubBassImpact('sls_print');
+    }
+  };
+
+  const handleTriggerTacticalPulse = () => {
+    stateRef.current.tacticalPulse = triggerTacticalPulseWave([0, 0], 1.75);
+    stateRef.current.camImpulse = triggerCameraMicroImpulse(0.28, [0, -1, 0], 0.11);
+    proceduralAudioSynth.playTacticalPulseRadarSweep(true);
+  };
+
+  const handleTriggerCinemaMacro = (macroId: CinemaMacroId) => {
+    setPathTracingEnabled(false);
+    setActiveCamPreset(null);
+    stateRef.current.activeCamPreset = null;
+    stateRef.current.macroElapsed = 0;
+    setTactileConfig((prev) => {
+      const resolved = prev.activeMacro === macroId ? 'off' : macroId;
+      stateRef.current.tactileConfig = { ...prev, activeMacro: resolved };
+      if (resolved === 'off' && cameraRef.current && controlsRef.current) {
+        cameraRef.current.fov = 42;
+        cameraRef.current.up.set(0, 1, 0);
+        cameraRef.current.updateProjectionMatrix();
+        controlsRef.current.enabled = true;
+      }
+      return { ...prev, activeMacro: resolved };
+    });
+    proceduralAudioSynth.playMechanicalLatchClick(790);
+  };
+
+  const handleToggleRecordWebm = () => {
+    const rec = webmRecorderRef.current;
+    if (!rec) return;
+    if (rec.isRecording()) {
+      rec.stopRecording();
+      setIsRecordingWebm(false);
+    } else {
+      const ok = rec.startRecording(`${config.id}_workstation_hd`);
+      setIsRecordingWebm(ok);
     }
   };
 
@@ -562,6 +710,8 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         handleCycleDirectorCamera();
       } else if (e.code === 'KeyC' && !e.repeat) {
         handleToggleMicroFpv();
+      } else if (e.code === 'KeyT' && !e.repeat) {
+        handleTriggerTacticalPulse();
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -808,10 +958,14 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
   };
 
   const handleHoverSceneGraphPart = (partName: string | null) => {
+    if (partName && partName !== stateRef.current.hoveredPart) {
+      proceduralAudioSynth.playPartHoverTick();
+    }
     setHoveredPart(partName);
     stateRef.current.hoveredPart = partName;
     if (!partName) {
       setHoveredCallout(null);
+      setHoverThermalReadout(null);
       return;
     }
     stateRef.current.highlightSelectTime = performance.now() / 1000;
@@ -972,7 +1126,16 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     scene.add(salvageFx.group);
     const signatureFx = createSignatureShowcaseSceneFXController(0);
     scene.add(signatureFx.rootGroup);
-    let lastRenderedPtSpp = 0;
+    const studioRig = createStudioAtmosphereRig(isSoftwareGl);
+    scene.add(studioRig.group);
+    const sciVizCtrl = createScientificVizSceneController();
+    scene.add(sciVizCtrl.group);
+    const scifiVfxCtrl = createSciFiHangarVfxController();
+    scene.add(scifiVfxCtrl.group);
+    const tactileCtrl = createTactileInteractionSceneController();
+    scene.add(tactileCtrl.group);
+    const webmRecorder = createCanvasWebmRecorder(() => renderer.domElement);
+    webmRecorderRef.current = webmRecorder;
     const _ultEuler = new THREE.Euler();
     let fpvWaypoints = buildSafeWorldBBoxFpvWaypoints(
       config.id,
@@ -1110,6 +1273,9 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
               ? partsRef.current.find((p) => p.mesh === (hits[0].object as THREE.Mesh))?.partName || null
               : null;
           if (hitName !== lastViewportHoverName) {
+            if (hitName) {
+              proceduralAudioSynth.playPartHoverTick();
+            }
             lastViewportHoverName = hitName;
             setViewportHoveredPart(hitName);
           }
@@ -1152,9 +1318,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
           } else {
             sp.target = [0, 0, 0];
             stateRef.current.snapShake = triggerAssemblySnapShake(1.05);
-            if (stateRef.current.audioSynthEnabled) {
-              proceduralAudioSynth.playMechanicalLatchClick(920);
-            }
+            proceduralAudioSynth.playMagneticSnapBackThud();
           }
           handleSelectSubPart(releasedPartName);
         }
@@ -1177,6 +1341,15 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       _pointerNdc.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
       _raycaster.setFromCamera(_pointerNdc, camera);
 
+      if (stateRef.current.scifiConfig.hexShieldEnabled && !stateRef.current.isolatedPart) {
+        const shieldHits = _raycaster.intersectObject(scifiVfxCtrl.shieldMesh, false);
+        if (shieldHits.length > 0) {
+          scifiVfxCtrl.triggerShieldHit(shieldHits[0].point);
+          proceduralAudioSynth.playHexShieldRippleResonance(true);
+          stateRef.current.camImpulse = triggerCameraMicroImpulse(0.38, [0, -0.5, 0], 0.11);
+        }
+      }
+
       const pickables = partsRef.current
         .filter((p) => p.mesh.visible && !stateRef.current.hiddenParts[p.partName])
         .map((p) => p.mesh);
@@ -1185,7 +1358,36 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         const hitMesh = hits[0].object as THREE.Mesh;
         const hitPart = partsRef.current.find((p) => p.mesh === hitMesh);
         if (hitPart) {
-          handleSelectSubPart(hitPart.partName);
+          if (stateRef.current.tactileConfig.kineticImpactArmed && !stateRef.current.isolatedPart) {
+            const hp = hits[0].point.clone();
+            camera.matrixWorld.extractBasis(_camRight, _camUp, _camFwd);
+            _emitterW
+              .copy(camera.position)
+              .addScaledVector(_camRight, 0.38)
+              .addScaledVector(_camUp, -0.24)
+              .addScaledVector(_camFwd, -0.35);
+            tactileCtrl.launchKineticProjectile(
+              _emitterW,
+              hp,
+              stateRef.current.tactileConfig.kineticImpulseNs,
+              hitPart.partName,
+              (_hitWorld, dirXZ, impNs, pName) => {
+                stateRef.current.snapShake = triggerAssemblySnapShake(Math.min(1.4, impNs / 180));
+                stateRef.current.camImpulse = triggerCameraMicroImpulse(
+                  Math.min(1.2, impNs / 240),
+                  [dirXZ[0], -0.25, dirXZ[1]],
+                  0.13
+                );
+                stateRef.current.impactSpike01 = Math.min(1.0, impNs / 260);
+                stateRef.current.impactTargetPart = pName;
+                proceduralAudioSynth.playPushImpactThud(impNs, true);
+              }
+            );
+            proceduralAudioSynth.playMechanicalLatchClick(620);
+          } else {
+            proceduralAudioSynth.playMechanicalLatchClick(740);
+            handleSelectSubPart(hitPart.partName);
+          }
         }
       } else if (!stateRef.current.isolatedPart) {
         handleSelectSubPart(null);
@@ -1438,6 +1640,13 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
           progress: 1
         };
         setSlsActive(false);
+        sciVizCtrl.clearLidarCloud();
+        if (initialWorkstationLoadedRef.current && stateRef.current.scifiConfig.autoSpawnMaterialize) {
+          stateRef.current.naniteState = triggerNaniteSpawnSweep(0.65);
+        } else {
+          stateRef.current.naniteState = createInitialNaniteState();
+        }
+        initialWorkstationLoadedRef.current = true;
         setIsLoadingGlb(false);
 
         // Build L0 Coordinate Skeleton Overlay (unclipped so Optical Sectioning exposes the full internal skeleton inside sliced regions!)
@@ -1523,9 +1732,24 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       lastTime = now;
 
       const s = stateRef.current;
+      const simDt = dt * s.tactileConfig.bulletTimeScale;
+
+      studioRig.applyPreset(s.cinemaOptics.lightingPreset, {
+        scene,
+        hemiLight: hemi,
+        keyLight,
+        rimLight,
+        bottomLight: bottomFill,
+        setDeckStyle: saltlineDeck.setDeckStyle
+      });
+
+      if (s.impactSpike01 > 0.001) {
+        s.impactSpike01 = Math.max(0, s.impactSpike01 - simDt * 1.45);
+      }
+
       // Pause continuous time advance during stationary Gear-2 DSLR Path-Tracing exposure so SPP converges to 256!
       if (s.liveSim && !s.pathTracingEnabled) {
-        simElapsed += dt;
+        simElapsed += simDt;
       }
 
       if (s.shipbreakerEnabled || s.focusWeakpointEnabled || s.windTunnelConfig.schlierenMode) {
@@ -1542,15 +1766,28 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         );
       }
 
+      const naniteFrame = stepNaniteState(
+        s.naniteState,
+        s.pathTracingEnabled ? 0 : dt,
+        bboxMinYRef.current,
+        bboxMaxYRef.current,
+        s.scifiConfig.naniteDissolveEnabled,
+        s.scifiConfig.naniteProgress
+      );
+      s.naniteState = naniteFrame.nextState;
+      if (s.tacticalPulse.active && !s.pathTracingEnabled) {
+        s.tacticalPulse = stepTacticalPulseWave(s.tacticalPulse, dt, 14.0);
+      }
+
       // System 1: Step 4-Stage Auto Disassembly Demo if active
       if (s.autoDisassemblyState.active && !s.pathTracingEnabled) {
-        s.autoDisassemblyState = stepAutoDisassemblyDemo(s.autoDisassemblyState, dt);
+        s.autoDisassemblyState = stepAutoDisassemblyDemo(s.autoDisassemblyState, simDt);
         s.targetExplosion = s.autoDisassemblyState.progress;
       }
 
       const twinActorId = config.id === 'b737_bridge' ? 'b737_cfm56' : config.id;
       if (s.ultimateSkill.active && !s.pathTracingEnabled) {
-        s.ultimateSkill = stepUltimateSkill(s.ultimateSkill, wallDt, twinActorId);
+        s.ultimateSkill = stepUltimateSkill(s.ultimateSkill, wallDt * s.tactileConfig.bulletTimeScale, twinActorId);
         if (s.ultimateSkill.justFinished) {
           assemblyRoot.position.set(0, 0, 0);
           assemblyRoot.rotation.set(0, 0, 0);
@@ -1586,6 +1823,42 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         assemblyRoot.rotation.set(0, 0, 0);
       }
 
+      // Dimension 4: Step 6.0s Automated Cinema Camera Macro if active
+      let macroPoseActive = false;
+      if (s.tactileConfig.activeMacro !== 'off' && !s.pathTracingEnabled) {
+        s.macroElapsed += dt;
+        const mPose = evaluateCinemaMacroPose(
+          s.tactileConfig.activeMacro,
+          s.macroElapsed,
+          bboxMinVecRef.current,
+          bboxMaxVecRef.current,
+          Math.max(1.15, assemblyNormMaxDimRef.current * 0.58)
+        );
+        if (mPose.active) {
+          macroPoseActive = true;
+          if (mPose.suggestedExplosion !== undefined) {
+            s.targetExplosion = mPose.suggestedExplosion;
+          }
+          const kMacro = 1 - Math.exp(-7.0 * dt);
+          camera.position.x += (mPose.position[0] - camera.position.x) * kMacro;
+          camera.position.y += (mPose.position[1] - camera.position.y) * kMacro;
+          camera.position.z += (mPose.position[2] - camera.position.z) * kMacro;
+          camera.up.set(0, 1, 0);
+          controls.target.set(mPose.lookAt[0], mPose.lookAt[1], mPose.lookAt[2]);
+          camera.lookAt(controls.target);
+          camera.fov += (mPose.fovDeg - camera.fov) * kMacro;
+          camera.updateProjectionMatrix();
+        } else {
+          s.macroElapsed = 0;
+          s.tactileConfig = { ...s.tactileConfig, activeMacro: 'off' };
+          setTactileConfig((prev) => ({ ...prev, activeMacro: 'off' }));
+          camera.fov = 42;
+          camera.up.set(0, 1, 0);
+          camera.updateProjectionMatrix();
+          controls.enabled = !s.activeCamPreset;
+        }
+      }
+
       // Smooth exponential damping for Explosion & Section Clipping ([C] Micro-FPV clamped to safe 18% micro-gap!)
       const effectiveTargetExplosion = s.ultimateSkill.active
         ? Math.max(s.targetExplosion, s.ultimateSkill.armorExplosionRatio)
@@ -1594,6 +1867,13 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
           : s.targetExplosion;
       const uiStepDt = Math.min(0.28, rawDt);
       s.curExplosion = dampValue(s.curExplosion, effectiveTargetExplosion, 10.5, uiStepDt);
+      saltlineDeck.setExplosionFade(s.curExplosion);
+      studioRig.update(
+        simElapsed,
+        bboxMinYRef.current - 0.022,
+        Boolean(s.isolatedPart || s.windTunnelConfig.schlierenMode)
+      );
+
       if (s.ultimateSkill.active && s.ultimateSkill.showcaseClipRatio < 0.995 && !s.pathTracingEnabled) {
         s.curClipRatio = dampValue(
           s.curClipRatio,
@@ -1603,15 +1883,17 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         );
       } else if (s.autoSectionScan && !s.pathTracingEnabled) {
         const sweepTarget = 0.54 + 0.38 * Math.sin(now * 0.95);
-        s.curClipRatio = dampValue(s.curClipRatio, sweepTarget, 6.0, dt);
+        s.curClipRatio = dampValue(s.curClipRatio, sweepTarget, 6.0, simDt);
       } else {
         s.curClipRatio = dampValue(s.curClipRatio, s.targetClipRatio, 10.5, uiStepDt);
       }
 
       // Module 4: Millimeter-Scale Micro-FPV Cavity Fly-Through vs Signature Director Camera [K] vs OrbitControls
       let activeFpvSegLabel = '';
-      if (s.microFpvActive && !s.pathTracingEnabled) {
-        s.microFpvPhase = (s.microFpvPhase + dt * 0.088) % 1.0;
+      if (macroPoseActive) {
+        // Camera already driven by 6.0s Cinema Macro
+      } else if (s.microFpvActive && !s.pathTracingEnabled) {
+        s.microFpvPhase = (s.microFpvPhase + simDt * 0.088) % 1.0;
         const fpvPose = evaluateMicroFpvSplinePose(fpvWaypoints, s.microFpvPhase, 0.72);
         activeFpvSegLabel = fpvPose.segmentLabel;
         if (camera.near !== 0.002) {
@@ -1751,6 +2033,11 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
 
       const parts = partsRef.current;
       let anyPartDisplaced = s.curExplosion > 0.012;
+      let framePeakStressMpa = 0;
+      const feaMapCode = feaColorMapToShaderCode(s.scientificConfig.feaColorMap);
+      const massSamples: PartMassSample[] = [];
+      const torqueSamples: TorqueJointSample[] = [];
+      _tmpRobotBox.makeEmpty();
 
       for (let i = 0; i < parts.length; i++) {
         const p = parts[i];
@@ -1900,16 +2187,67 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         }
 
         if (s.thermalMode) {
-          const normT = estimatePartThermalNormalized(config.id, p.partName, p.layer, loadFactor, p.normAxialX);
-          const [tr, tg, tb] = computeThermalIrColor(normT);
+          const flir = computeCalibratedFlirTemperatureC({
+            contextId: config.id,
+            partName: p.partName,
+            layer: p.layer,
+            loadFactor,
+            pushSpike01: s.impactSpike01
+          });
+          const [tr, tg, tb] = computeThermalIrColor(flir.normalized01);
           mat.color.setRGB(tr, tg, tb);
           if (mat.emissive) {
-            mat.emissive.setRGB(tr * 0.42 * normT, tg * 0.35 * normT, tb * 0.25 * normT);
+            mat.emissive.setRGB(
+              tr * 0.42 * flir.normalized01,
+              tg * 0.35 * flir.normalized01,
+              tb * 0.25 * flir.normalized01
+            );
           }
         } else {
           mat.color.copy(p.origColor);
           if (mat.emissive) {
             mat.emissive.setHex(ghostState.emissiveHex);
+          }
+        }
+
+        const cantileverDist = Math.hypot(p.basePos.x, p.basePos.y, p.basePos.z);
+        const feaRes = computeLinkVonMisesStress({
+          partName: p.partName,
+          layer: p.layer,
+          cantileverDistMeters: cantileverDist,
+          jointOmegaRadS: isMars ? marsOmegaSum * 0.4 : loadFactor * 2.2,
+          loadFactor,
+          pushSpike01: s.impactSpike01,
+          isImpactTarget: s.impactSpike01 > 0.05 && s.impactTargetPart === p.partName
+        });
+        if (feaRes.stressMpa > framePeakStressMpa) {
+          framePeakStressMpa = feaRes.stressMpa;
+        }
+
+        if (
+          s.scientificConfig.comZmpEnabled ||
+          s.scientificConfig.torqueVectorsEnabled ||
+          s.scifiConfig.hexShieldEnabled ||
+          s.scientificConfig.lidarPersistEnabled
+        ) {
+          _tmpVec3B.copy(p.geomLocalCenter);
+          m.localToWorld(_tmpVec3B);
+          _tmpRobotBox.expandByPoint(_tmpVec3B);
+          if (s.scientificConfig.comZmpEnabled) {
+            massSamples.push({
+              partName: p.partName,
+              worldPos: [_tmpVec3B.x, _tmpVec3B.y, _tmpVec3B.z],
+              volumeWeight: Math.max(0.02, p.normSize[0] * p.normSize[1] * p.normSize[2] * 12),
+              isGroundContactCandidate: n.includes('wheel') || n.includes('bogie') || n.includes('mount')
+            });
+          }
+          if (s.scientificConfig.torqueVectorsEnabled && torqueSamples.length < 14 && (p.layer === 'L2' || n.includes('wheel') || n.includes('fan') || n.includes('hpt'))) {
+            torqueSamples.push({
+              worldPos: _tmpVec3B.clone(),
+              axisWorld: isMars ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0),
+              torqueRatio01: Math.min(1, 0.25 + loadFactor * 0.52 + s.impactSpike01 * 0.4),
+              omegaRadS: 1.5 + loadFactor * 2.4
+            });
           }
         }
 
@@ -1941,6 +2279,14 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         p.twinUniforms.uOverheatCoreGlow.value = s.ultimateSkill.coreGlowIntensity * 0.85;
         p.twinUniforms.uModelMinY.value = bboxMinYRef.current;
         p.twinUniforms.uModelSpanY.value = Math.max(0.4, bboxMaxYRef.current - bboxMinYRef.current);
+        p.twinUniforms.uFeaActive.value =
+          s.scientificConfig.feaEnabled && !s.isolatedPart ? 1.0 : 0.0;
+        p.twinUniforms.uFeaSigma.value = feaRes.sigma01;
+        p.twinUniforms.uFeaColorMap.value = feaMapCode;
+        p.twinUniforms.uFeaContours.value = s.scientificConfig.feaContourLines ? 1.0 : 0.0;
+        p.twinUniforms.uNaniteActive.value = naniteFrame.active ? 1.0 : 0.0;
+        p.twinUniforms.uNaniteSweepY.value = naniteFrame.sweepWorldY;
+        p.twinUniforms.uNaniteDissolve.value = naniteFrame.dissolveAmount01;
       }
 
       if (s.liveSim && !s.pathTracingEnabled) {
@@ -2110,6 +2456,104 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         });
       }
 
+      const deckFloorY = bboxMinYRef.current - 0.022;
+      const comResult =
+        s.scientificConfig.comZmpEnabled && !s.isolatedPart && massSamples.length > 0
+          ? computeRobotComAndSupportPolygon({
+              samples: massSamples,
+              floorY: deckFloorY,
+              comAccelXZ: [s.impactSpike01 * 4.5, 0]
+            })
+          : null;
+
+      _tmpWorkspaceOrigin.set(0, (bboxMinYRef.current + bboxMaxYRef.current) * 0.52, 0);
+      _tmpLidarOrigin.set(0, bboxMaxYRef.current - 0.14, 0);
+      if (_tmpRobotBox.isEmpty()) {
+        _tmpRobotBox.min.set(
+          bboxMinVecRef.current[0],
+          bboxMinVecRef.current[1],
+          bboxMinVecRef.current[2]
+        );
+        _tmpRobotBox.max.set(
+          bboxMaxVecRef.current[0],
+          bboxMaxVecRef.current[1],
+          bboxMaxVecRef.current[2]
+        );
+      } else {
+        _tmpRobotBox.expandByScalar(0.14);
+      }
+
+      sciVizCtrl.update({
+        config: s.scientificConfig,
+        contextId: config.id,
+        floorY: deckFloorY,
+        simTime: simElapsed,
+        dt: simDt,
+        comZmp: comResult,
+        torqueSamples,
+        workspaceOriginWorld: _tmpWorkspaceOrigin,
+        workspaceMaxRadius: Math.max(0.75, assemblyNormMaxDimRef.current * 0.48),
+        lidarOriginWorld: _tmpLidarOrigin,
+        robotBoundsBox: _tmpRobotBox,
+        hidden: Boolean(s.isolatedPart || s.windTunnelConfig.schlierenMode)
+      });
+
+      scifiVfxCtrl.update({
+        config: s.scifiConfig,
+        naniteFrame,
+        pulseState: s.tacticalPulse,
+        robotBounds: _tmpRobotBox,
+        floorY: deckFloorY,
+        simTime: simElapsed,
+        dt: simDt,
+        loadFactor: loadFactor + s.impactSpike01 * 0.5,
+        hidden: Boolean(s.isolatedPart || s.windTunnelConfig.schlierenMode)
+      });
+
+      tactileCtrl.update({
+        dt,
+        simTime: now,
+        ikSpringActive: false,
+        jointLimitWarnings: [],
+        hidden: Boolean(s.isolatedPart || s.windTunnelConfig.schlierenMode)
+      });
+
+      const impStep = stepCameraMicroImpulse(s.camImpulse, rawDt);
+      s.camImpulse = impStep.next;
+      const swayOff = computeHandheldCameraMicroSway(
+        now,
+        s.tactileConfig.handheldMicroSway && !s.pathTracingEnabled
+      );
+      _tmpTransientCamOffset.set(
+        swayOff[0] + impStep.offsetMeters[0],
+        swayOff[1] + impStep.offsetMeters[1],
+        swayOff[2] + impStep.offsetMeters[2]
+      );
+      const hasCamTransient = !s.pathTracingEnabled && _tmpTransientCamOffset.lengthSq() > 1e-8;
+      if (hasCamTransient) {
+        camera.position.add(_tmpTransientCamOffset);
+        camera.updateMatrixWorld();
+      }
+
+      let focusTargetX = controls.target.x;
+      let focusTargetY = controls.target.y;
+      let focusTargetZ = controls.target.z;
+      const dofFocusPartName = s.isolatedPart || s.hoveredPart || lastViewportHoverName || s.highlightedPart;
+      if (dofFocusPartName) {
+        const fp = parts.find((pt) => pt.partName === dofFocusPartName);
+        if (fp && fp.mesh.visible) {
+          _tmpVec3B.copy(fp.geomLocalCenter);
+          fp.mesh.localToWorld(_tmpVec3B);
+          focusTargetX = _tmpVec3B.x;
+          focusTargetY = _tmpVec3B.y;
+          focusTargetZ = _tmpVec3B.z;
+        }
+      }
+      const smartFocusDist = computeSmartFocusDistanceMeters(
+        [camera.position.x, camera.position.y, camera.position.z],
+        [focusTargetX, focusTargetY, focusTargetZ]
+      );
+
       const showDeck = !s.isolatedPart && !s.windTunnelConfig.schlierenMode;
       saltlineDeck.mesh.visible = showDeck;
       if (showDeck && !s.pathTracingEnabled) {
@@ -2130,18 +2574,30 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             s.fk2 * 1.7 +
             s.fk3 * 2.3 +
             (s.thermalMode ? 7 : 0) +
+            (s.scientificConfig.feaEnabled ? 17 : 0) +
             (s.xrayMode ? 13 : 0) +
+            (naniteFrame.active ? naniteFrame.sweepWorldY * 29 : 0) +
             (s.isolatedPart ? 29 : 0) +
             (s.hoveredPart ? 41 : 0),
           emissiveSources,
           schlierenMode: s.windTunnelConfig.schlierenMode,
-          simTime: now
+          simTime: now,
+          cinemaOptics: s.cinemaOptics,
+          focusDistanceMeters: smartFocusDist,
+          bulletTimeScale: s.tactileConfig.bulletTimeScale,
+          impulseVignette01: impStep.vignette01,
+          rawDt
         });
 
       renderOnceRef.current = () => {
         executePipelineRender();
       };
       const ptRes = executePipelineRender();
+
+      if (hasCamTransient) {
+        camera.position.sub(_tmpTransientCamOffset);
+        camera.updateMatrixWorld();
+      }
 
       // Throttled ~10Hz HUD sync for FK slider positions, SPP counter, SciTech status, Auto-Disassembly, Blueprint Capsule & 3D Telemetry Callouts
       if (now - lastUiSync > 0.1) {
@@ -2150,6 +2606,10 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         const h = container.clientHeight || 640;
         setPtSpp(ptRes.spp);
         setSlsActive(s.slsState.active);
+        setPeakStressMpa(framePeakStressMpa);
+        if (comResult) {
+          setComStabilityStatus(comResult.statusLevel);
+        }
         setUltimateActiveUI(s.ultimateSkill.active);
         if (s.ultimateSkill.active) {
           setUltimatePhaseLabelUI(s.ultimateSkill.phaseLabel);
@@ -2204,6 +2664,33 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             const wxMm = _tmpVec3.x * 1000;
             const wyMm = _tmpVec3.y * 1000;
             const wzMm = _tmpVec3.z * 1000;
+            const hovFlir = computeCalibratedFlirTemperatureC({
+              contextId: config.id,
+              partName: hovP.partName,
+              layer: hovP.layer,
+              loadFactor,
+              pushSpike01: s.impactSpike01
+            });
+            setHoverThermalReadout({
+              tempC: hovFlir.tempC,
+              zoneLabel: hovFlir.zoneLabel,
+              partName: hovP.partName
+            });
+            const badgeParts: string[] = [];
+            if (s.thermalMode) {
+              badgeParts.push(`${hovFlir.tempC.toFixed(1)} °C · ${hovFlir.zoneLabel}`);
+            }
+            if (s.scientificConfig.feaEnabled) {
+              const hovFea = computeLinkVonMisesStress({
+                partName: hovP.partName,
+                layer: hovP.layer,
+                cantileverDistMeters: Math.hypot(hovP.basePos.x, hovP.basePos.y, hovP.basePos.z),
+                jointOmegaRadS: isMars ? marsOmegaSum * 0.4 : loadFactor * 2.2,
+                loadFactor,
+                pushSpike01: s.impactSpike01
+              });
+              badgeParts.push(`σ_vm ${hovFea.stressMpa} MPa`);
+            }
             _tmpVec3B.copy(_tmpVec3).project(camera);
             if (_tmpVec3B.z >= -1 && _tmpVec3B.z <= 1) {
               setHoveredCallout({
@@ -2213,16 +2700,19 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
                 tris: hovP.tris,
                 screenX: (_tmpVec3B.x * 0.5 + 0.5) * w,
                 screenY: (-_tmpVec3B.y * 0.5 + 0.5) * h,
-                worldMm: [wxMm, wyMm, wzMm]
+                worldMm: [wxMm, wyMm, wzMm],
+                telemetryBadge: badgeParts.length > 0 ? badgeParts.join(' · ') : undefined
               });
             } else {
               setHoveredCallout(null);
             }
           } else {
             setHoveredCallout(null);
+            setHoverThermalReadout(null);
           }
         } else {
           setHoveredCallout(null);
+          setHoverThermalReadout(null);
         }
 
         if (s.isolatedPart && isoLabelWorlds) {
@@ -2305,6 +2795,14 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       controls.removeEventListener('start', onControlStart);
       window.removeEventListener('resize', handleResize);
       resizeObs?.disconnect();
+      if (webmRecorder.isRecording()) {
+        webmRecorder.stopRecording();
+      }
+      webmRecorderRef.current = null;
+      studioRig.dispose();
+      sciVizCtrl.dispose();
+      scifiVfxCtrl.dispose();
+      tactileCtrl.dispose();
       magSlsRig.dispose();
       mpcPowerCtrl.dispose();
       disasterFx.dispose();
@@ -2904,22 +3402,23 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             onToggleProbes={() => setShowProbes((v) => !v)}
             audioSynthEnabled={audioSynthEnabled}
             onToggleAudioSynth={onToggleAudioSynth}
+            audioVolume={audioVolume}
+            onChangeAudioVolume={handleChangeAudioVolume}
+            handheldMicroSway={tactileConfig.handheldMicroSway}
+            onToggleHandheldMicroSway={() =>
+              setTactileConfig((prev) => ({
+                ...prev,
+                handheldMicroSway: !prev.handheldMicroSway
+              }))
+            }
             zenMode={zenMode}
             onToggleZenMode={onToggleZenMode}
             isExporting4K={isExporting4K}
             onExport4K={handleExport4K}
+            isRecordingWebm={isRecordingWebm}
+            onToggleRecordWebm={handleToggleRecordWebm}
             onOpenChange={setSettingsOpen}
           />
-        )}
-
-        {!zenMode && thermalMode && (
-          <div className="bg-[#12141a]/[0.88] border border-amber-500/40 rounded-lg px-3 py-1.5 pointer-events-none">
-            <div className="text-[10px] font-mono tabular-nums text-amber-300 flex items-center justify-between gap-4">
-              <span>红外热力场</span>
-              <span>{isMars ? '-60 °C → +215 °C' : '+15 °C → +1,380 °C'}</span>
-            </div>
-            <div className="h-1.5 w-40 rounded-sm mt-1 bg-gradient-to-r from-blue-900 via-cyan-500 to-amber-300" />
-          </div>
         )}
       </div>
 
@@ -2954,6 +3453,13 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             onChangeExplosion={(val) => {
               handleHoverSceneGraphPart(null);
               setAutoDisassembly(false);
+              if (val <= 0.01 && explosion > 0.04) {
+                proceduralAudioSynth.playMagneticSnapBackThud();
+                stateRef.current.snapShake = triggerAssemblySnapShake(0.85);
+                stateRef.current.camImpulse = triggerCameraMicroImpulse(0.28);
+              } else {
+                proceduralAudioSynth.playExplosionSliderHiss(val - explosion);
+              }
               setExplosion(val);
             }}
             autoDisassembly={autoDisassembly}
@@ -3074,6 +3580,29 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             onCleanWeathering={handleCleanWeathering}
             isExporting4K={isExporting4K}
             onExport4K={handleExport4K}
+            pathTracingEnabled={pathTracingEnabled}
+            pathTracingSpp={ptSpp}
+            onTogglePathTracing={() => setPathTracingEnabled((p) => !p)}
+            cinemaOptics={cinemaOptics}
+            onChangeCinemaOptics={setCinemaOptics}
+            scientificConfig={scientificConfig}
+            onChangeScientificConfig={setScientificConfig}
+            peakStressMpa={peakStressMpa}
+            comStabilityStatus={comStabilityStatus}
+            hoverThermalReadout={hoverThermalReadout}
+            scifiConfig={scifiConfig}
+            onChangeScifiConfig={setScifiConfig}
+            onTriggerNaniteDemo={handleTriggerNaniteDemo}
+            onTriggerTacticalPulse={handleTriggerTacticalPulse}
+            tactileConfig={tactileConfig}
+            onChangeTactileConfig={setTactileConfig}
+            onTriggerCinemaMacro={handleTriggerCinemaMacro}
+            audioEnabled={audioSynthEnabled}
+            onToggleAudio={onToggleAudioSynth}
+            audioVolume={audioVolume}
+            onChangeAudioVolume={handleChangeAudioVolume}
+            isRecordingWebm={isRecordingWebm}
+            onToggleRecordWebm={handleToggleRecordWebm}
             onOpenChange={setVisualPopoverOpen}
           />
 
@@ -3087,6 +3616,11 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
               setMagLensEnabled(false);
               setMpcEnabled(false);
               setWindTunnelConfig(createDefaultWindTunnelConfig());
+              setCinemaOptics(createDefaultCinemaOpticsConfig());
+              setScientificConfig(createDefaultScientificVizConfig());
+              setScifiConfig(createDefaultSciFiVfxConfig());
+              setTactileConfig(createDefaultTactileDirectorConfig());
+              stateRef.current.tacticalPulse = createInitialTacticalPulseState();
               if (microFpvActive) handleToggleMicroFpv();
               setClipRatio(1.0);
               setAutoSectionScan(false);

@@ -28,9 +28,40 @@ class ProceduralPhysicalAudioEngine {
   private aeroGain: GainNode | null = null;
 
   private lastSonarPingAt = 0;
+  private masterVolume = 0.85;
+  private lastHoverTickAt = 0;
+  private lastSliderHissAt = 0;
+  private gestureUnlockInstalled = false;
+
+  constructor() {
+    this.installAutoGestureUnlock();
+  }
+
+  public installAutoGestureUnlock(): void {
+    if (this.gestureUnlockInstalled || typeof window === 'undefined') return;
+    this.gestureUnlockInstalled = true;
+    const unlock = () => {
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+    };
+    window.addEventListener('pointerdown', unlock, { passive: true });
+    window.addEventListener('keydown', unlock, { passive: true });
+  }
 
   public isEnabled(): boolean {
     return this.enabled;
+  }
+
+  public getVolume(): number {
+    return this.masterVolume;
+  }
+
+  public setVolume(vol01: number): void {
+    this.masterVolume = Math.max(0, Math.min(1, Number.isFinite(vol01) ? vol01 : 0.85));
+    if (this.enabled && this.ctx && this.masterGain) {
+      this.masterGain.gain.setTargetAtTime(this.masterVolume, this.ctx.currentTime, 0.03);
+    }
   }
 
   public setEnabled(next: boolean): void {
@@ -38,7 +69,7 @@ class ProceduralPhysicalAudioEngine {
     if (next) {
       const ctx = this.ensureGraph();
       if (ctx && this.masterGain) {
-        this.masterGain.gain.setTargetAtTime(0.85, ctx.currentTime, 0.04);
+        this.masterGain.gain.setTargetAtTime(this.masterVolume, ctx.currentTime, 0.04);
       }
       this.playMechanicalLatchClick(680);
     } else if (this.ctx && this.masterGain) {
@@ -58,7 +89,7 @@ class ProceduralPhysicalAudioEngine {
       this.ctx = ctx;
 
       const master = ctx.createGain();
-      master.gain.value = 0.85;
+      master.gain.value = this.masterVolume;
       master.connect(ctx.destination);
       this.masterGain = master;
 
@@ -157,15 +188,20 @@ class ProceduralPhysicalAudioEngine {
       this.ctx.resume().catch(() => {});
     }
     if (forceAllow && this.masterGain) {
-      this.masterGain.gain.setTargetAtTime(0.85, this.ctx.currentTime, 0.02);
+      this.masterGain.gain.setTargetAtTime(this.masterVolume, this.ctx.currentTime, 0.02);
     }
     return this.ctx;
   }
 
   /**
-   * Updates continuous FOC Brushless Servo & Harmonic Drive whine every frame from Σ|Δq/Δt|.
+   * Updates continuous FOC Brushless Servo & Harmonic Drive whine every frame from Σ|Δq/Δt| and peak |τ|.
    */
-  public updateFocServoTelemetry(sumJointSpeedRadS: number, isSubseaRov: boolean = false, simTime: number = 0): void {
+  public updateFocServoTelemetry(
+    sumJointSpeedRadS: number,
+    isSubseaRov: boolean = false,
+    simTime: number = 0,
+    peakTorqueRatio01: number = 0
+  ): void {
     const ctx = this.ensureGraph();
     if (!ctx || !this.servoOscA || !this.servoOscB || !this.servoFilter || !this.servoGain) return;
 
@@ -175,11 +211,12 @@ class ProceduralPhysicalAudioEngine {
     }
 
     const params = computeFocServoAcousticParams(sumJointSpeedRadS);
+    const torqueBoost = Math.max(0, Math.min(1, peakTorqueRatio01));
     const t = ctx.currentTime;
-    this.servoOscA.frequency.setTargetAtTime(params.primaryCarrierHz, t, 0.035);
-    this.servoOscB.frequency.setTargetAtTime(params.harmonicSidebandHz, t, 0.035);
-    this.servoFilter.frequency.setTargetAtTime(params.primaryCarrierHz * 1.25, t, 0.04);
-    this.servoGain.gain.setTargetAtTime(params.gain, t, 0.045);
+    this.servoOscA.frequency.setTargetAtTime(params.primaryCarrierHz * (1 + torqueBoost * 0.18), t, 0.035);
+    this.servoOscB.frequency.setTargetAtTime(params.harmonicSidebandHz * (1 + torqueBoost * 0.24), t, 0.035);
+    this.servoFilter.frequency.setTargetAtTime(params.primaryCarrierHz * (1.25 + torqueBoost * 0.35), t, 0.04);
+    this.servoGain.gain.setTargetAtTime(Math.min(0.14, params.gain * (1 + torqueBoost * 0.45)), t, 0.045);
 
     // Periodic 2.4kHz Ping360 Sonar Pulse with underwater reverb when viewing BlueROV2 / RexROV2!
     if (isSubseaRov && simTime - this.lastSonarPingAt > 3.2) {
@@ -845,6 +882,135 @@ class ProceduralPhysicalAudioEngine {
     g.connect(this.masterGain);
     osc.start(t);
     osc.stop(t + 0.17);
+  }
+
+  /**
+   * Subtle high-precision optical micro-tick on CAD part hover (rate-limited to avoid chatter).
+   */
+  public playPartHoverTick(): void {
+    const ctx = this.ensureGraph();
+    if (!ctx || !this.masterGain) return;
+    const now = performance.now();
+    if (now - this.lastHoverTickAt < 55) return;
+    this.lastHoverTickAt = now;
+
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1820, t);
+    osc.frequency.exponentialRampToValueAtTime(920, t + 0.022);
+    g.gain.setValueAtTime(0.032, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+    osc.connect(g);
+    g.connect(this.masterGain);
+    osc.start(t);
+    osc.stop(t + 0.028);
+  }
+
+  /**
+   * Speed-modulated mechanical ratchet & pneumatic hiss while scrubbing exploded/section sliders.
+   */
+  public playExplosionSliderHiss(deltaAmount: number): void {
+    const ctx = this.ensureGraph();
+    if (!ctx || !this.masterGain) return;
+    const now = performance.now();
+    if (now - this.lastSliderHissAt < 48) return;
+    this.lastSliderHissAt = now;
+
+    const speed = Math.min(1, Math.abs(deltaAmount) * 18);
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(420 + speed * 540, t);
+    osc.frequency.exponentialRampToValueAtTime(240, t + 0.038);
+    g.gain.setValueAtTime(0.025 + speed * 0.045, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.042);
+    osc.connect(g);
+    g.connect(this.masterGain);
+    osc.start(t);
+    osc.stop(t + 0.045);
+  }
+
+  /**
+   * Heavy damped magnetic latch thud when exploded CAD sub-assemblies snap back to 0% home.
+   */
+  public playMagneticSnapBackThud(forceAllow: boolean = false): void {
+    const ctx = this.ensureGraph(forceAllow);
+    if (!ctx || !this.masterGain) return;
+    const t = ctx.currentTime;
+
+    const sub = ctx.createOscillator();
+    const sg = ctx.createGain();
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(148, t);
+    sub.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+    sg.gain.setValueAtTime(0.18, t);
+    sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    sub.connect(sg);
+    sg.connect(this.masterGain);
+    sub.start(t);
+    sub.stop(t + 0.19);
+
+    this.playMechanicalLatchClick(860, forceAllow);
+  }
+
+  /**
+   * Crystalline harmonic resonance when clicking the 3D Hexagonal Energy Shield.
+   */
+  public playHexShieldRippleResonance(forceAllow: boolean = false): void {
+    const ctx = this.ensureGraph(forceAllow);
+    if (!ctx || !this.masterGain) return;
+    const t = ctx.currentTime;
+    const freqs = [660, 990, 1485];
+    freqs.forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, t);
+      osc.frequency.exponentialRampToValueAtTime(f * 1.12, t + 0.28 + i * 0.05);
+      g.gain.setValueAtTime(0.065 / (i + 1), t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34 + i * 0.05);
+      osc.connect(g);
+      g.connect(this.masterGain!);
+      osc.start(t);
+      osc.stop(t + 0.36 + i * 0.05);
+    });
+  }
+
+  /**
+   * Deep-to-bright sonar radar sweep for Tactical Topographic Pulse Wave [T].
+   */
+  public playTacticalPulseRadarSweep(forceAllow: boolean = false): void {
+    const ctx = this.ensureGraph(forceAllow);
+    if (!ctx || !this.masterGain) return;
+    const t = ctx.currentTime;
+
+    const sub = ctx.createOscillator();
+    const sg = ctx.createGain();
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(95, t);
+    sub.frequency.exponentialRampToValueAtTime(32, t + 0.45);
+    sg.gain.setValueAtTime(0.16, t);
+    sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+    sub.connect(sg);
+    sg.connect(this.masterGain);
+    sub.start(t);
+    sub.stop(t + 0.5);
+
+    const sweep = ctx.createOscillator();
+    const wg = ctx.createGain();
+    sweep.type = 'sine';
+    sweep.frequency.setValueAtTime(360, t + 0.04);
+    sweep.frequency.exponentialRampToValueAtTime(1640, t + 0.55);
+    wg.gain.setValueAtTime(0.001, t);
+    wg.gain.linearRampToValueAtTime(0.075, t + 0.1);
+    wg.gain.exponentialRampToValueAtTime(0.0001, t + 0.62);
+    sweep.connect(wg);
+    wg.connect(this.masterGain);
+    sweep.start(t + 0.04);
+    sweep.stop(t + 0.65);
   }
 }
 
