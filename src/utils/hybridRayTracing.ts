@@ -5,6 +5,7 @@ import {
   computeBoundsTree,
   disposeBoundsTree
 } from 'three-mesh-bvh';
+import { WebGLPathTracer } from 'three-gpu-pathtracer';
 import {
   GTAO_CONFIG,
   RESTRAINED_BLOOM_CONFIG,
@@ -174,14 +175,105 @@ export function createStudioLightboxPmrem(renderer: THREE.WebGLRenderer): THREE.
   addEmitterPanel(22, 22, true, [0, -4.5, 0], [0, 0, 0], 0.08, 0.09, 0.12);
 
   const pmrem = new THREE.PMREMGenerator(renderer);
-  pmrem.compileEquirectangularShader();
   const rt = pmrem.fromScene(envScene, 0.032);
   pmrem.dispose();
   for (const d of dispositions) {
     d.geo.dispose();
     d.mat.dispose();
   }
-  return rt.texture;
+  const envTex = rt.texture;
+  const onEnvDispose = () => {
+    envTex.removeEventListener('dispose', onEnvDispose);
+    rt.dispose();
+  };
+  envTex.addEventListener('dispose', onEnvDispose);
+  return envTex;
+}
+
+/**
+ * Builds a calibrated CPU-backed FloatType HDR Studio Lightbox Equirectangular DataTexture
+ * matching `createStudioLightboxPmrem` so `WebGLPathTracer` can compute exact MIS marginal &
+ * conditional CDFs even when `scene.environment` is a GPU-only PMREM CubeUV texture.
+ */
+function createStudioLightboxEquirectHdr(): THREE.DataTexture {
+  const w = 256;
+  const h = 128;
+  const data = new Float32Array(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    const v = (y + 0.5) / h; // 0 = bottom (-Y), 1 = top (+Y) in DataTexture with flipY=false
+    const theta = (1 - v) * Math.PI; // 0 = zenith (+Y), PI = nadir (-Y)
+    const sinTheta = Math.sin(theta);
+    const dy = Math.cos(theta);
+    for (let x = 0; x < w; x++) {
+      const u = (x + 0.5) / w;
+      const phi = (u - 0.5) * Math.PI * 2;
+      const dx = sinTheta * Math.cos(phi);
+      const dz = sinTheta * Math.sin(phi);
+
+      // Ambient dark studio architectural dome
+      let r = 0.045;
+      let g = 0.055;
+      let b = 0.078;
+
+      if (dy > 0.12) {
+        // Project onto overhead studio ceiling plane y = 8.8
+        const tCeil = 8.8 / dy;
+        const cx = dx * tCeil;
+        const cz = dz * tCeil;
+        if (Math.abs(cx) < 5.75 && Math.abs(cz + 2.4) < 0.78) {
+          r = 2.35;
+          g = 2.42;
+          b = 2.55;
+        } else if (Math.abs(cx) < 5.75 && Math.abs(cz - 2.4) < 0.78) {
+          r = 2.1;
+          g = 2.18;
+          b = 2.32;
+        } else if (Math.abs(cx) < 6.5 && Math.abs(cz) < 0.6) {
+          r = 0.04;
+          g = 0.05;
+          b = 0.07;
+        }
+      } else if (dy < -0.15) {
+        // Matte space-gray studio floor bounce
+        r = 0.08;
+        g = 0.09;
+        b = 0.12;
+      }
+
+      // Neutral-warm key diffuser around (+8.8, +3.6, +3.4)
+      const keyDot = dx * 0.873 + dy * 0.357 + dz * 0.333;
+      if (keyDot > 0.86) {
+        const k = Math.min(1, (keyDot - 0.86) / 0.1);
+        r += 1.75 * k;
+        g += 1.48 * k;
+        b += 1.15 * k;
+      }
+
+      // Cool slate-cyan precision rim strip around (-8.8, +3.2, -3.4)
+      const rimDot = dx * -0.883 + dy * 0.321 + dz * -0.341;
+      if (rimDot > 0.85) {
+        const k = Math.min(1, (rimDot - 0.85) / 0.1);
+        r += 0.48 * k;
+        g += 1.18 * k;
+        b += 1.78 * k;
+      }
+
+      const idx = (y * w + x) * 4;
+      data[idx] = r;
+      data[idx + 1] = g;
+      data[idx + 2] = b;
+      data[idx + 3] = 1.0;
+    }
+  }
+  const tex = new THREE.DataTexture(data, w, h, THREE.RGBAFormat, THREE.FloatType);
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.flipY = false;
+  tex.needsUpdate = true;
+  return tex;
 }
 
 /**
@@ -257,6 +349,9 @@ export function upgradeGlbPbrAndBuildStaticBvh(
       if (!std || !('roughness' in std)) continue;
 
       std.userData = { ...std.userData, microSurfaceClass };
+      if (std.userData?.twinUniforms?.uMicroSurfaceClass) {
+        std.userData.twinUniforms.uMicroSurfaceClass.value = microSurfaceClass;
+      }
 
       if (isRubberElastomer) {
         std.metalness = 0.04;
@@ -359,8 +454,24 @@ export interface SaltlineReflectorDeckController {
 }
 
 function createProceduralMatteFloorMap(): {
-  normalRoughTex: THREE.CanvasTexture;
+  normalRoughTex: THREE.Texture;
 } {
+  if (typeof document === 'undefined') {
+    const data = new Uint8Array(64 * 64 * 4);
+    for (let i = 0; i < 64 * 64; i++) {
+      data[i * 4] = 128;
+      data[i * 4 + 1] = 128;
+      data[i * 4 + 2] = 178;
+      data[i * 4 + 3] = 255;
+    }
+    const fallbackTex = new THREE.DataTexture(data, 64, 64, THREE.RGBAFormat);
+    fallbackTex.wrapS = THREE.RepeatWrapping;
+    fallbackTex.wrapT = THREE.RepeatWrapping;
+    fallbackTex.repeat.set(18, 18);
+    fallbackTex.needsUpdate = true;
+    return { normalRoughTex: fallbackTex };
+  }
+
   const canvas = document.createElement('canvas');
   canvas.width = 256;
   canvas.height = 256;
@@ -412,7 +523,7 @@ export function createSaltlineReflectorDeck(
   const reflectRT = new THREE.WebGLRenderTarget(rtRes, rtRes, {
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
-    type: THREE.UnsignedByteType,
+    type: isSoftwareGl ? THREE.UnsignedByteType : THREE.HalfFloatType,
     depthBuffer: true
   });
 
@@ -505,11 +616,21 @@ export function createSaltlineReflectorDeck(
         float NoV = clamp(viewDir.y, 0.0, 1.0);
         float fresnel = 0.06 + 0.64 * pow(1.0 - NoV, 3.6);
 
-        // Industrial self-leveling epoxy + brushed-metal expansion seams + precision coordinate reticle ring
+        // Industrial self-leveling epoxy + fwidth()-antialiased brushed-metal expansion seams + precision coordinate reticle ring
         float stageFalloff = exp(-radialDist * radialDist * 0.055);
-        vec2 metricCell = abs(fract(vWorldPos.xz * 0.5) - 0.5);
-        float metalSeam = (1.0 - smoothstep(0.0, 0.009, min(metricCell.x, metricCell.y))) * (1.0 - smoothstep(2.2, 7.8, radialDist));
-        float coordRing = (1.0 - smoothstep(0.0, 0.014, abs(radialDist - 1.65))) + (1.0 - smoothstep(0.0, 0.014, abs(radialDist - 2.85))) * 0.6;
+        vec2 metricCoord = vWorldPos.xz * 0.5;
+        vec2 metricFw = max(fwidth(metricCoord), vec2(1e-4));
+        vec2 metricCell = abs(fract(metricCoord) - 0.5);
+        vec2 seamHalfW = max(vec2(0.0045), metricFw * 0.75);
+        vec2 seamAxis = (1.0 - smoothstep(seamHalfW - metricFw * 0.55, seamHalfW + metricFw * 0.65, metricCell)) * (1.0 - clamp(metricFw * 1.25, vec2(0.0), vec2(1.0)));
+        float metalSeam = max(seamAxis.x, seamAxis.y) * (1.0 - smoothstep(2.2, 7.8, radialDist));
+
+        float ringFw = max(fwidth(radialDist), 1e-4);
+        float ringHalfW = max(0.008, ringFw * 0.85);
+        float coordRing = (
+          (1.0 - smoothstep(ringHalfW - ringFw * 0.55, ringHalfW + ringFw * 0.65, abs(radialDist - 1.65))) +
+          (1.0 - smoothstep(ringHalfW - ringFw * 0.55, ringHalfW + ringFw * 0.65, abs(radialDist - 2.85))) * 0.6
+        ) * (1.0 - clamp(ringFw * 1.2, 0.0, 1.0));
         vec3 floorAlbedo = mix(uHorizonColor, uBaseColor + vec3(0.018, 0.022, 0.030) * stageFalloff, 1.0 - horizonBlend);
         floorAlbedo = mix(floorAlbedo, vec3(0.16, 0.20, 0.26), metalSeam * 0.34);
         floorAlbedo += uSeamGlowColor * (metalSeam * 0.32 + coordRing * 0.45) * uSeamGlowStrength * (1.0 - horizonBlend);
@@ -684,6 +805,38 @@ export interface DualGearRayTracingController {
   dispose: () => void;
 }
 
+/**
+ * Computes decoupled `geometrySig` (BVH / scene topology / explosion / clip / pose)
+ * and `cameraSig` (camera world transform & projection) so camera orbiting resets
+ * GPU Path Tracer SPP via `updateCamera()` in <0.1ms WITHOUT rebuilding the GPU BVH.
+ */
+export function computePathTracerSceneSignatures(params: {
+  camMatrixElements: ArrayLike<number>;
+  projMatrixElements?: ArrayLike<number>;
+  explosionProgress: number;
+  clipRatio: number;
+  poseChecksum: number;
+  sceneChildCount: number;
+  visibleMeshChecksum?: number;
+}): { geometrySig: number; cameraSig: number } {
+  let cameraSig = 0;
+  for (let i = 0; i < 16; i++) {
+    cameraSig += Math.round((params.camMatrixElements[i] || 0) * 2000) * (i + 3);
+    if (params.projMatrixElements) {
+      cameraSig += Math.round((params.projMatrixElements[i] || 0) * 1500) * (i + 19);
+    }
+  }
+
+  let geometrySig = 0;
+  geometrySig += Math.round(params.explosionProgress * 2500) * 31;
+  geometrySig += Math.round(params.clipRatio * 2500) * 47;
+  geometrySig += Math.round(params.poseChecksum * 1200) * 73;
+  geometrySig += Math.round(params.sceneChildCount) * 109;
+  geometrySig += Math.round(params.visibleMeshChecksum || 0) * 13;
+
+  return { geometrySig, cameraSig };
+}
+
 export function createDualGearRayTracingPipeline(
   renderer: THREE.WebGLRenderer,
   initialWidth: number,
@@ -692,10 +845,16 @@ export function createDualGearRayTracingPipeline(
 ): DualGearRayTracingController {
   let width = Math.max(64, Math.floor(initialWidth));
   let height = Math.max(64, Math.floor(initialHeight));
+
+  const getEffectiveDpr = () =>
+    isSoftwareGl ? 1 : Math.min(Math.max(1, renderer.getPixelRatio?.() || 1), 2);
   const computeEffectiveScale = () => (isSoftwareGl ? 0.8 : 1.0);
+
+  let currentDpr = getEffectiveDpr();
   let rtScale = computeEffectiveScale();
 
-  const rtType = THREE.UnsignedByteType;
+  // Genuine HalfFloat HDR render targets on hardware GPUs (zero 8-bit clamping before tone mapping!)
+  const rtType = isSoftwareGl ? THREE.UnsignedByteType : THREE.HalfFloatType;
 
   const createSceneTarget = (w: number, h: number) => {
     const depthTex = new THREE.DepthTexture(w, h);
@@ -704,6 +863,7 @@ export function createDualGearRayTracingPipeline(
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       type: rtType,
+      samples: 0, // DepthTexture attachment in WebGL2/ANGLE requires single-sample target; Retina DPR provides crisp physical supersampling
       depthTexture: depthTex,
       depthBuffer: true
     });
@@ -717,8 +877,8 @@ export function createDualGearRayTracingPipeline(
       depthBuffer: false
     });
 
-  let effW = Math.max(64, Math.floor(width * rtScale));
-  let effH = Math.max(64, Math.floor(height * rtScale));
+  let effW = Math.max(64, Math.floor(width * currentDpr * rtScale));
+  let effH = Math.max(64, Math.floor(height * currentDpr * rtScale));
 
   let sceneRT = createSceneTarget(effW, effH);
   let accumRTA = createAccumTarget(effW, effH);
@@ -726,6 +886,22 @@ export function createDualGearRayTracingPipeline(
   let pingPong = 0;
 
   let accumState: PathTracerAccumulatorState = createPathTracerAccumulatorState(256);
+
+  // Lazy Hardware GPU BVH Path Tracer (`three-gpu-pathtracer`) state
+  let gpuPathTracer: WebGLPathTracer | null = null;
+  let gpuPtFailed = false;
+  let wasGpuPtActive = false;
+  let lastGeometrySig = Number.NaN;
+  let lastCameraSig = Number.NaN;
+  let studioEquirectHdrTex: THREE.DataTexture | null = null;
+  const ptFloorStandInMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(0x141820),
+    roughness: 0.62,
+    metalness: 0.14
+  });
+
+  let lastCameraRef: THREE.PerspectiveCamera | null = null;
+  let lastPathTracingEnabled = false;
 
   const fsQuadGeo = createCustomQuadGeometry(2, 2, false);
   const orthoCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -772,10 +948,11 @@ export function createDualGearRayTracingPipeline(
   blitQuadMesh.frustumCulled = false;
   blitScene.add(blitQuadMesh);
 
-  // Straight-line HLSL-safe CAD Post-Processing & Progressive Path-Tracing Shader:
+  // Straight-line HLSL-safe CAD Post-Processing & Progressive Path-Tracing Fallback Shader:
   // - Multi-Scale Ground-Truth Horizon Ambient Occlusion (GTAO: tight joint crevices + structural cavities + chassis grounding)
-  // - Real-Time Screen-Space Reflections (SSR) on machined kinematic links & actuators
+  // - Real-Time Screen-Space Reflections (SSR) weighted by specular/mid-high luma grazing Fresnel
   // - Restrained High-Threshold Selective Bloom (Threshold = 0.88, Strength = 0.18 — zero white-shell blowout!)
+  // - Exact IEC 61966-2-1 linear-to-sRGB transfer function
   const hybridPostMat = new THREE.ShaderMaterial({
     uniforms: {
       tColor: { value: sceneRT.texture },
@@ -851,10 +1028,19 @@ export function createDualGearRayTracingPipeline(
       uniform float uImpulseVignette;
       varying vec2 vUv;
 
+      vec3 linearToSrgbExact(vec3 c) {
+        vec3 s = max(vec3(0.0), c);
+        return mix(
+          s * 12.92,
+          1.055 * pow(s, vec3(1.0 / 2.4)) - 0.055,
+          step(vec3(0.0031308), s)
+        );
+      }
+
       vec3 acesFilmicAndSrgb(vec3 linearHdr) {
         vec3 x = max(vec3(0.0), linearHdr * uExposure);
         vec3 mapped = clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
-        return pow(mapped, vec3(1.0 / 2.2));
+        return linearToSrgbExact(mapped);
       }
 
       float hash12(vec2 p) {
@@ -937,20 +1123,31 @@ export function createDualGearRayTracingPipeline(
           float edgeGradX = clamp((dR - dL) * 42.0, -1.0, 1.0);
           float edgeGradY = clamp((dU - dD) * 42.0, -1.0, 1.0);
           float silRim = clamp(length(vec2(edgeGradX, edgeGradY)), 0.0, 1.0);
-          vec2 p = (vUv - vec2(0.5, 0.5)) * vec2(uResolution.x / max(1.0, uResolution.y), 1.0);
-          float noseX = -0.27;
+          float aspect = uResolution.x / max(1.0, uResolution.y);
+          vec2 p = (vUv - vec2(0.5, 0.5)) * vec2(aspect, 1.0);
+
+          // Project 3D aerodynamic nose world origin (0, 0.5, 0) through uViewProj into screen UV!
+          vec4 noseClip = uViewProj * vec4(0.0, 0.5, 0.0, 1.0);
+          vec2 noseUv = noseClip.w > 1e-4
+            ? clamp((noseClip.xy / noseClip.w) * 0.5 + 0.5, vec2(-0.5), vec2(1.5))
+            : vec2(0.5, 0.5);
+          vec2 noseScreen = (noseUv - vec2(0.5, 0.5)) * vec2(aspect, 1.0);
+          float relX = p.x - noseScreen.x;
+          float relY = p.y - noseScreen.y;
+          float noseX = noseScreen.x - 0.27;
           float dxNose = p.x - noseX;
+
           float bowCurve = sqrt(max(0.002, 0.016 + max(0.0, dxNose) * 0.30));
-          float bowDist = abs(abs(p.y) - bowCurve);
+          float bowDist = abs(abs(relY) - bowCurve);
           float bowMask = smoothstep(-0.02, 0.04, dxNose) * (1.0 - smoothstep(0.32, 0.78, dxNose));
           float bowArc = exp(-bowDist * 68.0) * bowMask;
-          float bowDarkEdge = exp(-abs(abs(p.y) - (bowCurve + 0.012)) * 85.0) * bowMask;
-          float obCurve = sqrt(max(0.002, 0.006 + max(0.0, p.x + 0.04) * 0.19));
-          float obDist = abs(abs(p.y) - obCurve);
-          float obMask = smoothstep(-0.04, 0.03, p.x) * (1.0 - smoothstep(0.30, 0.72, p.x));
+          float bowDarkEdge = exp(-abs(abs(relY) - (bowCurve + 0.012)) * 85.0) * bowMask;
+          float obCurve = sqrt(max(0.002, 0.006 + max(0.0, relX + 0.04) * 0.19));
+          float obDist = abs(abs(relY) - obCurve);
+          float obMask = smoothstep(-0.04, 0.03, relX) * (1.0 - smoothstep(0.30, 0.72, relX));
           float obliqueArc = exp(-obDist * 76.0) * obMask * 0.75;
-          float wakeMask = smoothstep(0.08, 0.24, p.x) * (1.0 - smoothstep(0.45, 0.85, p.x)) * exp(-abs(p.y) * 9.5);
-          float wakeShear = wakeMask * sin(p.y * 52.0 + sin(p.x * 24.0 - uSimTime * 14.0) * 1.4) * 0.14;
+          float wakeMask = smoothstep(0.08, 0.24, relX) * (1.0 - smoothstep(0.45, 0.85, relX)) * exp(-abs(relY) * 9.5);
+          float wakeShear = wakeMask * sin(relY * 52.0 + sin(relX * 24.0 - uSimTime * 14.0) * 1.4) * 0.14;
 
           vec3 mappedBody = acesFilmicAndSrgb(baseSample.rgb);
           float luma = dot(mappedBody, vec3(0.299, 0.587, 0.114));
@@ -1075,9 +1272,9 @@ export function createDualGearRayTracingPipeline(
 
         vec2 edgeVig = smoothstep(vec2(0.0), vec2(0.07), ssrUv2) * (1.0 - smoothstep(vec2(0.93), vec2(1.0), ssrUv2));
         float ssrScreenFade = edgeVig.x * edgeVig.y;
-        // Favor SSR on darker/metallic machined actuators & grazing rims while preventing bright white diffuse shells from washing out
-        float baseLuma = dot(baseSample.rgb, vec3(0.299, 0.587, 0.114));
-        float metallicReceptivity = clamp(1.12 - baseLuma * 0.95, 0.22, 1.0);
+        // Weight SSR by specular / mid-high luma grazing Fresnel (polished chrome/titanium reflects strongly; matte black rubber stays subdued)
+        float baseLuma = dot(baseSample.rgb, vec3(0.2126, 0.7152, 0.0722));
+        float metallicReceptivity = clamp(0.28 + baseLuma * 0.52, 0.2, 0.85);
         vec3 realtimeSsr = (ssrC1 * ssrHit1 + ssrC2 * ssrHit2 * 0.85 + ssrC3 * ssrHit3 * 0.65)
           * fresnelSsr * metallicReceptivity * ssrScreenFade * 0.34;
 
@@ -1127,7 +1324,7 @@ export function createDualGearRayTracingPipeline(
           return;
         }
 
-        // Gear 2: Progressive 256-SPP Monte Carlo GI + Rough Metallic Inter-Reflections + Emissive Area Lights
+        // Software-GL Fallback Gear 2: Progressive Monte Carlo GI + Rough Metallic Inter-Reflections
         vec3 prevAccum = texture2D(tPrevAccum, vUv).rgb;
 
         float phi = noiseA * 6.2831853;
@@ -1227,9 +1424,35 @@ export function createDualGearRayTracingPipeline(
   }
 
   const _tmpWorldPos = new THREE.Vector3();
+  const _hiddenOverlaysScratch: THREE.Object3D[] = [];
+  const _swappedFloorMatsScratch: { mesh: THREE.Mesh; mat: THREE.Material | THREE.Material[] }[] = [];
   let rollingFrameMs = 14.0;
 
-  return {
+  const syncPhysicalTargetsIfNeeded = () => {
+    const nextDpr = getEffectiveDpr();
+    const nextScale = computeEffectiveScale();
+    const nextEffW = Math.max(64, Math.floor(width * nextDpr * nextScale));
+    const nextEffH = Math.max(64, Math.floor(height * nextDpr * nextScale));
+    if (nextEffW === effW && nextEffH === effH) return;
+
+    currentDpr = nextDpr;
+    rtScale = nextScale;
+    effW = nextEffW;
+    effH = nextEffH;
+
+    sceneRT.depthTexture?.dispose();
+    sceneRT.dispose();
+    accumRTA.dispose();
+    accumRTB.dispose();
+
+    sceneRT = createSceneTarget(effW, effH);
+    accumRTA = createAccumTarget(effW, effH);
+    accumRTB = createAccumTarget(effW, effH);
+    hybridPostMat.uniforms.uResolution.value.set(effW, effH);
+    accumState = createPathTracerAccumulatorState(256);
+  };
+
+  const api: DualGearRayTracingController = {
     renderFrame({
       scene,
       camera,
@@ -1248,6 +1471,10 @@ export function createDualGearRayTracingPipeline(
       impulseVignette01,
       rawDt
     }) {
+      lastCameraRef = camera;
+      lastPathTracingEnabled = Boolean(pathTracingEnabled && !schlierenMode);
+      syncPhysicalTargetsIfNeeded();
+
       const budget = stepFrameBudgetGuard(
         rollingFrameMs,
         rawDt ?? 0.016,
@@ -1274,21 +1501,6 @@ export function createDualGearRayTracingPipeline(
       hybridPostMat.uniforms.uImpulseVignette.value = impulseVignette01 ?? 0.0;
 
       camera.updateMatrixWorld();
-      const sig = computeSceneStateSignature(
-        camera.matrixWorld.elements,
-        explosionProgress,
-        clipRatio,
-        poseChecksum
-      );
-
-      const samplesPerFrame = budget.isThrottled ? 4 : 8;
-      const stepped = stepPathTracerAccumulatorState(
-        accumState,
-        pathTracingEnabled,
-        sig,
-        samplesPerFrame
-      );
-      accumState = stepped.next;
 
       hybridPostMat.uniforms.uProj.value.copy(camera.projectionMatrix);
       invProj.copy(camera.projectionMatrixInverse);
@@ -1332,6 +1544,14 @@ export function createDualGearRayTracingPipeline(
       hybridPostMat.uniforms.uSimTime.value = simTime || 0;
 
       if (!pathTracingEnabled || schlierenMode) {
+        wasGpuPtActive = false;
+        accumState = {
+          ...accumState,
+          enabled: false,
+          spp: 0,
+          converged: false
+        };
+
         renderer.setRenderTarget(sceneRT);
         renderer.clear();
         renderer.render(scene, camera);
@@ -1345,6 +1565,197 @@ export function createDualGearRayTracingPipeline(
 
         return { spp: 0, converged: false };
       }
+
+      // =======================================================================
+      // HARDWARE GEAR 2: GENUINE `WebGLPathTracer` GPU BVH MONTE CARLO TRACER
+      // =======================================================================
+      if (!isSoftwareGl && !gpuPtFailed) {
+        try {
+          if (!gpuPathTracer) {
+            gpuPathTracer = new WebGLPathTracer(renderer);
+            gpuPathTracer.bounces = 5;
+            gpuPathTracer.transmissiveBounces = 2;
+            gpuPathTracer.filterGlossyFactor = 0.5;
+            gpuPathTracer.multipleImportanceSampling = true;
+            gpuPathTracer.synchronizeRenderSize = true;
+            gpuPathTracer.renderDelay = 0;
+            gpuPathTracer.minSamples = 1;
+            gpuPathTracer.fadeDuration = 0;
+            gpuPathTracer.dynamicLowRes = false;
+            gpuPathTracer.rasterizeScene = false;
+            gpuPathTracer.tiles.set(1, 1);
+          }
+
+          gpuPathTracer.renderScale = Math.min(
+            1.0,
+            1.0 / Math.max(1, renderer.getPixelRatio?.() || 1)
+          );
+
+          // Fast zero-GC visible physical mesh checksum
+          let visibleMeshChecksum = 0;
+          scene.traverseVisible((obj) => {
+            if ((obj as THREE.Mesh).isMesh && !(obj as THREE.InstancedMesh).isInstancedMesh) {
+              visibleMeshChecksum = (visibleMeshChecksum + obj.id * 37) | 0;
+            }
+          });
+
+          const { geometrySig, cameraSig } = computePathTracerSceneSignatures({
+            camMatrixElements: camera.matrixWorld.elements,
+            projMatrixElements: camera.projectionMatrix.elements,
+            explosionProgress,
+            clipRatio,
+            poseChecksum,
+            sceneChildCount: scene.children.length,
+            visibleMeshChecksum
+          });
+
+          if (!wasGpuPtActive || geometrySig !== lastGeometrySig) {
+            _hiddenOverlaysScratch.length = 0;
+            _swappedFloorMatsScratch.length = 0;
+            const prevEnv = scene.environment;
+
+            try {
+              scene.traverse((obj) => {
+                if (!obj.visible) return;
+                if ((obj as THREE.Line).isLine || (obj as THREE.Points).isPoints) {
+                  _hiddenOverlaysScratch.push(obj);
+                  obj.visible = false;
+                  return;
+                }
+                if ((obj as THREE.Mesh).isMesh) {
+                  const m = obj as THREE.Mesh;
+                  if (
+                    m.name === 'infinite_matte_industrial_deck' &&
+                    (m.material as THREE.ShaderMaterial)?.isShaderMaterial
+                  ) {
+                    const sh = m.material as THREE.ShaderMaterial;
+                    if (sh.uniforms?.uBaseColor?.value) {
+                      ptFloorStandInMat.color.copy(sh.uniforms.uBaseColor.value);
+                    }
+                    const wet = Number(sh.uniforms?.uWetness?.value ?? 0.15);
+                    ptFloorStandInMat.roughness = THREE.MathUtils.lerp(0.68, 0.14, wet);
+                    _swappedFloorMatsScratch.push({ mesh: m, mat: m.material });
+                    m.material = ptFloorStandInMat;
+                    return;
+                  }
+
+                  if ((m as THREE.InstancedMesh).isInstancedMesh) {
+                    _hiddenOverlaysScratch.push(m);
+                    m.visible = false;
+                    return;
+                  }
+
+                  const mats = Array.isArray(m.material) ? m.material : [m.material];
+                  let isNonPhysicalHelper = false;
+                  for (let k = 0; k < mats.length; k++) {
+                    const mat = mats[k] as THREE.Material & {
+                      isShaderMaterial?: boolean;
+                      isRawShaderMaterial?: boolean;
+                      wireframe?: boolean;
+                    };
+                    if (
+                      !mat ||
+                      mat.isShaderMaterial ||
+                      mat.isRawShaderMaterial ||
+                      mat.blending === THREE.AdditiveBlending ||
+                      (mat.transparent && mat.opacity <= 0.02) ||
+                      (mat.wireframe && mat.transparent)
+                    ) {
+                      isNonPhysicalHelper = true;
+                      break;
+                    }
+                  }
+                  if (isNonPhysicalHelper) {
+                    _hiddenOverlaysScratch.push(m);
+                    m.visible = false;
+                  }
+                }
+              });
+
+              if (
+                prevEnv &&
+                !(prevEnv as THREE.CubeTexture).isCubeTexture &&
+                !(prevEnv as THREE.DataTexture).image?.data
+              ) {
+                if (!studioEquirectHdrTex) {
+                  studioEquirectHdrTex = createStudioLightboxEquirectHdr();
+                }
+                scene.environment = studioEquirectHdrTex;
+              }
+
+              gpuPathTracer.setScene(scene, camera);
+              gpuPathTracer.pausePathTracing = false;
+              lastGeometrySig = geometrySig;
+              lastCameraSig = cameraSig;
+              wasGpuPtActive = true;
+            } finally {
+              scene.environment = prevEnv;
+              for (let i = 0; i < _swappedFloorMatsScratch.length; i++) {
+                const sw = _swappedFloorMatsScratch[i];
+                sw.mesh.material = sw.mat;
+              }
+              for (let i = 0; i < _hiddenOverlaysScratch.length; i++) {
+                _hiddenOverlaysScratch[i].visible = true;
+              }
+              _swappedFloorMatsScratch.length = 0;
+              _hiddenOverlaysScratch.length = 0;
+            }
+          } else if (cameraSig !== lastCameraSig) {
+            if (gpuPathTracer.camera !== camera) {
+              gpuPathTracer.setCamera(camera);
+            } else {
+              gpuPathTracer.updateCamera();
+            }
+            gpuPathTracer.pausePathTracing = false;
+            lastCameraSig = cameraSig;
+          }
+
+          const prevToneExposure = renderer.toneMappingExposure;
+          renderer.toneMappingExposure = hybridPostMat.uniforms.uExposure.value;
+          try {
+            if (Math.floor(gpuPathTracer.samples) >= 256) {
+              gpuPathTracer.pausePathTracing = true;
+            } else {
+              gpuPathTracer.pausePathTracing = false;
+            }
+            gpuPathTracer.renderSample();
+          } finally {
+            renderer.toneMappingExposure = prevToneExposure;
+          }
+
+          const genuineSpp = Math.min(256, Math.floor(gpuPathTracer.samples));
+          const isConverged = genuineSpp >= 256;
+          accumState = {
+            ...accumState,
+            enabled: true,
+            spp: genuineSpp,
+            converged: isConverged
+          };
+          return { spp: genuineSpp, converged: isConverged };
+        } catch (err) {
+          console.warn('[HybridRayTracing] WebGLPathTracer fallback to screen-space progressive GI:', err);
+          gpuPtFailed = true;
+          wasGpuPtActive = false;
+        }
+      }
+
+      // =======================================================================
+      // SOFTWARE-GL / HEADLESS FALLBACK: SCREEN-SPACE PROGRESSIVE ACCUMULATOR
+      // =======================================================================
+      const sig = computeSceneStateSignature(
+        camera.matrixWorld.elements,
+        explosionProgress,
+        clipRatio,
+        poseChecksum
+      );
+
+      const stepped = stepPathTracerAccumulatorState(
+        accumState,
+        pathTracingEnabled,
+        sig,
+        1
+      );
+      accumState = stepped.next;
 
       if (!stepped.didReset && accumState.converged && stepped.blendWeight === 0) {
         const readAccum = pingPong === 0 ? accumRTA : accumRTB;
@@ -1373,8 +1784,6 @@ export function createDualGearRayTracingPipeline(
       );
       hybridPostMat.uniforms.uBlendWeight.value = stepped.didReset ? 1.0 : stepped.blendWeight;
       hybridPostMat.uniforms.uSampleSeed.value = accumState.spp;
-      // Use fast 60fps Gear-1 shader on camera-motion/reset frames to eliminate click/glide GPU stalls;
-      // accumulate Monte Carlo GI (uMode=1) on stationary frames.
       hybridPostMat.uniforms.uMode.value = stepped.didReset ? 0 : 1;
 
       renderer.setRenderTarget(nextTarget);
@@ -1391,24 +1800,7 @@ export function createDualGearRayTracingPipeline(
     setSize(newW: number, newH: number) {
       width = Math.max(64, Math.floor(newW));
       height = Math.max(64, Math.floor(newH));
-      rtScale = computeEffectiveScale();
-      const nextEffW = Math.max(64, Math.floor(width * rtScale));
-      const nextEffH = Math.max(64, Math.floor(height * rtScale));
-      if (nextEffW === effW && nextEffH === effH) return;
-
-      effW = nextEffW;
-      effH = nextEffH;
-
-      sceneRT.depthTexture?.dispose();
-      sceneRT.dispose();
-      accumRTA.dispose();
-      accumRTB.dispose();
-
-      sceneRT = createSceneTarget(effW, effH);
-      accumRTA = createAccumTarget(effW, effH);
-      accumRTB = createAccumTarget(effW, effH);
-      hybridPostMat.uniforms.uResolution.value.set(effW, effH);
-      accumState = createPathTracerAccumulatorState(256);
+      syncPhysicalTargetsIfNeeded();
     },
 
     resetAccumulation() {
@@ -1418,10 +1810,18 @@ export function createDualGearRayTracingPipeline(
         lastSignature: Number.NaN,
         converged: false
       };
+      lastGeometrySig = Number.NaN;
+      lastCameraSig = Number.NaN;
+      if (gpuPathTracer) {
+        gpuPathTracer.reset();
+        gpuPathTracer.pausePathTracing = false;
+      }
     },
 
     async export4KFrame(filename: string, renderCallback: () => void) {
-      renderCallback();
+      const prevSize = renderer.getSize(new THREE.Vector2());
+      const prevDpr = renderer.getPixelRatio();
+      const prevAspect = lastCameraRef ? lastCameraRef.aspect : 16 / 9;
 
       const outCanvas = document.createElement('canvas');
       outCanvas.width = 3840;
@@ -1429,34 +1829,52 @@ export function createDualGearRayTracingPipeline(
       const ctx = outCanvas.getContext('2d');
       if (!ctx) return;
 
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.fillStyle = '#0d1017';
-      ctx.fillRect(0, 0, 3840, 2160);
+      let exportModeLabel = 'RASTER HDR 4K';
 
-      const srcW = renderer.domElement.width || 1920;
-      const srcH = renderer.domElement.height || 1080;
-      const scale = Math.max(3840 / srcW, 2160 / srcH);
-      const drawW = srcW * scale;
-      const drawH = srcH * scale;
-      ctx.drawImage(
-        renderer.domElement,
-        (3840 - drawW) * 0.5,
-        (2160 - drawH) * 0.5,
-        drawW,
-        drawH
-      );
+      try {
+        renderer.setPixelRatio(1);
+        renderer.setSize(3840, 2160, false);
+        api.setSize(3840, 2160);
+        if (lastCameraRef) {
+          lastCameraRef.aspect = 3840 / 2160;
+          lastCameraRef.updateProjectionMatrix();
+        }
+
+        const samplePasses = lastPathTracingEnabled ? (isSoftwareGl ? 4 : 8) : 1;
+        for (let pass = 0; pass < samplePasses; pass++) {
+          renderCallback();
+        }
+
+        exportModeLabel = lastPathTracingEnabled
+          ? `SPP ${Math.max(1, Math.floor(accumState.spp))}`
+          : 'RASTER HDR 4K';
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.fillStyle = '#0d1017';
+        ctx.fillRect(0, 0, 3840, 2160);
+        ctx.drawImage(renderer.domElement, 0, 0, 3840, 2160);
+      } finally {
+        renderer.setPixelRatio(prevDpr);
+        renderer.setSize(prevSize.x, prevSize.y, false);
+        api.setSize(prevSize.x, prevSize.y);
+        if (lastCameraRef) {
+          lastCameraRef.aspect = prevAspect;
+          lastCameraRef.updateProjectionMatrix();
+        }
+        renderCallback();
+      }
 
       ctx.fillStyle = 'rgba(18, 20, 26, 0.82)';
-      ctx.fillRect(3040, 2088, 760, 52);
+      ctx.fillRect(2980, 2088, 820, 52);
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
       ctx.lineWidth = 2;
-      ctx.strokeRect(3040, 2088, 760, 52);
+      ctx.strokeRect(2980, 2088, 820, 52);
       ctx.fillStyle = '#e2e8f0';
       ctx.font = 'bold 21px monospace';
       ctx.fillText(
-        `MEGA-HANGAR DIGITAL TWIN · 3840x2160 UHD · SPP ${Math.max(1, accumState.spp || 64)}`,
-        3064,
+        `MEGA-HANGAR DIGITAL TWIN · 3840x2160 UHD · ${exportModeLabel}`,
+        3004,
         2122
       );
 
@@ -1476,6 +1894,31 @@ export function createDualGearRayTracingPipeline(
     },
 
     dispose() {
+      if (gpuPathTracer) {
+        try {
+          const internalPt = gpuPathTracer as unknown as {
+            _quad?: { dispose?: () => void; material?: THREE.Material };
+            _pathTracer?: { dispose?: () => void };
+            _lowResPathTracer?: { dispose?: () => void };
+            _colorBackground?: THREE.Texture;
+            _internalBackground?: THREE.Texture;
+            _generator?: { geometry?: THREE.BufferGeometry };
+          };
+          internalPt._quad?.material?.dispose();
+          internalPt._quad?.dispose?.();
+          internalPt._pathTracer?.dispose?.();
+          internalPt._lowResPathTracer?.dispose?.();
+          internalPt._colorBackground?.dispose?.();
+          internalPt._internalBackground?.dispose?.();
+          internalPt._generator?.geometry?.dispose?.();
+        } catch {
+          // Safe cleanup across three-gpu-pathtracer internal fields
+        }
+        gpuPathTracer = null;
+      }
+      studioEquirectHdrTex?.dispose();
+      studioEquirectHdrTex = null;
+      ptFloorStandInMat.dispose();
       sceneRT.depthTexture?.dispose();
       sceneRT.dispose();
       accumRTA.dispose();
@@ -1485,4 +1928,6 @@ export function createDualGearRayTracingPipeline(
       blitMat.dispose();
     }
   };
+
+  return api;
 }

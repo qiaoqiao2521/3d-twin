@@ -49,7 +49,7 @@ export function createSandevistanStrobeController(slotCount: number = 3): Sandev
         varying vec3 vNormalW;
         varying vec3 vWorldPos;
         void main() {
-          vNormalW = normalize(mat3(modelMatrix) * normal);
+          vNormalW = normalize(mat3(transpose(inverse(modelMatrix))) * normal);
           vec4 wp = modelMatrix * vec4(position, 1.0);
           vWorldPos = wp.xyz;
           gl_Position = projectionMatrix * viewMatrix * wp;
@@ -326,17 +326,10 @@ export function createSwarmSceneFXController(): SwarmSceneFXController {
       linkMat.color.setHex(phase === 1 ? 0xfbbf24 : 0x22d3ee);
       linkMat.opacity = phase === 1 ? 0.96 : 0.68;
 
-      const pairs: [THREE.Vector3, THREE.Vector3][] = [
-        [n0, n1],
-        [n1, n2],
-        [n2, n0],
-        [n1, n0],
-        [n2, n1],
-        [n0, n2]
-      ];
       const pktSpeed = phase === 1 ? 2.6 : 1.25;
       for (let i = 0; i < packets.length; i++) {
-        const [pa, pb] = pairs[i];
+        const pa = i === 0 || i === 5 ? n0 : i === 1 || i === 3 ? n1 : n2;
+        const pb = i === 2 || i === 3 ? n0 : i === 0 || i === 4 ? n1 : n2;
         const u = (simTime * pktSpeed + i * 0.19) % 1.0;
         packets[i].visible = true;
         packets[i].position.lerpVectors(pa, pb, u);
@@ -596,6 +589,8 @@ export function createMachineVisionFXController(
     sweepRings.push({ loop: rl, mat: rm });
   }
 
+  const _waveRadii = new Float32Array(3);
+
   return {
     group,
     updateVision(mode, actorPos, simTime) {
@@ -609,12 +604,11 @@ export function createMachineVisionFXController(
         return;
       }
 
-      // 3 staggered radar/sonar waves expanding 0 -> 48m radius
-      const waveRadii: number[] = [];
+      // 3 staggered radar/sonar waves expanding 0 -> 48m radius (zero-GC preallocated Float32Array)
       for (let r = 0; r < sweepRings.length; r++) {
         const phase = (simTime * 0.55 + r / 3) % 1.0;
         const rad = 1.2 + phase * 48.0;
-        waveRadii.push(rad);
+        _waveRadii[r] = rad;
         sweepRings[r].loop.visible = true;
         sweepRings[r].loop.position.set(actorPos.x, actorPos.y + 0.15, actorPos.z);
         sweepRings[r].loop.scale.set(rad, 1, rad);
@@ -632,8 +626,8 @@ export function createMachineVisionFXController(
         const dz = slamPos[i * 3 + 2] - actorPos.z;
         const dist = Math.hypot(dx, dz);
         let boost = isSlam ? 0.42 : 0.08;
-        for (let w = 0; w < waveRadii.length; w++) {
-          const diff = Math.abs(dist - waveRadii[w]);
+        for (let w = 0; w < 3; w++) {
+          const diff = Math.abs(dist - _waveRadii[w]);
           if (diff < 3.6) {
             boost = Math.max(boost, 1.35 * (1.0 - diff / 3.6));
           }

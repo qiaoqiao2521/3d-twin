@@ -83,7 +83,7 @@ export function createExplodedTraceLinesController(maxParts: number = 220): Expl
       posArr[b6 + 2] = a.originWorld.z;
       posArr[b6 + 3] = a.currentWorld.x;
       posArr[b6 + 4] = a.currentWorld.y;
-      posArr[b6 + 5] = a.originWorld.z !== undefined ? a.currentWorld.z : 0;
+      posArr[b6 + 5] = a.currentWorld.z;
 
       const b2 = activeCount * 2;
       distArr[b2] = 0;
@@ -137,6 +137,7 @@ export interface BlueprintDimensionRigController {
     yLabelWorld: THREE.Vector3;
     zLabelWorld: THREE.Vector3;
   };
+  dispose: () => void;
 }
 
 /**
@@ -185,10 +186,14 @@ export function createBlueprintDimensionRig(): BlueprintDimensionRigController {
     const a = (i / 72) * Math.PI * 2;
     ringPts.push(new THREE.Vector3(Math.cos(a), 0, Math.sin(a)));
   }
-  const baseRing = new THREE.LineLoop(
-    new THREE.BufferGeometry().setFromPoints(ringPts),
-    new THREE.LineBasicMaterial({ color: 0x0ea5e9, transparent: true, opacity: 0.55, depthWrite: false })
-  );
+  const baseRingGeo = new THREE.BufferGeometry().setFromPoints(ringPts);
+  const baseRingMat = new THREE.LineBasicMaterial({
+    color: 0x0ea5e9,
+    transparent: true,
+    opacity: 0.55,
+    depthWrite: false
+  });
+  const baseRing = new THREE.LineLoop(baseRingGeo, baseRingMat);
   group.add(baseRing);
 
   const xLabelWorld = new THREE.Vector3();
@@ -269,5 +274,14 @@ export function createBlueprintDimensionRig(): BlueprintDimensionRigController {
     return { xLabelWorld, yLabelWorld, zLabelWorld };
   };
 
-  return { group, updateForBox };
+  const dispose = () => {
+    wireGeo.dispose();
+    wireMat.dispose();
+    dimGeo.dispose();
+    dimMat.dispose();
+    baseRingGeo.dispose();
+    baseRingMat.dispose();
+  };
+
+  return { group, updateForBox, dispose };
 }

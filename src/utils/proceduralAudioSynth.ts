@@ -4,18 +4,29 @@ import {
 } from './sciTechEngine';
 
 /**
- * Module 5: Zero-External-File Procedural Physical WebAudio Synthesizer.
+ * Module 5: Zero-External-File Procedural Physical WebAudio DSP Synthesizer.
  * Synthesizes in pure native WebAudio code (zero .mp3/.wav network loads):
  * 1. FOC Brushless Servo & Harmonic Drive variable-frequency whine (180Hz ~ 1,400Hz) driven by Σ|Δq/Δt|
  * 2. CFM56 N1/N2 Dual-Spool Turbofan Blade Passing Frequency (BPF) scream + pink-noise jet roar
- * 3. Ping360 2.4kHz Abyssal Sonar Ping with underwater delay/feedback reverb + Sub-Bass weapon/Bullet-Time drop
+ * 3. Ping360 2.4kHz Abyssal Sonar Ping with bounded underwater delay/feedback reverb + Sub-Bass impacts
+ * 4. Master Brickwall Limiter / DynamicsCompressor, strict mute gate, 18-voice polyphony guard,
+ *    shared pre-allocated Pink/White noise buffers, cyclic DelayNode teardown, and 3D Stereo Panning.
  */
 class ProceduralPhysicalAudioEngine {
+  private static readonly MAX_ACTIVE_TRANSIENTS = 18;
+
   private ctx: AudioContext | null = null;
   private enabled = false;
 
-  // Persistent continuous FOC Servo + Turbofan synth nodes
+  // Master bus + brickwall limiter
   private masterGain: GainNode | null = null;
+  private masterLimiter: DynamicsCompressorNode | null = null;
+
+  // Shared pre-allocated noise buffers (allocated strictly once per AudioContext)
+  private whiteNoiseBuf: AudioBuffer | null = null;
+  private pinkNoiseBuf: AudioBuffer | null = null;
+
+  // Persistent continuous FOC Servo + Turbofan synth nodes
   private servoOscA: OscillatorNode | null = null;
   private servoOscB: OscillatorNode | null = null;
   private servoFilter: BiquadFilterNode | null = null;
@@ -27,6 +38,7 @@ class ProceduralPhysicalAudioEngine {
   private jetFilter: BiquadFilterNode | null = null;
   private aeroGain: GainNode | null = null;
 
+  private activeTransients = 0;
   private lastSonarPingAt = 0;
   private masterVolume = 0.85;
   private lastHoverTickAt = 0;
@@ -41,7 +53,7 @@ class ProceduralPhysicalAudioEngine {
     if (this.gestureUnlockInstalled || typeof window === 'undefined') return;
     this.gestureUnlockInstalled = true;
     const unlock = () => {
-      if (this.ctx && this.ctx.state === 'suspended') {
+      if (this.enabled && this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume().catch(() => {});
       }
     };
@@ -69,16 +81,25 @@ class ProceduralPhysicalAudioEngine {
     if (next) {
       const ctx = this.ensureGraph();
       if (ctx && this.masterGain) {
-        this.masterGain.gain.setTargetAtTime(this.masterVolume, ctx.currentTime, 0.04);
+        this.masterGain.gain.cancelScheduledValues(ctx.currentTime);
+        this.masterGain.gain.setTargetAtTime(this.masterVolume, ctx.currentTime, 0.03);
       }
       this.playMechanicalLatchClick(680);
     } else if (this.ctx && this.masterGain) {
-      this.masterGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.04);
+      const t = this.ctx.currentTime;
+      this.masterGain.gain.cancelScheduledValues(t);
+      this.masterGain.gain.setTargetAtTime(0.0, t, 0.025);
+      this.silenceContinuousLoops();
     }
   }
 
-  private ensureGraph(forceAllow: boolean = false): AudioContext | null {
-    if ((!this.enabled && !forceAllow) || typeof window === 'undefined') return null;
+  /**
+   * Ensures the WebAudio DSP graph is initialized.
+   * Strict mute invariant: NEVER creates/resumes AudioContext or raises masterGain when `!this.enabled`,
+   * even if legacy callers pass `forceAllow = true`.
+   */
+  private ensureGraph(_forceAllow: boolean = false): AudioContext | null {
+    if (!this.enabled || typeof window === 'undefined') return null;
 
     if (!this.ctx) {
       const AC =
@@ -88,10 +109,52 @@ class ProceduralPhysicalAudioEngine {
       const ctx = new AC();
       this.ctx = ctx;
 
+      // Master DynamicsCompressor / Limiter between masterGain and destination to prevent digital clipping
+      const limiter = ctx.createDynamicsCompressor();
+      limiter.threshold.value = -6;
+      limiter.knee.value = 12;
+      limiter.ratio.value = 10;
+      limiter.attack.value = 0.003;
+      limiter.release.value = 0.14;
+      limiter.connect(ctx.destination);
+      this.masterLimiter = limiter;
+
       const master = ctx.createGain();
       master.gain.value = this.masterVolume;
-      master.connect(ctx.destination);
+      master.connect(limiter);
       this.masterGain = master;
+
+      // Pre-allocate shared White Noise (2.2s) & Pink Noise (2.0s Paul Kellet 1/f) buffers once
+      const whiteLen = Math.floor(ctx.sampleRate * 2.2);
+      const whiteBuf = ctx.createBuffer(1, whiteLen, ctx.sampleRate);
+      const whiteData = whiteBuf.getChannelData(0);
+      for (let i = 0; i < whiteLen; i++) {
+        whiteData[i] = Math.random() * 2 - 1;
+      }
+      this.whiteNoiseBuf = whiteBuf;
+
+      const pinkLen = Math.floor(ctx.sampleRate * 2.0);
+      const pinkBuf = ctx.createBuffer(1, pinkLen, ctx.sampleRate);
+      const pinkOut = pinkBuf.getChannelData(0);
+      let b0 = 0,
+        b1 = 0,
+        b2 = 0,
+        b3 = 0,
+        b4 = 0,
+        b5 = 0,
+        b6 = 0;
+      for (let i = 0; i < pinkLen; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.969 * b2 + white * 0.153852;
+        b3 = 0.8665 * b3 + white * 0.3104856;
+        b4 = 0.55 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.016898;
+        pinkOut[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+        b6 = white * 0.115926;
+      }
+      this.pinkNoiseBuf = pinkBuf;
 
       // 1. Dual-Carrier FOC Brushless Servo & Harmonic Reducer Synth (Sine + Triangle -> Bandpass)
       const sFilter = ctx.createBiquadFilter();
@@ -126,23 +189,6 @@ class ProceduralPhysicalAudioEngine {
       // 2. Aerospace N1/N2 Dual-Spool BPF + Pink-Noise Jet Plume Synth
       const aGain = ctx.createGain();
       aGain.gain.value = 0.0;
-
-      // Procedural Pink Noise Buffer (2.0s seamless loop, Paul Kellet 1/f filter)
-      const bufLen = ctx.sampleRate * 2;
-      const pinkBuf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-      const out = pinkBuf.getChannelData(0);
-      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-      for (let i = 0; i < bufLen; i++) {
-        const white = Math.random() * 2 - 1;
-        b0 = 0.99886 * b0 + white * 0.0555179;
-        b1 = 0.99332 * b1 + white * 0.0750759;
-        b2 = 0.96900 * b2 + white * 0.1538520;
-        b3 = 0.86650 * b3 + white * 0.3104856;
-        b4 = 0.55000 * b4 + white * 0.5329522;
-        b5 = -0.7616 * b5 - white * 0.0168980;
-        out[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
-        b6 = white * 0.115926;
-      }
 
       const noiseSrc = ctx.createBufferSource();
       noiseSrc.buffer = pinkBuf;
@@ -187,10 +233,64 @@ class ProceduralPhysicalAudioEngine {
     if (this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
     }
-    if (forceAllow && this.masterGain) {
-      this.masterGain.gain.setTargetAtTime(this.masterVolume, this.ctx.currentTime, 0.02);
-    }
     return this.ctx;
+  }
+
+  private canSpawnTransient(): boolean {
+    return this.activeTransients < ProceduralPhysicalAudioEngine.MAX_ACTIVE_TRANSIENTS;
+  }
+
+  /**
+   * Creates an optional 3D StereoPannerNode (`pan` in [-1, 1]) connected to masterGain,
+   * or connects directly to masterGain when centered to save DSP nodes.
+   */
+  private createOutputDestination(
+    ctx: AudioContext,
+    pan?: number
+  ): { dest: AudioNode; panner: StereoPannerNode | null } {
+    if (
+      pan !== undefined &&
+      Number.isFinite(pan) &&
+      Math.abs(pan) > 0.001 &&
+      typeof ctx.createStereoPanner === 'function'
+    ) {
+      const panner = ctx.createStereoPanner();
+      panner.pan.setValueAtTime(Math.max(-1, Math.min(1, pan)), ctx.currentTime);
+      panner.connect(this.masterGain!);
+      return { dest: panner, panner };
+    }
+    return { dest: this.masterGain!, panner: null };
+  }
+
+  /**
+   * Attaches `onended` lifecycle cleanup to a transient OscillatorNode / AudioBufferSourceNode,
+   * disconnecting all downstream filter/gain/panner nodes and maintaining the polyphony counter.
+   */
+  private registerTransientCleanup(
+    source: AudioScheduledSourceNode,
+    nodesToDisconnect: (AudioNode | null | undefined)[],
+    countPolyphonySlot: boolean = true
+  ): void {
+    if (countPolyphonySlot) {
+      this.activeTransients++;
+    }
+    let cleaned = false;
+    source.onended = () => {
+      if (cleaned) return;
+      cleaned = true;
+      if (countPolyphonySlot) {
+        this.activeTransients = Math.max(0, this.activeTransients - 1);
+      }
+      try {
+        source.disconnect();
+      } catch {}
+      for (const node of nodesToDisconnect) {
+        if (!node) continue;
+        try {
+          node.disconnect();
+        } catch {}
+      }
+    };
   }
 
   /**
@@ -213,10 +313,26 @@ class ProceduralPhysicalAudioEngine {
     const params = computeFocServoAcousticParams(sumJointSpeedRadS);
     const torqueBoost = Math.max(0, Math.min(1, peakTorqueRatio01));
     const t = ctx.currentTime;
-    this.servoOscA.frequency.setTargetAtTime(params.primaryCarrierHz * (1 + torqueBoost * 0.18), t, 0.035);
-    this.servoOscB.frequency.setTargetAtTime(params.harmonicSidebandHz * (1 + torqueBoost * 0.24), t, 0.035);
-    this.servoFilter.frequency.setTargetAtTime(params.primaryCarrierHz * (1.25 + torqueBoost * 0.35), t, 0.04);
-    this.servoGain.gain.setTargetAtTime(Math.min(0.14, params.gain * (1 + torqueBoost * 0.45)), t, 0.045);
+    this.servoOscA.frequency.setTargetAtTime(
+      params.primaryCarrierHz * (1 + torqueBoost * 0.18),
+      t,
+      0.035
+    );
+    this.servoOscB.frequency.setTargetAtTime(
+      params.harmonicSidebandHz * (1 + torqueBoost * 0.24),
+      t,
+      0.035
+    );
+    this.servoFilter.frequency.setTargetAtTime(
+      params.primaryCarrierHz * (1.25 + torqueBoost * 0.35),
+      t,
+      0.04
+    );
+    this.servoGain.gain.setTargetAtTime(
+      Math.min(0.14, params.gain * (1 + torqueBoost * 0.45)),
+      t,
+      0.045
+    );
 
     // Periodic 2.4kHz Ping360 Sonar Pulse with underwater reverb when viewing BlueROV2 / RexROV2!
     if (isSubseaRov && simTime - this.lastSonarPingAt > 3.2) {
@@ -254,10 +370,15 @@ class ProceduralPhysicalAudioEngine {
   /**
    * Crisp mechanical latch / CAD snap-fit click sound when peeling, isolating, or locking armor.
    */
-  public playMechanicalLatchClick(pitchHz: number = 760, forceAllow: boolean = false): void {
+  public playMechanicalLatchClick(
+    pitchHz: number = 760,
+    forceAllow: boolean = false,
+    pan?: number
+  ): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
@@ -269,18 +390,21 @@ class ProceduralPhysicalAudioEngine {
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
 
     osc.connect(g);
-    g.connect(this.masterGain);
+    g.connect(dest);
+    this.registerTransientCleanup(osc, [g, panner], true);
     osc.start(t);
     osc.stop(t + 0.075);
   }
 
   /**
    * Ethereal 2.4kHz Ping360 subsea acoustic sonar pulse with multi-tap underwater delay echo.
+   * Explicitly breaks and disconnects the cyclic `delay -> lp -> feedback -> delay` network after decay.
    */
-  public playSonarPing2400Hz(): void {
+  public playSonarPing2400Hz(pan?: number): void {
     const ctx = this.ensureGraph();
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
     const pingOsc = ctx.createOscillator();
     const pingGain = ctx.createGain();
@@ -302,24 +426,42 @@ class ProceduralPhysicalAudioEngine {
     lp.frequency.value = 2800;
 
     pingOsc.connect(pingGain);
-    pingGain.connect(this.masterGain);
+    pingGain.connect(dest);
     pingGain.connect(delay);
     delay.connect(lp);
     lp.connect(feedback);
     feedback.connect(delay);
-    lp.connect(this.masterGain);
+    lp.connect(dest);
 
+    this.registerTransientCleanup(pingOsc, [], true);
     pingOsc.start(t);
     pingOsc.stop(t + 0.26);
+
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        try {
+          feedback.gain.value = 0;
+          pingGain.disconnect();
+          delay.disconnect();
+          lp.disconnect();
+          feedback.disconnect();
+          panner?.disconnect();
+        } catch {}
+      }, 2200);
+    }
   }
 
   /**
    * Deep Sub-Bass Drop + High-Energy Transient for Laser Fire, EMP, SLS Laser Ignition, and Bullet-Time Freeze!
    */
-  public playSubBassImpact(mode: 'laser' | 'emp_bullettime' | 'sls_print'): void {
+  public playSubBassImpact(
+    mode: 'laser' | 'emp_bullettime' | 'sls_print',
+    pan?: number
+  ): void {
     const ctx = this.ensureGraph();
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
     const sub = ctx.createOscillator();
     const subGain = ctx.createGain();
@@ -331,7 +473,8 @@ class ProceduralPhysicalAudioEngine {
       subGain.gain.setValueAtTime(0.18, t);
       subGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.68);
       sub.connect(subGain);
-      subGain.connect(this.masterGain);
+      subGain.connect(dest);
+      this.registerTransientCleanup(sub, [subGain, panner], true);
       sub.start(t);
       sub.stop(t + 0.7);
       return;
@@ -343,7 +486,8 @@ class ProceduralPhysicalAudioEngine {
       subGain.gain.setValueAtTime(0.08, t);
       subGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
       sub.connect(subGain);
-      subGain.connect(this.masterGain);
+      subGain.connect(dest);
+      this.registerTransientCleanup(sub, [subGain, panner], true);
       sub.start(t);
       sub.stop(t + 0.5);
       return;
@@ -364,10 +508,12 @@ class ProceduralPhysicalAudioEngine {
     zingGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
 
     sub.connect(subGain);
-    subGain.connect(this.masterGain);
+    subGain.connect(dest);
     zing.connect(zingGain);
-    zingGain.connect(this.masterGain);
+    zingGain.connect(dest);
 
+    this.registerTransientCleanup(sub, [subGain, panner], true);
+    this.registerTransientCleanup(zing, [zingGain], false);
     sub.start(t);
     sub.stop(t + 0.38);
     zing.start(t);
@@ -375,39 +521,137 @@ class ProceduralPhysicalAudioEngine {
   }
 
   /**
-   * Death Stranding Odradek 3-Layer Signature Sound (100% Zero-File WebAudio Synthesis):
-   * 1) 0 ~ 0.12s: Crisp metallic vane Click-Clack bandpass noise burst + metallic ring;
+   * Sandbox Domain Fire Cue (replaces legacy rogue TacticalSynthAudio context).
+   */
+  public playSandboxFireCue(domain: 'land' | 'sea' | 'air', pan?: number): void {
+    const ctx = this.ensureGraph();
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
+    const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(dest);
+
+    if (domain === 'air') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(145, t);
+      osc.frequency.exponentialRampToValueAtTime(32, t + 0.48);
+      gain.gain.setValueAtTime(0.18, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      this.registerTransientCleanup(osc, [gain, panner], true);
+      osc.start(t);
+      osc.stop(t + 0.52);
+
+      if (this.pinkNoiseBuf) {
+        const nSrc = ctx.createBufferSource();
+        nSrc.buffer = this.pinkNoiseBuf;
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(640, t);
+        bp.Q.value = 1.2;
+        const ng = ctx.createGain();
+        ng.gain.setValueAtTime(0.11, t);
+        ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.36);
+        nSrc.connect(bp);
+        bp.connect(ng);
+        ng.connect(dest);
+        this.registerTransientCleanup(nSrc, [bp, ng], false);
+        nSrc.start(t, Math.random() * 0.8, 0.38);
+      }
+    } else if (domain === 'sea') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(620, t);
+      osc.frequency.exponentialRampToValueAtTime(190, t + 0.36);
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
+      this.registerTransientCleanup(osc, [gain, panner], true);
+      osc.start(t);
+      osc.stop(t + 0.4);
+    } else {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(980, t);
+      osc.frequency.exponentialRampToValueAtTime(160, t + 0.28);
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      this.registerTransientCleanup(osc, [gain, panner], true);
+      osc.start(t);
+      osc.stop(t + 0.32);
+
+      if (this.whiteNoiseBuf) {
+        const nSrc = ctx.createBufferSource();
+        nSrc.buffer = this.whiteNoiseBuf;
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(2200, t);
+        bp.Q.value = 2.4;
+        const ng = ctx.createGain();
+        ng.gain.setValueAtTime(0.09, t);
+        ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
+        nSrc.connect(bp);
+        bp.connect(ng);
+        ng.connect(dest);
+        this.registerTransientCleanup(nSrc, [bp, ng], false);
+        nSrc.start(t, Math.random() * 1.2, 0.06);
+      }
+    }
+  }
+
+  /**
+   * Bullet-Time Time-Dilation Enter / Exit Sweep Cue.
+   */
+  public playBulletTimeSnap(entering: boolean, pan?: number): void {
+    const ctx = this.ensureGraph();
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
+    const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(entering ? 520 : 120, t);
+    osc.frequency.exponentialRampToValueAtTime(entering ? 54 : 680, t + 0.28);
+    gain.gain.setValueAtTime(0.13, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+    osc.connect(gain);
+    gain.connect(dest);
+    this.registerTransientCleanup(osc, [gain, panner], true);
+    osc.start(t);
+    osc.stop(t + 0.32);
+  }
+
+  /**
+   * Death Stranding Odradek 3-Layer Signature Sound (Zero Per-Hit Buffer Allocations):
+   * 1) 0 ~ 0.12s: Crisp metallic vane Click-Clack bandpass noise burst using shared whiteNoiseBuf;
    * 2) 0.10 ~ 0.80s: Spatial low-frequency sonar sweep dive (160Hz -> 38Hz sine resonance);
-   * 3) 0.15 ~ 2.80s: Ethereal Kojima-style FM fifth-interval overtone chord (440Hz / 659.25Hz / 987.77Hz)
-   *                  routed through a stereo Ping-Pong Delay tail!
+   * 3) 0.15 ~ 2.05s: Ethereal Kojima-style FM fifth-interval overtone chord (440Hz / 659.25Hz / 987.77Hz)
+   *                  routed through a stereo Ping-Pong Delay tail that cleanly disconnects at 2200ms!
    */
   public playOdradekScanSignature(forceAllow: boolean = false): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
 
-    // Layer 1 (0 ~ 0.12s): Crisp Metallic Click-Clack Double Vane Snap (Bandpass Noise + High-Q Chime)
-    const snapLen = Math.floor(ctx.sampleRate * 0.13);
-    const snapBuf = ctx.createBuffer(1, snapLen, ctx.sampleRate);
-    const snapData = snapBuf.getChannelData(0);
-    for (let i = 0; i < snapLen; i++) {
-      const sec = i / ctx.sampleRate;
-      const env1 = sec < 0.04 ? Math.exp(-sec * 95) : 0;
-      const env2 = sec >= 0.055 ? Math.exp(-(sec - 0.055) * 85) : 0;
-      snapData[i] = (Math.random() * 2 - 1) * (env1 + env2 * 1.15);
+    // Layer 1 (0 ~ 0.12s): Crisp Metallic Click-Clack Double Vane Snap via shared whiteNoiseBuf
+    if (this.whiteNoiseBuf) {
+      const snapSrc = ctx.createBufferSource();
+      snapSrc.buffer = this.whiteNoiseBuf;
+      const snapBp = ctx.createBiquadFilter();
+      snapBp.type = 'bandpass';
+      snapBp.frequency.setValueAtTime(2650, t);
+      snapBp.Q.value = 4.2;
+      const snapGain = ctx.createGain();
+      snapGain.gain.setValueAtTime(0.24, t);
+      snapGain.gain.exponentialRampToValueAtTime(0.002, t + 0.038);
+      snapGain.gain.setValueAtTime(0.27, t + 0.055);
+      snapGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      snapSrc.connect(snapBp);
+      snapBp.connect(snapGain);
+      snapGain.connect(this.masterGain);
+      this.registerTransientCleanup(snapSrc, [snapBp, snapGain], false);
+      snapSrc.start(t, Math.random() * 1.2, 0.13);
     }
-    const snapSrc = ctx.createBufferSource();
-    snapSrc.buffer = snapBuf;
-    const snapBp = ctx.createBiquadFilter();
-    snapBp.type = 'bandpass';
-    snapBp.frequency.setValueAtTime(2650, t);
-    snapBp.Q.value = 4.2;
-    const snapGain = ctx.createGain();
-    snapGain.gain.setValueAtTime(0.24, t);
-    snapSrc.connect(snapBp);
-    snapBp.connect(snapGain);
-    snapGain.connect(this.masterGain);
-    snapSrc.start(t);
 
     // Layer 2 (0.10 ~ 0.80s): Spatial Low-Frequency Sonar Dive (160Hz -> 38Hz)
     const subDive = ctx.createOscillator();
@@ -420,32 +664,36 @@ class ProceduralPhysicalAudioEngine {
     subDiveGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.84);
     subDive.connect(subDiveGain);
     subDiveGain.connect(this.masterGain);
+    this.registerTransientCleanup(subDive, [subDiveGain], true);
     subDive.start(t + 0.09);
     subDive.stop(t + 0.86);
 
-    // Layer 3 (0.15 ~ 2.80s): Ethereal FM Fifth-Interval Chord (440 / 659.25 / 987.77 Hz) + Stereo Ping-Pong Delay
+    // Layer 3 (0.15 ~ 2.05s): Ethereal FM Fifth-Interval Chord + Bounded Stereo Ping-Pong Delay
     const chordBus = ctx.createGain();
     chordBus.gain.setValueAtTime(0.0001, t);
     chordBus.gain.linearRampToValueAtTime(0.11, t + 0.24);
-    chordBus.gain.exponentialRampToValueAtTime(0.0001, t + 2.75);
+    chordBus.gain.exponentialRampToValueAtTime(0.0001, t + 2.02);
     chordBus.connect(this.masterGain);
 
-    // Stereo Ping-Pong Delay Network
     const delayL = ctx.createDelay(0.6);
     const delayR = ctx.createDelay(0.6);
     delayL.delayTime.value = 0.22;
     delayR.delayTime.value = 0.33;
     const fbL = ctx.createGain();
     const fbR = ctx.createGain();
-    fbL.gain.value = 0.38;
-    fbR.gain.value = 0.36;
+    fbL.gain.value = 0.36;
+    fbR.gain.value = 0.34;
+    const lpEcho = ctx.createBiquadFilter();
+    lpEcho.type = 'lowpass';
+    lpEcho.frequency.value = 3200;
     const merger = ctx.createChannelMerger(2);
     const wetGain = ctx.createGain();
     wetGain.gain.setValueAtTime(0.09, t);
-    wetGain.gain.exponentialRampToValueAtTime(0.0001, t + 2.85);
+    wetGain.gain.exponentialRampToValueAtTime(0.0001, t + 2.12);
 
     chordBus.connect(delayL);
-    delayL.connect(fbL);
+    delayL.connect(lpEcho);
+    lpEcho.connect(fbL);
     fbL.connect(delayR);
     delayR.connect(fbR);
     fbR.connect(delayL);
@@ -467,7 +715,7 @@ class ProceduralPhysicalAudioEngine {
       mod.type = 'sine';
       mod.frequency.setValueAtTime(f0 * 1.5, t + 0.15);
       modGain.gain.setValueAtTime(f0 * 0.45, t + 0.15);
-      modGain.gain.exponentialRampToValueAtTime(1.5, t + 1.6);
+      modGain.gain.exponentialRampToValueAtTime(1.5, t + 1.5);
 
       voiceGain.gain.setValueAtTime(0.36 / (idx + 1), t + 0.15);
 
@@ -476,11 +724,31 @@ class ProceduralPhysicalAudioEngine {
       carrier.connect(voiceGain);
       voiceGain.connect(chordBus);
 
+      this.registerTransientCleanup(mod, [modGain], false);
+      this.registerTransientCleanup(carrier, [voiceGain], false);
+
       mod.start(t + 0.15 + idx * 0.035);
       carrier.start(t + 0.15 + idx * 0.035);
-      mod.stop(t + 2.8);
-      carrier.stop(t + 2.8);
+      mod.stop(t + 2.05);
+      carrier.stop(t + 2.05);
     });
+
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        try {
+          fbL.gain.value = 0;
+          fbR.gain.value = 0;
+          chordBus.disconnect();
+          delayL.disconnect();
+          delayR.disconnect();
+          lpEcho.disconnect();
+          fbL.disconnect();
+          fbR.disconnect();
+          merger.disconnect();
+          wetGain.disconnect();
+        } catch {}
+      }, 2200);
+    }
   }
 
   /**
@@ -490,11 +758,13 @@ class ProceduralPhysicalAudioEngine {
    */
   public playOrbitalDropfallAudio(
     phase: 'launch_fall' | 'touchdown_rise',
-    forceAllow: boolean = false
+    forceAllow: boolean = false,
+    pan?: number
   ): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
     if (phase === 'launch_fall') {
       const shriek = ctx.createOscillator();
@@ -506,7 +776,8 @@ class ProceduralPhysicalAudioEngine {
       shriekGain.gain.linearRampToValueAtTime(0.14, t + 0.65);
       shriekGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.92);
       shriek.connect(shriekGain);
-      shriekGain.connect(this.masterGain);
+      shriekGain.connect(dest);
+      this.registerTransientCleanup(shriek, [shriekGain, panner], true);
       shriek.start(t);
       shriek.stop(t + 0.94);
       return;
@@ -521,7 +792,8 @@ class ProceduralPhysicalAudioEngine {
     slamGain.gain.setValueAtTime(0.28, t);
     slamGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.62);
     slam.connect(slamGain);
-    slamGain.connect(this.masterGain);
+    slamGain.connect(dest);
+    this.registerTransientCleanup(slam, [slamGain], false);
     slam.start(t);
     slam.stop(t + 0.64);
 
@@ -530,41 +802,42 @@ class ProceduralPhysicalAudioEngine {
     servoRise.type = 'triangle';
     servoRise.frequency.setValueAtTime(195, t + 0.32);
     servoRise.frequency.exponentialRampToValueAtTime(860, t + 0.88);
-    servoGain.gain.setValueAtTime(0.0001, t + 0.30);
+    servoGain.gain.setValueAtTime(0.0001, t + 0.3);
     servoGain.gain.linearRampToValueAtTime(0.095, t + 0.42);
     servoGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.92);
     servoRise.connect(servoGain);
-    servoGain.connect(this.masterGain);
+    servoGain.connect(dest);
+    this.registerTransientCleanup(servoRise, [servoGain, panner], true);
     servoRise.start(t + 0.31);
     servoRise.stop(t + 0.94);
   }
 
   /**
-   * Armored Core 6 Overheat Armor-Pop Steam Venting & Mechanical Lock-Shut Audio.
+   * Armored Core 6 Overheat Armor-Pop Steam Venting & Mechanical Lock-Shut Audio (Zero Buffer Allocation).
    */
   public playOverheatVentAudio(
     phase: 'open_steam' | 'lock_shut',
-    forceAllow: boolean = false
+    forceAllow: boolean = false,
+    pan?: number
   ): void {
     const ctx = this.ensureGraph(forceAllow);
     if (!ctx || !this.masterGain) return;
     const t = ctx.currentTime;
 
     if (phase === 'lock_shut') {
-      this.playMechanicalLatchClick(880, forceAllow);
-      window.setTimeout(() => this.playMechanicalLatchClick(540, forceAllow), 55);
+      this.playMechanicalLatchClick(880, forceAllow, pan);
+      if (typeof window !== 'undefined') {
+        window.setTimeout(() => this.playMechanicalLatchClick(540, forceAllow, pan), 55);
+      }
       return;
     }
 
-    this.playMechanicalLatchClick(940, forceAllow);
-    const len = Math.floor(ctx.sampleRate * 2.1);
-    const steamBuf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const ch = steamBuf.getChannelData(0);
-    for (let i = 0; i < len; i++) {
-      ch[i] = Math.random() * 2 - 1;
-    }
+    this.playMechanicalLatchClick(940, forceAllow, pan);
+    if (!this.whiteNoiseBuf || !this.canSpawnTransient()) return;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
+
     const src = ctx.createBufferSource();
-    src.buffer = steamBuf;
+    src.buffer = this.whiteNoiseBuf;
     const bp = ctx.createBiquadFilter();
     bp.type = 'bandpass';
     bp.frequency.setValueAtTime(1850, t);
@@ -577,44 +850,45 @@ class ProceduralPhysicalAudioEngine {
 
     src.connect(bp);
     bp.connect(g);
-    g.connect(this.masterGain);
-    src.start(t);
+    g.connect(dest);
+    this.registerTransientCleanup(src, [bp, g, panner], true);
+    src.start(t, 0, 2.1);
   }
 
   /**
    * Call of Duty style crisp tactical hitmarker audio tick ("thwack-tick" + metallic kill chime).
+   * Reuses pre-allocated whiteNoiseBuf so 30 rapid hits trigger zero synchronous buffer allocations.
    */
   public playCodHitmarkerTick(
     isCritOrStagger: boolean = false,
     isKill: boolean = false,
-    forceAllow: boolean = false
+    forceAllow: boolean = false,
+    pan?: number
   ): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.whiteNoiseBuf || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
-    // Short high-Q percussive transient tick
-    const snapLen = Math.floor(ctx.sampleRate * 0.045);
-    const snapBuf = ctx.createBuffer(1, snapLen, ctx.sampleRate);
-    const data = snapBuf.getChannelData(0);
-    for (let i = 0; i < snapLen; i++) {
-      const env = Math.exp(-(i / ctx.sampleRate) * 145);
-      data[i] = (Math.random() * 2 - 1) * env;
-    }
     const src = ctx.createBufferSource();
-    src.buffer = snapBuf;
+    src.buffer = this.whiteNoiseBuf;
     const bp = ctx.createBiquadFilter();
     bp.type = 'bandpass';
     bp.frequency.setValueAtTime(isCritOrStagger ? 3100 : 2350, t);
     bp.Q.value = 3.6;
     const g = ctx.createGain();
     g.gain.setValueAtTime(isCritOrStagger ? 0.24 : 0.16, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.042);
+
     src.connect(bp);
     bp.connect(g);
-    g.connect(this.masterGain);
-    src.start(t);
+    g.connect(dest);
 
-    if (isCritOrStagger || isKill) {
+    const hasChime = isCritOrStagger || isKill;
+    this.registerTransientCleanup(src, hasChime ? [bp, g] : [bp, g, panner], !hasChime);
+    src.start(t, Math.random() * 1.5, 0.045);
+
+    if (hasChime) {
       const ping = ctx.createOscillator();
       const pg = ctx.createGain();
       ping.type = 'triangle';
@@ -623,25 +897,30 @@ class ProceduralPhysicalAudioEngine {
       pg.gain.setValueAtTime(0.11, t);
       pg.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
       ping.connect(pg);
-      pg.connect(this.masterGain);
+      pg.connect(dest);
+      this.registerTransientCleanup(ping, [pg, panner], true);
       ping.start(t);
       ping.stop(t + 0.12);
     }
   }
 
   /**
-   * Sci-Fi Weapon Fire Audio (Pulse Rifle / Railgun Crack / Homing Missile Pod).
+   * Sci-Fi Weapon Fire Audio (Pulse Rifle / Railgun Crack / Homing Missile Pod / Orbital Ion)
+   * Enriched with layered transient noise punch + sub-bass body.
    */
   public playCombatWeaponFire(
     weapon: 'pulse_rifle' | 'railgun' | 'missile_pod' | 'orbital_ion',
-    forceAllow: boolean = false
+    forceAllow: boolean = false,
+    pan?: number
   ): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
     const jitter = 0.94 + Math.random() * 0.12;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
     if (weapon === 'pulse_rifle') {
+      // Layer 1: Plasma carrier bolt
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
       osc.type = 'sawtooth';
@@ -650,25 +929,61 @@ class ProceduralPhysicalAudioEngine {
       g.gain.setValueAtTime(0.085, t);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
       osc.connect(g);
-      g.connect(this.masterGain);
+      g.connect(dest);
+      this.registerTransientCleanup(osc, [g, panner], true);
       osc.start(t);
       osc.stop(t + 0.095);
+
+      // Layer 2: Tight sub-bass chest thump
+      const sub = ctx.createOscillator();
+      const sg = ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(148 * jitter, t);
+      sub.frequency.exponentialRampToValueAtTime(48, t + 0.072);
+      sg.gain.setValueAtTime(0.11, t);
+      sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.078);
+      sub.connect(sg);
+      sg.connect(dest);
+      this.registerTransientCleanup(sub, [sg], false);
+      sub.start(t);
+      sub.stop(t + 0.082);
+
+      // Layer 3: Crisp transient white-noise muzzle snap
+      if (this.whiteNoiseBuf) {
+        const nSrc = ctx.createBufferSource();
+        nSrc.buffer = this.whiteNoiseBuf;
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(2550 * jitter, t);
+        bp.Q.value = 2.4;
+        const ng = ctx.createGain();
+        ng.gain.setValueAtTime(0.095, t);
+        ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+        nSrc.connect(bp);
+        bp.connect(ng);
+        ng.connect(dest);
+        this.registerTransientCleanup(nSrc, [bp, ng], false);
+        nSrc.start(t, Math.random() * 1.4, 0.034);
+      }
       return;
     }
 
     if (weapon === 'railgun') {
+      // Layer 1: Deep electromagnetic capacitor sub-bass discharge
       const sub = ctx.createOscillator();
       const sg = ctx.createGain();
       sub.type = 'sine';
-      sub.frequency.setValueAtTime(210, t);
-      sub.frequency.exponentialRampToValueAtTime(32, t + 0.32);
-      sg.gain.setValueAtTime(0.22, t);
+      sub.frequency.setValueAtTime(220, t);
+      sub.frequency.exponentialRampToValueAtTime(30, t + 0.32);
+      sg.gain.setValueAtTime(0.24, t);
       sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
       sub.connect(sg);
-      sg.connect(this.masterGain);
+      sg.connect(dest);
+      this.registerTransientCleanup(sub, [sg, panner], true);
       sub.start(t);
       sub.stop(t + 0.35);
 
+      // Layer 2: Hypersonic Lorentz rail whip
       const whip = ctx.createOscillator();
       const wg = ctx.createGain();
       whip.type = 'sawtooth';
@@ -677,39 +992,110 @@ class ProceduralPhysicalAudioEngine {
       wg.gain.setValueAtTime(0.11, t);
       wg.gain.exponentialRampToValueAtTime(0.0001, t + 0.19);
       whip.connect(wg);
-      wg.connect(this.masterGain);
+      wg.connect(dest);
+      this.registerTransientCleanup(whip, [wg], false);
       whip.start(t);
       whip.stop(t + 0.2);
+
+      // Layer 3: High-voltage arc crack transient noise punch
+      if (this.whiteNoiseBuf) {
+        const arcSrc = ctx.createBufferSource();
+        arcSrc.buffer = this.whiteNoiseBuf;
+        const hp = ctx.createBiquadFilter();
+        hp.type = 'bandpass';
+        hp.frequency.setValueAtTime(3200, t);
+        hp.Q.value = 1.9;
+        const ag = ctx.createGain();
+        ag.gain.setValueAtTime(0.18, t);
+        ag.gain.exponentialRampToValueAtTime(0.0001, t + 0.068);
+        arcSrc.connect(hp);
+        hp.connect(ag);
+        ag.connect(dest);
+        this.registerTransientCleanup(arcSrc, [hp, ag], false);
+        arcSrc.start(t, Math.random() * 1.4, 0.075);
+      }
       return;
     }
 
     if (weapon === 'missile_pod') {
+      // Layer 1: Launch tube whistle transient
       const hiss = ctx.createOscillator();
       const hg = ctx.createGain();
       hiss.type = 'triangle';
       hiss.frequency.setValueAtTime(520 * jitter, t);
       hiss.frequency.exponentialRampToValueAtTime(1480, t + 0.16);
-      hg.gain.setValueAtTime(0.09, t);
+      hg.gain.setValueAtTime(0.085, t);
       hg.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
       hiss.connect(hg);
-      hg.connect(this.masterGain);
+      hg.connect(dest);
+      this.registerTransientCleanup(hiss, [hg], false);
       hiss.start(t);
       hiss.stop(t + 0.19);
+
+      // Layer 2: Breech ejection sub-bass body
+      const thump = ctx.createOscillator();
+      const tg = ctx.createGain();
+      thump.type = 'sine';
+      thump.frequency.setValueAtTime(132 * jitter, t);
+      thump.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+      tg.gain.setValueAtTime(0.14, t);
+      tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+      thump.connect(tg);
+      tg.connect(dest);
+      this.registerTransientCleanup(thump, [tg], false);
+      thump.start(t);
+      thump.stop(t + 0.16);
+
+      // Layer 3: Solid-propellant pink-noise rocket whoosh
+      if (this.pinkNoiseBuf) {
+        const pSrc = ctx.createBufferSource();
+        pSrc.buffer = this.pinkNoiseBuf;
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(980 * jitter, t);
+        bp.frequency.exponentialRampToValueAtTime(2400, t + 0.21);
+        bp.Q.value = 1.4;
+        const pg = ctx.createGain();
+        pg.gain.setValueAtTime(0.01, t);
+        pg.gain.linearRampToValueAtTime(0.16, t + 0.025);
+        pg.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+        pSrc.connect(bp);
+        bp.connect(pg);
+        pg.connect(dest);
+        this.registerTransientCleanup(pSrc, [bp, pg, panner], true);
+        pSrc.start(t, Math.random() * 1.2, 0.23);
+      } else {
+        this.registerTransientCleanup(hiss, [hg, panner], true);
+      }
       return;
     }
 
-    // Orbital Ion Cannon Ultimate Strike
+    // Orbital Ion Cannon Ultimate Strike (Sawtooth drop + Sub-Bass + Noise burst)
     const drop = ctx.createOscillator();
     const dg = ctx.createGain();
     drop.type = 'sawtooth';
     drop.frequency.setValueAtTime(920, t);
     drop.frequency.exponentialRampToValueAtTime(36, t + 0.85);
-    dg.gain.setValueAtTime(0.24, t);
+    dg.gain.setValueAtTime(0.22, t);
     dg.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
     drop.connect(dg);
-    dg.connect(this.masterGain);
+    dg.connect(dest);
+    this.registerTransientCleanup(drop, [dg, panner], true);
     drop.start(t);
     drop.stop(t + 0.92);
+
+    const ionSub = ctx.createOscillator();
+    const isg = ctx.createGain();
+    ionSub.type = 'sine';
+    ionSub.frequency.setValueAtTime(115, t);
+    ionSub.frequency.exponentialRampToValueAtTime(26, t + 0.82);
+    isg.gain.setValueAtTime(0.22, t);
+    isg.gain.exponentialRampToValueAtTime(0.0001, t + 0.86);
+    ionSub.connect(isg);
+    isg.connect(dest);
+    this.registerTransientCleanup(ionSub, [isg], false);
+    ionSub.start(t);
+    ionSub.stop(t + 0.88);
   }
 
   /**
@@ -717,11 +1103,13 @@ class ProceduralPhysicalAudioEngine {
    */
   public playBossEventCue(
     event: 'boss_warning' | 'acs_stagger_break' | 'laser_charge' | 'emp_nova',
-    forceAllow: boolean = false
+    forceAllow: boolean = false,
+    pan?: number
   ): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
     if (event === 'boss_warning') {
       const hornA = ctx.createOscillator();
@@ -738,7 +1126,9 @@ class ProceduralPhysicalAudioEngine {
       hg.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
       hornA.connect(hg);
       hornB.connect(hg);
-      hg.connect(this.masterGain);
+      hg.connect(dest);
+      this.registerTransientCleanup(hornA, [], false);
+      this.registerTransientCleanup(hornB, [hg, panner], true);
       hornA.start(t);
       hornB.start(t);
       hornA.stop(t + 0.98);
@@ -755,7 +1145,8 @@ class ProceduralPhysicalAudioEngine {
       sg.gain.setValueAtTime(0.28, t);
       sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.66);
       sub.connect(sg);
-      sg.connect(this.masterGain);
+      sg.connect(dest);
+      this.registerTransientCleanup(sub, [sg, panner], true);
       sub.start(t);
       sub.stop(t + 0.68);
 
@@ -767,7 +1158,8 @@ class ProceduralPhysicalAudioEngine {
       ag.gain.setValueAtTime(0.09, t);
       ag.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
       alarm.connect(ag);
-      ag.connect(this.masterGain);
+      ag.connect(dest);
+      this.registerTransientCleanup(alarm, [ag], false);
       alarm.start(t);
       alarm.stop(t + 0.25);
       return;
@@ -783,7 +1175,8 @@ class ProceduralPhysicalAudioEngine {
       g.gain.linearRampToValueAtTime(0.13, t + 0.6);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
       osc.connect(g);
-      g.connect(this.masterGain);
+      g.connect(dest);
+      this.registerTransientCleanup(osc, [g, panner], true);
       osc.start(t);
       osc.stop(t + 0.72);
       return;
@@ -798,7 +1191,8 @@ class ProceduralPhysicalAudioEngine {
     eg.gain.setValueAtTime(0.18, t);
     eg.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
     emp.connect(eg);
-    eg.connect(this.masterGain);
+    eg.connect(dest);
+    this.registerTransientCleanup(emp, [eg, panner], true);
     emp.start(t);
     emp.stop(t + 0.44);
   }
@@ -806,13 +1200,17 @@ class ProceduralPhysicalAudioEngine {
   /**
    * Hangar Unitree Push-Recovery Heavy Kinetic Impact Thud + Servo Brace Whir.
    */
-  public playPushImpactThud(forceNewtons: number = 225, forceAllow: boolean = false): void {
+  public playPushImpactThud(
+    forceNewtons: number = 225,
+    forceAllow: boolean = false,
+    pan?: number
+  ): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
     const scale = Math.max(0.6, Math.min(1.5, forceNewtons / 220));
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
-    // Low-end kinetic chassis thud
     const sub = ctx.createOscillator();
     const sg = ctx.createGain();
     sub.type = 'sine';
@@ -821,11 +1219,11 @@ class ProceduralPhysicalAudioEngine {
     sg.gain.setValueAtTime(0.24 * scale, t);
     sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
     sub.connect(sg);
-    sg.connect(this.masterGain);
+    sg.connect(dest);
+    this.registerTransientCleanup(sub, [sg], false);
     sub.start(t);
     sub.stop(t + 0.25);
 
-    // High-torque harmonic drive reflex chirp
     const servo = ctx.createOscillator();
     const vg = ctx.createGain();
     servo.type = 'triangle';
@@ -836,7 +1234,8 @@ class ProceduralPhysicalAudioEngine {
     vg.gain.linearRampToValueAtTime(0.075 * scale, t + 0.06);
     vg.gain.exponentialRampToValueAtTime(0.0001, t + 0.36);
     servo.connect(vg);
-    vg.connect(this.masterGain);
+    vg.connect(dest);
+    this.registerTransientCleanup(servo, [vg, panner], true);
     servo.start(t);
     servo.stop(t + 0.38);
   }
@@ -844,10 +1243,12 @@ class ProceduralPhysicalAudioEngine {
   /**
    * Crystalline Plasma Shield Shatter Burst when enemy energy shield drops to 0.
    */
-  public playShieldShatterBurst(forceAllow: boolean = false): void {
+  public playShieldShatterBurst(forceAllow: boolean = false, pan?: number): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
+
     const freqs = [1640, 2180, 2890];
     freqs.forEach((f, idx) => {
       const osc = ctx.createOscillator();
@@ -858,7 +1259,9 @@ class ProceduralPhysicalAudioEngine {
       g.gain.setValueAtTime(0.09, t + idx * 0.018);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26 + idx * 0.02);
       osc.connect(g);
-      g.connect(this.masterGain!);
+      g.connect(dest);
+      const isLast = idx === freqs.length - 1;
+      this.registerTransientCleanup(osc, isLast ? [g, panner] : [g], isLast);
       osc.start(t + idx * 0.018);
       osc.stop(t + 0.28 + idx * 0.02);
     });
@@ -867,10 +1270,12 @@ class ProceduralPhysicalAudioEngine {
   /**
    * Tactical Two-Tone Data-Link Ping when commanding Allied Wingman Go2 [Q].
    */
-  public playWingmanCommandPing(forceAllow: boolean = false): void {
+  public playWingmanCommandPing(forceAllow: boolean = false, pan?: number): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
+
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
     osc.type = 'triangle';
@@ -879,7 +1284,8 @@ class ProceduralPhysicalAudioEngine {
     g.gain.setValueAtTime(0.095, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
     osc.connect(g);
-    g.connect(this.masterGain);
+    g.connect(dest);
+    this.registerTransientCleanup(osc, [g, panner], true);
     osc.start(t);
     osc.stop(t + 0.17);
   }
@@ -887,14 +1293,15 @@ class ProceduralPhysicalAudioEngine {
   /**
    * Subtle high-precision optical micro-tick on CAD part hover (rate-limited to avoid chatter).
    */
-  public playPartHoverTick(): void {
+  public playPartHoverTick(pan?: number): void {
     const ctx = this.ensureGraph();
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const now = performance.now();
     if (now - this.lastHoverTickAt < 55) return;
     this.lastHoverTickAt = now;
 
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
     osc.type = 'sine';
@@ -903,43 +1310,69 @@ class ProceduralPhysicalAudioEngine {
     g.gain.setValueAtTime(0.032, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
     osc.connect(g);
-    g.connect(this.masterGain);
+    g.connect(dest);
+    this.registerTransientCleanup(osc, [g, panner], true);
     osc.start(t);
     osc.stop(t + 0.028);
   }
 
   /**
-   * Speed-modulated mechanical ratchet & pneumatic hiss while scrubbing exploded/section sliders.
+   * Speed-modulated bandpass pink-noise pneumatic hiss + subtle precision ratchet micro-tick
+   * while scrubbing exploded/section sliders.
    */
-  public playExplosionSliderHiss(deltaAmount: number): void {
+  public playExplosionSliderHiss(deltaAmount: number, pan?: number): void {
     const ctx = this.ensureGraph();
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const now = performance.now();
     if (now - this.lastSliderHissAt < 48) return;
     this.lastSliderHissAt = now;
 
     const speed = Math.min(1, Math.abs(deltaAmount) * 18);
     const t = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(420 + speed * 540, t);
-    osc.frequency.exponentialRampToValueAtTime(240, t + 0.038);
-    g.gain.setValueAtTime(0.025 + speed * 0.045, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.042);
-    osc.connect(g);
-    g.connect(this.masterGain);
-    osc.start(t);
-    osc.stop(t + 0.045);
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
+
+    // 1. Genuine bandpass-filtered pink-noise pneumatic fixture hiss
+    if (this.pinkNoiseBuf) {
+      const hissSrc = ctx.createBufferSource();
+      hissSrc.buffer = this.pinkNoiseBuf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(950 + speed * 1150, t);
+      bp.Q.value = 1.85;
+      const hg = ctx.createGain();
+      hg.gain.setValueAtTime(0.004, t);
+      hg.gain.linearRampToValueAtTime(0.055 + speed * 0.075, t + 0.012);
+      hg.gain.exponentialRampToValueAtTime(0.0001, t + 0.068);
+      hissSrc.connect(bp);
+      bp.connect(hg);
+      hg.connect(dest);
+      this.registerTransientCleanup(hissSrc, [bp, hg, panner], true);
+      hissSrc.start(t, Math.random() * 1.3, 0.075);
+    }
+
+    // 2. Subtle CNC detent ratchet micro-tick
+    const tick = ctx.createOscillator();
+    const tg = ctx.createGain();
+    tick.type = 'sine';
+    tick.frequency.setValueAtTime(1480 + speed * 420, t);
+    tick.frequency.exponentialRampToValueAtTime(440, t + 0.016);
+    tg.gain.setValueAtTime(0.016 + speed * 0.02, t);
+    tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.019);
+    tick.connect(tg);
+    tg.connect(dest);
+    this.registerTransientCleanup(tick, this.pinkNoiseBuf ? [tg] : [tg, panner], !this.pinkNoiseBuf);
+    tick.start(t);
+    tick.stop(t + 0.022);
   }
 
   /**
    * Heavy damped magnetic latch thud when exploded CAD sub-assemblies snap back to 0% home.
    */
-  public playMagneticSnapBackThud(forceAllow: boolean = false): void {
+  public playMagneticSnapBackThud(forceAllow: boolean = false, pan?: number): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
     const sub = ctx.createOscillator();
     const sg = ctx.createGain();
@@ -949,20 +1382,23 @@ class ProceduralPhysicalAudioEngine {
     sg.gain.setValueAtTime(0.18, t);
     sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
     sub.connect(sg);
-    sg.connect(this.masterGain);
+    sg.connect(dest);
+    this.registerTransientCleanup(sub, [sg, panner], true);
     sub.start(t);
     sub.stop(t + 0.19);
 
-    this.playMechanicalLatchClick(860, forceAllow);
+    this.playMechanicalLatchClick(860, forceAllow, pan);
   }
 
   /**
    * Crystalline harmonic resonance when clicking the 3D Hexagonal Energy Shield.
    */
-  public playHexShieldRippleResonance(forceAllow: boolean = false): void {
+  public playHexShieldRippleResonance(forceAllow: boolean = false, pan?: number): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
+
     const freqs = [660, 990, 1485];
     freqs.forEach((f, i) => {
       const osc = ctx.createOscillator();
@@ -973,7 +1409,9 @@ class ProceduralPhysicalAudioEngine {
       g.gain.setValueAtTime(0.065 / (i + 1), t);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34 + i * 0.05);
       osc.connect(g);
-      g.connect(this.masterGain!);
+      g.connect(dest);
+      const isLast = i === freqs.length - 1;
+      this.registerTransientCleanup(osc, isLast ? [g, panner] : [g], isLast);
       osc.start(t);
       osc.stop(t + 0.36 + i * 0.05);
     });
@@ -982,10 +1420,11 @@ class ProceduralPhysicalAudioEngine {
   /**
    * Deep-to-bright sonar radar sweep for Tactical Topographic Pulse Wave [T].
    */
-  public playTacticalPulseRadarSweep(forceAllow: boolean = false): void {
+  public playTacticalPulseRadarSweep(forceAllow: boolean = false, pan?: number): void {
     const ctx = this.ensureGraph(forceAllow);
-    if (!ctx || !this.masterGain) return;
+    if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
+    const { dest, panner } = this.createOutputDestination(ctx, pan);
 
     const sub = ctx.createOscillator();
     const sg = ctx.createGain();
@@ -995,7 +1434,8 @@ class ProceduralPhysicalAudioEngine {
     sg.gain.setValueAtTime(0.16, t);
     sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
     sub.connect(sg);
-    sg.connect(this.masterGain);
+    sg.connect(dest);
+    this.registerTransientCleanup(sub, [sg], false);
     sub.start(t);
     sub.stop(t + 0.5);
 
@@ -1008,11 +1448,11 @@ class ProceduralPhysicalAudioEngine {
     wg.gain.linearRampToValueAtTime(0.075, t + 0.1);
     wg.gain.exponentialRampToValueAtTime(0.0001, t + 0.62);
     sweep.connect(wg);
-    wg.connect(this.masterGain);
+    wg.connect(dest);
+    this.registerTransientCleanup(sweep, [wg, panner], true);
     sweep.start(t + 0.04);
     sweep.stop(t + 0.65);
   }
 }
 
 export const proceduralAudioSynth = new ProceduralPhysicalAudioEngine();
-

@@ -304,3 +304,151 @@ test('Module 2: Localized shield ripple normal, shield-shatter stun, soft separa
   assert.ok(siege.slowTimer > 0, 'Wingman bite must apply slow debuff');
 });
 
+
+test('AAA Overhaul: TALOS bipedal Boss spec, analytical spring stability at 20 FPS, swept Railgun anti-tunneling + 240Hz pierce guard, knockback, and boulder cover', async () => {
+  const {
+    MARS_BATTLEFIELD_OBSTACLES,
+    sampleMarsArenaSurfaceHeight,
+    stepAnalyticalDampedSpring
+  } = await import('./marsCombatEngine');
+
+  // 1. Boss uses 32-DOF TALOS Humanoid Titan asset
+  assert.ok(
+    ENEMY_ARCHETYPE_SPECS.ares_boss.glbUrls.some((u) => u.includes('talos_full_humanoid.glb')),
+    'ARES-09 Boss must use talos_full_humanoid.glb'
+  );
+
+  // 2. Analytical damped spring stays strictly stable & decays at dt = 0.05s (20 FPS)
+  let pos = 0;
+  let vel = 12.0;
+  for (let i = 0; i < 40; i++) {
+    [pos, vel] = stepAnalyticalDampedSpring(pos, vel, 26.0, 0.58, 0.05);
+    assert.ok(Number.isFinite(pos) && Math.abs(pos) < 2.0, `Spring exploded at step ${i}: ${pos}`);
+  }
+  assert.ok(Math.abs(pos) < 1e-3 && Math.abs(vel) < 1e-2, 'Spring must settle cleanly to zero');
+
+  // 3A. Swept-segment Railgun (125 m/s) hits small Go2 Hound at dt = 0.05s (6.25m step) without tunneling!
+  const tunnelState = createInitialMarsCombatState('unitree_g1', 0, false);
+  tunnelState.shellState = 'playing';
+  tunnelState.spawnTimer = 999;
+  tunnelState.x = 0;
+  tunnelState.z = 0;
+  tunnelState.y = sampleMarsArenaSurfaceHeight(0, 0);
+  tunnelState.activeWeapon = 'railgun';
+
+  const smallHound = spawnEnemyDropPod(tunnelState, 'go2_hound', 0, 3.4);
+  smallHound.dropPodProgress = 1;
+  smallHound.x = 3.4;
+  smallHound.z = 0;
+  smallHound.y = sampleMarsArenaSurfaceHeight(3.4, 0);
+  smallHound.aiCooldown = 99;
+  const houndHpBefore = smallHound.hp;
+
+  // Muzzle at x=0.5 -> after 0.05s at 125m/s, projectile is at x=6.75m (straddling 3.4m completely!)
+  stepMarsCombatWorld(
+    tunnelState,
+    0.05,
+    idleInput({
+      fireHeld: true,
+      muzzleWorldPoint: [0.5, smallHound.y + 0.85, 0],
+      aimWorldPoint: [20, smallHound.y + 0.85, 0]
+    })
+  );
+  assert.ok(smallHound.hp < houndHpBefore, 'Swept segment Railgun must not tunnel past 1.05m target at 20 FPS');
+
+  // 3B. At 240Hz (dt = 0.004s), piercing Railgun damages Boss strictly ONCE across 15 frames
+  const pierceState = createInitialMarsCombatState('unitree_g1', 0, false);
+  pierceState.shellState = 'playing';
+  pierceState.spawnTimer = 999;
+  pierceState.x = 0;
+  pierceState.z = 0;
+  pierceState.y = sampleMarsArenaSurfaceHeight(0, 0);
+  pierceState.activeWeapon = 'railgun';
+
+  const boss = summonAresBoss(pierceState)!;
+  boss.dropPodProgress = 1;
+  boss.x = 8.0;
+  boss.z = 0;
+  boss.y = sampleMarsArenaSurfaceHeight(8.0, 0);
+  boss.shield = 0;
+  boss.aiCooldown = 99;
+  const bossHpStart = boss.hp;
+
+  stepMarsCombatWorld(
+    pierceState,
+    0.004,
+    idleInput({
+      fireHeld: true,
+      muzzleWorldPoint: [1.0, boss.y + 2.2, 0],
+      aimWorldPoint: [20.0, boss.y + 2.2, 0]
+    })
+  );
+  for (let f = 0; f < 25; f++) {
+    pierceState.hitstopTimer = 0;
+    stepMarsCombatWorld(pierceState, 0.004, idleInput());
+  }
+  const totalBossDamage = bossHpStart - boss.hp;
+  assert.ok(
+    totalBossDamage > 100 && totalBossDamage < 220,
+    `Piercing Railgun at 240Hz must hit Boss exactly once (got damage ${totalBossDamage})`
+  );
+
+  // 4. Dedicated knockVx/knockVz pushes unstunned Vanguard backward away from player
+  const kbState = createInitialMarsCombatState('unitree_g1', 0, false);
+  kbState.shellState = 'playing';
+  kbState.spawnTimer = 999;
+  kbState.x = 0;
+  kbState.z = 0;
+  kbState.y = sampleMarsArenaSurfaceHeight(0, 0);
+  const van = spawnEnemyDropPod(kbState, 'g1_vanguard', 0, 14);
+  van.dropPodProgress = 1;
+  van.shield = 0;
+  van.x = 14.0;
+  van.z = 0;
+  van.y = sampleMarsArenaSurfaceHeight(14.0, 0);
+  van.aiCooldown = 99;
+
+  damageEnemyEntity(kbState, van, 40, 12, '超导磁轨炮', [13.2, van.y + 1.2, 0], 1.8);
+  assert.ok(van.knockVx > 2.0, 'Expected positive outward knockback velocity impulse');
+  kbState.hitstopTimer = 0;
+  stepMarsCombatWorld(kbState, 0.05, idleInput());
+  assert.ok(van.x > 14.0, `Expected unstunned enemy to be knocked back > 14.0m, got ${van.x}`);
+
+  // 5. Midfield basalt cover obstacle physically blocks projectiles
+  const boulder = MARS_BATTLEFIELD_OBSTACLES.find((o) => o.kind === 'boulder')!;
+  assert.ok(boulder, 'Expected midfield cover boulders');
+  const coverState = createInitialMarsCombatState('unitree_g1', 0, false);
+  coverState.shellState = 'playing';
+  coverState.spawnTimer = 999;
+  const dirLen = Math.hypot(boulder.x, boulder.z);
+  const ux = boulder.x / dirLen;
+  const uz = boulder.z / dirLen;
+  const bGround = sampleMarsArenaSurfaceHeight(boulder.x, boulder.z);
+  const startX = boulder.x - ux * (boulder.radius + 3.0);
+  const startZ = boulder.z - uz * (boulder.radius + 3.0);
+  const targetX = boulder.x + ux * (boulder.radius + 4.0);
+  const targetZ = boulder.z + uz * (boulder.radius + 4.0);
+
+  const sheltered = spawnEnemyDropPod(coverState, 'go2_hound', 0, 20);
+  sheltered.dropPodProgress = 1;
+  sheltered.x = targetX;
+  sheltered.z = targetZ;
+  sheltered.y = sampleMarsArenaSurfaceHeight(targetX, targetZ);
+  sheltered.aiCooldown = 99;
+  const shelteredHp = sheltered.hp;
+
+  stepMarsCombatWorld(
+    coverState,
+    0.04,
+    idleInput({
+      fireHeld: true,
+      muzzleWorldPoint: [startX, bGround + 1.0, startZ],
+      aimWorldPoint: [targetX, bGround + 1.0, targetZ]
+    })
+  );
+  for (let k = 0; k < 6; k++) {
+    coverState.hitstopTimer = 0;
+    stepMarsCombatWorld(coverState, 0.04, idleInput());
+  }
+  assert.equal(sheltered.hp, shelteredHp, 'Midfield boulder cover must block pulse rifle shots');
+});

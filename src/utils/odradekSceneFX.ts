@@ -34,7 +34,7 @@ export function attachTopographicWavefrontToTerrain(
   };
 
   mat.customProgramCacheKey = () =>
-    enableCaustics ? 'mega_hangar_odradek_terrain_caustics_v2' : 'mega_hangar_odradek_terrain_wave_v2';
+    enableCaustics ? 'mega_hangar_odradek_terrain_caustics_v3' : 'mega_hangar_odradek_terrain_wave_v3';
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uOdradekActive = uniforms.uOdradekActive;
     shader.uniforms.uOdradekOrigin = uniforms.uOdradekOrigin;
@@ -78,18 +78,25 @@ varying vec3 vOdradekWorldPos;\n` +
           float crestGlow = 1.0 - smoothstep(0.0, 0.48, crestDist);
           float crestCore = 1.0 - smoothstep(0.0, 0.12, crestDist);
 
-          // 2) Subtle 7.5m Trailing Wake of Topographic Elevation Iso-Contour Lines
+          // 2) Subtle 7.5m Trailing Wake of Topographic Elevation Iso-Contour Lines (fwidth() derivative AA)
           float behind = waveR - dXZ;
           float wakeEnv = (behind > 0.0 && behind < 7.5) ? (1.0 - behind / 7.5) : 0.0;
           float fadeOutTail = 1.0 - smoothstep(${(ODRADEK_TOTAL_DURATION - 1.2).toFixed(1)}, ${ODRADEK_TOTAL_DURATION.toFixed(1)}, uOdradekElapsed);
           wakeEnv *= fadeOutTail;
           crestGlow *= fadeOutTail;
 
-          float isoFract = abs(fract(vOdradekWorldPos.y * 2.6) - 0.5);
-          float isoLine = 1.0 - smoothstep(0.0, 0.045, isoFract);
+          float isoCoord = vOdradekWorldPos.y * 2.6;
+          float isoFw = max(fwidth(isoCoord), 1e-4);
+          float isoFract = abs(fract(isoCoord) - 0.5);
+          float isoHalfW = max(0.024, isoFw * 0.75);
+          float isoLine = (1.0 - smoothstep(isoHalfW - isoFw * 0.5, isoHalfW + isoFw * 0.65, isoFract)) * (1.0 - clamp(isoFw * 1.15, 0.0, 1.0));
 
-          vec2 orthoCell = abs(fract(vOdradekWorldPos.xz / 0.85) - 0.5);
-          float orthoLine = 1.0 - smoothstep(0.0, 0.022, min(orthoCell.x, orthoCell.y));
+          vec2 orthoCoord = vOdradekWorldPos.xz / 0.85;
+          vec2 orthoFw = max(fwidth(orthoCoord), vec2(1e-4));
+          vec2 orthoCell = abs(fract(orthoCoord) - 0.5);
+          vec2 orthoHalfW = max(vec2(0.012), orthoFw * 0.75);
+          vec2 orthoAxis = (1.0 - smoothstep(orthoHalfW - orthoFw * 0.5, orthoHalfW + orthoFw * 0.65, orthoCell)) * (1.0 - clamp(orthoFw * 1.2, vec2(0.0), vec2(1.0)));
+          float orthoLine = max(orthoAxis.x, orthoAxis.y);
 
           vec3 wakeColor = vec3(0.0, 0.78, 0.95) * (isoLine * 0.75 + orthoLine * 0.28) * wakeEnv;
           vec3 crestColor = mix(vec3(0.0, 0.88, 1.0), vec3(1.0, 1.0, 1.0), crestCore) * crestGlow * 1.85;
@@ -279,38 +286,43 @@ export function createOdradekScannerController(): OdradekScannerController {
         float tierWeight = vTier < 0.5 ? 0.36 : (vTier < 1.5 ? 0.50 : 0.58);
 
         if (vPart < 0.5) {
-          float coreX = 1.0 - smoothstep(0.0, 0.92, abs(vQuadUv.x));
+          float stemFw = max(fwidth(vQuadUv.x), 1e-3);
+          float coreX = 1.0 - smoothstep(max(0.2, 0.88 - stemFw), 0.96 + stemFw * 0.5, abs(vQuadUv.x));
           float stemGrad = 0.22 + 0.78 * vStemT;
           vec3 finalStem = mix(baseCol, vec3(1.0), vCrestWhite * 0.75);
           gl_FragColor = vec4(finalStem * 1.25, coreX * stemGrad * vAlpha * tierWeight * 0.75);
           return;
         }
 
-        // Analytical Thin-Line Holographic Micro-Reticle SDF
+        // Analytical Thin-Line Holographic Micro-Reticle SDF with fwidth() screen-space AA
         vec2 p = vQuadUv;
+        float pxFw = max(max(fwidth(p.x), fwidth(p.y)), 1e-3);
         float mask = 0.0;
 
         if (vTier < 0.5) {
           // Tier 0: Subtle Cyan Micro-Pip + Hairline Corner Frame
           vec2 dBox = abs(p) - vec2(0.52);
           float boxSdf = max(dBox.x, dBox.y);
-          float frame = 1.0 - smoothstep(0.0, 0.095, abs(boxSdf));
-          float pip = 1.0 - smoothstep(0.0, 0.18, length(p));
+          float halfStroke = max(0.045, pxFw * 0.75);
+          float frame = 1.0 - smoothstep(halfStroke - pxFw * 0.6, halfStroke + pxFw * 0.75, abs(boxSdf));
+          float pipR = max(0.14, pxFw * 0.9);
+          float pip = 1.0 - smoothstep(pipR - pxFw * 0.65, pipR + pxFw * 0.75, length(p));
           mask = max(frame * 0.65, pip);
         } else if (vTier < 1.5) {
           // Tier 1: Thin Hollow Equilateral Warning Triangle △
           float triSdf = sdEquilateralTriangle(vec2(p.x, p.y - 0.06), 0.66);
-          mask = 1.0 - smoothstep(0.0, 0.105, abs(triSdf));
+          float halfStroke = max(0.05, pxFw * 0.75);
+          mask = 1.0 - smoothstep(halfStroke - pxFw * 0.6, halfStroke + pxFw * 0.75, abs(triSdf));
         } else {
           // Tier 2: Crisp Thin Crimson Cross ✕
           vec2 rp = vec2((p.x - p.y) * 0.70710678, (p.x + p.y) * 0.70710678);
           float armA = max(abs(rp.x) - 0.11, abs(rp.y) - 0.72);
           float armB = max(abs(rp.y) - 0.11, abs(rp.x) - 0.72);
           float crossSdf = min(armA, armB);
-          mask = 1.0 - smoothstep(0.0, 0.085, crossSdf);
+          mask = 1.0 - smoothstep(-pxFw * 0.6, pxFw * 0.85, crossSdf);
         }
 
-        if (mask < 0.04) discard;
+        if (mask < 0.01) discard;
 
         vec3 iconCol = mix(baseCol * 1.35, vec3(1.0, 1.0, 1.0), vCrestWhite * 0.85);
         gl_FragColor = vec4(iconCol, mask * vAlpha * tierWeight);

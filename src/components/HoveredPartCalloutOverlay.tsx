@@ -28,10 +28,12 @@ export const HoveredPartCalloutOverlay: React.FC<HoveredPartCalloutOverlayProps>
 }) => {
   if (!callout || viewportWidth < 120 || viewportHeight < 120) return null;
 
-  const ax = Math.max(40, Math.min(viewportWidth - 40, callout.screenX));
-  const ay = Math.max(56, Math.min(viewportHeight - 56, callout.screenY));
+  const maxAnchorX = Math.max(40, viewportWidth - 40);
+  const maxAnchorY = Math.max(56, viewportHeight - 56);
+  const ax = Math.max(40, Math.min(maxAnchorX, callout.screenX));
+  const ay = Math.max(56, Math.min(maxAnchorY, callout.screenY));
 
-  // Route leader polyline away from the right-side Scene Graph HUD when anchor is on the right half
+  // Route leader polyline away from the right edge when anchor is on the right half
   const placeLeft = ax > viewportWidth * 0.54;
   const placeBelow = ay < 128;
 
@@ -46,15 +48,17 @@ export const HoveredPartCalloutOverlay: React.FC<HoveredPartCalloutOverlayProps>
 
   const cardWidth = 228;
   const rawCardLeft = placeLeft ? endX - cardWidth - 6 : endX + 6;
-  const cardLeft = Math.max(316, Math.min(viewportWidth - 324 - cardWidth, rawCardLeft));
-  const cardTop = Math.max(56, Math.min(viewportHeight - 92, endY - 20));
+  const maxCardLeft = Math.max(16, viewportWidth - cardWidth - 16);
+  const cardLeft = Math.max(16, Math.min(maxCardLeft, rawCardLeft));
+  const maxCardTop = Math.max(56, viewportHeight - 92);
+  const cardTop = Math.max(56, Math.min(maxCardTop, endY - 20));
 
   const formatMm = (v: number) => `${v >= 0 ? '+' : ''}${Math.round(v)}`;
 
   return (
     <div
       data-testid="hovered-part-3d-callout"
-      className="pointer-events-none absolute inset-0 z-25 overflow-hidden"
+      className="pointer-events-none absolute inset-0 z-[25] overflow-hidden"
     >
       <svg className="w-full h-full block" aria-hidden="true">
         {/* Precision 3D Spatial Anchor Reticle */}

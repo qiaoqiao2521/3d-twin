@@ -12,7 +12,6 @@ import {
   RotateCcw,
   Flame,
   AlertTriangle,
-  Camera,
   ChevronUp,
   ChevronDown,
   Sun,
@@ -20,10 +19,7 @@ import {
   Radar,
   Sparkles,
   Activity,
-  Crosshair,
-  Film,
-  Volume2,
-  VolumeX
+  Crosshair
 } from 'lucide-react';
 import { WindTunnelDisasterConfig } from '../utils/sciTechEngine';
 import {
@@ -87,7 +83,7 @@ export interface VisualLabPopoverProps {
   plasmaCutting?: boolean;
   onTogglePlasma?: () => void;
 
-  // Optional 4K Ray-Tracing Export & Hybrid Path-Tracing
+  // Retained in interface for caller compatibility (primary controls live in PathTracingHudBar & ViewportSettingsMenu)
   isExporting4K?: boolean;
   onExport4K?: () => void;
   pathTracingEnabled?: boolean;
@@ -111,7 +107,7 @@ export interface VisualLabPopoverProps {
   onTriggerNaniteDemo?: () => void;
   onTriggerTacticalPulse?: () => void;
 
-  // Dimension 4: Tactile Game Feel, Bullet-Time, Camera Macros, Audio & WebM Recording
+  // Dimension 4: Tactile Game Feel, Bullet-Time & Camera Macros
   tactileConfig?: TactileDirectorConfig;
   onChangeTactileConfig?: React.Dispatch<React.SetStateAction<TactileDirectorConfig>>;
   ikTensionNewtons?: number;
@@ -128,6 +124,10 @@ export interface VisualLabPopoverProps {
 }
 
 type SectionKey = '00' | '01' | '02' | '03' | '04';
+
+const blurRangeOnRelease = (e: React.PointerEvent<HTMLInputElement>) => {
+  e.currentTarget.blur();
+};
 
 export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
   thermalMode,
@@ -169,11 +169,6 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
   onToggleIk,
   plasmaCutting = false,
   onTogglePlasma,
-  isExporting4K = false,
-  onExport4K,
-  pathTracingEnabled = false,
-  pathTracingSpp = 0,
-  onTogglePathTracing,
   cinemaOptics,
   onChangeCinemaOptics,
   scientificConfig,
@@ -189,12 +184,6 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
   onChangeTactileConfig,
   ikTensionNewtons = 0,
   onTriggerCinemaMacro,
-  audioEnabled = false,
-  onToggleAudio,
-  audioVolume = 0.85,
-  onChangeAudioVolume,
-  isRecordingWebm = false,
-  onToggleRecordWebm,
   onOpenChange
 }) => {
   const [open, setOpen] = useState(false);
@@ -255,7 +244,6 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
     (focusModeEnabled ? 1 : 0) +
     (faultCount > 0 || faultInjectMode ? 1 : 0) +
     (ikEnabled ? 1 : 0) +
-    (pathTracingEnabled ? 1 : 0) +
     (cinemaOptics && cinemaOptics.lightingPreset !== 'cold_lab' ? 1 : 0) +
     (cinemaOptics?.smartBokehEnabled ? 1 : 0) +
     (scientificConfig?.feaEnabled ? 1 : 0) +
@@ -328,7 +316,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
           >
             {/* Top Bar inside Popover */}
             <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.08]">
-              <span className="text-xs font-semibold text-slate-100">光学·科研·视效实验台</span>
+              <span className="text-xs font-semibold text-slate-100">光学·科研·物理实验台</span>
               <div className="flex items-center gap-2 text-[10px] font-mono">
                 <button
                   type="button"
@@ -364,8 +352,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                   '00',
                   '00. 电影光学与影棚布光',
                   (cinemaOptics.lightingPreset !== 'cold_lab' ? 1 : 0) +
-                    (cinemaOptics.smartBokehEnabled ? 1 : 0) +
-                    (pathTracingEnabled ? 1 : 0)
+                    (cinemaOptics.smartBokehEnabled ? 1 : 0)
                 )}
                 {expandedSections['00'] && (
                   <div className="space-y-2 pt-0.5">
@@ -411,6 +398,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                           max={1}
                           step={0.02}
                           value={cinemaOptics.anamorphicStreak}
+                          onPointerUp={blurRangeOnRelease}
                           onChange={(e) =>
                             onChangeCinemaOptics((p) => ({
                               ...p,
@@ -436,6 +424,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                           max={1.5}
                           step={0.05}
                           value={cinemaOptics.exposureEv}
+                          onPointerUp={blurRangeOnRelease}
                           onChange={(e) =>
                             onChangeCinemaOptics((p) => ({
                               ...p,
@@ -460,6 +449,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                           max={0.95}
                           step={0.01}
                           value={cinemaOptics.bloomThreshold}
+                          onPointerUp={blurRangeOnRelease}
                           onChange={(e) =>
                             onChangeCinemaOptics((p) => ({
                               ...p,
@@ -502,23 +492,6 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                         <span className="truncate">暗角色散与胶片颗粒</span>
                         {dot(cinemaOptics.chromaticVignette)}
                       </button>
-
-                      {onTogglePathTracing && (
-                        <button
-                          type="button"
-                          data-testid="popover-toggle-pathtracing-btn"
-                          onClick={onTogglePathTracing}
-                          className={`col-span-2 ${itemClass(pathTracingEnabled)}`}
-                        >
-                          <span className="truncate">
-                            混合路径追踪累积 [R]
-                            {pathTracingEnabled && pathTracingSpp > 0
-                              ? ` · ${pathTracingSpp} SPP`
-                              : ''}
-                          </span>
-                          {dot(pathTracingEnabled)}
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}
@@ -561,7 +534,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                     >
                       <span className="flex items-center gap-1 truncate">
                         <Wind className="w-3 h-3 text-cyan-300 shrink-0" />
-                        <span>卡门涡街/感知域</span>
+                        <span>流场尾迹与感知域</span>
                       </span>
                       {dot(flowSensorMode)}
                     </button>
@@ -606,7 +579,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                     </button>
                   </div>
 
-                  {/* Calibrated FLIR Inline Legend & Live Hover °C Readout (Zero Main-Viewport Clutter!) */}
+                  {/* Calibrated FLIR Inline Legend & Live Hover °C Readout */}
                   {thermalMode && (
                     <div className="bg-[#0c111b] border border-amber-400/25 rounded-lg p-2 space-y-1">
                       <div className="flex items-center justify-between text-[10px] font-mono tabular-nums">
@@ -617,7 +590,13 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                             : '悬停部件测温'}
                         </span>
                       </div>
-                      <div className="h-1.5 rounded-full bg-gradient-to-r from-blue-600 via-purple-500 via-amber-400 to-yellow-100" />
+                      <div
+                        className="h-1.5 rounded-full"
+                        style={{
+                          background:
+                            'linear-gradient(90deg, #2563eb 0%, #a855f7 38%, #fbbf24 74%, #fef9c3 100%)'
+                        }}
+                      />
                       <div className="flex justify-between text-[9px] font-mono text-slate-400 tabular-nums">
                         <span>22°C 蒙皮</span>
                         <span>48°C 算力舱</span>
@@ -764,13 +743,15 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                         </span>
                       </div>
                       <div
-                        className={`h-1.5 rounded-full ${
-                          scientificConfig.feaColorMap === 'viridis'
-                            ? 'bg-gradient-to-r from-[#440154] via-[#21918c] to-[#fde725]'
-                            : scientificConfig.feaColorMap === 'jet'
-                            ? 'bg-gradient-to-r from-blue-600 via-emerald-400 via-yellow-300 to-red-600'
-                            : 'bg-gradient-to-r from-[#30123b] via-[#1ae4b6] via-[#faba39] to-[#7a0403]'
-                        }`}
+                        className="h-1.5 rounded-full"
+                        style={{
+                          background:
+                            scientificConfig.feaColorMap === 'viridis'
+                              ? 'linear-gradient(90deg, #440154 0%, #21918c 50%, #fde725 100%)'
+                              : scientificConfig.feaColorMap === 'jet'
+                                ? 'linear-gradient(90deg, #2563eb 0%, #34d399 36%, #fde047 68%, #dc2626 100%)'
+                                : 'linear-gradient(90deg, #30123b 0%, #1ae4b6 38%, #faba39 72%, #7a0403 100%)'
+                        }}
                       />
                       <div className="flex items-center justify-between gap-1 pt-0.5">
                         <div className="flex items-center gap-1">
@@ -820,15 +801,15 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                           comStabilityStatus === 'critical'
                             ? 'text-rose-400 font-semibold'
                             : comStabilityStatus === 'warning'
-                            ? 'text-amber-300 font-semibold'
-                            : 'text-emerald-300 font-semibold'
+                              ? 'text-amber-300 font-semibold'
+                              : 'text-emerald-300 font-semibold'
                         }
                       >
                         {comStabilityStatus === 'critical'
                           ? '倾覆临界预警'
                           : comStabilityStatus === 'warning'
-                          ? '支撑边缘动态调整'
-                          : '支撑多边形内稳定'}
+                            ? '支撑边缘动态调整'
+                            : '支撑多边形内稳定'}
                       </span>
                     </div>
                   )}
@@ -849,6 +830,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                         max={10.0}
                         step={0.5}
                         value={scientificConfig.lidarDecaySec}
+                        onPointerUp={blurRangeOnRelease}
                         onChange={(e) =>
                           onChangeScientificConfig((p) => ({
                             ...p,
@@ -863,14 +845,14 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
               )}
             </div>
 
-            {/* 03. Sci-Fi Hard-Surface & Energy VFX */}
+            {/* 03. Flow Physics, Additive Sintering & Energy VFX */}
             <div
               className="space-y-1.5 pb-1.5 border-b border-white/[0.08]"
               data-testid="windtunnel-popover"
             >
               {sectionHeader(
                 '03',
-                '03. 顶级科幻与能量视效',
+                '03. 流场实验与高能物理视效',
                 (slsActive ? 1 : 0) +
                   (scifiConfig?.naniteDissolveEnabled ? 1 : 0) +
                   (scifiConfig?.hexShieldEnabled ? 1 : 0) +
@@ -944,7 +926,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                           }
                           className={itemClass(scifiConfig.overdriveVentingEnabled, true)}
                         >
-                          <span className="truncate">超频泄压冷气喷流</span>
+                          <span className="truncate">过载散热冷气喷流</span>
                           {dot(scifiConfig.overdriveVentingEnabled, true)}
                         </button>
                       </>
@@ -972,7 +954,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                       }
                       className={itemClass(windTunnelConfig.schlierenMode)}
                     >
-                      <span className="truncate">光学纹影激波仪</span>
+                      <span className="truncate">光学纹影流场仪</span>
                       {dot(windTunnelConfig.schlierenMode)}
                     </button>
 
@@ -987,7 +969,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                       }
                       className={itemClass(windTunnelConfig.mach8PlasmaSheath, true)}
                     >
-                      <span className="truncate">马赫8 等离子鞘</span>
+                      <span className="truncate">高焓等离子热流鞘</span>
                       {dot(windTunnelConfig.mach8PlasmaSheath, true)}
                     </button>
 
@@ -1002,7 +984,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                       }
                       className={itemClass(windTunnelConfig.faradayLightningArcs)}
                     >
-                      <span className="truncate">法拉第笼走电弧</span>
+                      <span className="truncate">法拉第表面电弧</span>
                       {dot(windTunnelConfig.faradayLightningArcs)}
                     </button>
                   </div>
@@ -1023,6 +1005,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                           max={1}
                           step={0.02}
                           value={scifiConfig.naniteProgress}
+                          onPointerUp={blurRangeOnRelease}
                           onChange={(e) => {
                             const val = parseFloat(e.target.value);
                             onChangeScifiConfig((p) => ({
@@ -1059,11 +1042,11 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
               )}
             </div>
 
-            {/* 04. Tactile Game Feel, Physics Impulse & Director Tools */}
+            {/* 04. Tactile Physics Impulse, IK, Salvage & Director Macros */}
             <div className="space-y-1.5">
               {sectionHeader(
                 '04',
-                '04. 顶级交互与导演工具',
+                '04. 物理交互与导演运镜',
                 (tactileConfig?.kineticImpactArmed ? 1 : 0) +
                   (ikEnabled ? 1 : 0) +
                   (shipbreakerEnabled ? 1 : 0) +
@@ -1111,6 +1094,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                             max={400}
                             step={10}
                             value={tactileConfig.kineticImpulseNs}
+                            onPointerUp={blurRangeOnRelease}
                             onChange={(e) =>
                               onChangeTactileConfig((p) => ({
                                 ...p,
@@ -1319,73 +1303,6 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                       )}
                     </div>
                   )}
-
-                  {/* Audio Foley Volume + 4K PNG + WebM HD Video Capture */}
-                  {onToggleAudio && onChangeAudioVolume && (
-                    <div className="bg-[#0c111b] border border-white/[0.06] rounded-lg px-2 py-1.5 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={onToggleAudio}
-                        className="text-slate-300 hover:text-cyan-300 cursor-pointer shrink-0"
-                        title={audioEnabled ? '静音物理拟音' : '开启物理拟音'}
-                      >
-                        {audioEnabled ? (
-                          <Volume2 className="w-3.5 h-3.5 text-cyan-300" />
-                        ) : (
-                          <VolumeX className="w-3.5 h-3.5 text-slate-500" />
-                        )}
-                      </button>
-                      <input
-                        type="range"
-                        aria-label="主拟音音量"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={audioVolume}
-                        onChange={(e) => onChangeAudioVolume(parseFloat(e.target.value))}
-                        className="flex-1 h-1 accent-[#00e5ff] cursor-pointer"
-                      />
-                      <span className="text-[10px] font-mono text-slate-400 tabular-nums w-8 text-right">
-                        {Math.round(audioVolume * 100)}%
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-1">
-                    {onExport4K && (
-                      <button
-                        type="button"
-                        data-testid="export-4k-raytraced-btn"
-                        disabled={isExporting4K}
-                        onClick={onExport4K}
-                        className={itemClass(false)}
-                      >
-                        <span className="flex items-center gap-1 truncate">
-                          <Camera className="w-3 h-3 text-cyan-300 shrink-0" />
-                          <span className="truncate">
-                            {isExporting4K ? '合成 4K...' : '导出 4K 帧'}
-                          </span>
-                        </span>
-                      </button>
-                    )}
-
-                    {onToggleRecordWebm && (
-                      <button
-                        type="button"
-                        data-testid="record-webm-btn"
-                        onClick={onToggleRecordWebm}
-                        className={itemClass(isRecordingWebm, true)}
-                      >
-                        <span className="flex items-center gap-1 truncate">
-                          <Film className="w-3 h-3 text-amber-300 shrink-0" />
-                          <span className="truncate">
-                            {isRecordingWebm ? '停止并保存 WebM' : '录制 WebM 短片'}
-                          </span>
-                        </span>
-                        {dot(isRecordingWebm, true)}
-                      </button>
-                    )}
-                  </div>
                 </div>
               )}
             </div>
@@ -1409,7 +1326,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
             ? 'bg-cyan-500/[0.14] border-[#00e5ff]/70 text-cyan-100 font-semibold'
             : 'bg-[#161922]/90 border-white/[0.08] text-slate-200 hover:border-white/20 hover:text-white'
         }`}
-        title="展开电影光学、科研孪生、硬核视效与导演交互控制面板"
+        title="展开电影光学、科研孪生、流场物理与导演交互控制面板"
       >
         <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-300 shrink-0" strokeWidth={1.5} />
         <span>实验设置</span>

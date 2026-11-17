@@ -553,7 +553,7 @@ export interface CombatAnamorphicPostController {
       impulseIntensity01: number;
     }
   ) => void;
-  setSize: (width: number, height: number) => void;
+  setSize: (width: number, height: number, dpr?: number) => void;
   dispose: () => void;
 }
 
@@ -561,18 +561,48 @@ export function createCombatAnamorphicPostPipeline(
   renderer: THREE.WebGLRenderer,
   initialW: number,
   initialH: number,
-  isSoftwareGl: boolean
+  isSoftwareGl: boolean,
+  initialDpr?: number
 ): CombatAnamorphicPostController {
-  let w = Math.max(64, Math.floor(initialW));
-  let h = Math.max(64, Math.floor(initialH));
-  let rollingMs = 14.0;
+  const resolvePhysicalSize = (cssW: number, cssH: number, dpr?: number): [number, number] => {
+    const effDpr =
+      dpr ?? (typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : 1);
+    return [
+      Math.max(64, Math.floor(cssW * effDpr)),
+      Math.max(64, Math.floor(cssH * effDpr))
+    ];
+  };
 
-  let rt = new THREE.WebGLRenderTarget(w, h, {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
-    type: THREE.UnsignedByteType,
-    depthBuffer: true
-  });
+  let [w, h] = resolvePhysicalSize(initialW, initialH, initialDpr);
+  let rollingMs = 14.0;
+  const rtSamples = isSoftwareGl ? 0 : 4;
+
+  if (!isSoftwareGl && renderer.capabilities?.isWebGL2) {
+    renderer.extensions?.get?.('EXT_color_buffer_float');
+    renderer.extensions?.get?.('EXT_color_buffer_half_float');
+  }
+
+  const createHdrRenderTarget = (width: number, height: number) => {
+    const target = new THREE.WebGLRenderTarget(width, height, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      type: isSoftwareGl ? THREE.UnsignedByteType : THREE.HalfFloatType,
+      samples: rtSamples,
+      depthBuffer: true,
+      stencilBuffer: false
+    });
+    // Force standard WebGL2 renderbufferStorageMultisample + blitFramebuffer for RGBA16F MSAA
+    // (ANGLE's WEBGL_multisampled_render_to_texture only supports RGBA8, not RGBA16F!)
+    const rProps = (
+      renderer as unknown as { properties?: { get: (obj: unknown) => Record<string, unknown> } }
+    ).properties;
+    if (rProps && rtSamples > 0) {
+      rProps.get(target).__useRenderToTexture = false;
+    }
+    return target;
+  };
+
+  let rt = createHdrRenderTarget(w, h);
 
   const quadGeo = new THREE.PlaneGeometry(2, 2);
   const orthoCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -584,7 +614,8 @@ export function createCombatAnamorphicPostPipeline(
       uResolution: { value: new THREE.Vector2(w, h) },
       uAnamorphic: { value: 0.44 },
       uImpulse: { value: 0.0 },
-      uTime: { value: 0.0 }
+      uTime: { value: 0.0 },
+      uExposure: { value: renderer.toneMappingExposure || 1.12 }
     },
     depthTest: false,
     depthWrite: false,
@@ -602,12 +633,49 @@ export function createCombatAnamorphicPostPipeline(
       uniform float uAnamorphic;
       uniform float uImpulse;
       uniform float uTime;
+      uniform float uExposure;
       varying vec2 vUv;
 
+      // Soft bounded HDR highlight extraction in linear radiance space
       vec3 highPass(vec3 c) {
-        float peak = max(max(c.r, c.g), c.b);
-        float k = max(0.0, peak - 0.80) / 0.20;
-        return c * k * k;
+        vec3 exposed = max(vec3(0.0), c * uExposure);
+        float peak = max(max(exposed.r, exposed.g), exposed.b);
+        float excess = max(0.0, peak - 0.85);
+        float weight = (excess * excess) / (1.0 + excess * excess);
+        return min(exposed, vec3(12.0)) * weight;
+      }
+
+      // Stephen Hill / Three.js ACES Filmic RRT+ODT fit
+      vec3 rrtAndOdtFit(vec3 v) {
+        vec3 a = v * (v + 0.0245786) - 0.000090537;
+        vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
+        return a / b;
+      }
+
+      vec3 acesFilmicToneMapping(vec3 color) {
+        const mat3 ACESInputMat = mat3(
+          vec3(0.59719, 0.07600, 0.02840),
+          vec3(0.35458, 0.90834, 0.13383),
+          vec3(0.04823, 0.01566, 0.83777)
+        );
+        const mat3 ACESOutputMat = mat3(
+          vec3( 1.60475, -0.10208, -0.00327),
+          vec3(-0.53108,  1.10813, -0.07276),
+          vec3(-0.07367, -0.00605,  1.07602)
+        );
+        color /= 0.6;
+        color = ACESInputMat * color;
+        color = rrtAndOdtFit(color);
+        color = ACESOutputMat * color;
+        return clamp(color, 0.0, 1.0);
+      }
+
+      // IEC 61966-2-1 Linear-to-sRGB Transfer Function
+      vec3 linearToSrgb(vec3 linearCol) {
+        vec3 clamped = clamp(linearCol, 0.0, 1.0);
+        vec3 hi = pow(clamped, vec3(1.0 / 2.4)) * 1.055 - vec3(0.055);
+        vec3 lo = clamped * 12.92;
+        return mix(hi, lo, vec3(lessThanEqual(clamped, vec3(0.0031308))));
       }
 
       void main() {
@@ -615,12 +683,12 @@ export function createCombatAnamorphicPostPipeline(
         vec2 dir = vUv - 0.5;
         float dist = length(dir);
 
-        // Radial chromatic dispersion scaled slightly during heavy weapon/shield impacts
-        float ca = (0.0014 + uImpulse * 0.0055) * dist;
+        // Radial chromatic dispersion in linear HDR space scaled slightly on heavy impacts
+        float ca = (0.0012 + uImpulse * 0.0048) * dist;
         float r = texture2D(tScene, clamp(vUv - dir * ca, 0.002, 0.998)).r;
         float g = texture2D(tScene, vUv).g;
         float b = texture2D(tScene, clamp(vUv + dir * ca, 0.002, 0.998)).b;
-        vec3 col = vec3(r, g, b);
+        vec3 hdrCol = max(vec3(0.0), vec3(r, g, b) * uExposure);
 
         // 8-tap wide horizontal Panavision Anamorphic Flare Streak
         vec3 streak = vec3(0.0);
@@ -638,14 +706,19 @@ export function createCombatAnamorphicPostPipeline(
                    highPass(texture2D(tScene, clamp(vUv - vec2(dx4, 0.0), 0.002, 0.998)).rgb)) * 0.07;
 
         vec3 anamorphicTint = vec3(0.38, 0.86, 1.0) * streak.b + vec3(1.0, 0.62, 0.28) * streak.r * 0.65;
-        col += (streak * 0.45 + anamorphicTint * 0.65) * uAnamorphic;
+        hdrCol += (streak * 0.42 + anamorphicTint * 0.58) * uAnamorphic;
 
-        // Subtle cinema vignette + film grain
-        float vig = 1.0 - smoothstep(0.42, 0.96, dist) * (0.18 + uImpulse * 0.16);
+        // Subtle optical vignette before tone mapping
+        float vig = 1.0 - smoothstep(0.44, 0.98, dist) * (0.16 + uImpulse * 0.15);
+        hdrCol *= vig;
+
+        // ACES Filmic Tone Mapping + IEC sRGB Transfer Function (fixes hardware GPU linear dark crush!)
+        vec3 srgbCol = linearToSrgb(acesFilmicToneMapping(hdrCol));
+
         float grain = fract(sin(dot(vUv * uResolution + uTime * 37.0, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
-        col = clamp(col * vig + grain * 0.014, 0.0, 1.0);
+        srgbCol = clamp(srgbCol + grain * 0.012, 0.0, 1.0);
 
-        gl_FragColor = vec4(col, 1.0);
+        gl_FragColor = vec4(srgbCol, 1.0);
       }
     `
   });
@@ -659,7 +732,7 @@ export function createCombatAnamorphicPostPipeline(
       const budget = stepFrameBudgetGuard(rollingMs, params.rawDt, true, isSoftwareGl);
       rollingMs = budget.rollingMs;
 
-      // On software WebGL or severe frame budget pressure, bypass fullscreen RT pass seamlessly
+      // On software WebGL or zero anamorphic strength, bypass fullscreen RT pass (native ACES + sRGB output)
       if (isSoftwareGl || params.anamorphicStrength <= 0.01) {
         renderer.setRenderTarget(null);
         renderer.render(scene, camera);
@@ -667,6 +740,10 @@ export function createCombatAnamorphicPostPipeline(
       }
 
       const prevToneMapping = renderer.toneMapping;
+      postMat.uniforms.uExposure.value = renderer.toneMappingExposure || 1.12;
+
+      // Render raw linear HDR radiance into HalfFloat MSAA RenderTarget
+      renderer.toneMapping = THREE.NoToneMapping;
       renderer.setRenderTarget(rt);
       renderer.clear();
       renderer.render(scene, camera);
@@ -676,24 +753,18 @@ export function createCombatAnamorphicPostPipeline(
       postMat.uniforms.uImpulse.value = Math.max(0, Math.min(1, params.impulseIntensity01));
       postMat.uniforms.uTime.value = params.simTime;
 
-      renderer.toneMapping = THREE.NoToneMapping;
       renderer.setRenderTarget(null);
       renderer.render(postScene, orthoCam);
       renderer.toneMapping = prevToneMapping;
     },
-    setSize(width, height) {
-      const nw = Math.max(64, Math.floor(width));
-      const nh = Math.max(64, Math.floor(height));
+    setSize(width, height, dpr) {
+      const [nw, nh] = resolvePhysicalSize(width, height, dpr);
       if (nw === w && nh === h) return;
       w = nw;
       h = nh;
       rt.dispose();
-      rt = new THREE.WebGLRenderTarget(w, h, {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        type: THREE.UnsignedByteType,
-        depthBuffer: true
-      });
+      rt = createHdrRenderTarget(w, h);
+      postMat.uniforms.tScene.value = rt.texture;
       postMat.uniforms.uResolution.value.set(w, h);
     },
     dispose() {

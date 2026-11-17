@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { loadGltfResilient, fetchTextAssetResilient } from './src/utils/resilientGlbLoader';
+import {
+  loadGltfResilient,
+  fetchTextAssetResilient,
+  disposeSceneHierarchy
+} from './src/utils/resilientGlbLoader';
 import {
   Layers,
   Box,
@@ -59,6 +63,7 @@ import {
   AutoDisassemblyState,
   buildSubAssemblyMatrix,
   computePartOrthogonalExplosionPlan,
+  evaluateStagedExplosionOffset,
   stepAutoDisassemblyDemo,
   computePartBlueprintMetadata
 } from './src/utils/cadDisassemblyEngine';
@@ -276,8 +281,17 @@ const HANGAR_DRILL_LEVELS: { level: DrillLevel; label: string; desc: string }[] 
 const _tmpVec3 = new THREE.Vector3();
 const _tmpVec3B = new THREE.Vector3();
 const _tmpParentVec3 = new THREE.Vector3();
-const _tmpGrappleOriginW = new THREE.Vector3();
-const _tmpGrappleTargetW = new THREE.Vector3();
+const _decompPos = new THREE.Vector3();
+const _parentQuat = new THREE.Quaternion();
+const _parentScale = new THREE.Vector3();
+const _localDelta = new THREE.Vector3();
+const _ikTgtLocalScratch = new THREE.Vector3();
+const _endEffScratch = new THREE.Vector3();
+const _grappleCenterScratch = new THREE.Vector3();
+const _salvageFallbackAxis = new THREE.Vector3(0, 1, 0);
+const _plasmaEmissiveColor = new THREE.Color(0x67e8f9);
+const _faultEmissiveColor = new THREE.Color(0xf97316);
+const _faultEmissivePos = new THREE.Vector3();
 const _tmpCamRight = new THREE.Vector3();
 const _tmpCamUp = new THREE.Vector3();
 const _tmpCamFwd = new THREE.Vector3();
@@ -568,13 +582,17 @@ export default function App() {
     tacticalPulse: createInitialTacticalPulseState() as TacticalPulseWaveState,
     tactileConfig: createDefaultTactileDirectorConfig() as TactileDirectorConfig,
     macroElapsed: 0,
-    camImpulse: createInitialCameraMicroImpulse() as CameraMicroImpulseState
+    camImpulse: createInitialCameraMicroImpulse() as CameraMicroImpulseState,
+    activeDrawer: null as 'robots' | 'structure' | 'kinematics' | 'scenegraph' | null,
+    visualPopoverOpen: false
   });
   const initialPackLoadedRef = useRef(false);
 
   useEffect(() => {
     const s = stateRef.current;
     s.activeDrillLevel = activeDrillLevel;
+    s.activeDrawer = activeDrawer;
+    s.visualPopoverOpen = visualPopoverOpen;
     if (!autoDisassembly && tactileConfig.activeMacro === 'off') {
       s.targetExplosion = explosion;
     }
@@ -663,7 +681,9 @@ export default function App() {
     scientificConfig,
     scifiConfig,
     tactileConfig,
-    jointAngles
+    jointAngles,
+    activeDrawer,
+    visualPopoverOpen
   ]);
 
   const handleTriggerUltimateShowcase = () => {
@@ -1018,7 +1038,14 @@ export default function App() {
   useEffect(() => {
     if (appMode !== 'cad_hub') return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.code === 'KeyG' && !e.repeat) {
         const actor =
           activeTab === 'mars2020'
@@ -1101,11 +1128,11 @@ export default function App() {
     };
   }, [selectedRepo, selectedFileRel]);
 
-  const triggerSmoothCameraFocus = (targetLook: THREE.Vector3, offset: THREE.Vector3) => {
+  const triggerSmoothCameraFocus = useCallback((targetLook: THREE.Vector3, offset: THREE.Vector3) => {
     stateRef.current.camTargetLook.copy(targetLook);
     stateRef.current.camTargetPos.copy(targetLook).add(offset);
     stateRef.current.camGlideActive = true;
-  };
+  }, []);
 
   // Smooth camera framing when switching L0 -> L1 -> L2 -> L3 in Hangar
   const handleSelectDrillLevel = (lvl: DrillLevel) => {
@@ -1150,40 +1177,43 @@ export default function App() {
     }
   };
 
-  const handleSelectSubPart = (partName: string | null) => {
-    setHighlightedPart(partName);
-    stateRef.current.highlightedPart = partName;
-    if (!partName) {
-      setIsolatedPart(null);
-      setSelectedBlueprintMeta(null);
-      setSelectedAnchorScreen(null);
-      return;
-    }
-
-    stateRef.current.highlightSelectTime = performance.now() / 1000;
-    const found = partsRef.current.find((p) => p.partName === partName);
-    if (found) {
-      const matchedSub = subAssembliesRef.current.find((sa) => sa.partNames.includes(partName));
-      const meta = computePartBlueprintMetadata(
-        selectedPack.id,
-        found.partName,
-        found.layer,
-        matchedSub?.label || `${found.layer} 运动子总成`,
-        found.normSize,
-        assemblyNormMaxDimRef.current,
-        found.tris,
-        found.vertices,
-        urdfJointsRef.current
-      );
-      setSelectedBlueprintMeta(meta);
-
-      const box = new THREE.Box3().setFromObject(found.mesh);
-      if (!box.isEmpty()) {
-        const center = box.getCenter(new THREE.Vector3());
-        triggerSmoothCameraFocus(center, new THREE.Vector3(1.38, 0.9, 1.58));
+  const handleSelectSubPart = useCallback(
+    (partName: string | null) => {
+      setHighlightedPart(partName);
+      stateRef.current.highlightedPart = partName;
+      if (!partName) {
+        setIsolatedPart(null);
+        setSelectedBlueprintMeta(null);
+        setSelectedAnchorScreen(null);
+        return;
       }
-    }
-  };
+
+      stateRef.current.highlightSelectTime = performance.now() / 1000;
+      const found = partsRef.current.find((p) => p.partName === partName);
+      if (found) {
+        const matchedSub = subAssembliesRef.current.find((sa) => sa.partNames.includes(partName));
+        const meta = computePartBlueprintMetadata(
+          selectedPack.id,
+          found.partName,
+          found.layer,
+          matchedSub?.label || `${found.layer} 运动子总成`,
+          found.normSize,
+          assemblyNormMaxDimRef.current,
+          found.tris,
+          found.vertices,
+          urdfJointsRef.current
+        );
+        setSelectedBlueprintMeta(meta);
+
+        const box = new THREE.Box3().setFromObject(found.mesh);
+        if (!box.isEmpty()) {
+          const center = box.getCenter(new THREE.Vector3());
+          triggerSmoothCameraFocus(center, new THREE.Vector3(1.38, 0.9, 1.58));
+        }
+      }
+    },
+    [selectedPack.id, triggerSmoothCameraFocus]
+  );
 
   const handleToggleIsolateBlueprint = () => {
     if (!highlightedPart) return;
@@ -1228,7 +1258,8 @@ export default function App() {
     setSelectedAnchorScreen(null);
   };
 
-  const handleToggleHidePartInGraph = (partName: string) => {
+  const handleToggleHidePartInGraph = useCallback((partName: string) => {
+    const wasHidden = Boolean(stateRef.current.hiddenParts[partName]);
     setHiddenParts((prev) => {
       const next = { ...prev };
       if (next[partName]) {
@@ -1238,18 +1269,18 @@ export default function App() {
       }
       return next;
     });
-    if (isolatedPart === partName) {
+    if (stateRef.current.isolatedPart === partName) {
       setIsolatedPart(null);
     }
-    if (highlightedPart === partName && !hiddenParts[partName]) {
+    if (stateRef.current.highlightedPart === partName && !wasHidden) {
       setHighlightedPart(null);
       stateRef.current.highlightedPart = null;
       setSelectedBlueprintMeta(null);
       setSelectedAnchorScreen(null);
     }
-  };
+  }, []);
 
-  const handleHoverSceneGraphPart = (partName: string | null) => {
+  const handleHoverSceneGraphPart = useCallback((partName: string | null) => {
     if (partName && partName !== stateRef.current.hoveredPart) {
       proceduralAudioSynth.playPartHoverTick();
     }
@@ -1285,7 +1316,7 @@ export default function App() {
         }
       }
     }
-  };
+  }, []);
 
   const handleResetAllParts = () => {
     setIsolatedPart(null);
@@ -1743,15 +1774,21 @@ export default function App() {
       }
     };
 
+    let magWheelRaf = 0;
     const onWheel = (ev: WheelEvent) => {
       if (!stateRef.current.magLensEnabled) return;
       ev.preventDefault();
       ev.stopPropagation();
-      setMagLensRadius((prev) => {
-        const next = clampMagLensRadius(prev, ev.deltaY);
-        stateRef.current.magLensRadius = next;
-        return next;
-      });
+      const next = clampMagLensRadius(stateRef.current.magLensRadius, ev.deltaY);
+      stateRef.current.magLensRadius = next;
+      if (!magWheelRaf) {
+        magWheelRaf = requestAnimationFrame(() => {
+          magWheelRaf = 0;
+          if (!disposed) {
+            setMagLensRadius(stateRef.current.magLensRadius);
+          }
+        });
+      }
     };
 
     const onPointerUp = (ev: PointerEvent) => {
@@ -1926,6 +1963,26 @@ export default function App() {
     renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
 
     let flowController: FlowAndSensorFieldController | null = null;
+    const traceAnchorsBuf: {
+      originWorld: THREE.Vector3;
+      currentWorld: THREE.Vector3;
+      visible: boolean;
+    }[] = [];
+    const prismaticJointNodes = new Set<THREE.Object3D>();
+    const jointLimitPool = Array.from({ length: 12 }, () => ({
+      worldPos: new THREE.Vector3(),
+      severity: 'amber' as 'amber' | 'critical'
+    }));
+    const torqueSamplePool = Array.from({ length: 16 }, () => ({
+      worldPos: new THREE.Vector3(),
+      axisWorld: new THREE.Vector3(0, 1, 0),
+      torqueRatio01: 0,
+      omegaRadS: 0
+    }));
+    const salvageAnchorPool = Array.from({ length: 28 }, () => ({
+      pos: new THREE.Vector3(),
+      axisWorld: new THREE.Vector3(0, 1, 0)
+    }));
     let fpvWaypoints = buildSafeWorldBBoxFpvWaypoints(selectedPack.id, [-1, -0.8, -1], [1, 0.8, 1]);
     void buildMicroFpvCavityWaypoints;
     let skelNodes: SkeletonDynamicNode[] = [];
@@ -1934,7 +1991,6 @@ export default function App() {
     let ikChainIndices: number[] = [];
     let ikChainSpecs: IkJointLinkSpec[] = [];
     let ikAngles: number[] = [];
-    let ikChainRootInv = new THREE.Matrix4();
     let ikTipOffset: [number, number, number] = [0.18, 0, 0];
 
     // Load Real High-Poly GLB Asset via GLTFLoader (Y-up native, no rotation.x override)
@@ -1942,7 +1998,10 @@ export default function App() {
     setGlbLoadError(null);
     loadGltfResilient(selectedPack.glbUrl)
       .then((gltf) => {
-        if (disposed) return;
+        if (disposed) {
+          disposeSceneHierarchy(gltf.scene, { disposeTextures: true });
+          return;
+        }
         const root = gltf.scene;
         root.updateMatrixWorld(true);
 
@@ -2016,14 +2075,20 @@ export default function App() {
             const geomLocalCenter = geom.boundingBox
               ? geom.boundingBox.getCenter(new THREE.Vector3())
               : new THREE.Vector3();
+            const geomLocalSize = geom.boundingBox
+              ? geom.boundingBox.getSize(new THREE.Vector3())
+              : new THREE.Vector3(0.05, 0.05, 0.05);
+            const meshWorldScale = m.getWorldScale(new THREE.Vector3());
+            const obbSizeVec = new THREE.Vector3(
+              Math.max(0.002, Math.abs(geomLocalSize.x * meshWorldScale.x)),
+              Math.max(0.002, Math.abs(geomLocalSize.y * meshWorldScale.y)),
+              Math.max(0.002, Math.abs(geomLocalSize.z * meshWorldScale.z))
+            );
 
             const partBox = new THREE.Box3().setFromObject(m);
             const worldCenter = partBox.isEmpty()
               ? m.getWorldPosition(new THREE.Vector3())
               : partBox.getCenter(new THREE.Vector3());
-            const partSizeVec = partBox.isEmpty()
-              ? new THREE.Vector3(0.05, 0.05, 0.05)
-              : partBox.getSize(new THREE.Vector3());
 
             const socketInParentLocal = m.parent
               ? m.parent.worldToLocal(worldCenter.clone())
@@ -2060,7 +2125,7 @@ export default function App() {
               tris,
               vertices: verts,
               worldCenter,
-              normSize: [partSizeVec.x, partSizeVec.y, partSizeVec.z],
+              normSize: [obbSizeVec.x, obbSizeVec.y, obbSizeVec.z],
               geomLocalCenter,
               socketInParentLocal,
               stdMat,
@@ -2082,15 +2147,51 @@ export default function App() {
         subAssembliesRef.current = computedSubs;
         setSubAssemblies(computedSubs);
 
+        const rawPlanByMesh = new Map<THREE.Object3D, OrthogonalExplosionPlan>();
+        for (const tm of tempMeshes) {
+          rawPlanByMesh.set(
+            tm.mesh,
+            computePartOrthogonalExplosionPlan(
+              selectedPack.id,
+              tm.partName,
+              tm.layer,
+              [tm.worldCenter.x, tm.worldCenter.y, tm.worldCenter.z],
+              computedSubs
+            )
+          );
+        }
+
+        traceAnchorsBuf.length = 0;
         const loadedParts: LoadedRobotPart[] = tempMeshes.map((tm) => {
           const m = tm.mesh;
-          const orthoPlan = computePartOrthogonalExplosionPlan(
-            selectedPack.id,
-            tm.partName,
-            tm.layer,
-            [tm.worldCenter.x, tm.worldCenter.y, tm.worldCenter.z],
-            computedSubs
-          );
+          const rawPlan = rawPlanByMesh.get(m)!;
+          let anc = m.parent;
+          let parentRawPlan: OrthogonalExplosionPlan | undefined;
+          while (anc) {
+            const hit = rawPlanByMesh.get(anc);
+            if (hit) {
+              parentRawPlan = hit;
+              break;
+            }
+            anc = anc.parent;
+          }
+          const adjVec: [number, number, number] = [
+            rawPlan.orthoVector[0],
+            rawPlan.orthoVector[1],
+            rawPlan.orthoVector[2]
+          ];
+          if (parentRawPlan) {
+            for (let a = 0; a < 3; a++) {
+              const c = rawPlan.orthoVector[a];
+              const p = parentRawPlan.orthoVector[a];
+              if (c * p > 0) {
+                adjVec[a] = Math.sign(c) * Math.max(Math.abs(c) * 0.15, Math.abs(c) - Math.abs(p));
+              }
+            }
+          }
+          const orthoPlan: OrthogonalExplosionPlan = parentRawPlan
+            ? { ...rawPlan, orthoVector: adjVec }
+            : rawPlan;
 
           const parentNode = m.parent;
           const originParentLocal = parentNode
@@ -2110,6 +2211,13 @@ export default function App() {
             : new THREE.Vector3(...orthoPlan.peelVector);
 
           const normAxialX = ((tm.worldCenter.x - minX) / spanX) * 2 - 1;
+          const mountOriginWorld = tm.worldCenter.clone();
+          const currentCenterWorld = tm.worldCenter.clone();
+          traceAnchorsBuf.push({
+            originWorld: mountOriginWorld,
+            currentWorld: currentCenterWorld,
+            visible: true
+          });
 
           return {
             mesh: m,
@@ -2124,8 +2232,8 @@ export default function App() {
             localPeelVec,
             normSize: tm.normSize,
             orthoPlan,
-            mountOriginWorld: tm.worldCenter.clone(),
-            currentCenterWorld: tm.worldCenter.clone(),
+            mountOriginWorld,
+            currentCenterWorld,
             peelAmount: 0,
             normAxialX,
             origMat: tm.stdMat,
@@ -2143,6 +2251,12 @@ export default function App() {
 
         // Build Static per-mesh BLAS (MeshBVH) once & upgrade PBR microfacet / Emissive Area Light tags!
         const bvhInfo = upgradeGlbPbrAndBuildStaticBvh(root, selectedPack.id, classifyMeshLayer);
+        for (let i = 0; i < loadedParts.length; i++) {
+          const lp = loadedParts[i];
+          lp.twinUniforms.uMicroSurfaceClass.value = Number(
+            lp.origMat.userData?.microSurfaceClass ?? 0
+          );
+        }
         emissiveSources = bvhInfo.emissiveSources;
         setBvhStats({ meshes: bvhInfo.bvhMeshCount, emissives: bvhInfo.emissiveSources.length });
         rayTracer.resetAccumulation();
@@ -2177,9 +2291,11 @@ export default function App() {
         // Bind parsed URDF joints to the real gltf.scene nodes & build dynamic L0 Coordinate Skeleton + CCD IK Chain
         // NOTE: skelGroup materials are intentionally UNCLIPPED so Optical Sectioning exposes the full internal URDF skeleton inside sliced regions!
         const buildSkeletonAndBindJoints = () => {
+          disposeSceneHierarchy(skelGroup);
           skelGroup.clear();
           skelNodes = [];
           skelTopoLinesGeo = null;
+          prismaticJointNodes.clear();
 
           const rootAxes = new THREE.AxesHelper(1.25);
           skelRootAxes = rootAxes;
@@ -2223,6 +2339,9 @@ export default function App() {
                   currentVal: 0,
                   omegaRadS: 0
                 });
+                if (j.type === 'prismatic') {
+                  prismaticJointNodes.add(target);
+                }
               }
             }
             boundJointsRef.current = bindings;
@@ -2238,7 +2357,10 @@ export default function App() {
               const firstBind = bindings[ikChainIndices[0]];
               const chainParent = firstBind.targetNode.parent || root;
               chainParent.updateMatrixWorld(true);
-              ikChainRootInv.copy(chainParent.matrixWorld).invert();
+              const ikChainScale = Math.max(
+                1e-6,
+                chainParent.getWorldScale(new THREE.Vector3()).x
+              );
 
               let prevWorldPos = new THREE.Vector3();
               let prevWorldQuat = new THREE.Quaternion();
@@ -2250,7 +2372,11 @@ export default function App() {
                 const wPos = b.targetNode.getWorldPosition(new THREE.Vector3());
                 const wQuat = b.targetNode.getWorldQuaternion(new THREE.Quaternion());
                 const invPrevQ = prevWorldQuat.clone().invert();
-                const locOff = wPos.clone().sub(prevWorldPos).applyQuaternion(invPrevQ);
+                const locOff = wPos
+                  .clone()
+                  .sub(prevWorldPos)
+                  .applyQuaternion(invPrevQ)
+                  .divideScalar(ikChainScale);
                 const origQ = invPrevQ.multiply(wQuat);
                 ikChainSpecs.push({
                   name: b.def.name,
@@ -2263,7 +2389,7 @@ export default function App() {
                 prevWorldPos = wPos;
                 prevWorldQuat = wQuat;
               }
-              ikTipOffset = [0.16, 0.02, 0.0];
+              ikTipOffset = [0.16 / ikChainScale, 0.02 / ikChainScale, 0.0];
               stateRef.current.ikTargetWorld.set(
                 prevWorldPos.x + 0.24,
                 prevWorldPos.y + 0.14,
@@ -2638,26 +2764,29 @@ export default function App() {
       const bindings = boundJointsRef.current;
       let poseChecksum = 0;
 
-      // Solve 6-DOF CCD IK if active
-      let endEffectorWorld = new THREE.Vector3(0.45, 0.2, 0.25);
+      // Solve 6-DOF CCD IK if active (zero per-frame GC allocations!)
+      const endEffectorWorld = _endEffScratch.set(0.45, 0.2, 0.25);
       if (s.ikEnabled && ikChainSpecs.length > 0 && bindings.length > 0) {
         const firstBind = bindings[ikChainIndices[0]];
         const chainParent = firstBind.targetNode.parent || modelRoot;
         chainParent.updateMatrixWorld(true);
-        ikChainRootInv.copy(chainParent.matrixWorld).invert();
-        const targetLocal = s.ikTargetWorld.clone().applyMatrix4(ikChainRootInv);
+        _ikTgtLocalScratch.copy(s.ikTargetWorld);
+        chainParent.worldToLocal(_ikTgtLocalScratch);
         const solved = solveCcdIkChain(
           ikChainSpecs,
           ikAngles,
-          [targetLocal.x, targetLocal.y, targetLocal.z],
+          [_ikTgtLocalScratch.x, _ikTgtLocalScratch.y, _ikTgtLocalScratch.z],
           ikTipOffset,
           10,
           0.32
         );
         ikAngles = solved.angles;
-        endEffectorWorld
-          .set(solved.endEffectorPos[0], solved.endEffectorPos[1], solved.endEffectorPos[2])
-          .applyMatrix4(chainParent.matrixWorld);
+        endEffectorWorld.set(
+          solved.endEffectorPos[0],
+          solved.endEffectorPos[1],
+          solved.endEffectorPos[2]
+        );
+        chainParent.localToWorld(endEffectorWorld);
       }
 
       let sumJointSpeedRadS = 0;
@@ -2748,6 +2877,7 @@ export default function App() {
         if (b.def.type === 'prismatic') {
           b.targetNode.position.copy(b.basePos).addScaledVector(b.axisVec, b.currentVal);
         } else {
+          b.targetNode.position.copy(b.basePos);
           _tmpQuat.setFromAxisAngle(b.axisVec, b.currentVal);
           b.targetNode.quaternion.copy(b.baseQuat).multiply(_tmpQuat);
         }
@@ -2755,29 +2885,27 @@ export default function App() {
         if (
           s.tactileConfig.jointLimitGuardEnabled &&
           limInfo.nearLimit &&
-          jointLimitWarnings.length < 12
+          jointLimitWarnings.length < jointLimitPool.length
         ) {
-          const wPos = new THREE.Vector3();
-          b.targetNode.getWorldPosition(wPos);
-          jointLimitWarnings.push({
-            worldPos: wPos,
-            severity: limInfo.severity === 'critical' ? 'critical' : 'amber'
-          });
+          const slot = jointLimitPool[jointLimitWarnings.length];
+          b.targetNode.getWorldPosition(slot.worldPos);
+          slot.severity = limInfo.severity === 'critical' ? 'critical' : 'amber';
+          jointLimitWarnings.push(slot);
         }
 
-        if (s.scientificConfig.torqueVectorsEnabled && torqueSamples.length < 16) {
-          const wPos = new THREE.Vector3();
-          const wQuat = new THREE.Quaternion();
-          b.targetNode.getWorldPosition(wPos);
-          b.targetNode.getWorldQuaternion(wQuat);
-          torqueSamples.push({
-            worldPos: wPos,
-            axisWorld: b.axisVec.clone().applyQuaternion(wQuat).normalize(),
-            torqueRatio01: jTorque01,
-            omegaRadS: b.omegaRadS
-          });
+        if (s.scientificConfig.torqueVectorsEnabled && torqueSamples.length < torqueSamplePool.length) {
+          const slot = torqueSamplePool[torqueSamples.length];
+          b.targetNode.getWorldPosition(slot.worldPos);
+          b.targetNode.getWorldQuaternion(_tmpQuat);
+          slot.axisWorld.copy(b.axisVec).applyQuaternion(_tmpQuat).normalize();
+          slot.torqueRatio01 = jTorque01;
+          slot.omegaRadS = b.omegaRadS;
+          torqueSamples.push(slot);
         }
       }
+
+      // Sync articulated URDF matrices BEFORE transforming world-space explosion deltas into live parent-local coordinates!
+      modelRoot.updateMatrixWorld(true);
 
       // Module 5: Procedural WebAudio FOC Brushless Servo & Subsea Ping360 Sonar Telemetry (modulated by torque!)
       if (s.audioSynthEnabled) {
@@ -2824,23 +2952,35 @@ export default function App() {
         p.peelAmount = dampValue(p.peelAmount, targetPeel, 9.0, dt);
         if (p.peelAmount > 0.012) anyPartDisplaced = true;
 
-        const windows: Record<1 | 2 | 3 | 4, [number, number]> = {
-          1: [0.0, 0.3],
-          2: [0.22, 0.56],
-          3: [0.48, 0.82],
-          4: [0.72, 1.0]
-        };
-        const [w0, w1] = windows[p.orthoPlan.stage];
-        const rawU = s.curExplosion <= w0 ? 0 : s.curExplosion >= w1 ? 1 : (s.curExplosion - w0) / (w1 - w0);
-        const stageU = rawU * rawU * (3 - 2 * rawU);
-        const peelEase = p.peelAmount * p.peelAmount * (3 - 2 * p.peelAmount);
-
-        if (!bindings.some((b) => b.targetNode === m && b.def.type === 'prismatic')) {
+        if (!prismaticJointNodes.has(m)) {
           m.position.copy(p.basePos);
         }
-        m.position
-          .addScaledVector(p.localOrthoVec, stageU)
-          .addScaledVector(p.localPeelVec, peelEase);
+
+        // Evaluate 4-stage smoothstep world-space explosion + peel offset and project dynamically into m.parent local space!
+        const [exWx, exWy, exWz] = evaluateStagedExplosionOffset(
+          p.orthoPlan,
+          s.curExplosion,
+          p.peelAmount
+        );
+        if (Math.abs(exWx) > 1e-5 || Math.abs(exWy) > 1e-5 || Math.abs(exWz) > 1e-5) {
+          if (m.parent) {
+            m.parent.matrixWorld.decompose(_decompPos, _parentQuat, _parentScale);
+            _parentQuat.invert();
+            _localDelta
+              .set(exWx, exWy, exWz)
+              .applyQuaternion(_parentQuat)
+              .set(
+                _localDelta.x / (Math.abs(_parentScale.x) > 1e-6 ? _parentScale.x : 1),
+                _localDelta.y / (Math.abs(_parentScale.y) > 1e-6 ? _parentScale.y : 1),
+                _localDelta.z / (Math.abs(_parentScale.z) > 1e-6 ? _parentScale.z : 1)
+              );
+            m.position.add(_localDelta);
+          } else {
+            m.position.x += exWx;
+            m.position.y += exWy;
+            m.position.z += exWz;
+          }
+        }
 
         // Hardspace: Shipbreaker 2nd-Order Spring-Damper 3D Floating Offset
         const grappleSp = grappleSprings.get(p.partName);
@@ -2858,21 +2998,27 @@ export default function App() {
             const wy = stepped.pos[1] + hoverBob;
             const wz = stepped.pos[2];
             if (m.parent) {
-              _tmpGrappleOriginW.set(0, 0, 0);
-              m.parent.localToWorld(_tmpGrappleOriginW);
-              _tmpGrappleTargetW.set(
-                _tmpGrappleOriginW.x + wx,
-                _tmpGrappleOriginW.y + wy,
-                _tmpGrappleOriginW.z + wz
-              );
-              m.parent.worldToLocal(_tmpGrappleTargetW);
-              m.position.add(_tmpGrappleTargetW);
+              m.parent.matrixWorld.decompose(_decompPos, _parentQuat, _parentScale);
+              _parentQuat.invert();
+              _localDelta
+                .set(wx, wy, wz)
+                .applyQuaternion(_parentQuat)
+                .set(
+                  _localDelta.x / (Math.abs(_parentScale.x) > 1e-6 ? _parentScale.x : 1),
+                  _localDelta.y / (Math.abs(_parentScale.y) > 1e-6 ? _parentScale.y : 1),
+                  _localDelta.z / (Math.abs(_parentScale.z) > 1e-6 ? _parentScale.z : 1)
+                );
+              m.position.add(_localDelta);
             } else {
               m.position.x += wx;
               m.position.y += wy;
               m.position.z += wz;
             }
           }
+        }
+
+        if (anyPartDisplaced && m.children.length > 0) {
+          m.updateMatrixWorld();
         }
 
         const isHighlighted = Boolean(activeFocusPart && p.partName === activeFocusPart);
@@ -3048,9 +3194,10 @@ export default function App() {
 
       modelRoot.updateMatrixWorld(true);
 
-      // Update Exploded Assembly Dashed Trace Lines
-      if (anyPartDisplaced && !s.isolatedPart && parts.length > 0) {
-        const traceAnchors = parts.map((p) => {
+      // Update Exploded Assembly Dashed Trace Lines (zero per-frame GC allocations!)
+      if (anyPartDisplaced && !s.isolatedPart && parts.length > 0 && traceAnchorsBuf.length === parts.length) {
+        for (let i = 0; i < parts.length; i++) {
+          const p = parts[i];
           if (p.mesh.visible) {
             if (p.mesh.parent) {
               p.mountOriginWorld.copy(p.socketInParentLocal);
@@ -3059,13 +3206,9 @@ export default function App() {
             p.currentCenterWorld.copy(p.geomLocalCenter);
             p.mesh.localToWorld(p.currentCenterWorld);
           }
-          return {
-            originWorld: p.mountOriginWorld,
-            currentWorld: p.currentCenterWorld,
-            visible: p.mesh.visible
-          };
-        });
-        traceController.updateTraces(traceAnchors, true);
+          traceAnchorsBuf[i].visible = p.mesh.visible;
+        }
+        traceController.updateTraces(traceAnchorsBuf, true);
       } else {
         traceController.updateTraces([], false);
       }
@@ -3159,8 +3302,8 @@ export default function App() {
 
       if (s.ikEnabled && s.plasmaCutting) {
         dynamicEmissives.push({
-          pos: s.ikTargetWorld.clone(),
-          color: new THREE.Color(0x67e8f9),
+          pos: s.ikTargetWorld,
+          color: _plasmaEmissiveColor,
           radiance: 3.6
         });
       }
@@ -3196,8 +3339,8 @@ export default function App() {
             0.75
           );
           dynamicEmissives.push({
-            pos: _tmpVec3B.clone(),
-            color: new THREE.Color(0xf97316),
+            pos: _faultEmissivePos.copy(_tmpVec3B),
+            color: _faultEmissiveColor,
             radiance: 2.5
           });
         }
@@ -3334,20 +3477,28 @@ export default function App() {
 
       // Update Hardspace: Shipbreaker URDF Joint Assembly Lock-Rings & Curved Bézier Magnetic Grapple Tether
       if (s.shipbreakerEnabled && !s.isolatedPart) {
-        const jointWorldAnchors = (bindings.length > 0
-          ? bindings.slice(0, 28).map((b) => {
-              const pPos = new THREE.Vector3();
-              const qRot = new THREE.Quaternion();
-              b.targetNode.getWorldPosition(pPos);
-              b.targetNode.getWorldQuaternion(qRot);
-              const axisW = b.axisVec.clone().applyQuaternion(qRot).normalize();
-              return { pos: pPos, axisWorld: axisW };
-            })
-          : parts.slice(0, 16).map((pt) => {
-              const pPos = pt.geomLocalCenter.clone();
-              pt.mesh.localToWorld(pPos);
-              return { pos: pPos, axisWorld: new THREE.Vector3(0, 1, 0) };
-            }));
+        const jointWorldAnchors: { pos: THREE.Vector3; axisWorld: THREE.Vector3 }[] = [];
+        if (bindings.length > 0) {
+          const lim = Math.min(salvageAnchorPool.length, bindings.length);
+          for (let i = 0; i < lim; i++) {
+            const b = bindings[i];
+            const slot = salvageAnchorPool[i];
+            b.targetNode.getWorldPosition(slot.pos);
+            b.targetNode.getWorldQuaternion(_tmpQuat);
+            slot.axisWorld.copy(b.axisVec).applyQuaternion(_tmpQuat).normalize();
+            jointWorldAnchors.push(slot);
+          }
+        } else {
+          const lim = Math.min(16, parts.length);
+          for (let i = 0; i < lim; i++) {
+            const pt = parts[i];
+            const slot = salvageAnchorPool[i];
+            slot.pos.copy(pt.geomLocalCenter);
+            pt.mesh.localToWorld(slot.pos);
+            slot.axisWorld.copy(_salvageFallbackAxis);
+            jointWorldAnchors.push(slot);
+          }
+        }
 
         camera.matrixWorld.extractBasis(_tmpCamRight, _tmpCamUp, _tmpCamFwd);
         _tmpEmitterW
@@ -3362,8 +3513,9 @@ export default function App() {
         if (activeBeamPartName) {
           const gp = parts.find((pt) => pt.partName === activeBeamPartName);
           if (gp && gp.mesh.visible) {
-            grappledCenter = gp.geomLocalCenter.clone();
-            gp.mesh.localToWorld(grappledCenter);
+            _grappleCenterScratch.copy(gp.geomLocalCenter);
+            gp.mesh.localToWorld(_grappleCenterScratch);
+            grappledCenter = _grappleCenterScratch;
             grappledRadius = Math.max(gp.normSize[0], gp.normSize[1], gp.normSize[2]) * 0.58;
           }
         }
@@ -3560,7 +3712,9 @@ export default function App() {
         const h = container.clientHeight || 640;
         setPtSpp(ptRes.spp);
         setSlsActive(s.slsState.active);
-        setPeakStressMpa(framePeakStressMpa);
+        if (s.scientificConfig.feaEnabled || s.visualPopoverOpen) {
+          setPeakStressMpa(framePeakStressMpa);
+        }
         if (comResult) {
           setComStabilityStatus(comResult.statusLevel);
         }
@@ -3602,7 +3756,7 @@ export default function App() {
           setMicroFpvSegmentLabel(activeFpvSegLabel);
         }
 
-        if (s.liveSim && bindings.length > 0) {
+        if (s.liveSim && s.activeDrawer === 'kinematics' && bindings.length > 0) {
           const synced: Record<string, number> = {};
           for (let i = 0; i < Math.min(20, bindings.length); i++) {
             const b = bindings[i];
@@ -3787,6 +3941,7 @@ export default function App() {
       setViewportSize({ w, h });
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
       renderer.setSize(w, h);
       rayTracer.setSize(w, h);
     };
@@ -3798,6 +3953,7 @@ export default function App() {
     return () => {
       disposed = true;
       cancelAnimationFrame(frameId);
+      cancelAnimationFrame(magWheelRaf);
       clearTimeout(frameId);
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
@@ -3805,6 +3961,8 @@ export default function App() {
       renderer.domElement.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('wheel', onWheel);
       controls.removeEventListener('start', onControlStart);
+      controls.dispose();
+      controlsRef.current = null;
       window.removeEventListener('resize', handleResize);
       resizeObs?.disconnect();
       if (webmRecorder.isRecording()) {
@@ -3821,6 +3979,19 @@ export default function App() {
       salvageFx.dispose();
       signatureFx.dispose();
       ikPlasmaFx.dispose();
+      traceController.dispose?.();
+      (opticalSection as { dispose?: () => void }).dispose?.();
+      disposeSceneHierarchy(opticalSection.group);
+      (flowController as { dispose?: () => void } | null)?.dispose?.();
+      if (flowController) {
+        disposeSceneHierarchy(flowController.group);
+      }
+      (blueprintRig as { dispose?: () => void }).dispose?.();
+      disposeSceneHierarchy(blueprintRig.group);
+      disposeSceneHierarchy(skelGroup);
+      bayRing.geometry.dispose();
+      (bayRing.material as THREE.Material).dispose();
+      disposeSceneHierarchy(modelRoot, { disposeTextures: true });
       sparkGeo.dispose();
       (sparkPoints.material as THREE.Material).dispose();
       pushShaftGeo.dispose();
@@ -4410,6 +4581,7 @@ export default function App() {
                                       [j.name]: nextVal
                                     }));
                                   }}
+                                  onPointerUp={(e) => e.currentTarget.blur()}
                                   className="w-full accent-[#00e5ff] h-1.5 cursor-pointer"
                                 />
                               </div>
@@ -4585,7 +4757,23 @@ export default function App() {
                       data-testid="drawer-btn-kinematics"
                       aria-expanded={activeDrawer === 'kinematics'}
                       onClick={() =>
-                        setActiveDrawer((d) => (d === 'kinematics' ? null : 'kinematics'))
+                        setActiveDrawer((d) => {
+                          const next = d === 'kinematics' ? null : 'kinematics';
+                          if (next === 'kinematics' && stateRef.current.liveSim) {
+                            const bindings = boundJointsRef.current;
+                            if (bindings.length > 0) {
+                              const synced: Record<string, number> = {};
+                              for (let i = 0; i < Math.min(20, bindings.length); i++) {
+                                const b = bindings[i];
+                                if (b.def.type !== 'fixed') {
+                                  synced[b.def.name] = Number(b.currentVal.toFixed(2));
+                                }
+                              }
+                              setJointAngles(synced);
+                            }
+                          }
+                          return next;
+                        })
                       }
                       className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
                         activeDrawer === 'kinematics'

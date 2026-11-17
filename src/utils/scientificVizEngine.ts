@@ -363,10 +363,63 @@ export interface ScientificVizSceneController {
     workspaceMaxRadius: number;
     lidarOriginWorld: THREE.Vector3;
     robotBoundsBox: THREE.Box3 | null;
+    raycastTargets?: THREE.Object3D[];
     hidden: boolean;
   }) => void;
   clearLidarCloud: () => void;
   dispose: () => void;
+}
+
+function createCircularPointSpriteTexture(): THREE.Texture {
+  if (typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(0, 0, 64, 64);
+      const grad = ctx.createRadialGradient(32, 32, 1, 32, 32, 31);
+      grad.addColorStop(0.0, 'rgba(255,255,255,1.0)');
+      grad.addColorStop(0.55, 'rgba(255,255,255,0.88)');
+      grad.addColorStop(0.88, 'rgba(255,255,255,0.22)');
+      grad.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.needsUpdate = true;
+      return tex;
+    }
+  }
+  const size = 32;
+  const data = new Uint8Array(size * size * 4);
+  const c = (size - 1) * 0.5;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const r = Math.hypot(x - c, y - c) / c;
+      const alpha = r > 1.0 ? 0 : Math.pow(1.0 - r * r, 1.6);
+      const idx = (y * size + x) * 4;
+      data[idx] = 255;
+      data[idx + 1] = 255;
+      data[idx + 2] = 255;
+      data[idx + 3] = Math.round(alpha * 255);
+    }
+  }
+  const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+function attachCircularPointCoordDiscard(mat: THREE.PointsMaterial, cacheKey: string): void {
+  mat.customProgramCacheKey = () => cacheKey;
+  mat.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      'void main() {',
+      `void main() {
+        vec2 ptCentered = gl_PointCoord - vec2(0.5);
+        float ptRad = length(ptCentered);
+        if (ptRad > 0.5) discard;`
+    );
+  };
 }
 
 /**
@@ -521,31 +574,30 @@ export function createScientificVizSceneController(): ScientificVizSceneControll
   const envGroup = new THREE.Group();
   group.add(envGroup);
 
+  const circularPointTex = createCircularPointSpriteTexture();
+
   const outerEnvGeo = new THREE.SphereGeometry(1.0, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.72);
-  const outerEnvWire = new THREE.LineSegments(
-    new THREE.WireframeGeometry(outerEnvGeo),
-    new THREE.LineBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.22,
-      depthWrite: false
-    })
-  );
+  const outerEnvWireGeo = new THREE.WireframeGeometry(outerEnvGeo);
+  const outerEnvWireMat = new THREE.LineBasicMaterial({
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false
+  });
+  const outerEnvWire = new THREE.LineSegments(outerEnvWireGeo, outerEnvWireMat);
   envGroup.add(outerEnvWire);
 
-  const outerEnvShell = new THREE.Mesh(
-    outerEnvGeo,
-    new THREE.MeshBasicMaterial({
-      color: 0x0ea5e9,
-      transparent: true,
-      opacity: 0.055,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    })
-  );
+  const outerEnvShellMat = new THREE.MeshBasicMaterial({
+    color: 0x0ea5e9,
+    transparent: true,
+    opacity: 0.055,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const outerEnvShell = new THREE.Mesh(outerEnvGeo, outerEnvShellMat);
   envGroup.add(outerEnvShell);
 
-  // Volumetric workspace reachability point lattice
+  // Volumetric workspace reachability point lattice (circular smooth discard, zero square blocks)
   const latPts: number[] = [];
   for (let ir = 0; ir < 3; ir++) {
     const r = 0.42 + ir * 0.28;
@@ -564,12 +616,15 @@ export function createScientificVizSceneController(): ScientificVizSceneControll
   const latGeo = new THREE.BufferGeometry();
   latGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(latPts), 3));
   const latMat = new THREE.PointsMaterial({
+    map: circularPointTex,
     color: 0x67e8f9,
-    size: 0.022,
+    size: 0.026,
+    alphaTest: 0.03,
     transparent: true,
-    opacity: 0.55,
+    opacity: 0.58,
     depthWrite: false
   });
+  attachCircularPointCoordDiscard(latMat, 'sci_viz_lat_circular_pt_v1');
   envGroup.add(new THREE.Points(latGeo, latMat));
 
   // --------------------------------------------------------------------------
@@ -593,13 +648,16 @@ export function createScientificVizSceneController(): ScientificVizSceneControll
   lidarGeo.setAttribute('position', new THREE.BufferAttribute(lidarPos, 3));
   lidarGeo.setAttribute('color', new THREE.BufferAttribute(lidarCol, 3));
   const lidarMat = new THREE.PointsMaterial({
-    size: 0.032,
+    map: circularPointTex,
+    size: 0.036,
+    alphaTest: 0.03,
     vertexColors: true,
     transparent: true,
     opacity: 0.94,
     depthWrite: false,
     blending: THREE.AdditiveBlending
   });
+  attachCircularPointCoordDiscard(lidarMat, 'sci_viz_lidar_circular_pt_v1');
   const lidarPoints = new THREE.Points(lidarGeo, lidarMat);
   lidarPoints.frustumCulled = false;
   lidarGroup.add(lidarPoints);
@@ -623,6 +681,15 @@ export function createScientificVizSceneController(): ScientificVizSceneControll
   const _zAxis = new THREE.Vector3(0, 0, 1);
   const _tmpQuat = new THREE.Quaternion();
   const _tmpAxis = new THREE.Vector3();
+  const _sensorOrigin = new THREE.Vector3();
+  const _rayDir = new THREE.Vector3();
+  const _lidarRaycaster = new THREE.Raycaster();
+  _lidarRaycaster.near = 0.14;
+  _lidarRaycaster.far = 14.0;
+  const _rayHitsScratch: THREE.Intersection[] = [];
+  const _autoSceneMeshesScratch: THREE.Mesh[] = [];
+  let _cachedParentChildCount = -1;
+  let _cachedParentFrameTick = -999;
 
   return {
     group,
@@ -761,58 +828,125 @@ export function createScientificVizSceneController(): ScientificVizSceneControll
         envGroup.visible = false;
       }
 
-      // 4. Update Persistent Multi-Beam Rotating LiDAR Point Cloud
+      // 4. Update Persistent Multi-Beam Rotating LiDAR Point Cloud (Real MeshBVH + Floor Raycast)
       if (config.lidarPersistEnabled) {
         lidarGroup.visible = true;
         const decay = Math.max(1.2, config.lidarDecaySec);
         const orig = params.lidarOriginWorld;
-        const spinYaw = simTime * 3.8;
+        const hasValidBounds = Boolean(params.robotBoundsBox && !params.robotBoundsBox.isEmpty());
+        const sensorElevY = hasValidBounds
+          ? params.robotBoundsBox!.max.y - 0.12
+          : Math.max(orig.y, floorY + 1.15);
+        _sensorOrigin.set(orig.x, sensorElevY, orig.z);
 
-        // Emit 36 new persistent scan hits per frame across floor, procedural calibration pillars, and robot bounds
+        // Gather real 3D mesh raycast targets (either explicit raycastTargets or physical meshes in parent scene)
+        const explicitTargets = params.raycastTargets;
+        const useExplicitTargets = Boolean(explicitTargets && explicitTargets.length > 0);
+        if (!useExplicitTargets && group.parent) {
+          const tickSlot = Math.floor(simTime * 4);
+          if (
+            group.parent.children.length !== _cachedParentChildCount ||
+            tickSlot !== _cachedParentFrameTick
+          ) {
+            _cachedParentChildCount = group.parent.children.length;
+            _cachedParentFrameTick = tickSlot;
+            _autoSceneMeshesScratch.length = 0;
+            for (let ci = 0; ci < group.parent.children.length; ci++) {
+              const rootChild = group.parent.children[ci];
+              if (rootChild === group || !rootChild.visible) continue;
+              rootChild.traverseVisible((node) => {
+                if (!(node as THREE.Mesh).isMesh || (node as THREE.InstancedMesh).isInstancedMesh) return;
+                const m = node as THREE.Mesh;
+                if (m.name === 'infinite_matte_industrial_deck') return;
+                const mat = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.Material & {
+                  isShaderMaterial?: boolean;
+                  wireframe?: boolean;
+                };
+                if (
+                  !mat ||
+                  mat.isShaderMaterial ||
+                  mat.blending === THREE.AdditiveBlending ||
+                  mat.wireframe ||
+                  (mat.transparent && mat.opacity < 0.25)
+                ) {
+                  return;
+                }
+                _autoSceneMeshesScratch.push(m);
+              });
+            }
+          }
+        }
+
+        const spinYaw = simTime * 3.8;
+        const maxLidarRange = 12.0;
+
+        // Emit 36 rotating multi-beam rays per frame from actual upper head/sensor elevation
         for (let b = 0; b < 36; b++) {
           const az = spinYaw + (b / 36) * 0.55;
-          const elev = -0.06 - ((b % 12) / 12) * 0.62;
+          const elev = 0.04 - ((b % 12) / 11) * 0.72;
           const cosE = Math.cos(elev);
           const dx = Math.cos(az) * cosE;
           const dy = Math.sin(elev);
           const dz = Math.sin(az) * cosE;
+          _rayDir.set(dx, dy, dz).normalize();
 
-          let hitDist = 3.8;
-          if (dy < -0.02) {
-            const tFloor = (floorY + 0.012 - orig.y) / dy;
-            if (tFloor > 0.15 && tFloor < 5.2) hitDist = tFloor;
+          let hitDist = maxLidarRange;
+          let hitValid = false;
+
+          // 1) Exact analytical floor plane intersection
+          if (_rayDir.y < -0.004) {
+            const tFloor = (floorY + 0.012 - _sensorOrigin.y) / _rayDir.y;
+            if (tFloor > 0.14 && tFloor < hitDist) {
+              hitDist = tFloor;
+              hitValid = true;
+            }
           }
 
-          // Synthetic calibration boulders / walls at perimeter r ~ 2.45m for rich 3D elevation returns
-          const px = orig.x + dx * hitDist;
-          const pz = orig.z + dz * hitDist;
-          const radFromOrigin = Math.hypot(px, pz);
-          let hitY = orig.y + dy * hitDist;
-          if (radFromOrigin > 1.85 && radFromOrigin < 3.4) {
-            const ridge =
-              Math.max(0, Math.sin(px * 3.1) * Math.cos(pz * 2.9)) * 0.36 +
-              Math.max(0, Math.sin(Math.atan2(pz, px) * 5.0)) * 0.22;
-            hitY = Math.max(hitY, floorY + 0.014 + ridge);
+          // 2) Real 3D MeshBVH / Raycaster intersection against explicit targets or scene physical meshes
+          if (useExplicitTargets || _autoSceneMeshesScratch.length > 0) {
+            _lidarRaycaster.ray.origin.copy(_sensorOrigin);
+            _lidarRaycaster.ray.direction.copy(_rayDir);
+            _lidarRaycaster.far = hitDist;
+            _rayHitsScratch.length = 0;
+            if (useExplicitTargets) {
+              _lidarRaycaster.intersectObjects(explicitTargets!, true, _rayHitsScratch);
+            } else {
+              _lidarRaycaster.intersectObjects(_autoSceneMeshesScratch, false, _rayHitsScratch);
+            }
+            if (_rayHitsScratch.length > 0 && _rayHitsScratch[0].distance < hitDist) {
+              hitDist = _rayHitsScratch[0].distance;
+              hitValid = true;
+            }
           }
 
-          const slot = lidarWriteIdx % lidarCap;
-          lidarWriteIdx++;
-          lidarPos[slot * 3] = px;
-          lidarPos[slot * 3 + 1] = hitY;
-          lidarPos[slot * 3 + 2] = pz;
-          lidarAge[slot] = 0;
+          const endDist = hitValid ? hitDist : 3.2;
+          const px = _sensorOrigin.x + _rayDir.x * endDist;
+          const hitY = _sensorOrigin.y + _rayDir.y * endDist;
+          const pz = _sensorOrigin.z + _rayDir.z * endDist;
 
-          const elevNorm = Math.max(0, Math.min(1, (hitY - floorY) / 0.85));
-          const [cr, cg, cb] = evaluateScientificColorMap(0.18 + elevNorm * 0.76, 'turbo');
-          lidarBaseRgb[slot * 3] = cr;
-          lidarBaseRgb[slot * 3 + 1] = cg;
-          lidarBaseRgb[slot * 3 + 2] = cb;
+          if (hitValid) {
+            const slot = lidarWriteIdx % lidarCap;
+            lidarWriteIdx++;
+            lidarPos[slot * 3] = px;
+            lidarPos[slot * 3 + 1] = hitY;
+            lidarPos[slot * 3 + 2] = pz;
+            lidarAge[slot] = 0;
+
+            const elevSpan = hasValidBounds
+              ? Math.max(0.45, params.robotBoundsBox!.max.y - floorY)
+              : 1.25;
+            const elevNorm = Math.max(0, Math.min(1, (hitY - floorY) / elevSpan));
+            const [cr, cg, cb] = evaluateScientificColorMap(0.18 + elevNorm * 0.76, 'turbo');
+            lidarBaseRgb[slot * 3] = cr;
+            lidarBaseRgb[slot * 3 + 1] = cg;
+            lidarBaseRgb[slot * 3 + 2] = cb;
+          }
 
           if (b < beamCount) {
             const lb = b * 6;
-            beamLinePos[lb] = orig.x;
-            beamLinePos[lb + 1] = orig.y;
-            beamLinePos[lb + 2] = orig.z;
+            beamLinePos[lb] = _sensorOrigin.x;
+            beamLinePos[lb + 1] = _sensorOrigin.y;
+            beamLinePos[lb + 2] = _sensorOrigin.z;
             beamLinePos[lb + 3] = px;
             beamLinePos[lb + 4] = hitY;
             beamLinePos[lb + 5] = pz;
@@ -855,7 +989,11 @@ export function createScientificVizSceneController(): ScientificVizSceneControll
       sharedArcTorus.dispose();
       sharedTipCone.dispose();
       for (const t of torqueArcPool) t.mat.dispose();
-      outerEnvGeo.dispose();
+      outerEnvWire.geometry.dispose();
+      (outerEnvWire.material as THREE.Material).dispose();
+      outerEnvShell.geometry.dispose();
+      (outerEnvShell.material as THREE.Material).dispose();
+      circularPointTex.dispose();
       latGeo.dispose();
       latMat.dispose();
       lidarGeo.dispose();

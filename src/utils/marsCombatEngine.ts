@@ -18,7 +18,7 @@ export type PlayerMechId =
   | 'baxter_dual_arm'
   | 'hello_stretch';
 
-const HUMANOID_COMBAT_MECHS = new Set<PlayerMechId>([
+export const HUMANOID_COMBAT_MECHS = new Set<PlayerMechId>([
   'unitree_g1',
   'unitree_h1',
   'fourier_gr1',
@@ -26,11 +26,15 @@ const HUMANOID_COMBAT_MECHS = new Set<PlayerMechId>([
   'cassie_biped'
 ]);
 
-const QUADRUPED_COMBAT_MECHS = new Set<PlayerMechId>([
+export const QUADRUPED_COMBAT_MECHS = new Set<PlayerMechId>([
   'unitree_go2',
   'unitree_b2',
   'anymal_c'
 ]);
+
+export function isLeggedCombatMech(mechId: PlayerMechId): boolean {
+  return HUMANOID_COMBAT_MECHS.has(mechId) || QUADRUPED_COMBAT_MECHS.has(mechId);
+}
 export type CombatWeaponId = 'pulse_rifle' | 'railgun' | 'missile_pod';
 export type EnemyArchetypeId = 'go2_hound' | 'g1_vanguard' | 'sar_siege' | 'aero_hunter' | 'ares_boss';
 export type BossAttackKind = 'none' | 'balteus_salvo' | 'coral_laser_sweep' | 'orbital_pillars';
@@ -365,9 +369,9 @@ export const ENEMY_ARCHETYPE_SPECS: Record<EnemyArchetypeId, CombatEnemySpec> = 
   ares_boss: {
     archetype: 'ares_boss',
     codeName: 'ARES-09 · 赤星重装核能泰坦',
-    glbUrls: ['/robotics_glb/rexrov2_oberon7_subsea_rov.glb'],
-    urdfUrl: '/baselines/02-水下机器人ROV与深海作业系统/rexrov2/rexrov2_description/robots/rexrov2_oberon7.xacro',
-    scaleDim: 5.6,
+    glbUrls: ['/robotics_glb/talos_full_humanoid.glb'],
+    urdfUrl: '/baselines/06-双足人形具身智能机器人/talos-data/urdf/talos_full_v2.urdf',
+    scaleDim: 5.8,
     maxHp: 2150,
     maxShield: 520,
     maxStagger: 260,
@@ -389,6 +393,8 @@ export interface CombatEnemyEntity {
   vx: number;
   vy: number;
   vz: number;
+  knockVx: number;
+  knockVz: number;
   yaw: number;
   gaitDist: number;
   hp: number;
@@ -464,6 +470,9 @@ export interface CombatProjectile {
   x: number;
   y: number;
   z: number;
+  prevX: number;
+  prevY: number;
+  prevZ: number;
   vx: number;
   vy: number;
   vz: number;
@@ -472,6 +481,7 @@ export interface CombatProjectile {
   life: number;
   maxLife: number;
   homingTargetUid: number | null;
+  piercedUids: number[];
   sourceX: number;
   sourceZ: number;
 }
@@ -603,6 +613,16 @@ export interface MarsCombatWorldState {
   bossDefeated: boolean;
   bossBannerTimer: number;
   nextUid: number;
+  nextProjCursor: number;
+
+  // Hitstop One-Shot Input Buffers (guarantee zero dropped presses during hitstop freeze)
+  bufferedDash: boolean;
+  bufferedEmp: boolean;
+  bufferedMissile: boolean;
+  bufferedWingman: boolean;
+  bufferedUltimate: boolean;
+  bufferedSummonBoss: boolean;
+  bufferedVent: boolean;
 
   // Juice & Feedback
   hitstopTimer: number;
@@ -660,14 +680,171 @@ export interface CombatStepInput {
   wingmanCommandJustPressed?: boolean;
   ultimateJustPressed: boolean;
   summonBossJustPressed: boolean;
+  ventJustPressed?: boolean;
   aimYaw: number;
   aimPitch: number;
   aimWorldPoint: [number, number, number] | null;
   muzzleWorldPoint?: [number, number, number] | null;
 }
 
+export interface MarsBattlefieldObstacle {
+  x: number;
+  z: number;
+  radius: number;
+  height: number;
+  kind: 'tower' | 'boulder';
+}
+
 const MAX_PROJECTILES = 96;
 const ARENA_RADIUS = 68;
+
+const MIDFIELD_BOULDER_LAYOUT: readonly [number, number, number, number][] = [
+  [15.5, 0.72, 1.65, 2.35],
+  [22.0, 1.16, 1.95, 2.75],
+  [16.8, 2.08, 1.70, 2.45],
+  [27.5, 2.58, 2.15, 3.05],
+  [18.5, 3.58, 1.75, 2.55],
+  [31.0, 4.08, 2.25, 3.15],
+  [15.0, 5.16, 1.60, 2.30],
+  [25.5, 5.68, 2.05, 2.85],
+  [34.5, 0.92, 2.20, 3.10],
+  [36.0, 2.32, 2.30, 3.25]
+];
+
+/**
+ * Deterministic physical battlefield cover obstacles:
+ * - 6 Colony Defense Relay Towers at r = 56m
+ * - 10 Tactical Midfield Basalt Cover Boulders across r = 14..38m
+ * Shared 1:1 between physics/ballistics (`marsCombatEngine.ts`), camera collision (`MarsSciFiCombatGame.tsx`), and 3D scene (`marsCombatSceneFX.ts`).
+ */
+export const MARS_BATTLEFIELD_OBSTACLES: MarsBattlefieldObstacle[] = [
+  ...Array.from({ length: 6 }, (_, i) => {
+    const ang = (i / 6) * Math.PI * 2 + 0.38;
+    const rad = 56;
+    return {
+      x: Number((Math.cos(ang) * rad).toFixed(3)),
+      z: Number((Math.sin(ang) * rad).toFixed(3)),
+      radius: 1.65,
+      height: 8.4,
+      kind: 'tower' as const
+    };
+  }),
+  ...MIDFIELD_BOULDER_LAYOUT.map(([rad, ang, radius, height]) => ({
+    x: Number((Math.cos(ang) * rad).toFixed(3)),
+    z: Number((Math.sin(ang) * rad).toFixed(3)),
+    radius,
+    height,
+    kind: 'boulder' as const
+  }))
+];
+
+/**
+ * Samples the exact rendered Martian arena surface height (including `r > 70m` crater-rim uplift).
+ */
+export function sampleMarsArenaSurfaceHeight(x: number, z: number): number {
+  const r = Math.hypot(x, z);
+  const rimRise = r > 70 ? Math.pow((r - 70) / 28, 1.85) * 6.5 : 0;
+  return sampleLandTerrainHeight(x, z) + rimRise;
+}
+
+/**
+ * Unconditionally stable analytical closed-form underdamped spring integrator.
+ * Immune to explicit-Euler explosion at any dt (even dt = 0.05s or 1.0s).
+ */
+export function stepAnalyticalDampedSpring(
+  pos: number,
+  vel: number,
+  omega: number,
+  zeta: number,
+  dt: number
+): [number, number] {
+  if (dt <= 0) return [pos, vel];
+  const clampedZeta = Math.min(0.999, Math.max(0.001, zeta));
+  const omegaD = omega * Math.sqrt(1 - clampedZeta * clampedZeta);
+  const decay = Math.exp(-clampedZeta * omega * dt);
+  const cosD = Math.cos(omegaD * dt);
+  const sinD = Math.sin(omegaD * dt);
+  const bCoeff = (vel + clampedZeta * omega * pos) / omegaD;
+  const nextPos = decay * (pos * cosD + bCoeff * sinD);
+  const nextVel =
+    decay *
+    ((bCoeff * omegaD - clampedZeta * omega * pos) * cosD -
+      (pos * omegaD + clampedZeta * omega * bCoeff) * sinD);
+  return [nextPos, nextVel];
+}
+
+/**
+ * Bounded angular turn-rate helper (wraps shortest arc in [-PI, PI]).
+ */
+export function turnTowardsAngle(currentYaw: number, targetYaw: number, maxDeltaRad: number): number {
+  let diff = targetYaw - currentYaw;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  if (Math.abs(diff) <= maxDeltaRad) return targetYaw;
+  let next = currentYaw + Math.sign(diff) * maxDeltaRad;
+  while (next > Math.PI) next -= Math.PI * 2;
+  while (next < -Math.PI) next += Math.PI * 2;
+  return next;
+}
+
+/**
+ * Computes exact closest point on 3D segment A->B to target center C (with optional Y-axis ellipsoid scale).
+ */
+export function closestPointOnSegment3D(
+  ax: number,
+  ay: number,
+  az: number,
+  bx: number,
+  by: number,
+  bz: number,
+  cx: number,
+  cy: number,
+  cz: number,
+  yScale: number = 1.0
+): { px: number; py: number; pz: number; dist: number; t: number } {
+  const abx = bx - ax;
+  const aby = (by - ay) * yScale;
+  const abz = bz - az;
+  const acx = cx - ax;
+  const acy = (cy - ay) * yScale;
+  const acz = cz - az;
+  const abLenSq = abx * abx + aby * aby + abz * abz;
+  const t =
+    abLenSq > 1e-8 ? Math.max(0, Math.min(1, (acx * abx + acy * aby + acz * abz) / abLenSq)) : 0;
+  const px = ax + (bx - ax) * t;
+  const py = ay + (by - ay) * t;
+  const pz = az + (bz - az) * t;
+  const dist = Math.hypot(px - cx, (py - cy) * yScale, pz - cz);
+  return { px, py, pz, dist, t };
+}
+
+/**
+ * Exact 2D ray-segment entry t in [0, 1] against a horizontal circle (cx, cz, radius), or null if no hit.
+ */
+export function segmentIntersectsCircle2D(
+  ax: number,
+  az: number,
+  bx: number,
+  bz: number,
+  cx: number,
+  cz: number,
+  radius: number
+): number | null {
+  const fx = ax - cx;
+  const fz = az - cz;
+  const rSq = radius * radius;
+  if (fx * fx + fz * fz <= rSq) return 0;
+  const dx = bx - ax;
+  const dz = bz - az;
+  const a = dx * dx + dz * dz;
+  if (a < 1e-8) return null;
+  const b = 2 * (fx * dx + fz * dz);
+  const c = fx * fx + fz * fz - rSq;
+  const disc = b * b - 4 * a * c;
+  if (disc < 0) return null;
+  const t = (-b - Math.sqrt(disc)) / (2 * a);
+  return t >= 0 && t <= 1 ? t : null;
+}
 
 export function getPlayableMechSpec(id: PlayerMechId): PlayableMechSpec {
   return PLAYABLE_MECH_SPECS.find((m) => m.id === id) || PLAYABLE_MECH_SPECS[0];
@@ -694,6 +871,9 @@ export function createInitialMarsCombatState(
       x: 0,
       y: -999,
       z: 0,
+      prevX: 0,
+      prevY: -999,
+      prevZ: 0,
       vx: 0,
       vy: 0,
       vz: 0,
@@ -702,6 +882,7 @@ export function createInitialMarsCombatState(
       life: 0,
       maxLife: 1,
       homingTargetUid: null,
+      piercedUids: [],
       sourceX: 0,
       sourceZ: 0
     });
@@ -785,6 +966,15 @@ export function createInitialMarsCombatState(
     bossDefeated: false,
     bossBannerTimer: 0,
     nextUid: 1,
+    nextProjCursor: 0,
+
+    bufferedDash: false,
+    bufferedEmp: false,
+    bufferedMissile: false,
+    bufferedWingman: false,
+    bufferedUltimate: false,
+    bufferedSummonBoss: false,
+    bufferedVent: false,
 
     hitstopTimer: 0,
     cameraTrauma: 0,
@@ -843,8 +1033,22 @@ export function spawnEnemyDropPod(
   const rawZ = state.z + Math.sin(ang) * dist;
   const clampedR = Math.hypot(rawX, rawZ);
   const scaleBack = clampedR > ARENA_RADIUS - 4 ? (ARENA_RADIUS - 4) / clampedR : 1;
-  const x = rawX * scaleBack;
-  const z = rawZ * scaleBack;
+  let x = rawX * scaleBack;
+  let z = rawZ * scaleBack;
+  if (archetype !== 'aero_hunter') {
+    for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
+      const dx = x - obs.x;
+      const dz = z - obs.z;
+      const d = Math.hypot(dx, dz);
+      const minClear = obs.radius + spec.hitRadius * 0.9 + 0.35;
+      if (d < minClear) {
+        const nx = d > 1e-4 ? dx / d : 1;
+        const nz = d > 1e-4 ? dz / d : 0;
+        x = obs.x + nx * minClear;
+        z = obs.z + nz * minClear;
+      }
+    }
+  }
   const groundY = sampleLandTerrainHeight(x, z);
   const y = archetype === 'aero_hunter' ? groundY + 6.8 : groundY;
 
@@ -863,6 +1067,8 @@ export function spawnEnemyDropPod(
     vx: 0,
     vy: 0,
     vz: 0,
+    knockVx: 0,
+    knockVz: 0,
     yaw: Math.atan2(state.z - z, state.x - x),
     gaitDist: 0,
     hp: maxHp,
@@ -948,10 +1154,20 @@ export function summonAresBoss(state: MarsCombatWorldState): CombatEnemyEntity |
 }
 
 function allocProjectile(state: MarsCombatWorldState): CombatProjectile | null {
-  for (let i = 0; i < state.projectiles.length; i++) {
-    if (!state.projectiles[i].active) return state.projectiles[i];
+  const len = state.projectiles.length;
+  if (len === 0) return null;
+  for (let offset = 0; offset < len; offset++) {
+    const idx = (state.nextProjCursor + offset) % len;
+    if (!state.projectiles[idx].active) {
+      state.nextProjCursor = (idx + 1) % len;
+      state.projectiles[idx].piercedUids.length = 0;
+      return state.projectiles[idx];
+    }
   }
-  return state.projectiles[0];
+  const evictIdx = state.nextProjCursor % len;
+  state.nextProjCursor = (evictIdx + 1) % len;
+  state.projectiles[evictIdx].piercedUids.length = 0;
+  return state.projectiles[evictIdx];
 }
 
 /**
@@ -1030,18 +1246,21 @@ export function damageEnemyEntity(
   staggerDamage: number,
   weaponLabel: string,
   hitWorldPoint?: [number, number, number],
-  shieldMultiplier: number = 1.0
+  shieldMultiplier: number = 1.0,
+  options?: { fromWingman?: boolean; isWeakPointCrit?: boolean }
 ): void {
   if (enemy.koTimer > 0) return;
 
+  const isWeakPoint = Boolean(options?.isWeakPointCrit);
   const isDirectStaggerHit = enemy.staggeredTimer > 0 || enemy.shieldBreakStunTimer > 0;
-  const dmgMult = enemy.staggeredTimer > 0 ? 2.5 : enemy.shieldBreakStunTimer > 0 ? 1.35 : 1.0;
-  const displayedDamage = Math.round(baseDamage * dmgMult);
+  const staggerMult = enemy.staggeredTimer > 0 ? 2.5 : enemy.shieldBreakStunTimer > 0 ? 1.35 : 1.0;
+  const weakPointMult = isWeakPoint && enemy.shield <= 0 ? 1.35 : 1.0;
+  const displayedDamage = Math.round(baseDamage * staggerMult * weakPointMult);
   let finalDmg = displayedDamage;
   let hitShield = false;
   let shieldShattered = false;
 
-  const centerY = enemy.y + (enemy.isBoss ? 1.85 : enemy.archetype === 'aero_hunter' ? 0 : 0.95);
+  const centerY = enemy.y + (enemy.isBoss ? 2.15 : enemy.archetype === 'aero_hunter' ? 0 : 0.95);
   const hx = hitWorldPoint ? hitWorldPoint[0] : enemy.x + Math.cos(enemy.yaw) * 0.65;
   const hy = hitWorldPoint ? hitWorldPoint[1] : centerY + 0.15;
   const hz = hitWorldPoint ? hitWorldPoint[2] : enemy.z + Math.sin(enemy.yaw) * 0.65;
@@ -1054,19 +1273,19 @@ export function damageEnemyEntity(
   const worldNx = relWX / relLen;
   const worldNy = relWY / relLen;
   const worldNz = relWZ / relLen;
-  // rig.root.rotation.y = -enemy.yaw -> local +X maps to world (cos(yaw), 0, sin(yaw))
-  // Inverse (world -> local) transpose:
   const cosY = Math.cos(enemy.yaw);
   const sinY = Math.sin(enemy.yaw);
   const localDirX = worldNx * cosY + worldNz * sinY;
   const localDirZ = -worldNx * sinY + worldNz * cosY;
 
+  let popupAmount = displayedDamage;
   if (enemy.shield > 0) {
     hitShield = true;
     enemy.shieldRippleTimer = 0.48;
     enemy.lastShieldHitLocalDir = [localDirX, worldNy, localDirZ];
 
     const shieldDmg = Math.round(finalDmg * shieldMultiplier);
+    popupAmount = shieldDmg;
     if (shieldDmg >= enemy.shield) {
       const remainderRatio = Math.max(0, (shieldDmg - enemy.shield) / Math.max(1, shieldDmg));
       enemy.shield = 0;
@@ -1087,17 +1306,17 @@ export function damageEnemyEntity(
     enemy.hp = Math.max(0, enemy.hp - finalDmg);
   }
 
-  enemy.hitFlashTimer = 0.065;
-  // Physical Hit-Stagger Spring Impulse + Knockback (replaces full-white emissive washout!)
-  const massFactor = enemy.isBoss ? 0.28 : enemy.archetype === 'sar_siege' ? 0.55 : 1.0;
+  enemy.hitFlashTimer = 0.08;
+  // Physical Hit-Stagger Spring Impulse + Dedicated Knockback Velocity Channel (never overwritten by AI!)
+  const massFactor = enemy.isBoss ? 0.22 : enemy.archetype === 'sar_siege' ? 0.55 : 1.0;
   const impulseMag = Math.min(2.2, (0.55 + baseDamage / 85) * massFactor);
   enemy.hitTiltVelP += (-localDirX * 6.8 + 1.8) * impulseMag;
   enemy.hitTiltVelR += localDirZ * 6.2 * impulseMag;
-  if (enemy.archetype !== 'ares_boss') {
-    const knockSpd = (1.6 + baseDamage * 0.024) * massFactor;
-    enemy.vx -= worldNx * knockSpd;
-    enemy.vz -= worldNz * knockSpd;
-  }
+  const knockSpd = (2.1 + baseDamage * 0.028) * massFactor;
+  enemy.knockVx -= worldNx * knockSpd;
+  enemy.knockVz -= worldNz * knockSpd;
+
+  const isCritHit = isDirectStaggerHit || shieldShattered || (isWeakPoint && !hitShield);
 
   state.events.sparkImpacts.push({
     x: hx,
@@ -1107,7 +1326,7 @@ export function damageEnemyEntity(
     ny: Math.max(0.15, worldNy),
     nz: worldNz,
     isShield: hitShield,
-    isCrit: isDirectStaggerHit,
+    isCrit: isCritHit,
     isShatter: shieldShattered
   });
 
@@ -1116,12 +1335,12 @@ export function damageEnemyEntity(
     worldX: hx + (Math.random() - 0.5) * 0.35,
     worldY: hy + 0.35,
     worldZ: hz + (Math.random() - 0.5) * 0.35,
-    amount: displayedDamage,
-    isCrit: isDirectStaggerHit || shieldShattered,
+    amount: popupAmount,
+    isCrit: isCritHit,
     isShield: hitShield && !shieldShattered,
     life: 0.72
   });
-  if (state.damagePopups.length > 10) {
+  if (state.damagePopups.length > 12) {
     state.damagePopups.shift();
   }
 
@@ -1129,7 +1348,7 @@ export function damageEnemyEntity(
 
   // Accumulate Armored Core 6 ACS Stagger bar when not already staggered
   if (enemy.staggeredTimer <= 0 && enemy.hp > 0) {
-    enemy.stagger = Math.min(enemy.maxStagger, enemy.stagger + staggerDamage);
+    enemy.stagger = Math.min(enemy.maxStagger, enemy.stagger + staggerDamage * (isWeakPoint ? 1.25 : 1.0));
     if (enemy.stagger >= enemy.maxStagger) {
       enemy.stagger = enemy.maxStagger;
       enemy.staggeredTimer = enemy.isBoss ? 3.8 : 2.4;
@@ -1139,7 +1358,7 @@ export function damageEnemyEntity(
       state.events.bossCue = 'acs_stagger_break';
       state.events.explosions.push({
         x: enemy.x,
-        y: enemy.y + (enemy.isBoss ? 1.6 : 0.9),
+        y: enemy.y + (enemy.isBoss ? 1.8 : 0.9),
         z: enemy.z,
         scale: enemy.isBoss ? 2.8 : 1.4,
         colorHex: '#f59e0b'
@@ -1147,16 +1366,16 @@ export function damageEnemyEntity(
     }
   }
 
-  // Boss 50% HP Phase 2 Coral Overdrive transition!
+  // Boss 50% HP Phase 2 Coral Overdrive transition (preserves active ACS stagger punish window!)
   if (enemy.isBoss && enemy.bossPhase === 1 && enemy.hp > 0 && enemy.hp <= enemy.maxHp * 0.5) {
     enemy.bossPhase = 2;
-    enemy.bossPhaseTransitionTimer = 1.4;
-    enemy.staggeredTimer = 0;
-    enemy.stagger = 0;
-    state.hitstopTimer = 0.075;
-    state.cameraTrauma = 0.72;
+    enemy.bossPhaseTransitionTimer = enemy.staggeredTimer > 0 ? 0.45 : 1.25;
+    if (enemy.staggeredTimer <= 0) {
+      enemy.stagger = 0;
+    }
+    state.hitstopTimer = Math.max(state.hitstopTimer, 0.07);
+    state.cameraTrauma = Math.max(state.cameraTrauma, 0.72);
     state.events.bossCue = 'boss_warning';
-    // Spatial AoE warning ring ("GET BACK!") around Boss
     state.hazards.push({
       id: state.nextUid++,
       x: enemy.x,
@@ -1164,7 +1383,7 @@ export function damageEnemyEntity(
       z: enemy.z,
       radius: 10.5,
       elapsed: 0,
-      windupDuration: 0.95,
+      windupDuration: 1.05,
       damage: 42,
       kind: 'boss_phase_nova',
       detonated: false,
@@ -1173,19 +1392,21 @@ export function damageEnemyEntity(
   }
 
   const killed = enemy.hp <= 0;
-  state.hitmarker = {
-    timer: killed ? 0.22 : 0.12,
-    isCrit: isDirectStaggerHit || shieldShattered,
-    isShield: hitShield && !isDirectStaggerHit && !shieldShattered,
-    isKill: killed,
-    lastDamage: displayedDamage
-  };
-  state.events.hitConfirmed = {
-    crit: isDirectStaggerHit || shieldShattered,
-    kill: killed,
-    shield: hitShield,
-    shieldShattered
-  };
+  if (!options?.fromWingman || killed) {
+    state.hitmarker = {
+      timer: killed ? 0.22 : 0.12,
+      isCrit: isCritHit,
+      isShield: hitShield && !isCritHit,
+      isKill: killed,
+      lastDamage: popupAmount
+    };
+    state.events.hitConfirmed = {
+      crit: isCritHit,
+      kill: killed,
+      shield: hitShield,
+      shieldShattered
+    };
+  }
 
   if (killed) {
     enemy.koTimer = 0.42;
@@ -1217,7 +1438,6 @@ export function damageEnemyEntity(
       colorHex: enemy.isBoss ? '#ff2a55' : spec.accentHex
     });
 
-    // Spawn combat pickup core
     state.pickups.push({
       id: state.nextUid++,
       kind: state.kills % 2 === 0 ? 'repair_core' : 'overcharge_cell',
@@ -1245,9 +1465,37 @@ export function damageEnemyEntity(
   }
 }
 
+function applyMissileSplashDamage(
+  state: MarsCombatWorldState,
+  bx: number,
+  by: number,
+  bz: number,
+  directHitUid: number | null,
+  baseDamage: number,
+  baseStagger: number
+): void {
+  const splashRadius = 3.6;
+  for (const e of state.enemies) {
+    if (e.koTimer > 0 || e.dropPodProgress < 0.7 || e.uid === directHitUid) continue;
+    const d = Math.hypot(e.x - bx, e.z - bz);
+    if (d <= splashRadius) {
+      const falloff = Math.max(0.35, 1 - d / splashRadius);
+      damageEnemyEntity(
+        state,
+        e,
+        Math.round(baseDamage * 0.58 * falloff),
+        Math.round(baseStagger * 0.6 * falloff),
+        '蜂群导弹爆破溅射',
+        [e.x, Math.max(by, e.y + 0.8), e.z],
+        1.0
+      );
+    }
+  }
+}
+
 /**
  * Advances one simulation frame of the Mars Sci-Fi Mech Combat Game.
- * Clamps rawDt <= 0.05s and enforces sim-level hitstop while decaying visual timers cleanly.
+ * Clamps rawDt <= 0.05s, buffers edge inputs across hitstop frames, and uses analytical springs.
  */
 export function stepMarsCombatWorld(
   state: MarsCombatWorldState,
@@ -1265,6 +1513,16 @@ export function stepMarsCombatWorld(
 
   if (state.shellState !== 'playing') return;
 
+  // Buffer all one-shot edge triggers BEFORE hitstop early-return so zero player inputs are dropped!
+  if (input.jumpJustPressed) state.jumpBufferTimer = 0.14;
+  if (input.dashJustPressed) state.bufferedDash = true;
+  if (input.empJustPressed) state.bufferedEmp = true;
+  if (input.missileJustPressed) state.bufferedMissile = true;
+  if (input.wingmanCommandJustPressed) state.bufferedWingman = true;
+  if (input.ultimateJustPressed) state.bufferedUltimate = true;
+  if (input.summonBossJustPressed) state.bufferedSummonBoss = true;
+  if (input.ventJustPressed) state.bufferedVent = true;
+
   // Real-time visual feedback timers continue ticking during hitstop
   state.cameraTrauma = Math.max(0, state.cameraTrauma - dt * 1.45);
   if (state.hitmarker.timer > 0) state.hitmarker.timer = Math.max(0, state.hitmarker.timer - dt);
@@ -1275,10 +1533,16 @@ export function stepMarsCombatWorld(
   if (state.heavyPostureTimer > 0) state.heavyPostureTimer = Math.max(0, state.heavyPostureTimer - dt);
   if (state.wingmanCommandTimer > 0) state.wingmanCommandTimer = Math.max(0, state.wingmanCommandTimer - dt);
 
-  // Step ~80ms transient gun recoil spring (omega_n = 36 rad/s, zeta = 0.72)
-  const recoilAcc = -1296.0 * state.recoilPos - 51.8 * state.recoilVel;
-  state.recoilVel += recoilAcc * dt;
-  state.recoilPos = Math.max(-0.08, Math.min(0.45, state.recoilPos + state.recoilVel * dt));
+  // Unconditionally stable analytical gun recoil spring (omega_n = 36 rad/s, zeta = 0.72)
+  const [nextRecPos, nextRecVel] = stepAnalyticalDampedSpring(
+    state.recoilPos,
+    state.recoilVel,
+    36.0,
+    0.72,
+    dt
+  );
+  state.recoilPos = Math.max(-0.08, Math.min(0.45, nextRecPos));
+  state.recoilVel = nextRecVel;
 
   for (let i = state.threats.length - 1; i >= 0; i--) {
     state.threats[i].life -= dt;
@@ -1294,8 +1558,8 @@ export function stepMarsCombatWorld(
     if (state.damagePopups[i].life <= 0) state.damagePopups.splice(i, 1);
   }
 
-  // Delayed trailing ghost HP bars
-  state.ghostHp += (state.hp - state.ghostHp) * Math.min(1, dt * 4.2);
+  // Frame-rate independent delayed trailing ghost HP bar
+  state.ghostHp += (state.hp - state.ghostHp) * (1 - Math.exp(-4.5 * dt));
 
   // Outcome transition beat
   if (state.outcome !== 'none') {
@@ -1306,18 +1570,40 @@ export function stepMarsCombatWorld(
     }
   }
 
-  // Sim-level Hitstop freeze
+  // Sim-level Hitstop freeze (buffered inputs stay latched for the exact frame hitstop ends!)
   if (state.hitstopTimer > 0) {
     state.hitstopTimer = Math.max(0, state.hitstopTimer - dt);
     return;
   }
 
+  // Consume latched one-shot inputs now that simulation is advancing
+  const dashTriggered = state.bufferedDash;
+  const empTriggered = state.bufferedEmp;
+  const missileTriggered = state.bufferedMissile;
+  const wingmanTriggered = state.bufferedWingman;
+  const ultimateTriggered = state.bufferedUltimate;
+  const summonBossTriggered = state.bufferedSummonBoss;
+  const ventTriggered = state.bufferedVent;
+  state.bufferedDash = false;
+  state.bufferedEmp = false;
+  state.bufferedMissile = false;
+  state.bufferedWingman = false;
+  state.bufferedUltimate = false;
+  state.bufferedSummonBoss = false;
+  state.bufferedVent = false;
+
   state.elapsedPlaySec += dt;
   state.aimYaw = input.aimYaw;
   state.aimPitch = input.aimPitch;
 
-  if (input.summonBossJustPressed && !state.bossSpawned) {
+  if (summonBossTriggered && !state.bossSpawned) {
     summonAresBoss(state);
+  }
+
+  if (ventTriggered) {
+    state.spreadBloom = 0;
+    state.recoilPos *= 0.25;
+    state.boostEnergy = Math.min(100, state.boostEnergy + 10);
   }
 
   // Combo decay
@@ -1340,7 +1626,7 @@ export function stepMarsCombatWorld(
     state.shield = Math.min(state.maxShield, state.shield + dt * 24);
   }
 
-  // 1. Player Movement, Coyote Jump, Variable Jump Cut & Vector Quick-Boost Dash
+  // 1. Player Movement, Coyote Jump, Frame-Rate Independent Jump Cut & Vector Quick-Boost Dash
   const mechSpec = getPlayableMechSpec(state.mechId);
   const fwdX = Math.cos(state.aimYaw);
   const fwdZ = Math.sin(state.aimYaw);
@@ -1355,8 +1641,8 @@ export function stepMarsCombatWorld(
     wishZ /= wishLen;
   }
 
-  // Vector Quick-Boost Dash [Shift / Alt] with i-frames
-  if (input.dashJustPressed && state.dashCooldown <= 0 && state.boostEnergy >= 24) {
+  // Vector Quick-Boost Dash [C / Alt / Shift-Tap] with i-frames
+  if (dashTriggered && state.dashCooldown <= 0 && state.boostEnergy >= 28) {
     state.dashCooldown = 0.68;
     state.dashTimer = 0.22;
     state.invulnTimer = 0.34;
@@ -1380,16 +1666,18 @@ export function stepMarsCombatWorld(
     const targetSpeed = isSprinting ? mechSpec.sprintSpeed : mechSpec.cruiseSpeed;
     const targetVx = wishX * targetSpeed * Math.min(1, wishLen);
     const targetVz = wishZ * targetSpeed * Math.min(1, wishLen);
-    const accelK = 1 - Math.exp(-12 * dt);
+    const accelRate = state.isGrounded ? 12 : 7.5;
+    const accelK = 1 - Math.exp(-accelRate * dt);
     state.vx += (targetVx - state.vx) * accelK;
     state.vz += (targetVz - state.vz) * accelK;
   }
 
-  // Jump buffering + Coyote time + Variable jump cut
-  if (input.jumpJustPressed) state.jumpBufferTimer = 0.12;
-  else state.jumpBufferTimer = Math.max(0, state.jumpBufferTimer - dt);
+  // Jump buffering + Coyote time + Frame-rate independent variable jump cut
+  if (!input.jumpJustPressed) {
+    state.jumpBufferTimer = Math.max(0, state.jumpBufferTimer - dt);
+  }
 
-  if (state.isGrounded) state.coyoteTimer = 0.1;
+  if (state.isGrounded) state.coyoteTimer = 0.11;
   else state.coyoteTimer = Math.max(0, state.coyoteTimer - dt);
 
   if (state.jumpBufferTimer > 0 && state.coyoteTimer > 0) {
@@ -1398,18 +1686,18 @@ export function stepMarsCombatWorld(
     state.coyoteTimer = 0;
     state.jumpBufferTimer = 0;
   } else if (!input.jumpHeld && state.vy > 2.5) {
-    state.vy *= 0.55;
+    state.vy *= Math.pow(0.55, dt * 60);
   }
 
   if (!state.isGrounded) {
-    state.vy -= 21.5 * dt; // Responsive combat gravity on Mars
+    const grav = state.vy < 0 ? 24.5 : 20.5;
+    state.vy -= grav * dt;
   }
 
   state.x += state.vx * dt;
   state.z += state.vz * dt;
   state.y += state.vy * dt;
 
-  // Soft natural canyon perimeter clamp
   const rPlayer = Math.hypot(state.x, state.z);
   if (rPlayer > ARENA_RADIUS) {
     const s = ARENA_RADIUS / rPlayer;
@@ -1427,16 +1715,18 @@ export function stepMarsCombatWorld(
   }
 
   const horizSpeed = Math.hypot(state.vx, state.vz);
-  state.gaitDist += horizSpeed * dt;
+  const chassisFwdX = Math.cos(state.yaw);
+  const chassisFwdZ = Math.sin(state.yaw);
+  const signedProjection = state.vx * chassisFwdX + state.vz * chassisFwdZ;
+  const gaitSign = signedProjection < -0.35 ? -1 : 1;
+  state.gaitDist += horizSpeed * gaitSign * dt;
 
-  // Lower-body chassis orients along WASD movement vector when running; upper body aims independently via IK!
   const desiredYaw = horizSpeed > 1.05 ? Math.atan2(state.vz, state.vx) : state.aimYaw;
   let yawDiff = desiredYaw - state.yaw;
   while (yawDiff > Math.PI) yawDiff -= Math.PI * 2;
   while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
   state.yaw += yawDiff * (1 - Math.exp(-10 * dt));
 
-  // Tactical slide-dash & strafe body banking roll angle (deep lean on Shift dodge!)
   const latVel = state.vx * rightX + state.vz * rightZ;
   const targetBank =
     state.dashTimer > 0
@@ -1444,16 +1734,17 @@ export function stepMarsCombatWorld(
       : Math.max(-0.16, Math.min(0.16, latVel * 0.012));
   state.dodgeBankRad += (targetBank - state.dodgeBankRad) * (1 - Math.exp(-14 * dt));
 
-  // 2A. Allied Wingman Go2 Tactical Command [Q / Middle Mouse] -> Left-Arm Point + High-Speed Leap Pounce!
+  // 2A. Allied Wingman Go2 Tactical Command [Q / Middle Mouse] (prefers grounded targets so Go2 never levitates!)
   state.wingman.commandCooldown = Math.max(0, state.wingman.commandCooldown - dt);
-  if (input.wingmanCommandJustPressed && state.wingman.commandCooldown <= 0) {
-    // Pick enemy closest to player's aim ray / reticle point, or Boss / nearest live enemy
+  if (wingmanTriggered && state.wingman.commandCooldown <= 0) {
     let bestEnemy: CombatEnemyEntity | null = null;
     let bestScoreDist = Infinity;
     const refX = input.aimWorldPoint ? input.aimWorldPoint[0] : state.x + fwdX * 18;
     const refZ = input.aimWorldPoint ? input.aimWorldPoint[2] : state.z + fwdZ * 18;
+    const hasGrounded = state.enemies.some((e) => e.koTimer <= 0 && e.archetype !== 'aero_hunter');
     for (const e of state.enemies) {
       if (e.koTimer > 0) continue;
+      if (hasGrounded && e.archetype === 'aero_hunter') continue;
       const dAim = Math.hypot(e.x - refX, e.z - refZ);
       const weight = e.isBoss ? dAim * 0.75 : dAim;
       if (weight < bestScoreDist) {
@@ -1464,7 +1755,7 @@ export function stepMarsCombatWorld(
     state.wingmanCommandTimer = 0.42;
     state.wingman.commandCooldown = 4.2;
     state.events.wingmanPounced = true;
-    if (bestEnemy) {
+    if (bestEnemy && bestEnemy.archetype !== 'aero_hunter') {
       state.wingman.mode = 'pounce_leap';
       state.wingman.targetUid = bestEnemy.uid;
       state.wingman.modeTimer = 0.52;
@@ -1479,7 +1770,7 @@ export function stepMarsCombatWorld(
   }
 
   // 2B. Player Tactical Abilities: [E] EMP Nova & [V] Orbital Ion Cannon
-  if (input.empJustPressed && state.empCooldown <= 0) {
+  if (empTriggered && state.empCooldown <= 0) {
     state.empCooldown = 7.5;
     state.empWaveTimer = 0.65;
     state.heavyPostureTimer = 0.35;
@@ -1488,7 +1779,6 @@ export function stepMarsCombatWorld(
     state.events.bossCue = 'emp_nova';
     state.cameraTrauma = Math.min(1, state.cameraTrauma + 0.3);
 
-    // Intercept enemy missiles & stagger nearby enemies within 12.5m!
     for (const p of state.projectiles) {
       if (p.active && !p.fromPlayer) {
         if (Math.hypot(p.x - state.x, p.z - state.z) <= 13.5) {
@@ -1503,10 +1793,9 @@ export function stepMarsCombatWorld(
     }
   }
 
-  if (input.ultimateJustPressed && state.ultimateCharge >= 100) {
+  if (ultimateTriggered && state.ultimateCharge >= 100) {
     state.ultimateCharge = 0;
     state.heavyPostureTimer = 0.35;
-    // Target Boss or closest enemy, or aim point
     let tx = state.x + fwdX * 22;
     let tz = state.z + fwdZ * 22;
     const priorityEnemy =
@@ -1534,7 +1823,7 @@ export function stepMarsCombatWorld(
   }
 
   // 3. Player Primary Weapon Fire (LMB) & Quick Homing Missile Salvo (RMB / F) — 100% True Muzzle World Pos!
-  const fireMissileSalvo = input.missileJustPressed;
+  const fireMissileSalvo = missileTriggered;
   const effectiveMuzzle: [number, number, number] = input.muzzleWorldPoint
     ? input.muzzleWorldPoint
     : [
@@ -1550,10 +1839,10 @@ export function stepMarsCombatWorld(
     state.events.firedWeapon = wSpec.id;
     state.muzzleFlashTimer = wSpec.id === 'railgun' ? 0.085 : 0.052;
 
-    // Inject spring gun recoil impulse (~80ms shoulder/elbow/torso kickback) + 0.35s Heavy Skill Stance!
     if (wSpec.id === 'railgun') {
       state.recoilVel += 8.8;
       state.heavyPostureTimer = 0.35;
+      state.hitstopTimer = Math.max(state.hitstopTimer, 0.025);
     } else if (wSpec.id === 'missile_pod') {
       state.recoilVel += 6.2;
       state.heavyPostureTimer = 0.35;
@@ -1574,7 +1863,6 @@ export function stepMarsCombatWorld(
       isHeavy: wSpec.id !== 'pulse_rifle'
     };
 
-    // Determine exact 3D ballistic vector from true Muzzle World Pos to 3D Reticle Aim Point
     let dirX = Math.cos(state.aimPitch) * Math.cos(state.aimYaw);
     let dirY = Math.sin(state.aimPitch);
     let dirZ = Math.cos(state.aimPitch) * Math.sin(state.aimYaw);
@@ -1583,7 +1871,9 @@ export function stepMarsCombatWorld(
       const dy = input.aimWorldPoint[1] - muzzleY;
       const dz = input.aimWorldPoint[2] - muzzleZ;
       const dLen = Math.hypot(dx, dy, dz);
-      if (dLen > 0.6) {
+      // Reject close behind-back parallax points (< 0.8m or pointing >75 deg behind aimYaw)
+      const aimDot = (dx / Math.max(0.001, dLen)) * fwdX + (dz / Math.max(0.001, dLen)) * fwdZ;
+      if (dLen > 0.8 && aimDot > 0.15) {
         dirX = dx / dLen;
         dirY = dy / dLen;
         dirZ = dz / dLen;
@@ -1607,6 +1897,9 @@ export function stepMarsCombatWorld(
         proj.x = muzzleX;
         proj.y = muzzleY + 0.06;
         proj.z = muzzleZ;
+        proj.prevX = proj.x;
+        proj.prevY = proj.y;
+        proj.prevZ = proj.z;
         proj.vx = vxDir * wSpec.projectileSpeed;
         proj.vy = (dirY + 0.22) * wSpec.projectileSpeed;
         proj.vz = vzDir * wSpec.projectileSpeed;
@@ -1638,6 +1931,9 @@ export function stepMarsCombatWorld(
         proj.x = muzzleX;
         proj.y = muzzleY;
         proj.z = muzzleZ;
+        proj.prevX = muzzleX;
+        proj.prevY = muzzleY;
+        proj.prevZ = muzzleZ;
         proj.vx = sx * inv * wSpec.projectileSpeed;
         proj.vy = sy * inv * wSpec.projectileSpeed;
         proj.vz = sz * inv * wSpec.projectileSpeed;
@@ -1670,7 +1966,6 @@ export function stepMarsCombatWorld(
       }
     }
   } else if (!state.bossDefeated) {
-    // Keep 1-2 escort scouts spawning periodically during Boss Raid for ammo/repair core drops!
     state.spawnTimer -= dt;
     if (state.spawnTimer <= 0 && activeVanguardCount < 2) {
       state.spawnTimer = 9.5;
@@ -1682,22 +1977,23 @@ export function stepMarsCombatWorld(
   let activeCrowdAttackers = state.enemies.filter(
     (e) => !e.isBoss && e.koTimer <= 0 && e.attackPhase !== 'idle'
   ).length;
+  const knockDecay = Math.exp(-8.5 * dt);
 
   for (let i = state.enemies.length - 1; i >= 0; i--) {
     const e = state.enemies[i];
-    e.ghostHp += (e.hp - e.ghostHp) * Math.min(1, dt * 4.5);
+    e.ghostHp += (e.hp - e.ghostHp) * (1 - Math.exp(-4.5 * dt));
     if (e.hitFlashTimer > 0) e.hitFlashTimer = Math.max(0, e.hitFlashTimer - dt);
     if (e.shieldRippleTimer > 0) e.shieldRippleTimer = Math.max(0, e.shieldRippleTimer - dt);
     if (e.shieldShatterTimer > 0) e.shieldShatterTimer = Math.max(0, e.shieldShatterTimer - dt);
     if (e.slowTimer > 0) e.slowTimer = Math.max(0, e.slowTimer - dt);
 
-    // Step physical spring hit-stagger tilt (omega_n = 18 rad/s, zeta = 0.55)
-    const accP = -324 * e.hitTiltPitch - 19.8 * e.hitTiltVelP;
-    const accR = -324 * e.hitTiltRoll - 19.8 * e.hitTiltVelR;
-    e.hitTiltVelP += accP * dt;
-    e.hitTiltVelR += accR * dt;
-    e.hitTiltPitch = Math.max(-0.42, Math.min(0.42, e.hitTiltPitch + e.hitTiltVelP * dt));
-    e.hitTiltRoll = Math.max(-0.42, Math.min(0.42, e.hitTiltRoll + e.hitTiltVelR * dt));
+    // Unconditionally stable analytical hit-stagger spring (omega_n = 18 rad/s, zeta = 0.55)
+    const [nextTP, nextVP] = stepAnalyticalDampedSpring(e.hitTiltPitch, e.hitTiltVelP, 18.0, 0.55, dt);
+    const [nextTR, nextVR] = stepAnalyticalDampedSpring(e.hitTiltRoll, e.hitTiltVelR, 18.0, 0.55, dt);
+    e.hitTiltPitch = Math.max(-0.42, Math.min(0.42, nextTP));
+    e.hitTiltVelP = nextVP;
+    e.hitTiltRoll = Math.max(-0.42, Math.min(0.42, nextTR));
+    e.hitTiltVelR = nextVR;
 
     if (e.koTimer > 0) {
       e.koTimer -= dt;
@@ -1707,25 +2003,35 @@ export function stepMarsCombatWorld(
       continue;
     }
 
-    // Orbital drop-pod entry (0.45s snappy Titanfall slam)
     if (e.dropPodProgress < 1) {
       e.dropPodProgress = Math.min(1, e.dropPodProgress + dt / 0.45);
       continue;
     }
 
-    // Shield-Break Paralysis / Mini-Stun window!
+    // Shield-Break Paralysis / Mini-Stun window (with proper terrain height & knockback!)
     if (e.shieldBreakStunTimer > 0) {
       e.shieldBreakStunTimer = Math.max(0, e.shieldBreakStunTimer - dt);
-      e.vx *= 0.8;
-      e.vz *= 0.8;
-      e.x += e.vx * dt;
-      e.z += e.vz * dt;
+      const stunDrag = Math.pow(0.8, dt * 60);
+      e.vx *= stunDrag;
+      e.vz *= stunDrag;
+      e.x += (e.vx + e.knockVx) * dt;
+      e.z += (e.vz + e.knockVz) * dt;
+      e.knockVx *= knockDecay;
+      e.knockVz *= knockDecay;
+      const gStunY = sampleLandTerrainHeight(e.x, e.z);
+      e.y = e.archetype === 'aero_hunter' ? gStunY + 6.4 : gStunY;
       continue;
     }
 
-    // ACS Staggered punish window
+    // ACS Staggered punish window (still absorbs physical knockback impulses!)
     if (e.staggeredTimer > 0) {
       e.staggeredTimer -= dt;
+      e.x += e.knockVx * dt;
+      e.z += e.knockVz * dt;
+      e.knockVx *= knockDecay;
+      e.knockVz *= knockDecay;
+      const gStagY = sampleLandTerrainHeight(e.x, e.z);
+      e.y = e.archetype === 'aero_hunter' ? gStagY + 6.4 : gStagY;
       if (e.staggeredTimer <= 0) {
         e.stagger = 0;
       }
@@ -1748,23 +2054,23 @@ export function stepMarsCombatWorld(
     const slowMult = e.slowTimer > 0 ? 0.48 : 1.0;
 
     if (e.isBoss) {
-      // ARES-09 TITAN BOSS AI & 3 SIGNATURE TELEGRAPHED ATTACKS
+      // ARES-09 TALOS TITAN BOSS AI & 3 SIGNATURE TELEGRAPHED ATTACKS
       const speedMult = (e.bossPhase === 2 ? 1.28 : 1.0) * slowMult;
       if (e.attackPhase === 'idle') {
         if (distP > 18) {
           e.vx = dirPX * spec.speed * speedMult;
           e.vz = dirPZ * spec.speed * speedMult;
         } else {
-          // Slow tactical orbit around player
           e.vx = (-dirPZ * e.strafeSign * 0.75 + (distP < 11 ? -dirPX * 0.4 : 0)) * spec.speed;
           e.vz = (dirPX * e.strafeSign * 0.75 + (distP < 11 ? -dirPZ * 0.4 : 0)) * spec.speed;
         }
-        e.yaw = Math.atan2(dzP, dxP);
+        e.yaw = turnTowardsAngle(e.yaw, Math.atan2(dzP, dxP), 3.8 * dt);
         e.aiCooldown -= dt * speedMult;
 
         if (e.aiCooldown <= 0) {
           const cycle: BossAttackKind[] = ['balteus_salvo', 'coral_laser_sweep', 'orbital_pillars'];
-          const nextIdx = (e.uid + Math.floor(state.elapsedPlaySec * 0.7)) % cycle.length;
+          const prevIdx = cycle.indexOf(e.bossAttackKind);
+          const nextIdx = (prevIdx + 1 + Math.floor(randRange(0, 2))) % cycle.length;
           e.bossAttackKind = cycle[nextIdx];
           e.attackPhase = 'windup';
 
@@ -1800,13 +2106,13 @@ export function stepMarsCombatWorld(
           }
         }
       } else if (e.attackPhase === 'windup') {
-        e.vx *= 0.85;
-        e.vz *= 0.85;
+        const drag = Math.pow(0.85, dt * 60);
+        e.vx *= drag;
+        e.vz *= drag;
         e.phaseTimer -= dt;
         if (e.phaseTimer <= 0) {
           e.attackPhase = 'active';
           if (e.bossAttackKind === 'balteus_salvo') {
-            // Fire 12-16 curved Balteus ring missiles!
             const count = e.bossPhase === 2 ? 14 : 10;
             for (let m = 0; m < count; m++) {
               const p = allocProjectile(state);
@@ -1816,8 +2122,11 @@ export function stepMarsCombatWorld(
               p.fromPlayer = false;
               p.kind = 'boss_missile';
               p.x = e.x + Math.cos(ringAng) * 1.6;
-              p.y = e.y + 2.8;
+              p.y = e.y + 3.2;
               p.z = e.z + Math.sin(ringAng) * 1.6;
+              p.prevX = p.x;
+              p.prevY = p.y;
+              p.prevZ = p.z;
               p.vx = Math.cos(ringAng) * 14 + dirPX * 10;
               p.vy = 11.5 + (m % 3) * 2.2;
               p.vz = Math.sin(ringAng) * 14 + dirPZ * 10;
@@ -1825,7 +2134,7 @@ export function stepMarsCombatWorld(
               p.staggerDamage = 0;
               p.life = 3.2;
               p.maxLife = 3.2;
-              p.homingTargetUid = -1; // Homes onto player gently during first 1.2s
+              p.homingTargetUid = -1;
               p.sourceX = e.x;
               p.sourceZ = e.z;
             }
@@ -1842,7 +2151,6 @@ export function stepMarsCombatWorld(
           const prog = 1 - Math.max(0, e.phaseTimer / 1.15);
           e.laserSweepCurrentYaw = e.laserSweepStartYaw + prog * 1.36;
           e.yaw = e.laserSweepCurrentYaw;
-          // Check beam intersection against player (jumping > 1.35m clears ground sweep!)
           const lx = Math.cos(e.laserSweepCurrentYaw);
           const lz = Math.sin(e.laserSweepCurrentYaw);
           const projDist = (state.x - e.x) * lx + (state.z - e.z) * lz;
@@ -1863,7 +2171,6 @@ export function stepMarsCombatWorld(
         e.phaseTimer -= dt;
         if (e.phaseTimer <= 0) {
           e.attackPhase = 'idle';
-          e.bossAttackKind = 'none';
           e.aiCooldown = e.bossPhase === 2 ? 1.55 : 2.25;
         }
       }
@@ -1873,11 +2180,11 @@ export function stepMarsCombatWorld(
         const flankAng = Math.atan2(dzP, dxP) + (distP > 9 ? e.strafeSign * 0.48 : 0);
         e.vx = Math.cos(flankAng) * spec.speed;
         e.vz = Math.sin(flankAng) * spec.speed;
-        e.yaw = flankAng;
+        e.yaw = turnTowardsAngle(e.yaw, flankAng, 6.8 * dt);
         e.aiCooldown -= dt;
-        if (distP < 11.5 && e.aiCooldown <= 0 && activeCrowdAttackers < 3) {
+        if (distP < 11.5 && e.aiCooldown <= 0 && activeCrowdAttackers < 4) {
           e.attackPhase = 'windup';
-          e.phaseTimer = 0.48; // 0.48s visible crouch & laser line telegraph
+          e.phaseTimer = 0.48;
           e.telegraphTargetX = state.x;
           e.telegraphTargetZ = state.z;
           activeCrowdAttackers++;
@@ -1885,7 +2192,11 @@ export function stepMarsCombatWorld(
       } else if (e.attackPhase === 'windup') {
         e.vx = 0;
         e.vz = 0;
-        e.yaw = Math.atan2(e.telegraphTargetZ - e.z, e.telegraphTargetX - e.x);
+        e.yaw = turnTowardsAngle(
+          e.yaw,
+          Math.atan2(e.telegraphTargetZ - e.z, e.telegraphTargetX - e.x),
+          9.0 * dt
+        );
         e.phaseTimer -= dt;
         if (e.phaseTimer <= 0) {
           e.attackPhase = 'active';
@@ -1904,8 +2215,9 @@ export function stepMarsCombatWorld(
           e.phaseTimer = 0.55;
         }
       } else {
-        e.vx *= 0.82;
-        e.vz *= 0.82;
+        const drag = Math.pow(0.82, dt * 60);
+        e.vx *= drag;
+        e.vz *= drag;
         e.phaseTimer -= dt;
         if (e.phaseTimer <= 0) {
           e.attackPhase = 'idle';
@@ -1913,22 +2225,27 @@ export function stepMarsCombatWorld(
         }
       }
     } else if (e.archetype === 'g1_vanguard') {
-      // POLICY 2: Mid-Range Tactical Strafe Marksman
+      // POLICY 2: Mid-Range Tactical Strafe Marksman with Visible Laser Sight Telegraph
       const idealDist = 17.5;
       const radialPush = distP > idealDist + 2 ? 0.75 : distP < idealDist - 3 ? -0.65 : 0;
       e.vx = (dirPX * radialPush - dirPZ * e.strafeSign * 0.85) * spec.speed;
       e.vz = (dirPZ * radialPush + dirPX * e.strafeSign * 0.85) * spec.speed;
-      e.yaw = Math.atan2(dzP, dxP);
+      e.yaw = turnTowardsAngle(e.yaw, Math.atan2(dzP, dxP), 5.2 * dt);
       e.aiCooldown -= dt;
 
-      if (e.attackPhase === 'idle' && e.aiCooldown <= 0 && activeCrowdAttackers < 3 && distP < 36) {
+      if (e.attackPhase === 'idle' && e.aiCooldown <= 0 && activeCrowdAttackers < 4 && distP < 36) {
         e.attackPhase = 'windup';
         e.phaseTimer = 0.42;
+        e.telegraphTargetX = state.x;
+        e.telegraphTargetZ = state.z;
         activeCrowdAttackers++;
       } else if (e.attackPhase === 'windup') {
+        e.telegraphTargetX = state.x;
+        e.telegraphTargetZ = state.z;
         e.phaseTimer -= dt;
         if (e.phaseTimer <= 0) {
-          e.attackPhase = 'idle';
+          e.attackPhase = 'active';
+          e.phaseTimer = 0.18;
           e.aiCooldown = 2.4;
           const p = allocProjectile(state);
           if (p) {
@@ -1938,6 +2255,9 @@ export function stepMarsCombatWorld(
             p.x = e.x + dirPX * 0.8;
             p.y = e.y + 1.25;
             p.z = e.z + dirPZ * 0.8;
+            p.prevX = p.x;
+            p.prevY = p.y;
+            p.prevZ = p.z;
             const aimDy = state.y + 0.9 - p.y;
             const d3 = Math.max(1, Math.hypot(dxP, aimDy, dzP));
             p.vx = (dxP / d3) * 28;
@@ -1952,16 +2272,21 @@ export function stepMarsCombatWorld(
             p.sourceZ = e.z;
           }
         }
+      } else if (e.attackPhase === 'active') {
+        e.phaseTimer -= dt;
+        if (e.phaseTimer <= 0) {
+          e.attackPhase = 'idle';
+        }
       }
     } else if (e.archetype === 'sar_siege') {
-      // POLICY 3: Armored Area-Denial Mortar Tank (Projects Ground AoE Telegraph Ring)
+      // POLICY 3: Armored Area-Denial Mortar Tank
       const moveScale = distP > 22 ? 1 : distP < 12 ? -0.5 : 0.15;
       e.vx = dirPX * spec.speed * moveScale;
       e.vz = dirPZ * spec.speed * moveScale;
-      e.yaw = Math.atan2(dzP, dxP);
+      e.yaw = turnTowardsAngle(e.yaw, Math.atan2(dzP, dxP), 3.4 * dt);
       e.aiCooldown -= dt;
 
-      if (e.attackPhase === 'idle' && e.aiCooldown <= 0 && activeCrowdAttackers < 3) {
+      if (e.attackPhase === 'idle' && e.aiCooldown <= 0 && activeCrowdAttackers < 4) {
         e.attackPhase = 'windup';
         e.phaseTimer = 0.35;
         activeCrowdAttackers++;
@@ -1988,42 +2313,57 @@ export function stepMarsCombatWorld(
         }
       }
     } else {
-      // POLICY 4: Aerial Orbiting Sky-Hunter Drone
+      // POLICY 4: Aerial Orbiting Sky-Hunter VTOL Gunship
       const orbitAng = Math.atan2(dzP, dxP) + e.strafeSign * 1.15;
       e.vx = Math.cos(orbitAng) * spec.speed;
       e.vz = Math.sin(orbitAng) * spec.speed;
-      e.yaw = Math.atan2(dzP, dxP);
+      e.yaw = turnTowardsAngle(e.yaw, Math.atan2(dzP, dxP), 5.8 * dt);
       e.aiCooldown -= dt;
-      if (e.aiCooldown <= 0 && activeCrowdAttackers < 3) {
-        e.aiCooldown = 2.7;
-        const p = allocProjectile(state);
-        if (p) {
-          p.active = true;
-          p.fromPlayer = false;
-          p.kind = 'enemy_plasma';
-          p.x = e.x;
-          p.y = e.y;
-          p.z = e.z;
-          const aimDy = state.y + 0.8 - e.y;
-          const d3 = Math.max(1, Math.hypot(dxP, aimDy, dzP));
-          p.vx = (dxP / d3) * 30;
-          p.vy = (aimDy / d3) * 30;
-          p.vz = (dzP / d3) * 30;
-          p.damage = 13;
-          p.staggerDamage = 0;
-          p.life = 2.2;
-          p.maxLife = 2.2;
-          p.homingTargetUid = null;
-          p.sourceX = e.x;
-          p.sourceZ = e.z;
+      if (e.attackPhase === 'idle' && e.aiCooldown <= 0 && activeCrowdAttackers < 4) {
+        e.attackPhase = 'windup';
+        e.phaseTimer = 0.32;
+        e.telegraphTargetX = state.x;
+        e.telegraphTargetZ = state.z;
+        activeCrowdAttackers++;
+      } else if (e.attackPhase === 'windup') {
+        e.phaseTimer -= dt;
+        if (e.phaseTimer <= 0) {
+          e.attackPhase = 'idle';
+          e.aiCooldown = 2.7;
+          const p = allocProjectile(state);
+          if (p) {
+            p.active = true;
+            p.fromPlayer = false;
+            p.kind = 'enemy_plasma';
+            p.x = e.x;
+            p.y = e.y;
+            p.z = e.z;
+            p.prevX = p.x;
+            p.prevY = p.y;
+            p.prevZ = p.z;
+            const aimDy = state.y + 0.8 - e.y;
+            const d3 = Math.max(1, Math.hypot(dxP, aimDy, dzP));
+            p.vx = (dxP / d3) * 30;
+            p.vy = (aimDy / d3) * 30;
+            p.vz = (dzP / d3) * 30;
+            p.damage = 13;
+            p.staggerDamage = 0;
+            p.life = 2.2;
+            p.maxLife = 2.2;
+            p.homingTargetUid = null;
+            p.sourceX = e.x;
+            p.sourceZ = e.z;
+          }
         }
       }
     }
 
-    // Integrate enemy kinematics & ground/air height conformance
+    // Integrate enemy kinematics + independent knockback impulse channel
     const moveSlow = e.isBoss ? 1.0 : slowMult;
-    e.x += e.vx * moveSlow * dt;
-    e.z += e.vz * moveSlow * dt;
+    e.x += (e.vx * moveSlow + e.knockVx) * dt;
+    e.z += (e.vz * moveSlow + e.knockVz) * dt;
+    e.knockVx *= knockDecay;
+    e.knockVz *= knockDecay;
     const er = Math.hypot(e.x, e.z);
     if (er > ARENA_RADIUS - 2) {
       const s = (ARENA_RADIUS - 2) / er;
@@ -2032,16 +2372,20 @@ export function stepMarsCombatWorld(
     }
     const gY = sampleLandTerrainHeight(e.x, e.z);
     e.y = e.archetype === 'aero_hunter' ? gY + 6.4 + Math.sin(state.elapsedPlaySec * 2.4 + e.uid) * 0.45 : gY;
-    e.gaitDist += Math.hypot(e.vx * moveSlow, e.vz * moveSlow) * dt;
+    const eFwdProj = e.vx * Math.cos(e.yaw) + e.vz * Math.sin(e.yaw);
+    e.gaitDist += Math.hypot(e.vx * moveSlow, e.vz * moveSlow) * (eFwdProj < -0.4 ? -1 : 1) * dt;
   }
 
-  // 5B. Step Allied Wingman Go2 Companion (Escort Flank -> High-Speed Leap Pounce -> Electromagnetic Bite Slashes!)
+  // 5B. Step Allied Wingman Go2 Companion
   stepWingmanGo2Companion(state, dt, fwdX, fwdZ, rightX, rightZ);
 
-  // 5C. Soft Sphere Separation Collision (prevents dogs/robots/Boss from walking through player legs or clipping!)
+  // 5C. Pairwise Actor + Physical Battlefield Cover Obstacle Separation
   resolveCombatSoftCollisions(state);
 
-  // 6. Step Projectiles & Collision Detection
+  // 6. Step Projectiles with Continuous Swept Segment Collision & Physical Cover Blocking
+  const homingK = 1 - Math.exp(-7.5 * dt);
+  const bossHomingK = 1 - Math.exp(-3.8 * dt);
+
   for (let i = 0; i < state.projectiles.length; i++) {
     const p = state.projectiles[i];
     if (!p.active) continue;
@@ -2051,35 +2395,77 @@ export function stepMarsCombatWorld(
       continue;
     }
 
-    // Homing guidance
     if (p.kind === 'missile' && p.homingTargetUid !== null) {
       const tgt = state.enemies.find((e) => e.uid === p.homingTargetUid && e.koTimer <= 0);
       if (tgt) {
         const tx = tgt.x - p.x;
-        const ty = tgt.y + (tgt.isBoss ? 1.8 : 0.9) - p.y;
+        const ty = tgt.y + (tgt.isBoss ? 2.1 : 0.9) - p.y;
         const tz = tgt.z - p.z;
         const d = Math.max(0.1, Math.hypot(tx, ty, tz));
         const spd = 40;
-        p.vx += ((tx / d) * spd - p.vx) * Math.min(1, dt * 7.5);
-        p.vy += ((ty / d) * spd - p.vy) * Math.min(1, dt * 7.5);
-        p.vz += ((tz / d) * spd - p.vz) * Math.min(1, dt * 7.5);
+        p.vx += ((tx / d) * spd - p.vx) * homingK;
+        p.vy += ((ty / d) * spd - p.vy) * homingK;
+        p.vz += ((tz / d) * spd - p.vz) * homingK;
       }
     } else if (p.kind === 'boss_missile' && p.maxLife - p.life < 1.35) {
-      // Boss homing salvo curves toward player only during initial boost so quick-boost dash can out-turn them!
       const tx = state.x - p.x;
       const ty = state.y + 0.9 - p.y;
       const tz = state.z - p.z;
       const d = Math.max(0.1, Math.hypot(tx, ty, tz));
       const spd = 24;
-      p.vx += ((tx / d) * spd - p.vx) * Math.min(1, dt * 3.8);
-      p.vy += ((ty / d) * spd - p.vy) * Math.min(1, dt * 3.8);
-      p.vz += ((tz / d) * spd - p.vz) * Math.min(1, dt * 3.8);
+      p.vx += ((tx / d) * spd - p.vx) * bossHomingK;
+      p.vy += ((ty / d) * spd - p.vy) * bossHomingK;
+      p.vz += ((tz / d) * spd - p.vz) * bossHomingK;
     }
 
+    p.prevX = p.x;
+    p.prevY = p.y;
+    p.prevZ = p.z;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.z += p.vz * dt;
 
+    // 6A. Check Physical Battlefield Cover Obstacles (Boulders & Defense Towers block Line-of-Fire!)
+    let blockedByCover = false;
+    for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
+      const tObs = segmentIntersectsCircle2D(p.prevX, p.prevZ, p.x, p.z, obs.x, obs.z, obs.radius);
+      if (tObs !== null) {
+        const hitY = p.prevY + (p.y - p.prevY) * tObs;
+        const obsFloorY = sampleLandTerrainHeight(obs.x, obs.z);
+        if (hitY <= obsFloorY + obs.height) {
+          const hitX = p.prevX + (p.x - p.prevX) * tObs;
+          const hitZ = p.prevZ + (p.z - p.prevZ) * tObs;
+          const nLen = Math.max(0.01, Math.hypot(hitX - obs.x, hitZ - obs.z));
+          state.events.sparkImpacts.push({
+            x: hitX,
+            y: hitY,
+            z: hitZ,
+            nx: (hitX - obs.x) / nLen,
+            ny: 0.25,
+            nz: (hitZ - obs.z) / nLen,
+            isShield: false,
+            isCrit: false,
+            isShatter: false
+          });
+          if (p.kind === 'missile') {
+            state.events.explosions.push({
+              x: hitX,
+              y: hitY + 0.2,
+              z: hitZ,
+              scale: 1.15,
+              colorHex: '#fb7185'
+            });
+            applyMissileSplashDamage(state, hitX, hitY, hitZ, null, p.damage, p.staggerDamage);
+          }
+          p.active = false;
+          blockedByCover = true;
+          break;
+        }
+      }
+    }
+    if (blockedByCover) continue;
+
+    // 6B. Terrain Impact
     const terrainY = sampleLandTerrainHeight(p.x, p.z);
     if (p.y <= terrainY) {
       p.active = false;
@@ -2088,49 +2474,96 @@ export function stepMarsCombatWorld(
           x: p.x,
           y: terrainY + 0.25,
           z: p.z,
-          scale: 0.95,
+          scale: p.fromPlayer ? 1.25 : 0.95,
           colorHex: p.fromPlayer ? '#fb7185' : '#f97316'
         });
+        if (p.kind === 'missile' && p.fromPlayer) {
+          applyMissileSplashDamage(state, p.x, terrainY, p.z, null, p.damage, p.staggerDamage);
+        }
       }
       continue;
     }
 
+    // 6C. Continuous Swept Segment-Ellipsoid Actor Hit Detection (Zero Low-FPS Tunneling & Zero 240Hz Multi-Hit!)
     if (p.fromPlayer) {
       for (const e of state.enemies) {
         if (e.koTimer > 0 || e.dropPodProgress < 0.7) continue;
+        if (p.piercedUids.includes(e.uid)) continue;
+
         const spec = ENEMY_ARCHETYPE_SPECS[e.archetype];
-        const centerY = e.y + (e.isBoss ? 1.85 : e.archetype === 'aero_hunter' ? 0 : 0.95);
-        const dHit = Math.hypot(p.x - e.x, (p.y - centerY) * 0.8, p.z - e.z);
-        if (dHit <= spec.hitRadius + (p.kind === 'rail' ? 0.35 : 0.15)) {
+        const centerY = e.y + (e.isBoss ? 2.15 : e.archetype === 'aero_hunter' ? 0 : 0.95);
+        const seg = closestPointOnSegment3D(
+          p.prevX,
+          p.prevY,
+          p.prevZ,
+          p.x,
+          p.y,
+          p.z,
+          e.x,
+          centerY,
+          e.z,
+          0.8
+        );
+        const hitThreshold = spec.hitRadius + (p.kind === 'rail' ? 0.35 : 0.15);
+        if (seg.dist <= hitThreshold) {
           const wName =
             p.kind === 'rail' ? '超导磁轨炮' : p.kind === 'missile' ? '蜂群追踪导弹' : '高频脉冲步枪';
+          const isHeadWeakPoint =
+            e.archetype !== 'aero_hunter' && seg.py >= centerY + spec.scaleDim * 0.2;
           damageEnemyEntity(
             state,
             e,
             p.damage,
             p.staggerDamage,
             wName,
-            [p.x, p.y, p.z],
-            p.kind === 'pulse' ? 1.35 : 1.0
+            [seg.px, seg.py, seg.pz],
+            p.kind === 'pulse' ? 1.35 : 1.0,
+            { isWeakPointCrit: isHeadWeakPoint }
           );
-          if (p.kind !== 'rail') {
+
+          if (p.kind === 'missile') {
+            state.events.explosions.push({
+              x: seg.px,
+              y: seg.py,
+              z: seg.pz,
+              scale: 1.25,
+              colorHex: '#fb7185'
+            });
+            applyMissileSplashDamage(state, seg.px, seg.py, seg.pz, e.uid, p.damage, p.staggerDamage);
             p.active = false;
+            break;
+          } else if (p.kind !== 'rail') {
+            p.active = false;
+            break;
           } else {
-            p.damage *= 0.65; // Railgun pierces!
+            // Railgun pierces cleanly ONCE per enemy!
+            p.piercedUids.push(e.uid);
+            p.damage *= 0.65;
+            p.staggerDamage *= 0.65;
           }
-          break;
         }
       }
     } else {
-      const dPlayer = Math.hypot(p.x - state.x, (p.y - (state.y + 1.0)) * 0.85, p.z - state.z);
-      if (dPlayer <= 1.15) {
+      const segPlayer = closestPointOnSegment3D(
+        p.prevX,
+        p.prevY,
+        p.prevZ,
+        p.x,
+        p.y,
+        p.z,
+        state.x,
+        state.y + 1.0,
+        state.z,
+        0.85
+      );
+      if (segPlayer.dist <= 1.15) {
         p.active = false;
         applyDamageToPlayer(state, p.damage, p.sourceX, p.sourceZ);
       }
     }
   }
 
-  // 7. Step Ground AoE Telegraph Hazards
+  // 7. Step Ground AoE Telegraph Hazards (3D vertical clearance allows high-jumping over ground blasts!)
   for (let i = state.hazards.length - 1; i >= 0; i--) {
     const h = state.hazards[i];
     if (!h.detonated) {
@@ -2145,7 +2578,9 @@ export function stepMarsCombatWorld(
           colorHex: h.kind === 'orbital_pillar' ? '#00e5ff' : '#ff2a55'
         });
         const dist = Math.hypot(state.x - h.x, state.z - h.z);
-        if (dist <= h.radius) {
+        const verticalClear = state.y - h.y;
+        const hitHeightCap = h.kind === 'orbital_pillar' ? 18.0 : 2.1;
+        if (dist <= h.radius && verticalClear < hitHeightCap) {
           applyDamageToPlayer(state, h.damage, h.x, h.z);
         }
       }
@@ -2188,12 +2623,6 @@ export function stepMarsCombatWorld(
   }
 }
 
-/**
- * Steps the allied Unitree Go2 Wingman companion:
- * - 'escort': flanks player's left-rear sector, autonomously nipping enemies within 8.5m
- * - 'pounce_leap': high-speed parabolic leap onto commanded target ([Q] / Middle Click)
- * - 'bite_slash': rapid electromagnetic bite slashes (3.2x shield strip + slow + stagger)
- */
 export function stepWingmanGo2Companion(
   state: MarsCombatWorldState,
   dt: number,
@@ -2207,7 +2636,9 @@ export function stepWingmanGo2Companion(
 
   const findTarget = (): CombatEnemyEntity | null => {
     if (w.targetUid !== null) {
-      const found = state.enemies.find((e) => e.uid === w.targetUid && e.koTimer <= 0);
+      const found = state.enemies.find(
+        (e) => e.uid === w.targetUid && e.koTimer <= 0 && e.archetype !== 'aero_hunter'
+      );
       if (found) return found;
       w.targetUid = null;
     }
@@ -2232,7 +2663,6 @@ export function stepWingmanGo2Companion(
       }
       w.x += w.vx * dt;
       w.z += w.vz * dt;
-      // Parabolic jump arc over terrain
       const prog = 1 - Math.max(0, Math.min(1, w.modeTimer / 0.52));
       const baseH = sampleLandTerrainHeight(w.x, w.z);
       w.y = baseH + Math.sin(prog * Math.PI) * 2.15;
@@ -2257,10 +2687,10 @@ export function stepWingmanGo2Companion(
       w.targetUid = null;
     } else {
       const orbitAng = state.elapsedPlaySec * 9.5;
-      const latchDist = Math.max(1.05, ENEMY_ARCHETYPE_SPECS[tgt.archetype].hitRadius * 0.82);
+      const latchDist = Math.max(1.25, ENEMY_ARCHETYPE_SPECS[tgt.archetype].hitRadius * 1.05);
       w.x = tgt.x + Math.cos(orbitAng) * latchDist;
       w.z = tgt.z + Math.sin(orbitAng) * latchDist;
-      w.y = sampleLandTerrainHeight(w.x, w.z) + (tgt.archetype === 'aero_hunter' ? 2.4 : 0.25);
+      w.y = sampleLandTerrainHeight(w.x, w.z) + 0.18;
       w.yaw = Math.atan2(tgt.z - w.z, tgt.x - w.x);
       w.gaitDist += 14 * dt;
 
@@ -2276,29 +2706,31 @@ export function stepWingmanGo2Companion(
           18,
           '僚机Go2电磁扑咬',
           [tgt.x, tgt.y + (tgt.isBoss ? 1.4 : 0.8), tgt.z],
-          3.2
+          3.2,
+          { fromWingman: true }
         );
       }
       return;
     }
   }
 
-  // Default 'escort' mode: stay on right-forward tactical flank (visible in midfield, never blocking camera)
   const escortX = state.x + fwdX * 2.15 + rightX * 2.35;
   const escortZ = state.z + fwdZ * 2.15 + rightZ * 2.35;
   const dxE = escortX - w.x;
   const dzE = escortZ - w.z;
   const distE = Math.hypot(dxE, dzE);
+  const escortK = 1 - Math.exp(-9 * dt);
 
   if (distE > 0.25) {
     const desiredSpd = Math.min(18.5, distE * 5.2 + 2.2);
-    w.vx += ((dxE / distE) * desiredSpd - w.vx) * Math.min(1, dt * 9);
-    w.vz += ((dzE / distE) * desiredSpd - w.vz) * Math.min(1, dt * 9);
-    w.yaw = Math.atan2(w.vz, w.vx);
+    w.vx += ((dxE / distE) * desiredSpd - w.vx) * escortK;
+    w.vz += ((dzE / distE) * desiredSpd - w.vz) * escortK;
+    w.yaw = turnTowardsAngle(w.yaw, Math.atan2(w.vz, w.vx), 8.5 * dt);
   } else {
-    w.vx *= 0.8;
-    w.vz *= 0.8;
-    w.yaw = state.aimYaw;
+    const drag = Math.pow(0.8, dt * 60);
+    w.vx *= drag;
+    w.vz *= drag;
+    w.yaw = turnTowardsAngle(w.yaw, state.aimYaw, 7.0 * dt);
   }
 
   w.x += w.vx * dt;
@@ -2306,7 +2738,6 @@ export function stepWingmanGo2Companion(
   w.y = sampleLandTerrainHeight(w.x, w.z);
   w.gaitDist += Math.hypot(w.vx, w.vz) * dt;
 
-  // Autonomous close-defense bite if an enemy rushes within 6.2m of Wingman
   w.biteTickTimer = Math.max(0, w.biteTickTimer - dt);
   if (w.biteTickTimer <= 0) {
     for (const e of state.enemies) {
@@ -2316,22 +2747,62 @@ export function stepWingmanGo2Companion(
         w.biteTickTimer = 1.15;
         w.slashFlashTimer = 0.14;
         e.slowTimer = Math.max(e.slowTimer, 1.8);
-        damageEnemyEntity(state, e, 18, 10, '僚机Go2护卫撕咬', [e.x, e.y + 0.7, e.z], 2.4);
+        damageEnemyEntity(
+          state,
+          e,
+          18,
+          10,
+          '僚机Go2护卫撕咬',
+          [e.x, e.y + 0.7, e.z],
+          2.4,
+          { fromWingman: true }
+        );
         break;
       }
     }
   }
 }
 
-/**
- * Pairwise soft-sphere collision separation across Player, Wingman Go2, and grounded Enemies/Boss.
- * Prevents hounds or humanoid enemies from walking through player legs or stacking inside one another.
- */
 export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
   const playerR = 0.96;
   const wingmanR = 0.72;
 
-  // 1. Player <-> Wingman separation (keep escort from clipping player legs)
+  // 0. Physical Cover Obstacle Separation (6 Towers + 10 Midfield Basalt Cover Outcrops)
+  for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
+    const obsTopY = sampleLandTerrainHeight(obs.x, obs.z) + obs.height;
+    if (state.y < obsTopY - 0.25) {
+      const dx = state.x - obs.x;
+      const dz = state.z - obs.z;
+      const minD = playerR + obs.radius;
+      const d = Math.hypot(dx, dz);
+      if (d < minD) {
+        const nx = d > 1e-4 ? dx / d : 1;
+        const nz = d > 1e-4 ? dz / d : 0;
+        const push = minD - d;
+        state.x += nx * push;
+        state.z += nz * push;
+        if (state.isGrounded) {
+          state.y = sampleLandChassisSupportHeight(state.x, state.z, state.yaw, state.mechId);
+        }
+      }
+    }
+
+    if (state.wingman.mode === 'escort') {
+      const dxW = state.wingman.x - obs.x;
+      const dzW = state.wingman.z - obs.z;
+      const minDW = wingmanR + obs.radius;
+      const dW = Math.hypot(dxW, dzW);
+      if (dW < minDW) {
+        const nx = dW > 1e-4 ? dxW / dW : 1;
+        const nz = dW > 1e-4 ? dzW / dW : 0;
+        state.wingman.x += nx * (minDW - dW);
+        state.wingman.z += nz * (minDW - dW);
+        state.wingman.y = sampleLandTerrainHeight(state.wingman.x, state.wingman.z);
+      }
+    }
+  }
+
+  // 1. Player <-> Wingman separation
   if (state.wingman.mode === 'escort') {
     const dx = state.wingman.x - state.x;
     const dz = state.wingman.z - state.z;
@@ -2347,13 +2818,12 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
     }
   }
 
-  // 2. Player <-> Grounded Enemies & Boss separation
+  // 2. Player <-> Grounded Enemies & Boss separation + Enemy <-> Cover Obstacles
   for (let i = 0; i < state.enemies.length; i++) {
     const a = state.enemies[i];
     if (a.koTimer > 0 || a.dropPodProgress < 0.75 || a.archetype === 'aero_hunter') continue;
     const rA = a.isBoss ? 2.65 : ENEMY_ARCHETYPE_SPECS[a.archetype].hitRadius * 0.88;
 
-    // Separate Enemy A from Player (unless player is high above enemy during jump)
     const verticalGap = state.y - a.y;
     if (verticalGap < 1.65) {
       const dxP = a.x - state.x;
@@ -2365,7 +2835,6 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
         const nz = dP > 1e-4 ? dzP / dP : Math.sin(a.uid * 1.7);
         const overlap = minDP - dP;
         if (a.isBoss) {
-          // Boss has heavy mass -> pushes player outward predominantly
           state.x -= nx * overlap * 0.82;
           state.z -= nz * overlap * 0.82;
           a.x += nx * overlap * 0.18;
@@ -2376,10 +2845,12 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
           a.x += nx * overlap * 0.72;
           a.z += nz * overlap * 0.72;
         }
+        if (state.isGrounded) {
+          state.y = sampleLandChassisSupportHeight(state.x, state.z, state.yaw, state.mechId);
+        }
       }
     }
 
-    // 3. Enemy A <-> Enemy B pairwise separation
     for (let j = i + 1; j < state.enemies.length; j++) {
       const b = state.enemies[j];
       if (b.koTimer > 0 || b.dropPodProgress < 0.75 || b.archetype === 'aero_hunter') continue;
@@ -2398,8 +2869,23 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
         a.z -= nz * overlap * wA;
         b.x += nx * overlap * wB;
         b.z += nz * overlap * wB;
+        b.y = sampleLandTerrainHeight(b.x, b.z);
       }
     }
+
+    for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
+      const dxO = a.x - obs.x;
+      const dzO = a.z - obs.z;
+      const minDO = rA * 0.8 + obs.radius;
+      const dO = Math.hypot(dxO, dzO);
+      if (dO < minDO) {
+        const nx = dO > 1e-4 ? dxO / dO : 1;
+        const nz = dO > 1e-4 ? dzO / dO : 0;
+        a.x += nx * (minDO - dO);
+        a.z += nz * (minDO - dO);
+      }
+    }
+    a.y = sampleLandTerrainHeight(a.x, a.z);
   }
 }
 

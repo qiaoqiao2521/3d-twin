@@ -737,7 +737,7 @@ export function stepSandboxKinematics(
     next.roll = damp(next.roll, targetRoll, 5.5, dt);
 
     const stepDist = Math.hypot(next.vx, next.vy, next.vz) * dt;
-    next.gaitDistance += stepDist;
+    next.gaitDistance += (next.speed < -0.05 ? -1 : 1) * stepDist;
     next.throttlePct = Math.min(100, Math.round(18 + (Math.hypot(next.vx, next.vy, next.vz) / spec.boostSpeed) * 82));
     next.depthMeters = Number((250.0 - next.y * 4.2).toFixed(1));
     next.isGrounded = false;
@@ -805,9 +805,9 @@ export function stepSandboxKinematics(
   next.roll = damp(next.roll, slopeRight + bankRoll, 8.0, dt);
 
   const prevStrideIdx = Math.floor(next.gaitDistance * 1.45);
-  next.gaitDistance += Math.abs(next.speed) * dt;
+  next.gaitDistance += next.speed * dt;
   const curStrideIdx = Math.floor(next.gaitDistance * 1.45);
-  if (next.isGrounded && curStrideIdx > prevStrideIdx && Math.abs(next.speed) > 0.4) {
+  if (next.isGrounded && curStrideIdx !== prevStrideIdx && Math.abs(next.speed) > 0.4) {
     next.emittedFootstep = true;
   }
 
@@ -916,7 +916,8 @@ export function computeSandboxUrdfJointAngle(
   // Search-and-Rescue Tracked Robot (SAR): Rolling drive wheels + terrain-adaptive 4 flippers + AR4 turret aim!
   if (actorId === 'sar') {
     if (joint.type === 'continuous' && !name.includes('f_')) {
-      const wheelWrap = (kin.gaitDistance * 3.8) % (Math.PI * 2);
+      const twoPi = Math.PI * 2;
+      const wheelWrap = (((kin.gaitDistance * 3.8) % twoPi) + twoPi) % twoPi;
       return wheelWrap - Math.PI;
     }
     if (name.includes('f_front') || name.includes('flipper_front')) {

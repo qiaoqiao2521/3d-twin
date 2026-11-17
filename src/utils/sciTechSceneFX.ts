@@ -134,7 +134,27 @@ function createParaboloidBowShockGeometry(
   return g;
 }
 
-function createSoftGlowSpriteTexture(): THREE.CanvasTexture {
+function createSoftGlowSpriteTexture(): THREE.Texture {
+  if (typeof document === 'undefined') {
+    const size = 32;
+    const data = new Uint8Array(size * size * 4);
+    const c = (size - 1) * 0.5;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const r = Math.hypot(x - c, y - c) / c;
+        const a = r > 1 ? 0 : Math.pow(1 - r * r, 1.8);
+        const idx = (y * size + x) * 4;
+        data[idx] = 255;
+        data[idx + 1] = 255;
+        data[idx + 2] = 255;
+        data[idx + 3] = Math.round(a * 255);
+      }
+    }
+    const fallback = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+    fallback.colorSpace = THREE.SRGBColorSpace;
+    fallback.needsUpdate = true;
+    return fallback;
+  }
   const canvas = document.createElement('canvas');
   canvas.width = 64;
   canvas.height = 64;
@@ -474,6 +494,9 @@ export function createMpcAndPowerArteriesController(): MpcAndPowerArteriesContro
   const _relMat = new THREE.Matrix4();
   const _pParent = new THREE.Vector3();
   const _pChild = new THREE.Vector3();
+  const _jointDefsScratch: { name: string; type: string }[] = [];
+  const _omegaScratch: number[] = [];
+  const _torqueScratch: number[] = [];
 
   return {
     group,
@@ -558,13 +581,18 @@ export function createMpcAndPowerArteriesController(): MpcAndPowerArteriesContro
         ghostGroup16.visible = false;
       }
 
-      // 2. Update URDF Kinematic Power-Flow Arteries (Power Core -> Parent -> Child Joint Chain)
+      // 2. Update URDF Kinematic Power-Flow Arteries (Power Core -> Parent -> Child Joint Chain, Zero-GC!)
       const count = Math.min(maxJoints, jointNodes.length);
-      const metrics = computeUrdfPowerFlowMetrics(
-        jointNodes.slice(0, count).map((j) => j.def),
-        jointNodes.slice(0, count).map((j) => j.omegaRadS),
-        jointNodes.slice(0, count).map((j) => j.torqueNm ?? 16.0)
-      );
+      _jointDefsScratch.length = count;
+      _omegaScratch.length = count;
+      _torqueScratch.length = count;
+      for (let i = 0; i < count; i++) {
+        const jn = jointNodes[i];
+        _jointDefsScratch[i] = jn.def;
+        _omegaScratch[i] = jn.omegaRadS;
+        _torqueScratch[i] = jn.torqueNm ?? 16.0;
+      }
+      const metrics = computeUrdfPowerFlowMetrics(_jointDefsScratch, _omegaScratch, _torqueScratch);
 
       let activeArteries = 0;
       let activePulses = 0;
@@ -782,6 +810,9 @@ export function createWindTunnelDisasterFXController(): WindTunnelDisasterFXCont
   let sampledSkinAnchors: { mesh: THREE.Mesh; localPos: THREE.Vector3 }[] = [];
   const _wStart = new THREE.Vector3();
   const _wEnd = new THREE.Vector3();
+  const _startTuple: [number, number, number] = [0, 0, 0];
+  const _endTuple: [number, number, number] = [0, 0, 0];
+  const _anchorTuple: [number, number, number] = [0, 0, 0];
 
   return {
     group,
@@ -850,11 +881,20 @@ export function createWindTunnelDisasterFXController(): WindTunnelDisasterFXCont
           const ancB = sampledSkinAnchors[idxB];
           _wStart.copy(ancA.localPos).applyMatrix4(ancA.mesh.matrixWorld);
           _wEnd.copy(ancB.localPos).applyMatrix4(ancB.mesh.matrixWorld);
+          _startTuple[0] = _wStart.x;
+          _startTuple[1] = _wStart.y;
+          _startTuple[2] = _wStart.z;
+          _endTuple[0] = _wEnd.x;
+          _endTuple[1] = _wEnd.y;
+          _endTuple[2] = _wEnd.z;
+          _anchorTuple[0] = anchorWorld.x;
+          _anchorTuple[1] = anchorWorld.y;
+          _anchorTuple[2] = anchorWorld.z;
 
           const pts = generateSurfaceLightningArcPoints(
-            [_wStart.x, _wStart.y, _wStart.z],
-            [_wEnd.x, _wEnd.y, _wEnd.z],
-            [anchorWorld.x, anchorWorld.y, anchorWorld.z],
+            _startTuple,
+            _endTuple,
+            _anchorTuple,
             tickBucket * 0.37 + a * 1.91,
             segsPerArc
           );
