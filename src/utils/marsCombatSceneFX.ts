@@ -6,6 +6,7 @@ import {
   CombatEnemyEntity,
   PlayerMechId,
   CombatWeaponId,
+  BattlefieldMapId,
   MARS_BATTLEFIELD_OBSTACLES,
   sampleMarsArenaSurfaceHeight
 } from './marsCombatEngine';
@@ -207,17 +208,117 @@ export function createMartianBattlefieldTextures(
 }
 
 /**
- * Builds the Martian Jezero Battlefield Environment:
+ * Generates seamless 1024x1024 Martian Polar Ice Canyon Albedo + Micro-Relief Bump CanvasTextures
+ * combining glacial sapphire-cyan ice fractures, wind-packed polar snowdrifts, and dark basalt crevasses.
+ */
+export function createPolarIceCanyonTextures(
+  maxAnisotropy: number,
+  isSoftwareGl: boolean = false
+): {
+  albedoMap: THREE.CanvasTexture;
+  bumpMap: THREE.CanvasTexture;
+} {
+  const size = isSoftwareGl ? 512 : 1024;
+  const cColor = document.createElement('canvas');
+  cColor.width = size;
+  cColor.height = size;
+  const ctx = cColor.getContext('2d')!;
+
+  const cBump = document.createElement('canvas');
+  cBump.width = size;
+  cBump.height = size;
+  const bCtx = cBump.getContext('2d')!;
+
+  const colorImg = ctx.createImageData(size, size);
+  const bumpImg = bCtx.createImageData(size, size);
+  const cData = colorImg.data;
+  const bData = bumpImg.data;
+  const invSize = 1 / size;
+
+  for (let py = 0; py < size; py++) {
+    const v = py * invSize;
+    for (let px = 0; px < size; px++) {
+      const u = px * invSize;
+      const idx = (py * size + px) * 4;
+
+      const nMacro = periodicValueNoise(u, v, 8, 311);
+      const nMid = periodicValueNoise(u, v, 16, 619);
+      const nFine = periodicValueNoise(u, v, 64, 887);
+      const nMicro = periodicValueNoise(u, v, 128, 1213);
+      const fbm = nMacro * 0.46 + nMid * 0.29 + nFine * 0.17 + nMicro * 0.08;
+
+      const icePlates = periodicWorleyBasalt(u, v, 16, 1907);
+      const frostCrystals = periodicWorleyBasalt(u, v, 64, 3301);
+
+      const driftPhase =
+        v * 11.0 + (nMacro - 0.5) * 1.9 + (nMid - 0.5) * 0.65 + Math.cos(u * Math.PI * 4.0) * 0.32;
+      const sastrugi = 0.5 + 0.5 * Math.sin(driftPhase * Math.PI * 2.0);
+      const snowBlanket = Math.min(1, Math.max(0, (fbm - 0.36) * 2.35));
+      const crevasseLine = Math.max(0, 1 - icePlates.edge * 5.8) * (1 - snowBlanket * 0.75);
+      const crystalSpark = Math.max(0, 1 - frostCrystals.f1 * 2.5) * (0.4 + nFine * 0.6);
+
+      // Blend deep glacial cyan-blue ice + bright polar snow + dark frozen basalt crevasse seams
+      const iceR = 112 + fbm * 58 + snowBlanket * 66 + sastrugi * snowBlanket * 18 - crevasseLine * 68 + crystalSpark * 16;
+      const iceG = 152 + fbm * 54 + snowBlanket * 52 + sastrugi * snowBlanket * 16 - crevasseLine * 74 + crystalSpark * 18;
+      const iceB = 186 + fbm * 46 + snowBlanket * 38 + sastrugi * snowBlanket * 12 - crevasseLine * 64 + crystalSpark * 20;
+
+      cData[idx] = Math.max(22, Math.min(248, iceR | 0));
+      cData[idx + 1] = Math.max(34, Math.min(252, iceG | 0));
+      cData[idx + 2] = Math.max(48, Math.min(255, iceB | 0));
+      cData[idx + 3] = 255;
+
+      const hVal =
+        0.5 +
+        (fbm - 0.5) * 0.26 +
+        (sastrugi - 0.5) * snowBlanket * 0.2 +
+        crystalSpark * 0.18 -
+        crevasseLine * 0.34;
+      const lum = Math.max(0, Math.min(255, Math.round(hVal * 255)));
+      bData[idx] = lum;
+      bData[idx + 1] = lum;
+      bData[idx + 2] = lum;
+      bData[idx + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(colorImg, 0, 0);
+  bCtx.putImageData(bumpImg, 0, 0);
+
+  const albedoMap = new THREE.CanvasTexture(cColor);
+  albedoMap.colorSpace = THREE.SRGBColorSpace;
+  albedoMap.wrapS = THREE.RepeatWrapping;
+  albedoMap.wrapT = THREE.RepeatWrapping;
+  albedoMap.repeat.set(16, 16);
+  albedoMap.anisotropy = maxAnisotropy;
+
+  const bumpMap = new THREE.CanvasTexture(cBump);
+  bumpMap.wrapS = THREE.RepeatWrapping;
+  bumpMap.wrapT = THREE.RepeatWrapping;
+  bumpMap.repeat.set(16, 16);
+  bumpMap.anisotropy = maxAnisotropy;
+
+  return { albedoMap, bumpMap };
+}
+
+/**
+ * Builds the Martian Battlefield Environment (`'jezero_crater'` OR `'polar_ice_canyon'`):
  * - 210m x 210m continuous analytical terrain mesh extending well beyond the 68m combat perimeter
- * - Natural basalt canyon cliffs, 10 physical midfield tactical cover boulders, & 6 sci-fi Mars relay pylons
+ * - Natural basalt cliffs OR Infinigen glacial ice spires, 10 physical midfield cover outcrops, & 6 relay pylons
  * - Overhead Futuristic Orbital Carrier Silhouette Landmark visible in initial spawn vista!
  */
-export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwareGl: boolean) {
+export function createMarsBattlefieldEnvironment(
+  maxAnisotropy: number,
+  isSoftwareGl: boolean,
+  mapId: BattlefieldMapId = 'jezero_crater'
+) {
+  const isPolar = mapId === 'polar_ice_canyon';
   const root = new THREE.Group();
-  const { albedoMap, bumpMap } = createMartianBattlefieldTextures(maxAnisotropy, isSoftwareGl);
+  const { albedoMap, bumpMap } = isPolar
+    ? createPolarIceCanyonTextures(maxAnisotropy, isSoftwareGl)
+    : createMartianBattlefieldTextures(maxAnisotropy, isSoftwareGl);
   const dustGlowTex = createSoftGlowSpriteTexture();
 
-  // 0. Martian Dusk Rayleigh Atmospheric Sky Dome
+  // 0. Atmospheric Sky Dome (Warm Martian Dusk vs Sub-Zero Polar Borealis Twilight)
   const skyProfile: THREE.Vector2[] = [];
   for (let k = 0; k <= 16; k++) {
     const theta = (k / 16) * Math.PI;
@@ -237,7 +338,28 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
-    fragmentShader: `
+    fragmentShader: isPolar
+      ? `
+      varying vec3 vSkyDir;
+      void main() {
+        vec3 d = normalize(vSkyDir);
+        float h = clamp(d.y, -0.15, 1.0);
+        vec3 horizon = vec3(0.32, 0.56, 0.72);
+        vec3 midSky = vec3(0.09, 0.21, 0.36);
+        vec3 zenith = vec3(0.02, 0.05, 0.12);
+        vec3 sunDir = normalize(vec3(0.72, 0.28, -0.22));
+        float sunHalo = pow(max(0.0, dot(d, sunDir)), 12.0);
+        vec3 col = h < 0.32
+          ? mix(horizon, midSky, smoothstep(-0.08, 0.32, h))
+          : mix(midSky, zenith, smoothstep(0.32, 0.92, h));
+        float auroraRibbon = sin(d.x * 7.5 + d.z * 4.2) * 0.5 + 0.5;
+        float auroraBand = exp(-pow((h - 0.44 - auroraRibbon * 0.12) * 6.5, 2.0));
+        col += mix(vec3(0.06, 0.85, 0.62), vec3(0.22, 0.72, 0.98), auroraRibbon) * auroraBand * 0.28;
+        col += vec3(0.78, 0.94, 1.0) * sunHalo * 0.52;
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `
+      : `
       varying vec3 vSkyDir;
       void main() {
         float h = clamp(vSkyDir.y, -0.15, 1.0);
@@ -258,7 +380,7 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
   skyDome.frustumCulled = false;
   root.add(skyDome);
 
-  // 1. Continuous Martian Desert Terrain with Macro Dune/Hollow Vertex Color Stratification
+  // 1. Continuous Martian Terrain with Macro Dune / Glacial Crevasse Vertex Color Stratification
   const segs = isSoftwareGl ? 96 : 144;
   const terrainGeo = new THREE.PlaneGeometry(210, 210, segs, segs);
   terrainGeo.rotateX(-Math.PI / 2);
@@ -275,11 +397,18 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
       0.5 +
       0.5 * Math.sin(vx * 0.055 + Math.cos(vz * 0.048) * 1.7) * Math.cos(vz * 0.041 - vx * 0.022);
     const rimShade = r > 66 ? Math.max(0.72, 1 - (r - 66) * 0.008) : 1.0;
-    const crestWarm =
-      Math.min(1.14, Math.max(0.78, 0.88 + h * 0.055 + macroWave * 0.14)) * rimShade;
-    vColors[i * 3] = crestWarm;
-    vColors[i * 3 + 1] = crestWarm * (0.94 + macroWave * 0.08);
-    vColors[i * 3 + 2] = crestWarm * (0.90 + (1 - macroWave) * 0.10);
+    if (isPolar) {
+      const snowCrest = Math.min(1.12, Math.max(0.68, 0.84 + h * 0.065 + macroWave * 0.16)) * rimShade;
+      vColors[i * 3] = snowCrest * (0.84 + macroWave * 0.14);
+      vColors[i * 3 + 1] = snowCrest * (0.94 + macroWave * 0.06);
+      vColors[i * 3 + 2] = Math.min(1.15, snowCrest * 1.06);
+    } else {
+      const crestWarm =
+        Math.min(1.14, Math.max(0.78, 0.88 + h * 0.055 + macroWave * 0.14)) * rimShade;
+      vColors[i * 3] = crestWarm;
+      vColors[i * 3 + 1] = crestWarm * (0.94 + macroWave * 0.08);
+      vColors[i * 3 + 2] = crestWarm * (0.90 + (1 - macroWave) * 0.10);
+    }
   }
   terrainGeo.setAttribute('color', new THREE.BufferAttribute(vColors, 3));
   terrainGeo.computeVertexNormals();
@@ -289,15 +418,15 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     vertexColors: true,
     map: albedoMap,
     bumpMap,
-    bumpScale: 0.085,
-    roughness: 0.89,
-    metalness: 0.05
+    bumpScale: isPolar ? 0.095 : 0.085,
+    roughness: isPolar ? 0.56 : 0.89,
+    metalness: isPolar ? 0.14 : 0.05
   });
   const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
   terrainMesh.receiveShadow = !isSoftwareGl;
   root.add(terrainMesh);
 
-  // 2A. Natural Perimeter Basalt Outcrops (InstancedMesh, varied scale & tint)
+  // 2A. Natural Perimeter Outcrops (Basalt Cliffs or Glacial Ice Spires)
   const rockGeo = new THREE.DodecahedronGeometry(1.0, 1);
   const rPos = rockGeo.attributes.position;
   for (let i = 0; i < rPos.count; i++) {
@@ -306,18 +435,18 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     const rz = rPos.getZ(i);
     rPos.setXYZ(
       i,
-      rx * (1 + 0.16 * Math.sin(ry * 3.1)),
-      ry < 0 ? ry * 0.45 : ry * 1.25,
-      rz * (1 + 0.16 * Math.cos(rx * 2.7))
+      rx * (1 + 0.16 * Math.sin(ry * 3.1)) * (isPolar ? 0.78 : 1.0),
+      ry < 0 ? ry * 0.45 : ry * (isPolar ? 1.85 : 1.25),
+      rz * (1 + 0.16 * Math.cos(rx * 2.7)) * (isPolar ? 0.78 : 1.0)
     );
   }
   rockGeo.computeVertexNormals();
   const rockMat = new THREE.MeshStandardMaterial({
-    color: 0x6b3222,
+    color: isPolar ? 0x7dd3fc : 0x6b3222,
     bumpMap,
     bumpScale: 0.05,
-    roughness: 0.88,
-    metalness: 0.12
+    roughness: isPolar ? 0.36 : 0.88,
+    metalness: isPolar ? 0.24 : 0.12
   });
   const rockCount = 44;
   const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
@@ -332,12 +461,16 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     _dummyObj.position.set(x, y, z);
     _dummyObj.rotation.set((i % 5) * 0.08, ang + i * 0.7, 0);
     const sx = 3.2 + (i % 4) * 1.3;
-    const sy = 2.4 + (i % 5) * 1.6;
+    const sy = (isPolar ? 3.8 : 2.4) + (i % 5) * (isPolar ? 2.2 : 1.6);
     const sz = 2.8 + (i % 3) * 1.2;
     _dummyObj.scale.set(sx, sy, sz);
     _dummyObj.updateMatrix();
     rockInst.setMatrixAt(i, _dummyObj.matrix);
-    _col.setHSL(0.035 + (i % 4) * 0.006, 0.48, 0.22 + (i % 3) * 0.05);
+    if (isPolar) {
+      _col.setHSL(0.55 + (i % 4) * 0.015, 0.52, 0.58 + (i % 3) * 0.09);
+    } else {
+      _col.setHSL(0.035 + (i % 4) * 0.006, 0.48, 0.22 + (i % 3) * 0.05);
+    }
     rockInst.setColorAt(i, _col);
   }
   rockInst.instanceMatrix.needsUpdate = true;
@@ -345,7 +478,7 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
   rockInst.computeBoundingSphere();
   root.add(rockInst);
 
-  // 2B. Tactical Midfield Basalt Cover Boulders (1:1 synced with MARS_BATTLEFIELD_OBSTACLES!)
+  // 2B. Tactical Midfield Cover Outcrops (1:1 synced with MARS_BATTLEFIELD_OBSTACLES!)
   const midfieldBoulders = MARS_BATTLEFIELD_OBSTACLES.filter((o) => o.kind === 'boulder');
   const coverBoulderInst = new THREE.InstancedMesh(rockGeo, rockMat, midfieldBoulders.length);
   coverBoulderInst.castShadow = !isSoftwareGl;
@@ -355,11 +488,15 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     const groundY = sampleMarsArenaSurfaceHeight(obs.x, obs.z);
     _dummyObj.position.set(obs.x, groundY + 0.12, obs.z);
     _dummyObj.rotation.set((i % 3) * 0.06, i * 1.15 + 0.4, ((i + 1) % 3) * 0.05);
-    const sy = obs.height / 1.25;
+    const sy = obs.height / (isPolar ? 1.75 : 1.25);
     _dummyObj.scale.set(obs.radius * 1.02, sy, obs.radius * 0.96);
     _dummyObj.updateMatrix();
     coverBoulderInst.setMatrixAt(i, _dummyObj.matrix);
-    _col.setHSL(0.032 + (i % 3) * 0.007, 0.44, 0.20 + (i % 4) * 0.04);
+    if (isPolar) {
+      _col.setHSL(0.54 + (i % 3) * 0.018, 0.56, 0.54 + (i % 4) * 0.08);
+    } else {
+      _col.setHSL(0.032 + (i % 3) * 0.007, 0.44, 0.20 + (i % 4) * 0.04);
+    }
     coverBoulderInst.setColorAt(i, _col);
   }
   coverBoulderInst.instanceMatrix.needsUpdate = true;
@@ -367,14 +504,66 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
   coverBoulderInst.computeBoundingSphere();
   root.add(coverBoulderInst);
 
-  // 3. Multi-Part Sci-Fi Colony Defense Beacons around Mid-Perimeter (6 composite towers synced with MARS_BATTLEFIELD_OBSTACLES)
+  // Optional Real Princeton Infinigen Glacial Spire Group (populated asynchronously on Polar Ice Canyon!)
+  const infinigenSpireGroup = new THREE.Group();
+  root.add(infinigenSpireGroup);
+  const clonedSpireMaterials: THREE.Material[] = [];
+
+  const applyLoadedGlacialSpires = (spireTemplate: THREE.Group) => {
+    if (!isPolar || infinigenSpireGroup.children.length > 0) return;
+    spireTemplate.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(spireTemplate);
+    const sz = box.getSize(new THREE.Vector3());
+    const ctr = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(sz.x, sz.y, sz.z, 0.01);
+
+    // Place 12 monumental Infinigen snow-canyon ridge formations ringing the polar canyon horizon!
+    for (let i = 0; i < 12; i++) {
+      const ang = (i / 12) * Math.PI * 2 + 0.22;
+      const rad = 76 + (i % 3) * 7.5;
+      const gx = Math.cos(ang) * rad;
+      const gz = Math.sin(ang) * rad;
+      const gy = sampleMarsArenaSurfaceHeight(gx, gz) - 0.8;
+
+      const inst = spireTemplate.clone(true);
+      const targetSpan = 22 + (i % 4) * 5.5;
+      const sc = targetSpan / maxDim;
+      inst.scale.set(sc, sc * (1.15 + (i % 3) * 0.22), sc);
+      inst.position.set(gx - ctr.x * sc, gy - box.min.y * sc, gz - ctr.z * sc);
+      inst.rotation.y = -ang + Math.PI * 0.5 + (i % 2) * 0.4;
+      inst.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) {
+          const m = o as THREE.Mesh;
+          m.castShadow = false;
+          m.receiveShadow = !isSoftwareGl;
+          const iceChunkMat = new THREE.MeshStandardMaterial({
+            color: i % 2 === 0 ? 0xcffafe : 0xbae6fd,
+            map: albedoMap,
+            bumpMap,
+            bumpScale: 0.06,
+            roughness: 0.42,
+            metalness: 0.18
+          });
+          clonedSpireMaterials.push(iceChunkMat);
+          m.material = iceChunkMat;
+        }
+      });
+      infinigenSpireGroup.add(inst);
+    }
+  };
+
+  // 3. Multi-Part Sci-Fi Colony Defense Beacons around Mid-Perimeter
   const pylonGroup = new THREE.Group();
-  const hullMat = new THREE.MeshStandardMaterial({ color: 0x1e2530, roughness: 0.68, metalness: 0.55 });
+  const hullMat = new THREE.MeshStandardMaterial({
+    color: isPolar ? 0x162231 : 0x1e2530,
+    roughness: 0.62,
+    metalness: 0.62
+  });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.28, metalness: 0.88 });
   const beaconMat = new THREE.MeshStandardMaterial({
-    color: 0x00e5ff,
-    emissive: 0x00b8d4,
-    emissiveIntensity: 1.8,
+    color: isPolar ? 0x34d399 : 0x00e5ff,
+    emissive: isPolar ? 0x10b981 : 0x00b8d4,
+    emissiveIntensity: 1.9,
     roughness: 0.2
   });
   const baseGeo = new THREE.CylinderGeometry(1.1, 1.55, 1.2, 6);
@@ -449,22 +638,22 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
   cruiser.add(spine, prow, bridge, wingL, thrusterA, thrusterB);
   root.add(cruiser);
 
-  // 5. Drifting Atmospheric Martian Dust Motes (soft radial sprite — zero square points!)
-  const dustCount = 180;
+  // 5. Drifting Atmospheric Motes (Martian Dust vs Polar Blizzard Snowflakes)
+  const dustCount = isPolar ? 260 : 180;
   const dustPos = new Float32Array(dustCount * 3);
   for (let i = 0; i < dustCount; i++) {
     dustPos[i * 3] = (Math.random() - 0.5) * 110;
-    dustPos[i * 3 + 1] = 0.6 + Math.random() * 12;
+    dustPos[i * 3 + 1] = 0.6 + Math.random() * 14;
     dustPos[i * 3 + 2] = (Math.random() - 0.5) * 110;
   }
   const dustGeo = new THREE.BufferGeometry();
   dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
   const dustMat = new THREE.PointsMaterial({
-    color: 0xfdba74,
+    color: isPolar ? 0xe0f2fe : 0xfdba74,
     map: dustGlowTex,
-    size: 0.28,
+    size: isPolar ? 0.34 : 0.28,
     transparent: true,
-    opacity: 0.42,
+    opacity: isPolar ? 0.68 : 0.42,
     depthWrite: false
   });
   const dustPoints = new THREE.Points(dustGeo, dustMat);
@@ -474,19 +663,23 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     cruiser.position.y = 22 + Math.sin(simTime * 0.45) * 0.75;
     const arr = dustGeo.attributes.position.array as Float32Array;
     for (let i = 0; i < dustCount; i++) {
-      let x = arr[i * 3] + dt * 3.8;
-      let z = arr[i * 3 + 2] + dt * 1.2;
+      let x = arr[i * 3] + dt * (isPolar ? 6.4 : 3.8);
+      let y = arr[i * 3 + 1] - (isPolar ? dt * 2.3 : 0);
+      let z = arr[i * 3 + 2] + dt * (isPolar ? 2.6 : 1.2);
       if (x - playerX > 55) x -= 110;
       if (x - playerX < -55) x += 110;
       if (z - playerZ > 55) z -= 110;
       if (z - playerZ < -55) z += 110;
+      if (isPolar && y < 0.3) y += 14.0;
       arr[i * 3] = x;
+      arr[i * 3 + 1] = y;
       arr[i * 3 + 2] = z;
     }
     dustGeo.attributes.position.needsUpdate = true;
   };
 
   const dispose = () => {
+    for (const m of clonedSpireMaterials) m.dispose();
     albedoMap.dispose();
     bumpMap.dispose();
     dustGlowTex.dispose();
@@ -514,7 +707,15 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     dustMat.dispose();
   };
 
-  return { root, terrainMesh, coverBoulderInst, pylonGroup, updateAtmosphere, dispose };
+  return {
+    root,
+    terrainMesh,
+    coverBoulderInst,
+    pylonGroup,
+    applyLoadedGlacialSpires,
+    updateAtmosphere,
+    dispose
+  };
 }
 
 /**
@@ -885,6 +1086,34 @@ export function createMarsCombatVFXController() {
   wingmanSlashGroup.add(slashA, slashB);
   root.add(wingmanSlashGroup);
 
+  // 10. Setup Player High-Frequency Plasma War-Axe Cleave Crescent Arc [X]
+  const playerMeleeSlashGroup = new THREE.Group();
+  playerMeleeSlashGroup.visible = false;
+  const meleeOuterArcGeo = new THREE.TorusGeometry(3.05, 0.14, 6, 28, Math.PI * 0.86);
+  meleeOuterArcGeo.rotateX(Math.PI / 2);
+  const meleeInnerArcGeo = new THREE.TorusGeometry(2.88, 0.06, 6, 28, Math.PI * 0.86);
+  meleeInnerArcGeo.rotateX(Math.PI / 2);
+  const meleeOuterMat = new THREE.MeshBasicMaterial({
+    color: 0x10b981,
+    transparent: true,
+    opacity: 0.88,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const meleeInnerMat = new THREE.MeshBasicMaterial({
+    color: 0xfef08a,
+    transparent: true,
+    opacity: 0.96,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const meleeOuterMesh = new THREE.Mesh(meleeOuterArcGeo, meleeOuterMat);
+  const meleeInnerMesh = new THREE.Mesh(meleeInnerArcGeo, meleeInnerMat);
+  playerMeleeSlashGroup.add(meleeOuterMesh, meleeInnerMesh);
+  root.add(playerMeleeSlashGroup);
+
   const update = (params: {
     dt: number;
     simTime: number;
@@ -898,6 +1127,7 @@ export function createMarsCombatVFXController() {
     ultimateBeamTarget: [number, number, number];
     explosions: { x: number; y: number; z: number; scale: number; colorHex: string }[];
     wingmanSlash?: { x: number; y: number; z: number; yaw: number; flashTimer: number };
+    playerMeleeSlash?: { x: number; y: number; z: number; yaw: number; swingTimer: number };
   }) => {
     const {
       dt,
@@ -938,20 +1168,43 @@ export function createMarsCombatVFXController() {
         _quat.setFromUnitVectors(_v2.set(0, 0, 1), _v1);
         _dummyObj.quaternion.copy(_quat);
       }
-      const lenScale = p.kind === 'rail' ? 3.2 : p.kind === 'pulse' ? 1.35 : 1.15;
-      const radScale = p.kind === 'rail' ? 1.45 : p.kind === 'boss_missile' ? 1.5 : 1.0;
+      const lenScale =
+        p.kind === 'rail'
+          ? 3.2
+          : p.kind === 'bow_arrow'
+            ? 2.85
+            : p.kind === 'pulse'
+              ? 1.35
+              : p.kind === 'xeno_acid'
+                ? 1.05
+                : 1.15;
+      const radScale =
+        p.kind === 'rail'
+          ? 1.45
+          : p.kind === 'bow_arrow'
+            ? 0.85
+            : p.kind === 'xeno_acid'
+              ? 1.65
+              : p.kind === 'boss_missile'
+                ? 1.5
+                : 1.0;
       _dummyObj.scale.set(radScale, radScale, lenScale);
       _dummyObj.updateMatrix();
       projInst.setMatrixAt(i, _dummyObj.matrix);
 
       if (p.kind === 'pulse') _col.setHex(0x00e5ff);
       else if (p.kind === 'rail') _col.setHex(0xfbbf24);
+      else if (p.kind === 'bow_arrow') _col.setHex(0x10b981);
       else if (p.kind === 'missile') _col.setHex(0xfb7185);
+      else if (p.kind === 'xeno_acid') _col.setHex(0x84cc16);
       else if (p.kind === 'boss_missile') _col.setHex(0xff5500);
       else _col.setHex(0xff2a55);
       projInst.setColorAt(i, _col);
 
-      if ((p.kind === 'missile' || p.kind === 'boss_missile') && Math.random() < missileSparkProb) {
+      if (
+        (p.kind === 'missile' || p.kind === 'boss_missile' || p.kind === 'xeno_acid' || p.kind === 'bow_arrow') &&
+        Math.random() < missileSparkProb
+      ) {
         const idx = sparkCursor % SPARK_MAX;
         sparkCursor++;
         sPos[idx * 3] = p.x;
@@ -960,9 +1213,19 @@ export function createMarsCombatVFXController() {
         sVel[idx * 3] = (Math.random() - 0.5) * 1.6;
         sVel[idx * 3 + 1] = (Math.random() - 0.5) * 1.6;
         sVel[idx * 3 + 2] = (Math.random() - 0.5) * 1.6;
-        sCol[idx * 3] = 1.0;
-        sCol[idx * 3 + 1] = p.fromPlayer ? 0.55 : 0.35;
-        sCol[idx * 3 + 2] = p.fromPlayer ? 0.68 : 0.1;
+        if (p.kind === 'xeno_acid') {
+          sCol[idx * 3] = 0.52;
+          sCol[idx * 3 + 1] = 0.95;
+          sCol[idx * 3 + 2] = 0.14;
+        } else if (p.kind === 'bow_arrow') {
+          sCol[idx * 3] = 0.08;
+          sCol[idx * 3 + 1] = 0.92;
+          sCol[idx * 3 + 2] = 0.62;
+        } else {
+          sCol[idx * 3] = 1.0;
+          sCol[idx * 3 + 1] = p.fromPlayer ? 0.55 : 0.35;
+          sCol[idx * 3 + 2] = p.fromPlayer ? 0.68 : 0.1;
+        }
         sLife[idx] = 0.22;
       }
     }
@@ -996,20 +1259,29 @@ export function createMarsCombatVFXController() {
       }
       slot.group.visible = true;
       slot.group.position.set(h.x, h.y + 0.06, h.z);
+      const isAcid = h.kind === 'acid_pool';
       const isCyan = h.kind === 'orbital_pillar';
-      const hex = isCyan ? 0x00e5ff : 0xff2a55;
+      const hex = isAcid ? 0x84cc16 : isCyan ? 0x00e5ff : 0xff2a55;
       slot.outerMat.color.setHex(hex);
-      slot.fillMat.color.setHex(hex);
+      slot.fillMat.color.setHex(isAcid ? 0x4ade80 : hex);
       slot.outerRing.scale.setScalar(h.radius);
 
       if (!h.detonated) {
-        const prog = Math.min(1, h.elapsed / Math.max(0.1, h.windupDuration));
+        const prog = Math.min(1, h.elapsed / Math.max(0.05, h.windupDuration));
         slot.fillDisc.scale.setScalar(Math.max(0.05, h.radius * prog));
         slot.fillMat.opacity = 0.16 + prog * 0.34;
+        slot.pillar.visible = false;
+      } else if (isAcid) {
+        const fade = Math.min(1, h.lingerTimer / 1.1);
+        const bubble = 0.88 + Math.sin(simTime * 12 + h.id) * 0.12;
+        slot.fillDisc.scale.setScalar(h.radius * bubble);
+        slot.fillMat.opacity = 0.44 * fade;
+        slot.outerMat.opacity = 0.78 * fade;
         slot.pillar.visible = false;
       } else {
         slot.fillDisc.scale.setScalar(h.radius);
         slot.fillMat.opacity = 0.5 * (h.lingerTimer / 0.4);
+        slot.outerMat.opacity = 0.88;
         slot.pillar.visible = h.kind === 'orbital_pillar' || h.kind === 'boss_phase_nova';
         slot.pillarMat.color.setHex(hex);
         slot.pillar.scale.set(h.radius * 0.65, 1, h.radius * 0.65);
@@ -1017,7 +1289,7 @@ export function createMarsCombatVFXController() {
       }
     }
 
-    // Update Enemy Windup Aiming Laser Sightlines (Go2 Hound pounce, G1 Vanguard burst, Aero Hunter dive-strafe)
+    // Update Enemy Windup Aiming Laser Sightlines (Robots + Xenomorph Lunges + Deathless Slam)
     let sightIdx = 0;
     for (const e of enemies) {
       if (sightIdx >= MAX_WINDUP_SIGHTS) break;
@@ -1028,13 +1300,23 @@ export function createMarsCombatVFXController() {
         e.attackPhase === 'windup' &&
         (e.archetype === 'go2_hound' ||
           e.archetype === 'g1_vanguard' ||
-          e.archetype === 'aero_hunter')
+          e.archetype === 'aero_hunter' ||
+          e.archetype === 'xeno_runner' ||
+          e.archetype === 'xeno_spitter' ||
+          e.archetype === 'deathless_vanguard')
       ) {
         const slot = windupSightSlots[sightIdx++];
         const originY =
-          e.y + (e.archetype === 'aero_hunter' ? 0.55 : e.archetype === 'g1_vanguard' ? 1.45 : 0.72);
+          e.y +
+          (e.archetype === 'aero_hunter'
+            ? 0.55
+            : e.archetype === 'g1_vanguard' || e.archetype === 'deathless_vanguard'
+              ? 1.45
+              : 0.95);
         const targetGroundY = sampleMarsArenaSurfaceHeight(e.telegraphTargetX, e.telegraphTargetZ);
-        const targetY = targetGroundY + (e.archetype === 'go2_hound' ? 0.12 : 0.95);
+        const targetY =
+          targetGroundY +
+          (e.archetype === 'go2_hound' || e.archetype === 'xeno_spitter' ? 0.12 : 0.95);
 
         _v1.set(e.x, originY, e.z);
         _v2.set(e.telegraphTargetX, targetY, e.telegraphTargetZ);
@@ -1046,13 +1328,22 @@ export function createMarsCombatVFXController() {
           slot.group.lookAt(_v2);
           const pulse = 0.75 + Math.sin(simTime * 34 + e.uid) * 0.25;
           slot.beam.scale.set(pulse * 1.15, pulse * 1.15, len);
-          const sightHex = e.archetype === 'aero_hunter' ? 0x38bdf8 : 0xff2a55;
+          const sightHex =
+            e.archetype === 'aero_hunter'
+              ? 0x38bdf8
+              : e.archetype === 'xeno_runner' || e.archetype === 'xeno_spitter'
+                ? 0x84cc16
+                : e.archetype === 'deathless_vanguard'
+                  ? 0xf59e0b
+                  : 0xff2a55;
           slot.beamMat.color.setHex(sightHex);
           slot.beamMat.opacity = 0.55 + pulse * 0.35;
 
           slot.targetRing.visible = true;
           slot.targetRing.position.set(e.telegraphTargetX, targetGroundY + 0.08, e.telegraphTargetZ);
-          slot.targetRing.scale.setScalar(e.archetype === 'go2_hound' ? 0.92 : 0.62);
+          slot.targetRing.scale.setScalar(
+            e.archetype === 'go2_hound' || e.archetype === 'xeno_spitter' ? 0.95 : 0.65
+          );
           slot.ringMat.color.setHex(sightHex);
           slot.ringMat.opacity = 0.48 + pulse * 0.34;
         } else {
@@ -1208,6 +1499,29 @@ export function createMarsCombatVFXController() {
     } else {
       wingmanSlashGroup.visible = false;
     }
+
+    // Update Player High-Frequency Plasma War-Axe Cleave Crescent [X]
+    if (params.playerMeleeSlash && params.playerMeleeSlash.swingTimer > 0) {
+      playerMeleeSlashGroup.visible = true;
+      const prog = 1 - Math.max(0, Math.min(1, params.playerMeleeSlash.swingTimer / 0.32));
+      playerMeleeSlashGroup.position.set(
+        params.playerMeleeSlash.x,
+        params.playerMeleeSlash.y + 1.15,
+        params.playerMeleeSlash.z
+      );
+      // Sweep crescent from right-front across to left-front around -yaw!
+      playerMeleeSlashGroup.rotation.set(
+        0.16,
+        -params.playerMeleeSlash.yaw - Math.PI * 0.43 + (prog - 0.5) * 0.95,
+        -0.18 + prog * 0.36
+      );
+      const fade = Math.sin(prog * Math.PI);
+      meleeOuterMat.opacity = 0.35 + fade * 0.62;
+      meleeInnerMat.opacity = 0.45 + fade * 0.55;
+      playerMeleeSlashGroup.scale.setScalar(0.88 + prog * 0.34);
+    } else {
+      playerMeleeSlashGroup.visible = false;
+    }
   };
 
   const spawnEjectedShell = (ev: {
@@ -1243,12 +1557,14 @@ export function createMarsCombatVFXController() {
     isShield: boolean;
     isCrit: boolean;
     isShatter: boolean;
+    isAcidBlood?: boolean;
+    isPhysicalBlock?: boolean;
   }) => {
-    const count = imp.isShatter ? 34 : imp.isCrit ? 20 : 12;
+    const count = imp.isShatter ? 34 : imp.isPhysicalBlock ? 22 : imp.isCrit ? 20 : 14;
     for (let i = 0; i < count; i++) {
       const idx = sparkCursor % SPARK_MAX;
       sparkCursor++;
-      const spread = imp.isShatter ? 1.35 : 0.75;
+      const spread = imp.isShatter ? 1.35 : imp.isPhysicalBlock ? 1.05 : 0.75;
       const dx = imp.nx + (Math.random() - 0.5) * spread;
       const dy = Math.max(0.15, imp.ny + (Math.random() - 0.35) * spread);
       const dz = imp.nz + (Math.random() - 0.5) * spread;
@@ -1260,7 +1576,11 @@ export function createMarsCombatVFXController() {
       sVel[idx * 3 + 1] = dy * spd + 1.8;
       sVel[idx * 3 + 2] = dz * spd;
 
-      if (imp.isShatter || imp.isShield) {
+      if (imp.isAcidBlood) {
+        _col.setHex(i % 2 === 0 ? 0xa3e635 : 0x22c55e);
+      } else if (imp.isPhysicalBlock) {
+        _col.setHex(i % 2 === 0 ? 0xfef08a : 0x7dd3fc);
+      } else if (imp.isShatter || imp.isShield) {
         _col.setHex(i % 3 === 0 ? 0xe0f2fe : 0x00e5ff);
       } else if (imp.isCrit) {
         _col.setHex(i % 2 === 0 ? 0xfef08a : 0xf97316);
@@ -1318,6 +1638,10 @@ export function createMarsCombatVFXController() {
     shellMat.dispose();
     slashGeo.dispose();
     slashMat.dispose();
+    meleeOuterArcGeo.dispose();
+    meleeInnerArcGeo.dispose();
+    meleeOuterMat.dispose();
+    meleeInnerMat.dispose();
   };
 
   return {
@@ -1325,6 +1649,7 @@ export function createMarsCombatVFXController() {
     update: (
       params: Parameters<typeof update>[0] & {
         wingmanSlash?: { x: number; y: number; z: number; yaw: number; flashTimer: number };
+        playerMeleeSlash?: { x: number; y: number; z: number; yaw: number; swingTimer: number };
       }
     ) => update(params),
     spawnExplosionBurst,
@@ -1623,7 +1948,9 @@ export function createMountedSciFiPulseRifle(
         ? 0xfbbf24
         : activeWeapon === 'missile_pod'
           ? 0xfb7185
-          : 0x00e5ff;
+          : activeWeapon === 'compound_bow'
+            ? 0x10b981
+            : 0x00e5ff;
     plasmaRailMat.color.setHex(hex);
     plasmaRailMat.emissive.setHex(hex);
 
@@ -1631,7 +1958,8 @@ export function createMountedSciFiPulseRifle(
       flashGroup.visible = true;
       flashMat.color.setHex(activeWeapon === 'railgun' ? 0xfef08a : hex);
       const t = Math.min(1, muzzleFlashTimer / 0.055);
-      const weaponScaleMult = activeWeapon === 'railgun' ? 1.85 : 1.15;
+      const weaponScaleMult =
+        activeWeapon === 'railgun' ? 1.85 : activeWeapon === 'compound_bow' ? 1.05 : 1.15;
       flashGroup.scale.set(
         weaponScaleMult * (0.7 + t * 0.65),
         weaponScaleMult * (0.65 + t * 0.55),
@@ -1662,7 +1990,7 @@ export function createMountedSciFiPulseRifle(
     haloGeo.dispose();
   };
 
-  return { group, muzzleSocket, updateWeaponVisuals, dispose };
+  return { group, barrelCluster, muzzleSocket, updateWeaponVisuals, dispose };
 }
 
 /**
