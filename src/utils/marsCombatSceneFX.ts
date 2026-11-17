@@ -1,25 +1,23 @@
 import * as THREE from 'three';
-import { sampleLandTerrainHeight } from './actionSandboxEngine';
 import {
   CombatProjectile,
   GroundTelegraphHazard,
   CombatPickup,
   CombatEnemyEntity,
   PlayerMechId,
-  CombatWeaponId
+  CombatWeaponId,
+  MARS_BATTLEFIELD_OBSTACLES,
+  sampleMarsArenaSurfaceHeight
 } from './marsCombatEngine';
 
 const _dummyObj = new THREE.Object3D();
 const _v1 = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
+const _v3 = new THREE.Vector3();
 const _up = new THREE.Vector3(0, 1, 0);
 const _quat = new THREE.Quaternion();
 const _col = new THREE.Color();
 
-/**
- * Generates seamless Martian Jezero Iron-Oxide Regolith Albedo + Micro-Relief Bump CanvasTextures.
- * 100% procedural zero-404 textures with SRGBColorSpace on color map and Linear on bumpMap.
- */
 export function createSoftGlowSpriteTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 64;
@@ -55,11 +53,78 @@ export function createSoftShadowDiscTexture(): THREE.CanvasTexture {
   return tex;
 }
 
-export function createMartianBattlefieldTextures(maxAnisotropy: number): {
+function hashPeriodicGrid(ix: number, iy: number, mask: number, seed: number): number {
+  const x = ix & mask;
+  const y = iy & mask;
+  let h = Math.imul((x * 374761393 + y * 668265263 + seed) | 0, 1274126177);
+  h = (h ^ (h >>> 13)) >>> 0;
+  return (h & 0xffff) / 65535;
+}
+
+function periodicValueNoise(u: number, v: number, freqPow2: number, seed: number): number {
+  const mask = freqPow2 - 1;
+  const gx = u * freqPow2;
+  const gy = v * freqPow2;
+  const ix = Math.floor(gx);
+  const iy = Math.floor(gy);
+  const fx = gx - ix;
+  const fy = gy - iy;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
+  const n00 = hashPeriodicGrid(ix, iy, mask, seed);
+  const n10 = hashPeriodicGrid(ix + 1, iy, mask, seed);
+  const n01 = hashPeriodicGrid(ix, iy + 1, mask, seed);
+  const n11 = hashPeriodicGrid(ix + 1, iy + 1, mask, seed);
+  const nx0 = n00 + (n10 - n00) * sx;
+  const nx1 = n01 + (n11 - n01) * sx;
+  return nx0 + (nx1 - nx0) * sy;
+}
+
+function periodicWorleyBasalt(
+  u: number,
+  v: number,
+  cellsPow2: number,
+  seed: number
+): { f1: number; edge: number } {
+  const mask = cellsPow2 - 1;
+  const gx = u * cellsPow2;
+  const gy = v * cellsPow2;
+  const ix = Math.floor(gx);
+  const iy = Math.floor(gy);
+  let d1 = 99;
+  let d2 = 99;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const cx = ix + dx;
+      const cy = iy + dy;
+      const px = cx + 0.15 + hashPeriodicGrid(cx, cy, mask, seed) * 0.7;
+      const py = cy + 0.15 + hashPeriodicGrid(cx, cy, mask, seed + 911) * 0.7;
+      const distSq = (gx - px) * (gx - px) + (gy - py) * (gy - py);
+      if (distSq < d1) {
+        d2 = d1;
+        d1 = distSq;
+      } else if (distSq < d2) {
+        d2 = distSq;
+      }
+    }
+  }
+  const s1 = Math.sqrt(d1);
+  const s2 = Math.sqrt(d2);
+  return { f1: s1, edge: Math.min(1, Math.max(0, s2 - s1)) };
+}
+
+/**
+ * Generates seamless 1024x1024 Martian Jezero Iron-Oxide Regolith Albedo + Micro-Relief Bump CanvasTextures
+ * using strictly 1.0-periodic multi-scale Value-Noise + Worley basalt fracture + aeolian ripples (zero modulo polka-dots).
+ */
+export function createMartianBattlefieldTextures(
+  maxAnisotropy: number,
+  isSoftwareGl: boolean = false
+): {
   albedoMap: THREE.CanvasTexture;
   bumpMap: THREE.CanvasTexture;
 } {
-  const size = 256;
+  const size = isSoftwareGl ? 512 : 1024;
   const cColor = document.createElement('canvas');
   cColor.width = size;
   cColor.height = size;
@@ -70,62 +135,72 @@ export function createMartianBattlefieldTextures(maxAnisotropy: number): {
   cBump.height = size;
   const bCtx = cBump.getContext('2d')!;
 
-  ctx.fillStyle = '#5e2919';
-  ctx.fillRect(0, 0, size, size);
-  bCtx.fillStyle = '#808080';
-  bCtx.fillRect(0, 0, size, size);
+  const colorImg = ctx.createImageData(size, size);
+  const bumpImg = bCtx.createImageData(size, size);
+  const cData = colorImg.data;
+  const bData = bumpImg.data;
+  const invSize = 1 / size;
 
-  // Wind-rippled Martian dune strata
-  for (let y = 0; y < size; y += 6) {
-    const wave = Math.sin((y / size) * Math.PI * 8) * 14;
-    ctx.strokeStyle = y % 12 === 0 ? 'rgba(194, 94, 52, 0.20)' : 'rgba(34, 14, 9, 0.22)';
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.bezierCurveTo(size * 0.33, y + wave, size * 0.66, y - wave, size, y);
-    ctx.stroke();
+  for (let py = 0; py < size; py++) {
+    const v = py * invSize;
+    for (let px = 0; px < size; px++) {
+      const u = px * invSize;
+      const idx = (py * size + px) * 4;
 
-    bCtx.strokeStyle = y % 12 === 0 ? 'rgba(215, 215, 215, 0.26)' : 'rgba(45, 45, 45, 0.26)';
-    bCtx.lineWidth = 2.6;
-    bCtx.beginPath();
-    bCtx.moveTo(0, y);
-    bCtx.bezierCurveTo(size * 0.33, y + wave, size * 0.66, y - wave, size, y);
-    bCtx.stroke();
+      const nMacro = periodicValueNoise(u, v, 8, 101);
+      const nMid = periodicValueNoise(u, v, 16, 233);
+      const nFine = periodicValueNoise(u, v, 64, 577);
+      const nMicro = periodicValueNoise(u, v, 128, 941);
+      const fbm = nMacro * 0.45 + nMid * 0.30 + nFine * 0.17 + nMicro * 0.08;
+
+      const basaltMacro = periodicWorleyBasalt(u, v, 16, 1301);
+      const gravel = periodicWorleyBasalt(u, v, 64, 2707);
+
+      const ripplePhase =
+        v * 14.0 + (nMacro - 0.5) * 1.65 + (nMid - 0.5) * 0.55 + Math.sin(u * Math.PI * 4.0) * 0.28;
+      const ripple = 0.5 + 0.5 * Math.sin(ripplePhase * Math.PI * 2.0);
+      const sandMask = Math.min(1, Math.max(0, (fbm - 0.34) * 2.2));
+      const rockExpose = (1 - sandMask) * Math.min(1, basaltMacro.edge * 2.4);
+      const pebbleBump = Math.max(0, 1 - gravel.f1 * 2.6) * (0.35 + nFine * 0.65);
+
+      const baseR = 96 + fbm * 66 + ripple * sandMask * 28 - rockExpose * 38 + pebbleBump * 18;
+      const baseG = 42 + fbm * 31 + ripple * sandMask * 14 - rockExpose * 19 + pebbleBump * 8;
+      const baseB = 26 + fbm * 18 + ripple * sandMask * 7 - rockExpose * 9 + pebbleBump * 6;
+
+      cData[idx] = Math.max(18, Math.min(242, baseR | 0));
+      cData[idx + 1] = Math.max(10, Math.min(185, baseG | 0));
+      cData[idx + 2] = Math.max(8, Math.min(145, baseB | 0));
+      cData[idx + 3] = 255;
+
+      const hVal =
+        0.46 +
+        (fbm - 0.5) * 0.28 +
+        (ripple - 0.5) * sandMask * 0.22 +
+        rockExpose * 0.24 +
+        pebbleBump * 0.22 -
+        (1 - Math.min(1, basaltMacro.edge * 5.0)) * (1 - sandMask) * 0.18;
+      const lum = Math.max(0, Math.min(255, Math.round(hVal * 255)));
+      bData[idx] = lum;
+      bData[idx + 1] = lum;
+      bData[idx + 2] = lum;
+      bData[idx + 3] = 255;
+    }
   }
 
-  // Basalt gravel & hematite mineral flecks
-  for (let i = 0; i < 1800; i++) {
-    const x = (i * 73) % size;
-    const y = (i * 139) % size;
-    const rad = 0.7 + (i % 3) * 0.55;
-    ctx.fillStyle =
-      i % 4 === 0
-        ? 'rgba(218, 122, 76, 0.16)'
-        : i % 2 === 0
-          ? 'rgba(112, 54, 36, 0.18)'
-          : 'rgba(42, 18, 12, 0.18)';
-    ctx.beginPath();
-    ctx.arc(x, y, rad, 0, Math.PI * 2);
-    ctx.fill();
-
-    const lum = i % 2 === 0 ? 156 : 98;
-    bCtx.fillStyle = 'rgba(' + lum + ',' + lum + ',' + lum + ',0.16)';
-    bCtx.beginPath();
-    bCtx.arc(x, y, rad, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  ctx.putImageData(colorImg, 0, 0);
+  bCtx.putImageData(bumpImg, 0, 0);
 
   const albedoMap = new THREE.CanvasTexture(cColor);
   albedoMap.colorSpace = THREE.SRGBColorSpace;
   albedoMap.wrapS = THREE.RepeatWrapping;
   albedoMap.wrapT = THREE.RepeatWrapping;
-  albedoMap.repeat.set(56, 56);
+  albedoMap.repeat.set(18, 18);
   albedoMap.anisotropy = maxAnisotropy;
 
   const bumpMap = new THREE.CanvasTexture(cBump);
   bumpMap.wrapS = THREE.RepeatWrapping;
   bumpMap.wrapT = THREE.RepeatWrapping;
-  bumpMap.repeat.set(56, 56);
+  bumpMap.repeat.set(18, 18);
   bumpMap.anisotropy = maxAnisotropy;
 
   return { albedoMap, bumpMap };
@@ -133,13 +208,13 @@ export function createMartianBattlefieldTextures(maxAnisotropy: number): {
 
 /**
  * Builds the Martian Jezero Battlefield Environment:
- * - 190m x 190m continuous analytical terrain mesh extending well beyond the 68m combat perimeter
- * - Natural basalt canyon cliffs & multi-part sci-fi Mars relay pylons around perimeter (no indoor box walls!)
+ * - 210m x 210m continuous analytical terrain mesh extending well beyond the 68m combat perimeter
+ * - Natural basalt canyon cliffs, 10 physical midfield tactical cover boulders, & 6 sci-fi Mars relay pylons
  * - Overhead Futuristic Orbital Carrier Silhouette Landmark visible in initial spawn vista!
  */
 export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwareGl: boolean) {
   const root = new THREE.Group();
-  const { albedoMap, bumpMap } = createMartianBattlefieldTextures(maxAnisotropy);
+  const { albedoMap, bumpMap } = createMartianBattlefieldTextures(maxAnisotropy, isSoftwareGl);
   const dustGlowTex = createSoftGlowSpriteTexture();
 
   // 0. Martian Dusk Rayleigh Atmospheric Sky Dome
@@ -183,62 +258,77 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
   skyDome.frustumCulled = false;
   root.add(skyDome);
 
-  // 1. Continuous Martian Desert Terrain
-  const segs = isSoftwareGl ? 96 : 136;
+  // 1. Continuous Martian Desert Terrain with Macro Dune/Hollow Vertex Color Stratification
+  const segs = isSoftwareGl ? 96 : 144;
   const terrainGeo = new THREE.PlaneGeometry(210, 210, segs, segs);
   terrainGeo.rotateX(-Math.PI / 2);
   const pos = terrainGeo.attributes.position;
+  const vColors = new Float32Array(pos.count * 3);
   for (let i = 0; i < pos.count; i++) {
     const vx = pos.getX(i);
     const vz = pos.getZ(i);
     const r = Math.hypot(vx, vz);
-    // Natural outer crater rim uplift beyond 70m combat zone
-    const rimRise = r > 70 ? Math.pow((r - 70) / 28, 1.85) * 6.5 : 0;
-    pos.setY(i, sampleLandTerrainHeight(vx, vz) + rimRise);
+    const h = sampleMarsArenaSurfaceHeight(vx, vz);
+    pos.setY(i, h);
+
+    const macroWave =
+      0.5 +
+      0.5 * Math.sin(vx * 0.055 + Math.cos(vz * 0.048) * 1.7) * Math.cos(vz * 0.041 - vx * 0.022);
+    const rimShade = r > 66 ? Math.max(0.72, 1 - (r - 66) * 0.008) : 1.0;
+    const crestWarm =
+      Math.min(1.14, Math.max(0.78, 0.88 + h * 0.055 + macroWave * 0.14)) * rimShade;
+    vColors[i * 3] = crestWarm;
+    vColors[i * 3 + 1] = crestWarm * (0.94 + macroWave * 0.08);
+    vColors[i * 3 + 2] = crestWarm * (0.90 + (1 - macroWave) * 0.10);
   }
+  terrainGeo.setAttribute('color', new THREE.BufferAttribute(vColors, 3));
   terrainGeo.computeVertexNormals();
 
   const terrainMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
+    vertexColors: true,
     map: albedoMap,
     bumpMap,
-    bumpScale: 0.05,
-    roughness: 0.88,
-    metalness: 0.06
+    bumpScale: 0.085,
+    roughness: 0.89,
+    metalness: 0.05
   });
   const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
   terrainMesh.receiveShadow = !isSoftwareGl;
   root.add(terrainMesh);
 
-  // 2. Natural Perimeter Basalt Outcrops (InstancedMesh, varied scale & tint)
+  // 2A. Natural Perimeter Basalt Outcrops (InstancedMesh, varied scale & tint)
   const rockGeo = new THREE.DodecahedronGeometry(1.0, 1);
   const rPos = rockGeo.attributes.position;
   for (let i = 0; i < rPos.count; i++) {
     const rx = rPos.getX(i);
     const ry = rPos.getY(i);
     const rz = rPos.getZ(i);
-    // Flatten underside and bevel angular basalt facets
     rPos.setXYZ(
       i,
-      rx * (1 + 0.18 * Math.sin(ry * 3.1)),
+      rx * (1 + 0.16 * Math.sin(ry * 3.1)),
       ry < 0 ? ry * 0.45 : ry * 1.25,
-      rz * (1 + 0.18 * Math.cos(rx * 2.7))
+      rz * (1 + 0.16 * Math.cos(rx * 2.7))
     );
   }
   rockGeo.computeVertexNormals();
   const rockMat = new THREE.MeshStandardMaterial({
     color: 0x6b3222,
+    bumpMap,
+    bumpScale: 0.05,
     roughness: 0.88,
     metalness: 0.12
   });
   const rockCount = 44;
   const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
+  rockInst.castShadow = !isSoftwareGl;
+  rockInst.receiveShadow = !isSoftwareGl;
   for (let i = 0; i < rockCount; i++) {
     const ang = (i / rockCount) * Math.PI * 2 + (i % 3) * 0.06;
     const rad = 72 + (i % 4) * 5.5;
     const x = Math.cos(ang) * rad;
     const z = Math.sin(ang) * rad;
-    const y = sampleLandTerrainHeight(x, z) + Math.pow((rad - 70) / 28, 1.85) * 6.5 - 0.3;
+    const y = sampleMarsArenaSurfaceHeight(x, z) - 0.3;
     _dummyObj.position.set(x, y, z);
     _dummyObj.rotation.set((i % 5) * 0.08, ang + i * 0.7, 0);
     const sx = 3.2 + (i % 4) * 1.3;
@@ -255,7 +345,29 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
   rockInst.computeBoundingSphere();
   root.add(rockInst);
 
-  // 3. Multi-Part Sci-Fi Colony Defense Beacons around Mid-Perimeter (6 composite towers, 5 parts each)
+  // 2B. Tactical Midfield Basalt Cover Boulders (1:1 synced with MARS_BATTLEFIELD_OBSTACLES!)
+  const midfieldBoulders = MARS_BATTLEFIELD_OBSTACLES.filter((o) => o.kind === 'boulder');
+  const coverBoulderInst = new THREE.InstancedMesh(rockGeo, rockMat, midfieldBoulders.length);
+  coverBoulderInst.castShadow = !isSoftwareGl;
+  coverBoulderInst.receiveShadow = !isSoftwareGl;
+  for (let i = 0; i < midfieldBoulders.length; i++) {
+    const obs = midfieldBoulders[i];
+    const groundY = sampleMarsArenaSurfaceHeight(obs.x, obs.z);
+    _dummyObj.position.set(obs.x, groundY + 0.12, obs.z);
+    _dummyObj.rotation.set((i % 3) * 0.06, i * 1.15 + 0.4, ((i + 1) % 3) * 0.05);
+    const sy = obs.height / 1.25;
+    _dummyObj.scale.set(obs.radius * 1.02, sy, obs.radius * 0.96);
+    _dummyObj.updateMatrix();
+    coverBoulderInst.setMatrixAt(i, _dummyObj.matrix);
+    _col.setHSL(0.032 + (i % 3) * 0.007, 0.44, 0.20 + (i % 4) * 0.04);
+    coverBoulderInst.setColorAt(i, _col);
+  }
+  coverBoulderInst.instanceMatrix.needsUpdate = true;
+  if (coverBoulderInst.instanceColor) coverBoulderInst.instanceColor.needsUpdate = true;
+  coverBoulderInst.computeBoundingSphere();
+  root.add(coverBoulderInst);
+
+  // 3. Multi-Part Sci-Fi Colony Defense Beacons around Mid-Perimeter (6 composite towers synced with MARS_BATTLEFIELD_OBSTACLES)
   const pylonGroup = new THREE.Group();
   const hullMat = new THREE.MeshStandardMaterial({ color: 0x1e2530, roughness: 0.68, metalness: 0.55 });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.28, metalness: 0.88 });
@@ -275,7 +387,7 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     const rad = 56;
     const px = Math.cos(ang) * rad;
     const pz = Math.sin(ang) * rad;
-    const py = sampleLandTerrainHeight(px, pz);
+    const py = sampleMarsArenaSurfaceHeight(px, pz);
 
     const tower = new THREE.Group();
     tower.position.set(px, py, pz);
@@ -283,13 +395,19 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
 
     const base = new THREE.Mesh(baseGeo, hullMat);
     base.position.y = 0.55;
+    base.castShadow = !isSoftwareGl;
+    base.receiveShadow = !isSoftwareGl;
     const mast = new THREE.Mesh(mastGeo, hullMat);
     mast.position.y = 4.2;
+    mast.castShadow = !isSoftwareGl;
+    mast.receiveShadow = !isSoftwareGl;
     const finA = new THREE.Mesh(finGeo, trimMat);
     finA.position.set(0, 4.8, 0);
+    finA.castShadow = !isSoftwareGl;
     const finB = new THREE.Mesh(finGeo, trimMat);
     finB.position.set(0, 4.8, 0);
     finB.rotation.y = Math.PI / 2;
+    finB.castShadow = !isSoftwareGl;
     const emitter = new THREE.Mesh(emitterGeo, beaconMat);
     emitter.position.y = 8.15;
 
@@ -309,15 +427,21 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     emissiveIntensity: 2.6,
     roughness: 0.2
   });
-  const spine = new THREE.Mesh(new THREE.BoxGeometry(28, 3.4, 5.8), shipHullMat);
-  const prow = new THREE.Mesh(new THREE.ConeGeometry(3.6, 11.5, 4), shipHullMat);
+  const cruiserSpineGeo = new THREE.BoxGeometry(28, 3.4, 5.8);
+  const cruiserProwGeo = new THREE.ConeGeometry(3.6, 11.5, 4);
+  const cruiserBridgeGeo = new THREE.BoxGeometry(6.8, 3.0, 3.4);
+  const cruiserWingGeo = new THREE.BoxGeometry(12, 0.75, 14);
+  const cruiserThrusterGeo = new THREE.CylinderGeometry(1.15, 1.35, 2.4, 12);
+
+  const spine = new THREE.Mesh(cruiserSpineGeo, shipHullMat);
+  const prow = new THREE.Mesh(cruiserProwGeo, shipHullMat);
   prow.rotation.z = Math.PI / 2;
   prow.position.x = -18.5;
-  const bridge = new THREE.Mesh(new THREE.BoxGeometry(6.8, 3.0, 3.4), shipHullMat);
+  const bridge = new THREE.Mesh(cruiserBridgeGeo, shipHullMat);
   bridge.position.set(4, 3.0, 0);
-  const wingL = new THREE.Mesh(new THREE.BoxGeometry(12, 0.75, 14), shipHullMat);
+  const wingL = new THREE.Mesh(cruiserWingGeo, shipHullMat);
   wingL.position.set(3, -0.4, 0);
-  const thrusterA = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.35, 2.4, 12), shipEngineMat);
+  const thrusterA = new THREE.Mesh(cruiserThrusterGeo, shipEngineMat);
   thrusterA.rotation.z = Math.PI / 2;
   thrusterA.position.set(14.5, 0.2, -1.9);
   const thrusterB = thrusterA.clone();
@@ -351,9 +475,11 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     const arr = dustGeo.attributes.position.array as Float32Array;
     for (let i = 0; i < dustCount; i++) {
       let x = arr[i * 3] + dt * 3.8;
-      const z = arr[i * 3 + 2] + dt * 1.2;
+      let z = arr[i * 3 + 2] + dt * 1.2;
       if (x - playerX > 55) x -= 110;
       if (x - playerX < -55) x += 110;
+      if (z - playerZ > 55) z -= 110;
+      if (z - playerZ < -55) z += 110;
       arr[i * 3] = x;
       arr[i * 3 + 2] = z;
     }
@@ -377,20 +503,26 @@ export function createMarsBattlefieldEnvironment(maxAnisotropy: number, isSoftwa
     hullMat.dispose();
     trimMat.dispose();
     beaconMat.dispose();
+    cruiserSpineGeo.dispose();
+    cruiserProwGeo.dispose();
+    cruiserBridgeGeo.dispose();
+    cruiserWingGeo.dispose();
+    cruiserThrusterGeo.dispose();
     shipHullMat.dispose();
     shipEngineMat.dispose();
     dustGeo.dispose();
     dustMat.dispose();
   };
 
-  return { root, terrainMesh, updateAtmosphere, dispose };
+  return { root, terrainMesh, coverBoulderInst, pylonGroup, updateAtmosphere, dispose };
 }
 
 /**
  * Zero-GC Pooled Combat VFX Controller:
  * - InstancedMesh Projectiles (Player Pulse / Railgun / Homing Missiles / Boss Salvo Missiles)
- * - Ground Holographic AoE Countdown Telegraph Rings + Orbital Lightning Pillars
- * - Boss Volumetric Coral Sweeping Laser Beam + Phase 2 Coral Overdrive Dome
+ * - Ground Holographic AoE Countdown Telegraph Rings (24 slots) + Orbital Lightning Pillars
+ * - Enemy Windup Crimson Aiming Laser Sightlines (12 slots for Go2 Hound / G1 Vanguard / Aero Hunter)
+ * - Boss Volumetric Coral Sweeping Laser Beam
  * - Player EMP Nova Sphere + Player Orbital Ion Cannon Sky-Beam
  * - Pooled Particle Burst Ring Buffer (320 sparks/embers)
  * - Composite Multi-Part Rotating 3D Pickups (Repair Cores & Overcharge Cells)
@@ -400,7 +532,7 @@ export function createMarsCombatVFXController() {
   const sparkGlowTex = createSoftGlowSpriteTexture();
   const pkShadowTex = createSoftShadowDiscTexture();
 
-  // 1. Pooled Instanced Projectiles (max 96 — initialized off-screen at y=-999 so Title Screen has zero origin artifacts!)
+  // 1. Pooled Instanced Projectiles (max 96 — initialized off-screen at y=-999)
   const projGeo = new THREE.CapsuleGeometry(0.11, 0.95, 4, 8);
   projGeo.rotateX(Math.PI / 2);
   const projMat = new THREE.MeshBasicMaterial({
@@ -423,7 +555,7 @@ export function createMarsCombatVFXController() {
   if (projInst.instanceColor) projInst.instanceColor.needsUpdate = true;
   root.add(projInst);
 
-  // 2. Pooled Explosion Sparks & Exhaust Flares Ring Buffer (320 soft radial glow sprites — zero white squares!)
+  // 2. Pooled Explosion Sparks & Exhaust Flares Ring Buffer (320 soft radial glow sprites)
   const SPARK_MAX = 320;
   const sPos = new Float32Array(SPARK_MAX * 3);
   const sVel = new Float32Array(SPARK_MAX * 3);
@@ -470,13 +602,16 @@ export function createMarsCombatVFXController() {
     }
   };
 
-  // 3. Ground AoE Telegraph Pool (8 slots, each with outer boundary ring + inner countdown fill disc + vertical strike pillar)
-  const MAX_TELEGRAPHS = 8;
+  // 3A. Ground AoE Telegraph Pool (24 slots so overlapping Siege Mortars + Boss Orbital Pillars never clip!)
+  const MAX_TELEGRAPHS = 24;
   const telegraphSlots: {
     group: THREE.Group;
     outerRing: THREE.Mesh;
     fillDisc: THREE.Mesh;
     pillar: THREE.Mesh;
+    outerMat: THREE.MeshBasicMaterial;
+    fillMat: THREE.MeshBasicMaterial;
+    pillarMat: THREE.MeshBasicMaterial;
   }[] = [];
   const ringGeo = new THREE.RingGeometry(0.88, 1.0, 36);
   ringGeo.rotateX(-Math.PI / 2);
@@ -520,7 +655,47 @@ export function createMarsCombatVFXController() {
     pillar.visible = false;
     g.add(outerRing, fillDisc, pillar);
     root.add(g);
-    telegraphSlots.push({ group: g, outerRing, fillDisc, pillar });
+    telegraphSlots.push({ group: g, outerRing, fillDisc, pillar, outerMat, fillMat, pillarMat });
+  }
+
+  // 3B. Enemy Windup Crimson Laser Sightlines Pool (12 slots for Go2 Hound / G1 Vanguard / Aero Hunter)
+  const MAX_WINDUP_SIGHTS = 12;
+  const windupSightGeo = new THREE.CylinderGeometry(0.022, 0.032, 1.0, 6);
+  windupSightGeo.rotateX(Math.PI / 2);
+  windupSightGeo.translate(0, 0, 0.5);
+  const windupSightSlots: {
+    group: THREE.Group;
+    beam: THREE.Mesh;
+    targetRing: THREE.Mesh;
+    beamMat: THREE.MeshBasicMaterial;
+    ringMat: THREE.MeshBasicMaterial;
+  }[] = [];
+  for (let i = 0; i < MAX_WINDUP_SIGHTS; i++) {
+    const g = new THREE.Group();
+    g.visible = false;
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0xff2a55,
+      transparent: true,
+      opacity: 0.78,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xff2a55,
+      transparent: true,
+      opacity: 0.72,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2
+    });
+    const beam = new THREE.Mesh(windupSightGeo, beamMat);
+    const targetRing = new THREE.Mesh(ringGeo, ringMat);
+    targetRing.scale.setScalar(0.58);
+    g.add(beam);
+    root.add(g, targetRing);
+    targetRing.visible = false;
+    windupSightSlots.push({ group: g, beam, targetRing, beamMat, ringMat });
   }
 
   // 4. Boss Volumetric Sweeping Coral Laser Beam (Inner White Core + Outer Crimson Sheath + Charge Sphere)
@@ -547,60 +722,54 @@ export function createMarsCombatVFXController() {
     side: THREE.DoubleSide,
     depthWrite: false
   });
-  const chargeSphere = new THREE.Mesh(
-    new THREE.SphereGeometry(0.75, 16, 16),
-    new THREE.MeshBasicMaterial({
-      color: 0xff3b6b,
-      transparent: true,
-      opacity: 0.9,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-  );
+  const chargeSphereGeo = new THREE.SphereGeometry(0.75, 16, 16);
+  const chargeSphereMat = new THREE.MeshBasicMaterial({
+    color: 0xff3b6b,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const chargeSphere = new THREE.Mesh(chargeSphereGeo, chargeSphereMat);
   const coreBeamMesh = new THREE.Mesh(coreBeamGeo, coreBeamMat);
   const sheathBeamMesh = new THREE.Mesh(sheathBeamGeo, sheathBeamMat);
   bossLaserGroup.add(chargeSphere, coreBeamMesh, sheathBeamMesh);
   root.add(bossLaserGroup);
 
   // 5. Player EMP Nova Sphere & Player Orbital Ion Cannon Sky-Beam
-  const empSphere = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 24, 18),
-    new THREE.MeshBasicMaterial({
-      color: 0x00e5ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.75,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-  );
+  const empSphereGeo = new THREE.SphereGeometry(1, 24, 18);
+  const empSphereMat = new THREE.MeshBasicMaterial({
+    color: 0x00e5ff,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.75,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const empSphere = new THREE.Mesh(empSphereGeo, empSphereMat);
   empSphere.visible = false;
   root.add(empSphere);
 
   const orbitalIonBeam = new THREE.Group();
   orbitalIonBeam.visible = false;
-  const ionCore = new THREE.Mesh(
-    pillarGeo,
-    new THREE.MeshBasicMaterial({
-      color: 0xe0f2fe,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-  );
+  const ionCoreMat = new THREE.MeshBasicMaterial({
+    color: 0xe0f2fe,
+    transparent: true,
+    opacity: 0.95,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const ionOuterMat = new THREE.MeshBasicMaterial({
+    color: 0x00e5ff,
+    transparent: true,
+    opacity: 0.45,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const ionCore = new THREE.Mesh(pillarGeo, ionCoreMat);
   ionCore.scale.set(1.6, 2.2, 1.6);
-  const ionOuter = new THREE.Mesh(
-    pillarGeo,
-    new THREE.MeshBasicMaterial({
-      color: 0x00e5ff,
-      transparent: true,
-      opacity: 0.45,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    })
-  );
+  const ionOuter = new THREE.Mesh(pillarGeo, ionOuterMat);
   ionOuter.scale.set(4.2, 2.2, 4.2);
   orbitalIonBeam.add(ionCore, ionOuter);
   root.add(orbitalIonBeam);
@@ -609,24 +778,22 @@ export function createMarsCombatVFXController() {
   const dropStreaks: THREE.Mesh[] = [];
   const streakGeo = new THREE.CylinderGeometry(0.08, 0.85, 24, 10, 1, true);
   streakGeo.translate(0, 12, 0);
+  const streakMat = new THREE.MeshBasicMaterial({
+    color: 0xff4d4d,
+    transparent: true,
+    opacity: 0.72,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
   for (let i = 0; i < 6; i++) {
-    const m = new THREE.Mesh(
-      streakGeo,
-      new THREE.MeshBasicMaterial({
-        color: 0xff4d4d,
-        transparent: true,
-        opacity: 0.72,
-        blending: THREE.AdditiveBlending,
-        side: THREE.DoubleSide,
-        depthWrite: false
-      })
-    );
+    const m = new THREE.Mesh(streakGeo, streakMat);
     m.visible = false;
     root.add(m);
     dropStreaks.push(m);
   }
 
-  // 7. Composite 4-Part 3D Combat Pickups Pool (8 slots: Outer Gyro Ring + Inner Crystal Octahedron + Top/Bottom Caps + Contact Shadow)
+  // 7. Composite 4-Part 3D Combat Pickups Pool (8 slots)
   const pickupSlots: {
     group: THREE.Group;
     core: THREE.Mesh;
@@ -669,6 +836,55 @@ export function createMarsCombatVFXController() {
     pickupSlots.push({ group: g, core, ring, coreMat, ringMat });
   }
 
+  // 8. Setup Pooled Shell Casings InstancedMesh (initialized at y=-999!)
+  const SHELL_MAX = 28;
+  const shellPos = new Float32Array(SHELL_MAX * 3);
+  const shellVel = new Float32Array(SHELL_MAX * 3);
+  const shellLife = new Float32Array(SHELL_MAX);
+  const shellHeavy = new Uint8Array(SHELL_MAX);
+  let shellCursor = 0;
+
+  const shellGeo = new THREE.CylinderGeometry(0.024, 0.028, 0.13, 6);
+  shellGeo.rotateZ(Math.PI / 2);
+  const shellMat = new THREE.MeshStandardMaterial({
+    color: 0xfbbf24,
+    emissive: 0xd97706,
+    emissiveIntensity: 0.75,
+    roughness: 0.22,
+    metalness: 0.92
+  });
+  const shellInst = new THREE.InstancedMesh(shellGeo, shellMat, SHELL_MAX);
+  shellInst.frustumCulled = false;
+  _dummyObj.position.set(0, -999, 0);
+  _dummyObj.scale.setScalar(0.0001);
+  _dummyObj.updateMatrix();
+  for (let i = 0; i < SHELL_MAX; i++) {
+    shellInst.setMatrixAt(i, _dummyObj.matrix);
+    shellInst.setColorAt(i, _col.setHex(0xfbbf24));
+  }
+  shellInst.instanceMatrix.needsUpdate = true;
+  if (shellInst.instanceColor) shellInst.instanceColor.needsUpdate = true;
+  root.add(shellInst);
+
+  // 9. Setup Wingman Electromagnetic Cross-Slash Arc Mesh
+  const wingmanSlashGroup = new THREE.Group();
+  wingmanSlashGroup.visible = false;
+  const slashGeo = new THREE.TorusGeometry(0.95, 0.055, 6, 20, Math.PI * 0.85);
+  const slashMat = new THREE.MeshBasicMaterial({
+    color: 0x00e5ff,
+    transparent: true,
+    opacity: 0.92,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const slashA = new THREE.Mesh(slashGeo, slashMat);
+  slashA.rotation.x = Math.PI * 0.32;
+  const slashB = new THREE.Mesh(slashGeo, slashMat);
+  slashB.rotation.x = -Math.PI * 0.32;
+  slashB.rotation.y = 0.6;
+  wingmanSlashGroup.add(slashA, slashB);
+  root.add(wingmanSlashGroup);
+
   const update = (params: {
     dt: number;
     simTime: number;
@@ -701,6 +917,9 @@ export function createMarsCombatVFXController() {
       spawnExplosionBurst(ex.x, ex.y, ex.z, ex.scale, ex.colorHex);
     }
 
+    // Frame-rate independent missile exhaust spark emission probability (normalized to 0.65 at 60Hz)
+    const missileSparkProb = 1 - Math.pow(1 - 0.65, Math.max(0.1, dt * 60));
+
     // Update Instanced Projectiles + Missile exhaust sparks
     for (let i = 0; i < 96; i++) {
       const p = projectiles[i];
@@ -732,8 +951,7 @@ export function createMarsCombatVFXController() {
       else _col.setHex(0xff2a55);
       projInst.setColorAt(i, _col);
 
-      // Emit missile exhaust trail spark
-      if ((p.kind === 'missile' || p.kind === 'boss_missile') && Math.random() < 0.65) {
+      if ((p.kind === 'missile' || p.kind === 'boss_missile') && Math.random() < missileSparkProb) {
         const idx = sparkCursor % SPARK_MAX;
         sparkCursor++;
         sPos[idx * 3] = p.x;
@@ -768,7 +986,7 @@ export function createMarsCombatVFXController() {
     sparkGeo.attributes.position.needsUpdate = true;
     sparkGeo.attributes.color.needsUpdate = true;
 
-    // Update Ground AoE Telegraph Rings & Orbital Strike Pillars
+    // Update Ground AoE Telegraph Rings & Orbital Strike Pillars (24 slots)
     for (let i = 0; i < MAX_TELEGRAPHS; i++) {
       const slot = telegraphSlots[i];
       const h = hazards[i];
@@ -780,26 +998,72 @@ export function createMarsCombatVFXController() {
       slot.group.position.set(h.x, h.y + 0.06, h.z);
       const isCyan = h.kind === 'orbital_pillar';
       const hex = isCyan ? 0x00e5ff : 0xff2a55;
-      (slot.outerRing.material as THREE.MeshBasicMaterial).color.setHex(hex);
-      (slot.fillDisc.material as THREE.MeshBasicMaterial).color.setHex(hex);
+      slot.outerMat.color.setHex(hex);
+      slot.fillMat.color.setHex(hex);
       slot.outerRing.scale.setScalar(h.radius);
 
       if (!h.detonated) {
         const prog = Math.min(1, h.elapsed / Math.max(0.1, h.windupDuration));
         slot.fillDisc.scale.setScalar(Math.max(0.05, h.radius * prog));
-        (slot.fillDisc.material as THREE.MeshBasicMaterial).opacity = 0.16 + prog * 0.34;
+        slot.fillMat.opacity = 0.16 + prog * 0.34;
         slot.pillar.visible = false;
       } else {
         slot.fillDisc.scale.setScalar(h.radius);
-        (slot.fillDisc.material as THREE.MeshBasicMaterial).opacity = 0.5 * (h.lingerTimer / 0.4);
+        slot.fillMat.opacity = 0.5 * (h.lingerTimer / 0.4);
         slot.pillar.visible = h.kind === 'orbital_pillar' || h.kind === 'boss_phase_nova';
-        (slot.pillar.material as THREE.MeshBasicMaterial).color.setHex(hex);
+        slot.pillarMat.color.setHex(hex);
         slot.pillar.scale.set(h.radius * 0.65, 1, h.radius * 0.65);
-        (slot.pillar.material as THREE.MeshBasicMaterial).opacity = Math.min(
-          0.9,
-          h.lingerTimer * 2.2
-        );
+        slot.pillarMat.opacity = Math.min(0.9, h.lingerTimer * 2.2);
       }
+    }
+
+    // Update Enemy Windup Aiming Laser Sightlines (Go2 Hound pounce, G1 Vanguard burst, Aero Hunter dive-strafe)
+    let sightIdx = 0;
+    for (const e of enemies) {
+      if (sightIdx >= MAX_WINDUP_SIGHTS) break;
+      if (
+        !e.isBoss &&
+        e.koTimer <= 0 &&
+        e.dropPodProgress >= 0.95 &&
+        e.attackPhase === 'windup' &&
+        (e.archetype === 'go2_hound' ||
+          e.archetype === 'g1_vanguard' ||
+          e.archetype === 'aero_hunter')
+      ) {
+        const slot = windupSightSlots[sightIdx++];
+        const originY =
+          e.y + (e.archetype === 'aero_hunter' ? 0.55 : e.archetype === 'g1_vanguard' ? 1.45 : 0.72);
+        const targetGroundY = sampleMarsArenaSurfaceHeight(e.telegraphTargetX, e.telegraphTargetZ);
+        const targetY = targetGroundY + (e.archetype === 'go2_hound' ? 0.12 : 0.95);
+
+        _v1.set(e.x, originY, e.z);
+        _v2.set(e.telegraphTargetX, targetY, e.telegraphTargetZ);
+        _v3.subVectors(_v2, _v1);
+        const len = _v3.length();
+        if (len > 0.35) {
+          slot.group.visible = true;
+          slot.group.position.copy(_v1);
+          slot.group.lookAt(_v2);
+          const pulse = 0.75 + Math.sin(simTime * 34 + e.uid) * 0.25;
+          slot.beam.scale.set(pulse * 1.15, pulse * 1.15, len);
+          const sightHex = e.archetype === 'aero_hunter' ? 0x38bdf8 : 0xff2a55;
+          slot.beamMat.color.setHex(sightHex);
+          slot.beamMat.opacity = 0.55 + pulse * 0.35;
+
+          slot.targetRing.visible = true;
+          slot.targetRing.position.set(e.telegraphTargetX, targetGroundY + 0.08, e.telegraphTargetZ);
+          slot.targetRing.scale.setScalar(e.archetype === 'go2_hound' ? 0.92 : 0.62);
+          slot.ringMat.color.setHex(sightHex);
+          slot.ringMat.opacity = 0.48 + pulse * 0.34;
+        } else {
+          slot.group.visible = false;
+          slot.targetRing.visible = false;
+        }
+      }
+    }
+    for (let k = sightIdx; k < MAX_WINDUP_SIGHTS; k++) {
+      windupSightSlots[k].group.visible = false;
+      windupSightSlots[k].targetRing.visible = false;
     }
 
     // Update Boss Sweeping Searing Coral Laser Beam
@@ -817,7 +1081,7 @@ export function createMarsCombatVFXController() {
         chargeSphere.scale.setScalar(pulse * 1.45);
         coreBeamMesh.visible = true;
         sheathBeamMesh.visible = false;
-        coreBeamMesh.scale.set(1, 0.14, 0.14); // Thin aiming telegraph laser line!
+        coreBeamMesh.scale.set(1, 0.14, 0.14);
       } else {
         chargeSphere.scale.setScalar(1.35);
         coreBeamMesh.visible = true;
@@ -851,7 +1115,7 @@ export function createMarsCombatVFXController() {
       const t = 1 - empWaveTimer / 0.65;
       empSphere.position.set(empWaveOrigin[0], empWaveOrigin[1], empWaveOrigin[2]);
       empSphere.scale.setScalar(1 + t * 12.5);
-      (empSphere.material as THREE.MeshBasicMaterial).opacity = (1 - t) * 0.78;
+      empSphereMat.opacity = (1 - t) * 0.78;
     } else {
       empSphere.visible = false;
     }
@@ -895,7 +1159,7 @@ export function createMarsCombatVFXController() {
       }
     }
 
-    // 8. Pooled Ejected Brass/Energy Shell Casings (28 InstancedMesh slots arcing rightward with spin & gravity)
+    // Update Pooled Ejected Brass/Energy Shell Casings
     for (let i = 0; i < SHELL_MAX; i++) {
       if (shellLife[i] <= 0) {
         _dummyObj.position.set(0, -999, 0);
@@ -909,7 +1173,7 @@ export function createMarsCombatVFXController() {
       shellPos[i * 3 + 1] += shellVel[i * 3 + 1] * dt;
       shellPos[i * 3 + 2] += shellVel[i * 3 + 2] * dt;
       shellVel[i * 3 + 1] -= 18.5 * dt;
-      const gFloor = sampleLandTerrainHeight(shellPos[i * 3], shellPos[i * 3 + 2]) + 0.04;
+      const gFloor = sampleMarsArenaSurfaceHeight(shellPos[i * 3], shellPos[i * 3 + 2]) + 0.04;
       if (shellPos[i * 3 + 1] < gFloor) {
         shellPos[i * 3 + 1] = gFloor;
         shellVel[i * 3 + 1] = Math.abs(shellVel[i * 3 + 1]) * 0.35;
@@ -929,7 +1193,7 @@ export function createMarsCombatVFXController() {
     }
     shellInst.instanceMatrix.needsUpdate = true;
 
-    // 9. Update Wingman Electromagnetic Bite Slash Arcs
+    // Update Wingman Electromagnetic Bite Slash Arcs
     if (params.wingmanSlash && params.wingmanSlash.flashTimer > 0) {
       wingmanSlashGroup.visible = true;
       wingmanSlashGroup.position.set(
@@ -945,55 +1209,6 @@ export function createMarsCombatVFXController() {
       wingmanSlashGroup.visible = false;
     }
   };
-
-  // Setup Pooled Shell Casings InstancedMesh (initialized at y=-999!)
-  const SHELL_MAX = 28;
-  const shellPos = new Float32Array(SHELL_MAX * 3);
-  const shellVel = new Float32Array(SHELL_MAX * 3);
-  const shellLife = new Float32Array(SHELL_MAX);
-  const shellHeavy = new Uint8Array(SHELL_MAX);
-  let shellCursor = 0;
-
-  const shellGeo = new THREE.CylinderGeometry(0.024, 0.028, 0.13, 6);
-  shellGeo.rotateZ(Math.PI / 2);
-  const shellMat = new THREE.MeshStandardMaterial({
-    color: 0xfbbf24,
-    emissive: 0xd97706,
-    emissiveIntensity: 0.75,
-    roughness: 0.22,
-    metalness: 0.92
-  });
-  const shellInst = new THREE.InstancedMesh(shellGeo, shellMat, SHELL_MAX);
-  shellInst.frustumCulled = false;
-  _dummyObj.position.set(0, -999, 0);
-  _dummyObj.scale.setScalar(0.0001);
-  _dummyObj.updateMatrix();
-  for (let i = 0; i < SHELL_MAX; i++) {
-    shellInst.setMatrixAt(i, _dummyObj.matrix);
-    shellInst.setColorAt(i, _col.setHex(0xfbbf24));
-  }
-  shellInst.instanceMatrix.needsUpdate = true;
-  if (shellInst.instanceColor) shellInst.instanceColor.needsUpdate = true;
-  root.add(shellInst);
-
-  // Setup Wingman Electromagnetic Cross-Slash Arc Mesh
-  const wingmanSlashGroup = new THREE.Group();
-  wingmanSlashGroup.visible = false;
-  const slashGeo = new THREE.TorusGeometry(0.95, 0.055, 6, 20, Math.PI * 0.85);
-  const slashMat = new THREE.MeshBasicMaterial({
-    color: 0x00e5ff,
-    transparent: true,
-    opacity: 0.92,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  const slashA = new THREE.Mesh(slashGeo, slashMat);
-  slashA.rotation.x = Math.PI * 0.32;
-  const slashB = new THREE.Mesh(slashGeo, slashMat);
-  slashB.rotation.x = -Math.PI * 0.32;
-  slashB.rotation.y = 0.6;
-  wingmanSlashGroup.add(slashA, slashB);
-  root.add(wingmanSlashGroup);
 
   const spawnEjectedShell = (ev: {
     x: number;
@@ -1046,12 +1261,10 @@ export function createMarsCombatVFXController() {
       sVel[idx * 3 + 2] = dz * spd;
 
       if (imp.isShatter || imp.isShield) {
-        // Electric cyan-blue plasma shield shards!
         _col.setHex(i % 3 === 0 ? 0xe0f2fe : 0x00e5ff);
       } else if (imp.isCrit) {
         _col.setHex(i % 2 === 0 ? 0xfef08a : 0xf97316);
       } else {
-        // Hot metallic armor sparks + dark titanium flecks (zero full-body white washout!)
         _col.setHex(i % 3 === 0 ? 0xfdba74 : 0xfbbf24);
       }
       sCol[idx * 3] = _col.r;
@@ -1071,15 +1284,36 @@ export function createMarsCombatVFXController() {
     ringGeo.dispose();
     discGeo.dispose();
     pillarGeo.dispose();
+    for (const slot of telegraphSlots) {
+      slot.outerMat.dispose();
+      slot.fillMat.dispose();
+      slot.pillarMat.dispose();
+    }
+    windupSightGeo.dispose();
+    for (const slot of windupSightSlots) {
+      slot.beamMat.dispose();
+      slot.ringMat.dispose();
+    }
     coreBeamGeo.dispose();
     sheathBeamGeo.dispose();
     coreBeamMat.dispose();
     sheathBeamMat.dispose();
+    chargeSphereGeo.dispose();
+    chargeSphereMat.dispose();
+    empSphereGeo.dispose();
+    empSphereMat.dispose();
+    ionCoreMat.dispose();
+    ionOuterMat.dispose();
     streakGeo.dispose();
+    streakMat.dispose();
     pkCoreGeo.dispose();
     pkRingGeo.dispose();
     pkShadowGeo.dispose();
     pkShadowMat.dispose();
+    for (const slot of pickupSlots) {
+      slot.coreMat.dispose();
+      slot.ringMat.dispose();
+    }
     shellGeo.dispose();
     shellMat.dispose();
     slashGeo.dispose();
@@ -1101,10 +1335,165 @@ export function createMarsCombatVFXController() {
 }
 
 /**
+ * Wraps the `aero_hunter` turbofan nacelle core in a sleek swept-wing Martian VTOL Gunship airframe
+ * so aerial hunter drones read as genuine combat aircraft rather than flying passenger-jet engine pods.
+ */
+export function createAeroHunterGunshipFrame(isSoftwareGl: boolean) {
+  const group = new THREE.Group();
+  group.name = 'aero_hunter_vtol_airframe';
+
+  const hullMat = new THREE.MeshStandardMaterial({
+    color: 0x1e293b,
+    roughness: 0.44,
+    metalness: 0.84
+  });
+  const wingTrimMat = new THREE.MeshStandardMaterial({
+    color: 0x64748b,
+    roughness: 0.30,
+    metalness: 0.88
+  });
+  const sensorMat = new THREE.MeshStandardMaterial({
+    color: 0x38bdf8,
+    emissive: 0x0ea5e9,
+    emissiveIntensity: 2.1,
+    roughness: 0.18
+  });
+
+  const noseGeo = new THREE.ConeGeometry(0.32, 1.05, 6);
+  noseGeo.rotateZ(-Math.PI / 2);
+  const nose = new THREE.Mesh(noseGeo, hullMat);
+  nose.position.set(1.12, 0.95, 0);
+  nose.castShadow = !isSoftwareGl;
+
+  const canopyGeo = new THREE.OctahedronGeometry(0.24, 1);
+  canopyGeo.scale(1.8, 0.65, 0.85);
+  const canopy = new THREE.Mesh(canopyGeo, sensorMat);
+  canopy.position.set(0.76, 1.16, 0);
+
+  const wingGeo = new THREE.BoxGeometry(0.78, 0.065, 2.85);
+  const sweptWing = new THREE.Mesh(wingGeo, hullMat);
+  sweptWing.position.set(-0.08, 1.02, 0);
+  sweptWing.castShadow = !isSoftwareGl;
+
+  const podGeo = new THREE.CylinderGeometry(0.085, 0.105, 0.86, 8);
+  podGeo.rotateZ(Math.PI / 2);
+  const podL = new THREE.Mesh(podGeo, wingTrimMat);
+  podL.position.set(0.18, 0.90, -1.12);
+  const podR = new THREE.Mesh(podGeo, wingTrimMat);
+  podR.position.set(0.18, 0.90, 1.12);
+
+  const tailFinGeo = new THREE.BoxGeometry(0.54, 0.56, 0.055);
+  const finL = new THREE.Mesh(tailFinGeo, wingTrimMat);
+  finL.position.set(-0.92, 1.32, -0.52);
+  finL.rotation.x = -0.28;
+  const finR = new THREE.Mesh(tailFinGeo, wingTrimMat);
+  finR.position.set(-0.92, 1.32, 0.52);
+  finR.rotation.x = 0.28;
+
+  group.add(nose, canopy, sweptWing, podL, podR, finL, finR);
+
+  const dispose = () => {
+    noseGeo.dispose();
+    canopyGeo.dispose();
+    wingGeo.dispose();
+    podGeo.dispose();
+    tailFinGeo.dispose();
+    hullMat.dispose();
+    wingTrimMat.dispose();
+    sensorMat.dispose();
+  };
+
+  return { group, dispose };
+}
+
+/**
+ * Builds an Armored 4-Wheel Combat UGV Rover Carrier Base for stationary robotic arms
+ * (`unitree_z1`, `baxter_dual_arm`) so manipulator loadouts roll across Martian regolith on real wheels.
+ */
+export function createArmoredManipulatorCarrierBase(
+  mechId: 'unitree_z1' | 'baxter_dual_arm',
+  isSoftwareGl: boolean
+) {
+  const group = new THREE.Group();
+  group.name = 'armored_ugv_carrier_base';
+
+  const isWide = mechId === 'baxter_dual_arm';
+  const chassisLen = isWide ? 1.56 : 1.32;
+  const chassisWid = isWide ? 1.16 : 0.96;
+  const wheelRadius = isWide ? 0.25 : 0.22;
+
+  const hullMat = new THREE.MeshStandardMaterial({
+    color: 0x1e2532,
+    roughness: 0.52,
+    metalness: 0.78
+  });
+  const tireMat = new THREE.MeshStandardMaterial({
+    color: 0x151821,
+    roughness: 0.78,
+    metalness: 0.32
+  });
+  const hubMat = new THREE.MeshStandardMaterial({
+    color: 0x38bdf8,
+    emissive: 0x0284c7,
+    emissiveIntensity: 1.4,
+    roughness: 0.25,
+    metalness: 0.85
+  });
+
+  const deckGeo = new THREE.BoxGeometry(chassisLen, 0.24, chassisWid);
+  const deck = new THREE.Mesh(deckGeo, hullMat);
+  deck.position.y = wheelRadius + 0.06;
+  deck.castShadow = !isSoftwareGl;
+  deck.receiveShadow = !isSoftwareGl;
+
+  const collarGeo = new THREE.CylinderGeometry(0.32, 0.42, 0.14, 12);
+  const collar = new THREE.Mesh(collarGeo, hullMat);
+  collar.position.y = wheelRadius + 0.22;
+  collar.castShadow = !isSoftwareGl;
+
+  const wheelGeo = new THREE.CylinderGeometry(wheelRadius, wheelRadius, 0.18, 16);
+  wheelGeo.rotateX(Math.PI / 2);
+  const hubGeo = new THREE.CylinderGeometry(wheelRadius * 0.42, wheelRadius * 0.42, 0.195, 8);
+  hubGeo.rotateX(Math.PI / 2);
+
+  const wheels: THREE.Group[] = [];
+  const wxOff = chassisLen * 0.36;
+  const wzOff = chassisWid * 0.54;
+  const offsets: [number, number][] = [
+    [wxOff, -wzOff],
+    [wxOff, wzOff],
+    [-wxOff, -wzOff],
+    [-wxOff, wzOff]
+  ];
+  for (const [ox, oz] of offsets) {
+    const wPivot = new THREE.Group();
+    wPivot.position.set(ox, wheelRadius, oz);
+    const tire = new THREE.Mesh(wheelGeo, tireMat);
+    tire.castShadow = !isSoftwareGl;
+    const hub = new THREE.Mesh(hubGeo, hubMat);
+    wPivot.add(tire, hub);
+    group.add(wPivot);
+    wheels.push(wPivot);
+  }
+
+  group.add(deck, collar);
+
+  const dispose = () => {
+    deckGeo.dispose();
+    collarGeo.dispose();
+    wheelGeo.dispose();
+    hubGeo.dispose();
+    hullMat.dispose();
+    tireMat.dispose();
+    hubMat.dispose();
+  };
+
+  return { group, wheels, wheelRadius, mountHeight: wheelRadius + 0.24, dispose };
+}
+
+/**
  * Creates a Multi-Part Procedural Sci-Fi Pulse Rifle / Electromagnetic Arm Cannon (`THREE.Group`)
  * mounted directly onto the player mech's right forearm/hand or weapon turret node.
- * Exposes `muzzleSocket` at the exact barrel tip so 100% of projectiles spawn from True Muzzle World Pos,
- * plus a 3-plane Cruciform Muzzle Flash!
  */
 export function createMountedSciFiPulseRifle(
   mechId: PlayerMechId,
@@ -1115,11 +1504,9 @@ export function createMountedSciFiPulseRifle(
   group.name = 'mounted_scifi_pulse_rifle';
   group.scale.setScalar(parentScaleCompensation);
   if (isUrdfZUpLink) {
-    // URDF link local space has +X forward, +Z up -> rotate +90° around X so rifle +Y (optic sight) points +Z up!
     group.rotation.x = Math.PI / 2;
   }
 
-  // Calibrate local weapon scale & grip offset per mech chassis
   const weaponScale =
     mechId === 'unitree_g1'
       ? 1.12
@@ -1149,34 +1536,37 @@ export function createMountedSciFiPulseRifle(
     roughness: 0.15
   });
 
-  // 1. Main Receiver Housing (+X is forward along barrel)
-  const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.13, 0.095), receiverMat);
+  const receiverGeo = new THREE.BoxGeometry(0.46, 0.13, 0.095);
+  const receiver = new THREE.Mesh(receiverGeo, receiverMat);
   receiver.position.set(0.16, 0.02, 0);
 
-  // 2. Twin Magnetic Accelerator Barrel Rails (Upper & Lower)
-  const upperRail = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.036, 0.056), alloyBarrelMat);
+  const upperRailGeo = new THREE.BoxGeometry(0.56, 0.036, 0.056);
+  const upperRail = new THREE.Mesh(upperRailGeo, alloyBarrelMat);
   upperRail.position.set(0.36, 0.062, 0);
-  const lowerRail = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.032, 0.052), alloyBarrelMat);
+
+  const lowerRailGeo = new THREE.BoxGeometry(0.52, 0.032, 0.052);
+  const lowerRail = new THREE.Mesh(lowerRailGeo, alloyBarrelMat);
   lowerRail.position.set(0.34, -0.018, 0);
 
-  // 3. Glowing Plasma Accelerator Core Strip between rails
-  const plasmaCore = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.026, 0.036), plasmaRailMat);
+  const plasmaCoreGeo = new THREE.BoxGeometry(0.54, 0.026, 0.036);
+  const plasmaCore = new THREE.Mesh(plasmaCoreGeo, plasmaRailMat);
   plasmaCore.position.set(0.35, 0.022, 0);
 
-  // 4. Holographic Reflex Sight + Angled Magazine + Foregrip
-  const opticHousing = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.055, 0.064), receiverMat);
+  const opticHousingGeo = new THREE.BoxGeometry(0.12, 0.055, 0.064);
+  const opticHousing = new THREE.Mesh(opticHousingGeo, receiverMat);
   opticHousing.position.set(0.14, 0.11, 0);
-  const opticLens = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.038, 0.048), plasmaRailMat);
+
+  const opticLensGeo = new THREE.BoxGeometry(0.015, 0.038, 0.048);
+  const opticLens = new THREE.Mesh(opticLensGeo, plasmaRailMat);
   opticLens.position.set(0.19, 0.112, 0);
 
-  const magCell = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.16, 0.058), receiverMat);
+  const magCellGeo = new THREE.BoxGeometry(0.075, 0.16, 0.058);
+  const magCell = new THREE.Mesh(magCellGeo, receiverMat);
   magCell.position.set(0.18, -0.09, 0);
   magCell.rotation.z = -0.24;
 
-  const muzzleBrake = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.038, 0.044, 0.09, 8),
-    alloyBarrelMat
-  );
+  const muzzleBrakeGeo = new THREE.CylinderGeometry(0.038, 0.044, 0.09, 8);
+  const muzzleBrake = new THREE.Mesh(muzzleBrakeGeo, alloyBarrelMat);
   muzzleBrake.rotation.z = Math.PI / 2;
   muzzleBrake.position.set(0.65, 0.022, 0);
 
@@ -1191,13 +1581,11 @@ export function createMountedSciFiPulseRifle(
     muzzleBrake
   );
 
-  // 5. Exact True Muzzle Socket (`+0.71m` forward at barrel tip)
   const muzzleSocket = new THREE.Object3D();
   muzzleSocket.name = 'true_muzzle_socket';
   muzzleSocket.position.set(0.71, 0.022, 0);
   barrelCluster.add(muzzleSocket);
 
-  // 6. 3-Plane Additive Cruciform Muzzle Flash right at `muzzleSocket`!
   const flashGroup = new THREE.Group();
   flashGroup.visible = false;
   muzzleSocket.add(flashGroup);
@@ -1225,9 +1613,9 @@ export function createMountedSciFiPulseRifle(
   const updateWeaponVisuals = (
     activeWeapon: CombatWeaponId,
     muzzleFlashTimer: number,
-    recoilPos: number
+    recoilPos: number,
+    dt: number = 0.016
   ) => {
-    // Physical bolt/barrel recoil slide kickback along -X!
     barrelCluster.position.x = -recoilPos * 0.065;
 
     const hex =
@@ -1249,7 +1637,7 @@ export function createMountedSciFiPulseRifle(
         weaponScaleMult * (0.65 + t * 0.55),
         weaponScaleMult * (0.65 + t * 0.55)
       );
-      flashGroup.rotation.x += 1.35;
+      flashGroup.rotation.x += 81.0 * dt;
       flashMat.opacity = 0.95 * t;
     } else {
       flashGroup.visible = false;
@@ -1257,6 +1645,14 @@ export function createMountedSciFiPulseRifle(
   };
 
   const dispose = () => {
+    receiverGeo.dispose();
+    upperRailGeo.dispose();
+    lowerRailGeo.dispose();
+    plasmaCoreGeo.dispose();
+    opticHousingGeo.dispose();
+    opticLensGeo.dispose();
+    magCellGeo.dispose();
+    muzzleBrakeGeo.dispose();
     receiverMat.dispose();
     alloyBarrelMat.dispose();
     plasmaRailMat.dispose();
@@ -1270,7 +1666,7 @@ export function createMountedSciFiPulseRifle(
 }
 
 /**
- * Creates Dorsal Tactical Jet-Dodge Thruster Plumes for Player Mech (`Shift` Quick-Boost & Jump Jets).
+ * Creates Dorsal Tactical Jet-Dodge Thruster Plumes for Player Mech (`C / Alt` Quick-Boost & Jump Jets).
  */
 export function createPlayerDodgeThrusterRig() {
   const group = new THREE.Group();
@@ -1300,7 +1696,7 @@ export function createPlayerDodgeThrusterRig() {
   const makePlume = (offsetZ: number) => {
     const p = new THREE.Group();
     p.position.set(-0.22, 1.05, offsetZ);
-    p.rotation.y = Math.PI / 2; // Point backward along -X in player local frame
+    p.rotation.y = Math.PI / 2;
     const outer = new THREE.Mesh(coneGeo, outerMat);
     const core = new THREE.Mesh(coneGeo, coreMat);
     core.scale.set(0.52, 0.52, 0.65);
@@ -1335,11 +1731,7 @@ export function createPlayerDodgeThrusterRig() {
 }
 
 /**
- * Creates a Translucent Fresnel + Localized Hexagonal Honeycomb Water-Ripple Energy Shield Material!
- * - Zero ugly wireframe lines!
- * - Idle state: ultra-clean grazing-angle Fresnel rim glow (`0.14` alpha) so the real `.glb` robot stays 100% crisp.
- * - On hit (`uRippleTimer > 0`): blooms a bright procedural hexagonal lattice & concentric shockwave ripple ONLY around `uHitLocalDir`!
- * - On shield break (`uShatterTimer > 0`): fractures into electric cyan hexagonal flash shards before vanishing!
+ * Creates a Translucent Fresnel + Localized Hexagonal Honeycomb Water-Ripple Energy Shield Material.
  */
 export function createLocalizedHexShieldMaterial(
   accentHex: string = '#00e5ff',
@@ -1384,7 +1776,6 @@ export function createLocalizedHexShieldMaterial(
       varying vec3 vViewNormal;
       varying vec3 vViewDir;
 
-      // Procedural 2D hexagonal grid distance (0 at cell edge, 0.5 at cell center)
       float hexEdgeDist(vec2 p) {
         const vec2 s = vec2(1.0, 1.7320508);
         vec4 hC = floor(vec4(p, p - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
@@ -1402,12 +1793,10 @@ export function createLocalizedHexShieldMaterial(
         vec3 nLocal = normalize(vLocalDir);
         vec3 hitDir = normalize(uHitLocalDir);
 
-        // Subtle Fresnel grazing rim glow when shield is intact
         float ndotv = clamp(abs(dot(normalize(vViewDir), normalize(vViewNormal))), 0.0, 1.0);
         float fresnel = pow(1.0 - ndotv, 3.6);
         float baseRim = fresnel * 0.16 * step(0.001, uShieldRatio);
 
-        // Triplanar hexagonal lattice coordinates on unit sphere
         vec3 blendW = abs(nLocal);
         blendW = pow(blendW, vec3(4.0));
         blendW /= max(0.0001, blendW.x + blendW.y + blendW.z);
@@ -1417,7 +1806,6 @@ export function createLocalizedHexShieldMaterial(
         float hexDist = hexX * blendW.x + hexY * blendW.y + hexZ * blendW.z;
         float hexLine = 1.0 - smoothstep(0.02, 0.085, hexDist);
 
-        // Localized Impact Water-Ripple around uHitLocalDir!
         float rippleAlpha = 0.0;
         vec3 col = uColor;
         if (uRippleTimer > 0.001) {
@@ -1433,7 +1821,6 @@ export function createLocalizedHexShieldMaterial(
           col = mix(uColor, vec3(0.92, 0.99, 1.0), clamp(impactCore + primaryRing * 0.65, 0.0, 1.0));
         }
 
-        // Shield Shatter Overload Burst when broken!
         float shatterAlpha = 0.0;
         if (uShatterTimer > 0.001) {
           float sProg = 1.0 - clamp(uShatterTimer / 0.58, 0.0, 1.0);
@@ -1451,8 +1838,4 @@ export function createLocalizedHexShieldMaterial(
   });
 }
 
-/**
- * Helper to keep _up referenced cleanly when needed for future orientation helpers.
- */
 export const UP_AXIS = _up;
-

@@ -159,14 +159,18 @@ export function createSignatureShowcaseSceneFXController(
         float rotA = ang + uTime * 0.85;
         float rotB = ang - uTime * 1.35;
 
-        // Precision CAD degree ticks + concentric range rings + radar sweep
-        float outerRing = smoothstep(0.018, 0.002, abs(r - 0.94));
-        float midRing = smoothstep(0.014, 0.002, abs(r - 0.66)) * step(0.1, sin(rotB * 12.0));
-        float innerRing = smoothstep(0.014, 0.002, abs(r - 0.36));
+        // Precision CAD degree ticks + concentric range rings + radar sweep with fwidth() AA
+        float rFw = max(fwidth(r), 1e-4);
+        vec2 uvFw = max(fwidth(vUv), vec2(1e-4));
+        float outerRing = 1.0 - smoothstep(max(0.006, rFw * 0.7), max(0.018, rFw * 1.8), abs(r - 0.94));
+        float midRing = (1.0 - smoothstep(max(0.005, rFw * 0.7), max(0.014, rFw * 1.7), abs(r - 0.66))) * smoothstep(0.05, 0.15, sin(rotB * 12.0));
+        float innerRing = 1.0 - smoothstep(max(0.005, rFw * 0.7), max(0.014, rFw * 1.7), abs(r - 0.36));
 
         float majorTicks = smoothstep(0.96, 0.995, cos(rotA * 24.0)) * smoothstep(0.09, 0.01, abs(r - 0.88));
         float minorTicks = smoothstep(0.92, 0.99, cos(ang * 72.0)) * smoothstep(0.04, 0.005, abs(r - 0.94)) * 0.55;
-        float crosshairs = (smoothstep(0.008, 0.001, abs(vUv.x)) + smoothstep(0.008, 0.001, abs(vUv.y))) * step(0.32, r) * step(r, 0.95) * 0.45;
+        float chX = 1.0 - smoothstep(max(0.002, uvFw.x * 0.7), max(0.008, uvFw.x * 1.7), abs(vUv.x));
+        float chY = 1.0 - smoothstep(max(0.002, uvFw.y * 0.7), max(0.008, uvFw.y * 1.7), abs(vUv.y));
+        float crosshairs = (chX + chY) * step(0.32, r) * step(r, 0.95) * 0.45;
 
         float sweepWave = fract(r * 1.8 - uTime * 1.4);
         float pulseRing = smoothstep(0.12, 0.0, abs(sweepWave - 0.5)) * (1.0 - r) * 0.55;
@@ -206,7 +210,7 @@ export function createSignatureShowcaseSceneFXController(
         vLocalY = position.y;
         vec4 wp = modelMatrix * vec4(position, 1.0);
         vWorldPos = wp.xyz;
-        vNormalW = normalize(mat3(modelMatrix) * normal);
+        vNormalW = normalize(mat3(transpose(inverse(modelMatrix))) * normal);
         gl_Position = projectionMatrix * viewMatrix * wp;
       }
     `,
@@ -377,7 +381,7 @@ export function createSignatureShowcaseSceneFXController(
           vLocal = position;
           vec4 wp = modelMatrix * vec4(position, 1.0);
           vWorld = wp.xyz;
-          vNorm = normalize(mat3(modelMatrix) * normal);
+          vNorm = normalize(mat3(transpose(inverse(modelMatrix))) * normal);
           gl_Position = projectionMatrix * viewMatrix * wp;
         }
       `,
@@ -479,6 +483,7 @@ export function createSignatureShowcaseSceneFXController(
 
   const _tmpTargetPos = new THREE.Vector3();
   const _tmpOriginPos = new THREE.Vector3();
+  const _aliveTargetsScratch: InteractiveFieldTarget[] = [];
 
   return {
     rootGroup,
@@ -657,10 +662,13 @@ export function createSignatureShowcaseSceneFXController(
         _tmpOriginPos.set(actorWorld.x, actorWorld.y + modelRadius * 0.55, actorWorld.z);
         beamCoreMat.opacity = skill.beamConvergence01 * 0.95;
         beamHaloMat.opacity = skill.beamConvergence01 * 0.45;
-        const aliveTargets = targets.filter((t) => t.alive);
+        _aliveTargetsScratch.length = 0;
+        for (let k = 0; k < targets.length; k++) {
+          if (targets[k].alive) _aliveTargetsScratch.push(targets[k]);
+        }
         for (let i = 0; i < beamRigs.length; i++) {
           const rig = beamRigs[i];
-          const tgt = aliveTargets[i];
+          const tgt = _aliveTargetsScratch[i];
           if (tgt) {
             _tmpTargetPos.set(tgt.x, tgt.y + 1.45, tgt.z);
           } else {

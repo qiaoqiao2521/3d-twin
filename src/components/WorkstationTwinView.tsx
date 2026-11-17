@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { loadGlbSceneResilient } from '../utils/resilientGlbLoader';
+import { loadGlbSceneResilient, disposeSceneHierarchy } from '../utils/resilientGlbLoader';
 import {
   Layers,
   Sliders,
@@ -212,6 +212,13 @@ const _tmpVec3 = new THREE.Vector3();
 const _tmpVec3B = new THREE.Vector3();
 const _tmpBox3 = new THREE.Box3();
 const _tmpQuat = new THREE.Quaternion();
+const _decompPos = new THREE.Vector3();
+const _parentQuat = new THREE.Quaternion();
+const _parentScale = new THREE.Vector3();
+const _localDelta = new THREE.Vector3();
+const _grappleCenterScratch = new THREE.Vector3();
+const _salvageAxisMars = new THREE.Vector3(0, 1, 0);
+const _salvageAxisAero = new THREE.Vector3(1, 0, 0);
 const _raycaster = new THREE.Raycaster();
 const _pointerNdc = new THREE.Vector2();
 const _axisX = new THREE.Vector3(1, 0, 0);
@@ -443,13 +450,17 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     macroElapsed: 0,
     camImpulse: createInitialCameraMicroImpulse() as CameraMicroImpulseState,
     impactSpike01: 0,
-    impactTargetPart: ''
+    impactTargetPart: '',
+    activeDrawer: null as 'structure' | 'kinematics' | 'scenegraph' | null,
+    visualPopoverOpen: false
   });
   const initialWorkstationLoadedRef = useRef(false);
 
   useEffect(() => {
     const s = stateRef.current;
     s.activeLevel = activeLevel;
+    s.activeDrawer = activeDrawer;
+    s.visualPopoverOpen = visualPopoverOpen;
     if (!autoDisassembly && tactileConfig.activeMacro === 'off') {
       s.targetExplosion = explosion;
     }
@@ -527,7 +538,9 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     tactileConfig,
     fkJoint1,
     fkJoint2,
-    fkJoint3
+    fkJoint3,
+    activeDrawer,
+    visualPopoverOpen
   ]);
 
   const handleTriggerUltimateShowcase = () => {
@@ -699,7 +712,14 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
   // Keyboard shortcuts [R] Path Tracing & [C] Micro-FPV Cavity Fly-Through in Workstation
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.code === 'Escape') {
         setActiveDrawer(null);
       } else if (e.code === 'KeyR' && !e.repeat) {
@@ -805,11 +825,11 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     stateRef.current.windTunnelConfig = createDefaultWindTunnelConfig();
   }, [config.id]);
 
-  const triggerSmoothCameraFocus = (targetLook: THREE.Vector3, offset: THREE.Vector3) => {
+  const triggerSmoothCameraFocus = useCallback((targetLook: THREE.Vector3, offset: THREE.Vector3) => {
     stateRef.current.camTargetLook.copy(targetLook);
     stateRef.current.camTargetPos.copy(targetLook).add(offset);
     stateRef.current.camGlideActive = true;
-  };
+  }, []);
 
   const handleSelectLevel = (lvl: DrillLevel) => {
     setActiveLevel(lvl);
@@ -858,40 +878,43 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     }
   };
 
-  const handleSelectSubPart = (partName: string | null) => {
-    setHighlightedPart(partName);
-    stateRef.current.highlightedPart = partName;
-    if (!partName) {
-      setIsolatedPart(null);
-      setSelectedBlueprintMeta(null);
-      setSelectedAnchorScreen(null);
-      return;
-    }
-
-    stateRef.current.highlightSelectTime = performance.now() / 1000;
-    const found = partsRef.current.find((p) => p.partName === partName);
-    if (found) {
-      const matchedSub = subAssembliesRef.current.find((sa) => sa.partNames.includes(partName));
-      const meta = computePartBlueprintMetadata(
-        config.id,
-        found.partName,
-        found.layer,
-        matchedSub?.label || `${found.layer} 精密子总成`,
-        found.normSize,
-        assemblyNormMaxDimRef.current,
-        found.tris,
-        found.vertices,
-        []
-      );
-      setSelectedBlueprintMeta(meta);
-
-      const box = new THREE.Box3().setFromObject(found.mesh);
-      if (!box.isEmpty()) {
-        const center = box.getCenter(new THREE.Vector3());
-        triggerSmoothCameraFocus(center, new THREE.Vector3(1.38, 0.88, 1.56));
+  const handleSelectSubPart = useCallback(
+    (partName: string | null) => {
+      setHighlightedPart(partName);
+      stateRef.current.highlightedPart = partName;
+      if (!partName) {
+        setIsolatedPart(null);
+        setSelectedBlueprintMeta(null);
+        setSelectedAnchorScreen(null);
+        return;
       }
-    }
-  };
+
+      stateRef.current.highlightSelectTime = performance.now() / 1000;
+      const found = partsRef.current.find((p) => p.partName === partName);
+      if (found) {
+        const matchedSub = subAssembliesRef.current.find((sa) => sa.partNames.includes(partName));
+        const meta = computePartBlueprintMetadata(
+          config.id,
+          found.partName,
+          found.layer,
+          matchedSub?.label || `${found.layer} 精密子总成`,
+          found.normSize,
+          assemblyNormMaxDimRef.current,
+          found.tris,
+          found.vertices,
+          []
+        );
+        setSelectedBlueprintMeta(meta);
+
+        const box = new THREE.Box3().setFromObject(found.mesh);
+        if (!box.isEmpty()) {
+          const center = box.getCenter(new THREE.Vector3());
+          triggerSmoothCameraFocus(center, new THREE.Vector3(1.38, 0.88, 1.56));
+        }
+      }
+    },
+    [config.id, triggerSmoothCameraFocus]
+  );
 
   const handleToggleIsolateBlueprint = () => {
     if (!highlightedPart) return;
@@ -938,7 +961,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     setSelectedAnchorScreen(null);
   };
 
-  const handleToggleHidePartInGraph = (partName: string) => {
+  const handleToggleHidePartInGraph = useCallback((partName: string) => {
     setHiddenParts((prev) => {
       const next = { ...prev };
       if (next[partName]) {
@@ -948,16 +971,16 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       }
       return next;
     });
-    if (highlightedPart === partName) {
+    if (stateRef.current.highlightedPart === partName) {
       setIsolatedPart(null);
       setHighlightedPart(null);
       stateRef.current.highlightedPart = null;
       setSelectedBlueprintMeta(null);
       setSelectedAnchorScreen(null);
     }
-  };
+  }, []);
 
-  const handleHoverSceneGraphPart = (partName: string | null) => {
+  const handleHoverSceneGraphPart = useCallback((partName: string | null) => {
     if (partName && partName !== stateRef.current.hoveredPart) {
       proceduralAudioSynth.playPartHoverTick();
     }
@@ -994,7 +1017,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         }
       }
     }
-  };
+  }, []);
 
   const handleResetAllParts = () => {
     setIsolatedPart(null);
@@ -1151,8 +1174,6 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     const grappleGrabPointWorld = new THREE.Vector3();
     const grappleDragPlane = new THREE.Plane();
     const grappleDragHit = new THREE.Vector3();
-    const _grappleOriginW = new THREE.Vector3();
-    const _grappleTargetW = new THREE.Vector3();
     const _camRight = new THREE.Vector3();
     const _camUp = new THREE.Vector3();
     const _camFwd = new THREE.Vector3();
@@ -1289,13 +1310,21 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         setViewportHoveredPart(null);
       }
     };
+    let magWheelRaf = 0;
     const onWheel = (ev: WheelEvent) => {
       if (!stateRef.current.magLensEnabled) return;
       ev.preventDefault();
       ev.stopPropagation();
       const nextR = clampMagLensRadius(stateRef.current.magLensRadius, ev.deltaY);
       stateRef.current.magLensRadius = nextR;
-      setMagLensRadius(nextR);
+      if (!magWheelRaf) {
+        magWheelRaf = requestAnimationFrame(() => {
+          magWheelRaf = 0;
+          if (!disposed) {
+            setMagLensRadius(stateRef.current.magLensRadius);
+          }
+        });
+      }
     };
     const onPointerUp = (ev: PointerEvent) => {
       if (draggingGrapplePart) {
@@ -1400,6 +1429,11 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
 
     let flowController: FlowAndSensorFieldController | null = null;
+    const traceAnchorsBuf: {
+      originWorld: THREE.Vector3;
+      currentWorld: THREE.Vector3;
+      visible: boolean;
+    }[] = [];
 
     // Load all 3 real GLB subsystem files (L1, L2, L3) via resilient GLTFLoader + DRACOLoader
     setIsLoadingGlb(true);
@@ -1413,7 +1447,12 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       loadLayerGlb('L3', config.glbLayers.L3)
     ])
       .then((loadedLayers) => {
-        if (disposed) return;
+        if (disposed) {
+          loadedLayers.forEach(({ group }) =>
+            disposeSceneHierarchy(group, { disposeTextures: true })
+          );
+          return;
+        }
 
         const centeredModelGroup = new THREE.Group();
         centeredModelGroup.name = `${config.id}_centered_cad_group`;
@@ -1498,14 +1537,20 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
               const geomLocalCenter = geom.boundingBox
                 ? geom.boundingBox.getCenter(new THREE.Vector3())
                 : new THREE.Vector3();
+              const geomLocalSize = geom.boundingBox
+                ? geom.boundingBox.getSize(new THREE.Vector3())
+                : new THREE.Vector3(0.05, 0.05, 0.05);
+              const meshWorldScale = m.getWorldScale(new THREE.Vector3());
+              const obbSizeVec = new THREE.Vector3(
+                Math.max(0.002, Math.abs(geomLocalSize.x * meshWorldScale.x)),
+                Math.max(0.002, Math.abs(geomLocalSize.y * meshWorldScale.y)),
+                Math.max(0.002, Math.abs(geomLocalSize.z * meshWorldScale.z))
+              );
 
               const partBox = new THREE.Box3().setFromObject(m);
               const worldCenter = partBox.isEmpty()
                 ? m.getWorldPosition(new THREE.Vector3())
                 : partBox.getCenter(new THREE.Vector3());
-              const partSizeVec = partBox.isEmpty()
-                ? new THREE.Vector3(0.05, 0.05, 0.05)
-                : partBox.getSize(new THREE.Vector3());
               jointPositions.push(worldCenter.clone());
 
               const socketInParentLocal = m.parent
@@ -1541,7 +1586,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
                 tris,
                 vertices: verts,
                 worldCenter,
-                normSize: [partSizeVec.x, partSizeVec.y, partSizeVec.z],
+                normSize: [obbSizeVec.x, obbSizeVec.y, obbSizeVec.z],
                 geomLocalCenter,
                 socketInParentLocal,
                 stdMat,
@@ -1564,17 +1609,52 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         subAssembliesRef.current = computedSubs;
         setSubAssemblies(computedSubs);
 
+        const rawPlanByMesh = new Map<THREE.Object3D, OrthogonalExplosionPlan>();
+        for (const tm of tempMeshes) {
+          rawPlanByMesh.set(
+            tm.mesh,
+            computePartOrthogonalExplosionPlan(
+              config.id,
+              tm.partName,
+              tm.layerKey,
+              [tm.worldCenter.x, tm.worldCenter.y, tm.worldCenter.z],
+              computedSubs
+            )
+          );
+        }
+
+        traceAnchorsBuf.length = 0;
         const loadedParts: LoadedTwinPart[] = tempMeshes.map((tm) => {
           const m = tm.mesh;
-          const orthoPlan = computePartOrthogonalExplosionPlan(
-            config.id,
-            tm.partName,
-            tm.layerKey,
-            [tm.worldCenter.x, tm.worldCenter.y, tm.worldCenter.z],
-            computedSubs
-          );
+          const rawPlan = rawPlanByMesh.get(m)!;
+          let anc = m.parent;
+          let parentRawPlan: OrthogonalExplosionPlan | undefined;
+          while (anc) {
+            const hit = rawPlanByMesh.get(anc);
+            if (hit) {
+              parentRawPlan = hit;
+              break;
+            }
+            anc = anc.parent;
+          }
+          const adjVec: [number, number, number] = [
+            rawPlan.orthoVector[0],
+            rawPlan.orthoVector[1],
+            rawPlan.orthoVector[2]
+          ];
+          if (parentRawPlan) {
+            for (let a = 0; a < 3; a++) {
+              const c = rawPlan.orthoVector[a];
+              const p = parentRawPlan.orthoVector[a];
+              if (c * p > 0) {
+                adjVec[a] = Math.sign(c) * Math.max(Math.abs(c) * 0.15, Math.abs(c) - Math.abs(p));
+              }
+            }
+          }
+          const orthoPlan: OrthogonalExplosionPlan = parentRawPlan
+            ? { ...rawPlan, orthoVector: adjVec }
+            : rawPlan;
 
-          // Convert world-normalized orthogonal & peel vectors into m.parent local delta so any CAD unit scale or Z-up parent transform stays 100% world-orthogonal
           const parentNode = m.parent;
           const originParentLocal = parentNode
             ? parentNode.worldToLocal(tm.worldCenter.clone())
@@ -1593,6 +1673,13 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             : new THREE.Vector3(...orthoPlan.peelVector);
 
           const normAxialX = ((tm.worldCenter.x - minX) / spanX) * 2 - 1;
+          const mountOriginWorld = tm.worldCenter.clone();
+          const currentCenterWorld = tm.worldCenter.clone();
+          traceAnchorsBuf.push({
+            originWorld: mountOriginWorld,
+            currentWorld: currentCenterWorld,
+            visible: true
+          });
 
           return {
             mesh: m,
@@ -1608,8 +1695,8 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             localPeelVec,
             normSize: tm.normSize,
             orthoPlan,
-            mountOriginWorld: tm.worldCenter.clone(),
-            currentCenterWorld: tm.worldCenter.clone(),
+            mountOriginWorld,
+            currentCenterWorld,
             peelAmount: 0,
             normAxialX,
             origMat: tm.stdMat,
@@ -1626,6 +1713,12 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
 
         // Build Static per-mesh BLAS (MeshBVH) once & upgrade PBR microfacet / Emissive Area Light tags!
         const bvhInfo = upgradeGlbPbrAndBuildStaticBvh(assemblyRoot, config.id, classifyMeshLayer);
+        for (let i = 0; i < loadedParts.length; i++) {
+          const lp = loadedParts[i];
+          lp.twinUniforms.uMicroSurfaceClass.value = Number(
+            lp.origMat.userData?.microSurfaceClass ?? 0
+          );
+        }
         emissiveSources = bvhInfo.emissiveSources;
         setBvhStats({ meshes: bvhInfo.bvhMeshCount, emissives: bvhInfo.emissiveSources.length });
         rayTracer.resetAccumulation();
@@ -2055,59 +2148,9 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         p.peelAmount = dampValue(p.peelAmount, targetPeel, 9.0, dt);
         if (p.peelAmount > 0.012) anyPartDisplaced = true;
 
-        // Evaluate 4-stage smoothstep progress + peel ease
-        const [wx, wy, wz] = evaluateStagedExplosionOffset(p.orthoPlan, s.curExplosion, p.peelAmount);
-        // Project world displacement ratio onto precomputed parent-local orthogonal & peel vectors
-        const windows: Record<1 | 2 | 3 | 4, [number, number]> = {
-          1: [0.0, 0.3],
-          2: [0.22, 0.56],
-          3: [0.48, 0.82],
-          4: [0.72, 1.0]
-        };
-        const [w0, w1] = windows[p.orthoPlan.stage];
-        const rawU = s.curExplosion <= w0 ? 0 : s.curExplosion >= w1 ? 1 : (s.curExplosion - w0) / (w1 - w0);
-        const stageU = rawU * rawU * (3 - 2 * rawU);
-        const peelEase = p.peelAmount * p.peelAmount * (3 - 2 * p.peelAmount);
-
-        m.position
-          .copy(p.basePos)
-          .addScaledVector(p.localOrthoVec, stageU)
-          .addScaledVector(p.localPeelVec, peelEase);
+        // Reset to rest pose, apply live subsystem articulation FIRST, then apply world-space staged explosion in live parent-local coordinates!
+        m.position.copy(p.basePos);
         m.quaternion.copy(p.baseQuat);
-        // Keep wx/wy/wz referenced cleanly
-        void wx; void wy; void wz;
-
-        const grappleSp = grappleSprings.get(p.partName);
-        if (grappleSp) {
-          const stepped = stepSpringDamperVec3(grappleSp, dt, 95.0, 12.5);
-          grappleSprings.set(p.partName, stepped);
-          const dispMag = Math.hypot(stepped.pos[0], stepped.pos[1], stepped.pos[2]);
-          if (dispMag > 0.002) {
-            anyPartDisplaced = true;
-            const hoverBob =
-              draggingGrapplePart === p.partName
-                ? 0
-                : Math.sin(now * 2.8 + p.normAxialX * 3.1) * 0.014 * Math.min(1, dispMag * 4);
-            const gwx = stepped.pos[0];
-            const gwy = stepped.pos[1] + hoverBob;
-            const gwz = stepped.pos[2];
-            if (m.parent) {
-              _grappleOriginW.set(0, 0, 0);
-              m.parent.localToWorld(_grappleOriginW);
-              _grappleTargetW.set(
-                _grappleOriginW.x + gwx,
-                _grappleOriginW.y + gwy,
-                _grappleOriginW.z + gwz
-              );
-              m.parent.worldToLocal(_grappleTargetW);
-              m.position.add(_grappleTargetW);
-            } else {
-              m.position.x += gwx;
-              m.position.y += gwy;
-              m.position.z += gwz;
-            }
-          }
-        }
 
         const n = p.partName.toLowerCase();
         if (isMars) {
@@ -2115,12 +2158,22 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             _tmpQuat.setFromAxisAngle(_axisX, s.fk1 * 0.35);
             m.quaternion.multiply(_tmpQuat);
           } else if (p.layer === 'L1' && n.includes('wheel')) {
-            _tmpQuat.setFromAxisAngle(_axisX, s.fk1 * 0.25 + (s.liveSim ? s.wheelAccumAngle * 0.2 : 0));
+            _tmpQuat.setFromAxisAngle(
+              _axisX,
+              s.fk1 * 0.25 + (s.liveSim ? s.wheelAccumAngle * 0.2 : 0)
+            );
             m.quaternion.multiply(_tmpQuat);
           } else if (p.layer === 'L2' && (n.includes('arm') || n.includes('turret'))) {
             _tmpQuat.setFromAxisAngle(_axisX, s.fk2 * 0.6);
             m.quaternion.multiply(_tmpQuat);
-          } else if (p.layer === 'L2' && (n.includes('head') || n.includes('navcam') || n.includes('mastcam') || n.includes('top') || n.includes('cylinder015'))) {
+          } else if (
+            p.layer === 'L2' &&
+            (n.includes('head') ||
+              n.includes('navcam') ||
+              n.includes('mastcam') ||
+              n.includes('top') ||
+              n.includes('cylinder015'))
+          ) {
             _tmpQuat.setFromAxisAngle(_axisY, s.fk3);
             m.quaternion.multiply(_tmpQuat);
           }
@@ -2137,6 +2190,70 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             _tmpQuat.setFromAxisAngle(_axisX, s.fk3);
             m.quaternion.multiply(_tmpQuat);
           }
+        }
+
+        // Evaluate 4-stage smoothstep world-space explosion + peel offset and project dynamically into m.parent local space!
+        const [wx, wy, wz] = evaluateStagedExplosionOffset(
+          p.orthoPlan,
+          s.curExplosion,
+          p.peelAmount
+        );
+        if (Math.abs(wx) > 1e-5 || Math.abs(wy) > 1e-5 || Math.abs(wz) > 1e-5) {
+          if (m.parent) {
+            m.parent.matrixWorld.decompose(_decompPos, _parentQuat, _parentScale);
+            _parentQuat.invert();
+            _localDelta
+              .set(wx, wy, wz)
+              .applyQuaternion(_parentQuat)
+              .set(
+                _localDelta.x / (Math.abs(_parentScale.x) > 1e-6 ? _parentScale.x : 1),
+                _localDelta.y / (Math.abs(_parentScale.y) > 1e-6 ? _parentScale.y : 1),
+                _localDelta.z / (Math.abs(_parentScale.z) > 1e-6 ? _parentScale.z : 1)
+              );
+            m.position.add(_localDelta);
+          } else {
+            m.position.x += wx;
+            m.position.y += wy;
+            m.position.z += wz;
+          }
+        }
+
+        const grappleSp = grappleSprings.get(p.partName);
+        if (grappleSp) {
+          const stepped = stepSpringDamperVec3(grappleSp, dt, 95.0, 12.5);
+          grappleSprings.set(p.partName, stepped);
+          const dispMag = Math.hypot(stepped.pos[0], stepped.pos[1], stepped.pos[2]);
+          if (dispMag > 0.002) {
+            anyPartDisplaced = true;
+            const hoverBob =
+              draggingGrapplePart === p.partName
+                ? 0
+                : Math.sin(now * 2.8 + p.normAxialX * 3.1) * 0.014 * Math.min(1, dispMag * 4);
+            const gwx = stepped.pos[0];
+            const gwy = stepped.pos[1] + hoverBob;
+            const gwz = stepped.pos[2];
+            if (m.parent) {
+              m.parent.matrixWorld.decompose(_decompPos, _parentQuat, _parentScale);
+              _parentQuat.invert();
+              _localDelta
+                .set(gwx, gwy, gwz)
+                .applyQuaternion(_parentQuat)
+                .set(
+                  _localDelta.x / (Math.abs(_parentScale.x) > 1e-6 ? _parentScale.x : 1),
+                  _localDelta.y / (Math.abs(_parentScale.y) > 1e-6 ? _parentScale.y : 1),
+                  _localDelta.z / (Math.abs(_parentScale.z) > 1e-6 ? _parentScale.z : 1)
+                );
+              m.position.add(_localDelta);
+            } else {
+              m.position.x += gwx;
+              m.position.y += gwy;
+              m.position.z += gwz;
+            }
+          }
+        }
+
+        if (m.children.length > 0) {
+          m.updateMatrixWorld();
         }
 
         const isHighlighted = Boolean(activeFocusPart && p.partName === activeFocusPart);
@@ -2241,10 +2358,14 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
               isGroundContactCandidate: n.includes('wheel') || n.includes('bogie') || n.includes('mount')
             });
           }
-          if (s.scientificConfig.torqueVectorsEnabled && torqueSamples.length < 14 && (p.layer === 'L2' || n.includes('wheel') || n.includes('fan') || n.includes('hpt'))) {
+          if (
+            s.scientificConfig.torqueVectorsEnabled &&
+            torqueSamples.length < 14 &&
+            (p.layer === 'L2' || n.includes('wheel') || n.includes('fan') || n.includes('hpt'))
+          ) {
             torqueSamples.push({
-              worldPos: _tmpVec3B.clone(),
-              axisWorld: isMars ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0),
+              worldPos: p.currentCenterWorld.copy(_tmpVec3B),
+              axisWorld: isMars ? _salvageAxisMars : _salvageAxisAero,
               torqueRatio01: Math.min(1, 0.25 + loadFactor * 0.52 + s.impactSpike01 * 0.4),
               omegaRadS: 1.5 + loadFactor * 2.4
             });
@@ -2300,9 +2421,10 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
 
       assemblyRoot.updateMatrixWorld(true);
 
-      // Update Exploded Assembly Dashed Trace Lines
-      if (anyPartDisplaced && !s.isolatedPart && parts.length > 0) {
-        const traceAnchors = parts.map((p) => {
+      // Update Exploded Assembly Dashed Trace Lines (zero per-frame GC allocations!)
+      if (anyPartDisplaced && !s.isolatedPart && parts.length > 0 && traceAnchorsBuf.length === parts.length) {
+        for (let i = 0; i < parts.length; i++) {
+          const p = parts[i];
           if (p.mesh.visible) {
             if (p.mesh.parent) {
               p.mountOriginWorld.copy(p.socketInParentLocal);
@@ -2311,13 +2433,9 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             p.currentCenterWorld.copy(p.geomLocalCenter);
             p.mesh.localToWorld(p.currentCenterWorld);
           }
-          return {
-            originWorld: p.mountOriginWorld,
-            currentWorld: p.currentCenterWorld,
-            visible: p.mesh.visible
-          };
-        });
-        traceController.updateTraces(traceAnchors, true);
+          traceAnchorsBuf[i].visible = p.mesh.visible;
+        }
+        traceController.updateTraces(traceAnchorsBuf, true);
       } else {
         traceController.updateTraces([], false);
       }
@@ -2410,11 +2528,15 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       });
 
       if (s.shipbreakerEnabled && !s.isolatedPart) {
-        const jointWorldAnchors = parts.slice(0, 20).map((pt) => {
-          const pPos = pt.geomLocalCenter.clone();
-          pt.mesh.localToWorld(pPos);
-          return { pos: pPos, axisWorld: isMars ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0) };
-        });
+        const anchorLimit = Math.min(20, parts.length);
+        const jointWorldAnchors: { pos: THREE.Vector3; axisWorld: THREE.Vector3 }[] = [];
+        const salvageAxis = isMars ? _salvageAxisMars : _salvageAxisAero;
+        for (let i = 0; i < anchorLimit; i++) {
+          const pt = parts[i];
+          pt.currentCenterWorld.copy(pt.geomLocalCenter);
+          pt.mesh.localToWorld(pt.currentCenterWorld);
+          jointWorldAnchors.push({ pos: pt.currentCenterWorld, axisWorld: salvageAxis });
+        }
 
         camera.matrixWorld.extractBasis(_camRight, _camUp, _camFwd);
         _emitterW
@@ -2429,8 +2551,9 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         if (activeBeamPartName) {
           const gp = parts.find((pt) => pt.partName === activeBeamPartName);
           if (gp && gp.mesh.visible) {
-            grappledCenter = gp.geomLocalCenter.clone();
-            gp.mesh.localToWorld(grappledCenter);
+            _grappleCenterScratch.copy(gp.geomLocalCenter);
+            gp.mesh.localToWorld(_grappleCenterScratch);
+            grappledCenter = _grappleCenterScratch;
             grappledRadius = Math.max(gp.normSize[0], gp.normSize[1], gp.normSize[2]) * 0.58;
           }
         }
@@ -2606,7 +2729,9 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
         const h = container.clientHeight || 640;
         setPtSpp(ptRes.spp);
         setSlsActive(s.slsState.active);
-        setPeakStressMpa(framePeakStressMpa);
+        if (s.scientificConfig.feaEnabled || s.visualPopoverOpen) {
+          setPeakStressMpa(framePeakStressMpa);
+        }
         if (comResult) {
           setComStabilityStatus(comResult.statusLevel);
         }
@@ -2624,7 +2749,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
           setMicroFpvSegmentLabel(activeFpvSegLabel);
         }
 
-        if (s.liveSim) {
+        if (s.liveSim && s.activeDrawer === 'kinematics') {
           setFkJoint1(Number(s.fk1.toFixed(2)));
           setFkJoint2(Number(s.fk2.toFixed(2)));
           setFkJoint3(Number(s.fk3.toFixed(2)));
@@ -2775,6 +2900,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       setViewportSize({ w, h });
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
       renderer.setSize(w, h);
       rayTracer.setSize(w, h);
     };
@@ -2786,6 +2912,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     return () => {
       disposed = true;
       cancelAnimationFrame(frameId);
+      cancelAnimationFrame(magWheelRaf);
       clearTimeout(frameId);
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
@@ -2793,6 +2920,8 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       renderer.domElement.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('wheel', onWheel);
       controls.removeEventListener('start', onControlStart);
+      controls.dispose();
+      controlsRef.current = null;
       window.removeEventListener('resize', handleResize);
       resizeObs?.disconnect();
       if (webmRecorder.isRecording()) {
@@ -2808,7 +2937,17 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       disasterFx.dispose();
       salvageFx.dispose();
       signatureFx.dispose();
-      traceController.dispose();
+      traceController.dispose?.();
+      (opticalSection as { dispose?: () => void }).dispose?.();
+      disposeSceneHierarchy(opticalSection.group);
+      (flowController as { dispose?: () => void } | null)?.dispose?.();
+      if (flowController) {
+        disposeSceneHierarchy(flowController.group);
+      }
+      (blueprintRig as { dispose?: () => void }).dispose?.();
+      disposeSceneHierarchy(blueprintRig.group);
+      disposeSceneHierarchy(skelGroup);
+      disposeSceneHierarchy(assemblyRoot, { disposeTextures: true });
       saltlineDeck.dispose();
       rayTracer.dispose();
       rayTracerRef.current = null;
@@ -3140,6 +3279,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
                             setPlaThrottle(parseFloat(e.target.value));
                             setLiveSim(true);
                           }}
+                          onPointerUp={(e) => e.currentTarget.blur()}
                           className="w-full accent-[#00e5ff] h-1.5 cursor-pointer"
                         />
                       </div>
@@ -3182,6 +3322,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
                           setLiveSim(false);
                           s.set(parseFloat(e.target.value));
                         }}
+                        onPointerUp={(e) => e.currentTarget.blur()}
                         className="w-full accent-[#00e5ff] h-1.5 cursor-pointer"
                       />
                     </div>
@@ -3303,7 +3444,15 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
                 data-testid={`ws-drawer-btn-kinematics-${config.id}`}
                 aria-expanded={activeDrawer === 'kinematics'}
                 onClick={() =>
-                  setActiveDrawer((d) => (d === 'kinematics' ? null : 'kinematics'))
+                  setActiveDrawer((d) => {
+                    const next = d === 'kinematics' ? null : 'kinematics';
+                    if (next === 'kinematics' && stateRef.current.liveSim) {
+                      setFkJoint1(Number(stateRef.current.fk1.toFixed(2)));
+                      setFkJoint2(Number(stateRef.current.fk2.toFixed(2)));
+                      setFkJoint3(Number(stateRef.current.fk3.toFixed(2)));
+                    }
+                    return next;
+                  })
                 }
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
                   activeDrawer === 'kinematics'

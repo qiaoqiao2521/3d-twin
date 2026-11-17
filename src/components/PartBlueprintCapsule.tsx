@@ -172,9 +172,9 @@ export const PartBlueprintCapsule: React.FC<PartBlueprintCapsuleProps> = ({
           {/* Detailed CAD Engineering Blueprint Specification Sheet */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-1.5 border-t border-slate-800 text-[10px] font-mono tabular-nums">
             <div className="col-span-2 flex items-center justify-between">
-              <span className="text-slate-400">CAD 包围盒尺寸</span>
+              <span className="text-slate-400">局部 OBB 尺寸 L × H × W (mm)</span>
               <span className="text-amber-300 font-bold">
-                {metadata.dimensionsMm[0]} × {metadata.dimensionsMm[2]} × {metadata.dimensionsMm[1]} mm
+                {metadata.dimensionsMm[0]} × {metadata.dimensionsMm[1]} × {metadata.dimensionsMm[2]} mm
               </span>
             </div>
             <div className="flex items-center justify-between">

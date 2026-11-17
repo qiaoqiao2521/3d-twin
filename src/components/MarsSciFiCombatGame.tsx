@@ -1,9 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { loadGlbSceneResilient, fetchTextAssetResilient } from '../utils/resilientGlbLoader';
+import {
+  loadGlbSceneResilient,
+  fetchTextAssetResilient,
+  cloneSceneWithSkeletonSupport,
+  ensureMeshoptLodReady,
+  getOrBuildDecimatedLodGeometries,
+  disposeSceneHierarchy
+} from '../utils/resilientGlbLoader';
 import { UrdfJointDef, parseUrdfJoints } from '../utils/manifestUtils';
 import { computeSandboxUrdfJointAngle, SandboxKinematicState } from '../utils/actionSandboxEngine';
-import { detectSoftwareWebGL, createStudioLightboxPmrem } from '../utils/hybridRayTracing';
+import {
+  detectSoftwareWebGL,
+  createStudioLightboxPmrem,
+  upgradeGlbPbrAndBuildStaticBvh
+} from '../utils/hybridRayTracing';
 import { createCombatAnamorphicPostPipeline } from '../utils/cinemaOpticsPipeline';
 import {
   createInitialCameraMicroImpulse,
@@ -19,13 +30,15 @@ import {
   PLAYABLE_MECH_SPECS,
   COMBAT_WEAPONS,
   ENEMY_ARCHETYPE_SPECS,
+  MARS_BATTLEFIELD_OBSTACLES,
   MarsCombatWorldState,
   RunSummarySnapshot,
   KillfeedEntry,
   HitmarkerFeedback,
+  isLeggedCombatMech,
+  sampleMarsArenaSurfaceHeight,
   getPlayableMechSpec,
   createInitialMarsCombatState,
-  spawnRandomEnemyWave,
   summonAresBoss,
   computeRelativeThreatAngleRad,
   computeCombatUpperLowerBodyIK,
@@ -37,7 +50,9 @@ import {
   createSoftShadowDiscTexture,
   createMountedSciFiPulseRifle,
   createPlayerDodgeThrusterRig,
-  createLocalizedHexShieldMaterial
+  createLocalizedHexShieldMaterial,
+  createAeroHunterGunshipFrame,
+  createArmoredManipulatorCarrierBase
 } from '../utils/marsCombatSceneFX';
 
 export interface MarsSciFiCombatGameProps {
@@ -56,18 +71,24 @@ interface BoundUrdfNode {
   axisVec: THREE.Vector3;
 }
 
+interface RigMeshEntry {
+  mesh: THREE.Mesh;
+  mat: THREE.MeshStandardMaterial;
+  baseGeo: THREE.BufferGeometry;
+  lods: { lod1: THREE.BufferGeometry; lod2: THREE.BufferGeometry } | null;
+  baseEmissive: THREE.Color;
+  baseEmissiveIntensity: number;
+}
+
 interface Spawned3DEnemyRig {
   uid: number;
   archetype: EnemyArchetypeId;
   root: THREE.Group;
   modelPivot: THREE.Group;
   joints: BoundUrdfNode[];
-  meshes: {
-    mesh: THREE.Mesh;
-    mat: THREE.MeshStandardMaterial;
-    baseEmissive: THREE.Color;
-    baseEmissiveIntensity: number;
-  }[];
+  meshes: RigMeshEntry[];
+  rotorNodes: THREE.Object3D[];
+  gunshipFrame: ReturnType<typeof createAeroHunterGunshipFrame> | null;
   shieldDome: THREE.Mesh | null;
 }
 
@@ -127,13 +148,15 @@ interface HudSyncSnapshot {
 }
 
 const _muzzleWorldVec = new THREE.Vector3();
-
 const _raycaster = new THREE.Raycaster();
 const _ndc = new THREE.Vector2();
 const _projVec = new THREE.Vector3();
 const _camTarget = new THREE.Vector3();
 const _camDesired = new THREE.Vector3();
 const _qAxis = new THREE.Quaternion();
+const _wheelSpinQuat = new THREE.Quaternion();
+const _wheelSpinAxis = new THREE.Vector3(0, 1, 0);
+
 const _tmpUrdfKin: SandboxKinematicState = {
   x: 0,
   y: 0,
@@ -165,21 +188,18 @@ const _tmpUrdfKin: SandboxKinematicState = {
 
 /**
  * Normalizes a cloned GLB group so its bounding box max dimension equals `targetMaxDim`
- * and its bottom sits flush at local `y = 0`.
+ * and its bottom sits flush at local `y = 0`, enabling shadows & optional runtime Meshopt LODs.
  */
 function normalizeAndGroundGlbGroup(
   rawGroup: THREE.Group,
   targetMaxDim: number,
-  tintAccentHex?: string
+  isSoftwareGl: boolean,
+  tintAccentHex?: string,
+  buildRuntimeLods: boolean = false
 ): {
   pivot: THREE.Group;
   normScale: number;
-  meshes: {
-    mesh: THREE.Mesh;
-    mat: THREE.MeshStandardMaterial;
-    baseEmissive: THREE.Color;
-    baseEmissiveIntensity: number;
-  }[];
+  meshes: RigMeshEntry[];
 } {
   const pivot = new THREE.Group();
   rawGroup.updateMatrixWorld(true);
@@ -193,18 +213,14 @@ function normalizeAndGroundGlbGroup(
   rawGroup.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
   rawGroup.updateMatrixWorld(true);
 
-  const meshes: {
-    mesh: THREE.Mesh;
-    mat: THREE.MeshStandardMaterial;
-    baseEmissive: THREE.Color;
-    baseEmissiveIntensity: number;
-  }[] = [];
-
+  const meshes: RigMeshEntry[] = [];
   const accentCol = tintAccentHex ? new THREE.Color(tintAccentHex) : null;
 
   rawGroup.traverse((obj) => {
     if ((obj as THREE.Mesh).isMesh) {
       const m = obj as THREE.Mesh;
+      m.castShadow = !isSoftwareGl;
+      m.receiveShadow = !isSoftwareGl;
       const srcMat = Array.isArray(m.material) ? m.material[0] : m.material;
       const std = (
         srcMat ? srcMat.clone() : new THREE.MeshStandardMaterial({ color: 0x94a3b8 })
@@ -217,7 +233,9 @@ function normalizeAndGroundGlbGroup(
       const baseEmissive = std.emissive ? std.emissive.clone() : new THREE.Color(0x000000);
       const baseEmissiveIntensity = std.emissiveIntensity ?? 0;
       m.material = std;
-      meshes.push({ mesh: m, mat: std, baseEmissive, baseEmissiveIntensity });
+      const baseGeo = m.geometry;
+      const lods = buildRuntimeLods ? getOrBuildDecimatedLodGeometries(baseGeo) : null;
+      meshes.push({ mesh: m, mat: std, baseGeo, lods, baseEmissive, baseEmissiveIntensity });
     }
   });
 
@@ -258,6 +276,43 @@ function bindUrdfJointsToRoot(root: THREE.Object3D, defs: UrdfJointDef[]): Bound
   return bound;
 }
 
+function collectRoverWheelNodes(
+  root: THREE.Object3D
+): { node: THREE.Object3D; baseQuat: THREE.Quaternion; axis: THREE.Vector3 }[] {
+  const found: { node: THREE.Object3D; baseQuat: THREE.Quaternion; axis: THREE.Vector3 }[] = [];
+  root.traverse((o) => {
+    if (!o.name) return;
+    const n = o.name.toLowerCase();
+    if (
+      /wheel/.test(n) &&
+      !/steer|bogie|rocker|bracket|fender|hub_mount|fork|strut/.test(n) &&
+      !found.some((f) => {
+        let p = o.parent;
+        while (p) {
+          if (p === f.node) return true;
+          p = p.parent;
+        }
+        return false;
+      })
+    ) {
+      // Determine thin cylinder spin axis from local geometry bounds if mesh, else local Z/Y
+      let spinAxis = new THREE.Vector3(0, 0, 1);
+      if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry) {
+        const g = (o as THREE.Mesh).geometry;
+        if (!g.boundingBox) g.computeBoundingBox();
+        if (g.boundingBox) {
+          const sz = g.boundingBox.getSize(new THREE.Vector3());
+          if (sz.x <= sz.y && sz.x <= sz.z) spinAxis.set(1, 0, 0);
+          else if (sz.y <= sz.x && sz.y <= sz.z) spinAxis.set(0, 1, 0);
+          else spinAxis.set(0, 0, 1);
+        }
+      }
+      found.push({ node: o, baseQuat: o.quaternion.clone(), axis: spinAxis });
+    }
+  });
+  return found;
+}
+
 export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
   initialAutostart = false,
   initialMechId = 'unitree_g1',
@@ -293,6 +348,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     wingmanCommandJustPressed: false,
     ultimateJustPressed: false,
     summonBossJustPressed: false,
+    ventJustPressed: false,
     pointerNdcX: 0,
     pointerNdcY: 0,
     hasPointerSample: false,
@@ -332,12 +388,18 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     };
   });
 
-  // Sync Game Shell state to document.body.dataset.state
+  // Sync Game Shell state to document.body.dataset.state & release PointerLock when leaving 'playing'
   useEffect(() => {
     shellStateRef.current = shellState;
     document.body.dataset.state = shellState;
     if (shellState !== 'playing') {
-      document.exitPointerLock?.();
+      if (document.pointerLockElement) {
+        try {
+          document.exitPointerLock?.();
+        } catch {
+          // Safe fallback if pointer lock unsupported
+        }
+      }
       inputHubRef.current.keysHeld.clear();
       inputHubRef.current.mouseHeldL = false;
       proceduralAudioSynth.silenceContinuousLoops();
@@ -393,6 +455,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
   useEffect(() => {
     const hub = inputHubRef.current;
     const onKeyDown = (e: KeyboardEvent) => {
+      // Never hijack browser shortcuts like Ctrl+R, Cmd+R, Ctrl+Shift+I
+      if (e.ctrlKey || e.metaKey) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       const st = shellStateRef.current;
 
@@ -428,16 +492,20 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         else if (e.code === 'Space') {
           e.preventDefault();
           hub.jumpJustPressed = true;
-        } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'AltLeft') {
+        } else if (e.code === 'KeyC' || e.code === 'AltLeft') {
+          // [C / Alt] Dedicated Vector Quick-Boost Dodge (decoupled from [Shift] Sprint!)
+          e.preventDefault();
           hub.dashJustPressed = true;
         } else if (e.code === 'KeyE') {
           hub.empJustPressed = true;
         } else if (e.code === 'KeyQ') {
-          // [Q] Tactical Left-Arm Point + Allied Wingman Go2 Pounce!
           hub.wingmanCommandJustPressed = true;
-        } else if (e.code === 'KeyV' || e.code === 'KeyR') {
-          // [V / R] Orbital Ion Cannon Ultimate!
+        } else if (e.code === 'KeyV') {
+          // [V] Orbital Ion Cannon Ultimate (never accidentally triggered by [R]!)
           hub.ultimateJustPressed = true;
+        } else if (e.code === 'KeyR') {
+          // [R] Tactical Barrel Heat-Vent & Spread/Recoil Reset
+          hub.ventJustPressed = true;
         } else if (e.code === 'KeyF') {
           hub.missileJustPressed = true;
         } else if (e.code === 'KeyB') {
@@ -479,6 +547,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     const isSoftwareGl = detectSoftwareWebGL();
     const initW = container.clientWidth || 1280;
     const initH = container.clientHeight || 800;
+    const initDpr = isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 2);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x3b1b13);
@@ -494,47 +563,56 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.12;
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(initDpr);
     renderer.setSize(initW, initH);
     renderer.shadowMap.enabled = !isSoftwareGl;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // Studio PBR environment reflection for real metallic GLB robot hulls
     const envTex = createStudioLightboxPmrem(renderer);
     scene.environment = envTex;
 
-    const combatPost = createCombatAnamorphicPostPipeline(renderer, initW, initH, isSoftwareGl);
+    const combatPost = createCombatAnamorphicPostPipeline(
+      renderer,
+      initW,
+      initH,
+      isSoftwareGl,
+      initDpr
+    );
     let camMicroImpulse = createInitialCameraMicroImpulse();
-    let extraHitstopTimer = 0;
 
-    // Warm Martian Sun Key Light + Cool Sky/Canyon Hemisphere Fill + Rim Light
+    // Warm Martian Sun Key Light + Player-Following 2048x2048 Shadow Frustum + Cool Rim Light
     const hemi = new THREE.HemisphereLight(0xffcfb3, 0x1c1218, 0.72);
     scene.add(hemi);
 
     const sunKey = new THREE.DirectionalLight(0xffdfa8, 1.65);
     sunKey.position.set(28, 42, -24);
     sunKey.castShadow = !isSoftwareGl;
-    sunKey.shadow.mapSize.set(1024, 1024);
+    sunKey.shadow.mapSize.set(2048, 2048);
     sunKey.shadow.camera.near = 4;
-    sunKey.shadow.camera.far = 120;
-    sunKey.shadow.camera.left = -38;
-    sunKey.shadow.camera.right = 38;
-    sunKey.shadow.camera.top = 38;
-    sunKey.shadow.camera.bottom = -38;
-    sunKey.shadow.bias = -0.0005;
+    sunKey.shadow.camera.far = 135;
+    sunKey.shadow.camera.left = -44;
+    sunKey.shadow.camera.right = 44;
+    sunKey.shadow.camera.top = 44;
+    sunKey.shadow.camera.bottom = -44;
+    sunKey.shadow.bias = -0.0004;
+    sunKey.shadow.normalBias = 0.02;
     scene.add(sunKey);
+    scene.add(sunKey.target);
 
     const rimCool = new THREE.DirectionalLight(0x38bdf8, 0.68);
     rimCool.position.set(-24, 16, 28);
     scene.add(rimCool);
 
-    // Martian Jezero Battlefield + Natural Perimeter + Orbital Frigate Vista
+    // Martian Jezero Battlefield + Cover Boulders + Perimeter Towers + Static MeshBVH Acceleration
     const marsEnv = createMarsBattlefieldEnvironment(
       renderer.capabilities.getMaxAnisotropy(),
       isSoftwareGl
     );
+    upgradeGlbPbrAndBuildStaticBvh(marsEnv.terrainMesh, 'mars_terrain', () => 'L1');
+    upgradeGlbPbrAndBuildStaticBvh(marsEnv.coverBoulderInst, 'mars_boulders', () => 'L1');
+    upgradeGlbPbrAndBuildStaticBvh(marsEnv.pylonGroup, 'mars_pylons', () => 'L1');
     scene.add(marsEnv.root);
 
     // Pooled Zero-GC Combat & Boss VFX Controller
@@ -560,23 +638,25 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     playerRoot.add(playerShadow);
 
     let playerModelPivot: THREE.Group | null = null;
+    let playerMeshes: RigMeshEntry[] = [];
     let playerUrdfJoints: BoundUrdfNode[] = [];
+    let playerRoverWheels: { node: THREE.Object3D; baseQuat: THREE.Quaternion; axis: THREE.Vector3 }[] = [];
+    let playerCarrier: ReturnType<typeof createArmoredManipulatorCarrierBase> | null = null;
     let currentLoadedPlayerMechId: PlayerMechId | null = null;
     let playerRifle: ReturnType<typeof createMountedSciFiPulseRifle> | null = null;
     let playerTurretMount: THREE.Group | null = null;
 
-    // Dorsal Tactical Jet-Dodge Thruster Plumes
     const dodgeThrusterRig = createPlayerDodgeThrusterRig();
     playerRoot.add(dodgeThrusterRig.group);
 
-    // Allied Wingman Go2 Companion 3D Rig (Fights alongside player + responds to [Q / Middle Click]!)
+    // Allied Wingman Go2 Companion 3D Rig
     const wingmanRoot = new THREE.Group();
     scene.add(wingmanRoot);
     const wingmanShadow = new THREE.Mesh(contactShadowGeo, contactShadowMat);
     wingmanShadow.scale.setScalar(0.52);
     wingmanShadow.position.y = 0.03;
     wingmanRoot.add(wingmanShadow);
-    const wingmanRingGeo = new THREE.RingGeometry(0.40, 0.50, 28);
+    const wingmanRingGeo = new THREE.RingGeometry(0.4, 0.5, 28);
     wingmanRingGeo.rotateX(-Math.PI / 2);
     const wingmanRingMat = new THREE.MeshBasicMaterial({
       color: 0x00e5ff,
@@ -591,8 +671,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     wingmanBeaconRing.position.y = 0.04;
     wingmanRoot.add(wingmanBeaconRing);
     let wingmanUrdfJoints: BoundUrdfNode[] = [];
+    let wingmanMeshes: RigMeshEntry[] = [];
 
-    // Template Cache for Real GLB Assets & URDFs (loaded once, cloned cleanly for enemies & wingman!)
+    // Template Cache for Real GLB Assets & URDFs (built with Static MeshBVH once at load!)
     const glbCache = new Map<string, THREE.Group>();
     const urdfCache = new Map<string, UrdfJointDef[]>();
 
@@ -600,9 +681,11 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       const key = urls.join('|');
       let master = glbCache.get(key);
       if (!master) {
+        await ensureMeshoptLodReady();
         const containerGroup = new THREE.Group();
         const scenes = await Promise.all(urls.map((u) => loadGlbSceneResilient(u)));
         for (const s of scenes) containerGroup.add(s);
+        upgradeGlbPbrAndBuildStaticBvh(containerGroup, key, () => 'L1');
         glbCache.set(key, containerGroup);
         master = containerGroup;
       }
@@ -623,6 +706,12 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       return { template: master, joints };
     };
 
+    const disposeClonedRigMeshes = (entries: RigMeshEntry[]) => {
+      for (const m of entries) {
+        m.mat.dispose();
+      }
+    };
+
     const syncPlayerMechModel = async (mechId: PlayerMechId) => {
       if (disposed || currentLoadedPlayerMechId === mechId) return;
       currentLoadedPlayerMechId = mechId;
@@ -634,27 +723,68 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           playerRifle.dispose();
           playerRifle = null;
         }
+        if (playerCarrier) {
+          playerRoot.remove(playerCarrier.group);
+          playerCarrier.dispose();
+          playerCarrier = null;
+        }
         playerTurretMount = null;
+        playerRoverWheels = [];
         if (playerModelPivot) {
           playerRoot.remove(playerModelPivot);
+          disposeClonedRigMeshes(playerMeshes);
+          playerMeshes = [];
         }
-        const cloned = template.clone(true);
-        const { pivot, normScale } = normalizeAndGroundGlbGroup(
+
+        const cloned = cloneSceneWithSkeletonSupport(template);
+        const isStationaryArm = mechId === 'unitree_z1' || mechId === 'baxter_dual_arm';
+        const effectiveDim = isStationaryArm ? spec.targetMaxDim * 0.84 : spec.targetMaxDim;
+        const { pivot, normScale, meshes } = normalizeAndGroundGlbGroup(
           cloned,
-          spec.targetMaxDim,
-          '#00e5ff'
+          effectiveDim,
+          isSoftwareGl,
+          '#00e5ff',
+          false
         );
+
+        // Mount stationary robotic arms onto an Armored 4-Wheel Combat UGV Rover Carrier Base!
+        if (isStationaryArm) {
+          const carrier = createArmoredManipulatorCarrierBase(mechId, isSoftwareGl);
+          playerRoot.add(carrier.group);
+          pivot.position.y = carrier.mountHeight;
+          playerCarrier = carrier;
+        }
+
         playerRoot.add(pivot);
         playerModelPivot = pivot;
+        playerMeshes = meshes;
         playerUrdfJoints = bindUrdfJointsToRoot(pivot, joints);
 
-        // Attach Multi-Part Sci-Fi Pulse Rifle / Arm Cannon directly to right hand/forearm URDF node (or dorsal turret mount)!
+        if (mechId === 'mars2020' || mechId === 'hello_stretch') {
+          playerRoverWheels = collectRoverWheelNodes(pivot);
+        }
+
+        // Attach Sci-Fi Pulse Rifle to humanoid/manipulator right hand or dorsal turret gimbal
         let handSocketNode: THREE.Object3D | null = null;
-        if (mechId === 'unitree_g1' || mechId === 'unitree_z1') {
+        if (
+          mechId === 'unitree_g1' ||
+          mechId === 'unitree_h1' ||
+          mechId === 'fourier_gr1' ||
+          mechId === 'talos_humanoid' ||
+          mechId === 'unitree_z1'
+        ) {
           const priorityPatterns =
-            mechId === 'unitree_g1'
-              ? ['right_hand_palm_link', 'right_wrist_yaw_link', 'right_wrist_pitch_link', 'right_elbow_link']
-              : ['link06', 'joint6', 'link05'];
+            mechId === 'unitree_z1'
+              ? ['link06', 'joint6', 'link05']
+              : [
+                  'right_hand_palm_link',
+                  'right_wrist_yaw_link',
+                  'right_wrist_pitch_link',
+                  'right_hand',
+                  'arm_right_7_link',
+                  'r_wrist',
+                  'right_elbow'
+                ];
           for (const pat of priorityPatterns) {
             pivot.traverse((o) => {
               if (!handSocketNode && o.name && o.name.toLowerCase().includes(pat)) {
@@ -667,15 +797,19 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
 
         if (handSocketNode) {
           const rifle = createMountedSciFiPulseRifle(mechId, true, 1 / Math.max(0.1, normScale));
-          // Slight palm offset forward & centered in hand grip
           rifle.group.position.set(0.03, 0, 0.01);
           (handSocketNode as THREE.Object3D).add(rifle.group);
           playerRifle = rifle;
         } else {
-          // Dorsal / Shoulder Weapon Turret Gimbal for Quadruped Go2, Tracked SAR, and Mars2020 Rover!
           const turret = new THREE.Group();
           const mountY =
-            mechId === 'unitree_go2' ? 0.92 : mechId === 'sar' ? 1.18 : 1.48;
+            mechId === 'unitree_go2' || mechId === 'anymal_c'
+              ? 0.92
+              : mechId === 'unitree_b2'
+                ? 1.05
+                : mechId === 'sar'
+                  ? 1.18
+                  : 1.48;
           turret.position.set(0.18, mountY, 0.22);
           const rifle = createMountedSciFiPulseRifle(mechId, false, 1.0);
           turret.add(rifle.group);
@@ -688,7 +822,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       }
     };
 
-    // Pre-warm Player Mech + Allied Wingman Go2 + All Enemy Archetypes + ARES-09 Boss GLBs in parallel!
+    // Pre-warm Player Mech + Allied Wingman Go2 + All Enemy Archetypes + TALOS ARES-09 Boss GLBs
     (async () => {
       setIsLoadingAssets(true);
       await syncPlayerMechModel(selectedMechRef.current);
@@ -699,9 +833,16 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           go2Spec.urdfUrl
         );
         if (!disposed) {
-          const wCloned = wTpl.clone(true);
-          const { pivot: wPivot } = normalizeAndGroundGlbGroup(wCloned, 0.86, '#00e5ff');
+          const wCloned = cloneSceneWithSkeletonSupport(wTpl);
+          const { pivot: wPivot, meshes: wMeshes } = normalizeAndGroundGlbGroup(
+            wCloned,
+            0.86,
+            isSoftwareGl,
+            '#00e5ff',
+            false
+          );
           wingmanRoot.add(wPivot);
+          wingmanMeshes = wMeshes;
           wingmanUrdfJoints = bindUrdfJointsToRoot(wPivot, wJoints);
         }
       } catch {
@@ -721,6 +862,17 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     scene.add(enemyGroupRoot);
     const shieldSphereGeo = new THREE.SphereGeometry(1, 28, 20);
 
+    const disposeEnemyRig = (rig: Spawned3DEnemyRig) => {
+      if (rig.shieldDome) {
+        (rig.shieldDome.material as THREE.Material).dispose();
+      }
+      if (rig.gunshipFrame) {
+        rig.gunshipFrame.dispose();
+      }
+      disposeClonedRigMeshes(rig.meshes);
+      enemyGroupRoot.remove(rig.root);
+    };
+
     const ensureEnemyRig = (uid: number, archetype: EnemyArchetypeId) => {
       if (enemyRigs.has(uid)) return enemyRigs.get(uid)!;
       const spec = ENEMY_ARCHETYPE_SPECS[archetype];
@@ -737,11 +889,29 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       shadow.position.y = 0.03;
       rigRoot.add(shadow);
 
-      const cloned = cached.clone(true);
-      const { pivot, meshes } = normalizeAndGroundGlbGroup(cloned, spec.scaleDim, spec.accentHex);
+      const cloned = cloneSceneWithSkeletonSupport(cached);
+      const { pivot, meshes } = normalizeAndGroundGlbGroup(
+        cloned,
+        spec.scaleDim,
+        isSoftwareGl,
+        spec.accentHex,
+        true
+      );
       rigRoot.add(pivot);
 
-      // Translucent Fresnel + Localized Hexagonal Honeycomb Impact Ripple Energy Shield (ZERO wireframe!)
+      // Wrap `aero_hunter` nacelle core in a swept-wing VTOL Gunship airframe & collect spinning fan rotors!
+      let gunshipFrame: ReturnType<typeof createAeroHunterGunshipFrame> | null = null;
+      const rotorNodes: THREE.Object3D[] = [];
+      if (archetype === 'aero_hunter') {
+        gunshipFrame = createAeroHunterGunshipFrame(isSoftwareGl);
+        pivot.add(gunshipFrame.group);
+        pivot.traverse((o) => {
+          if (o.name && /fan|blade|rotor|impeller|lpc|hpc|spinner/i.test(o.name)) {
+            rotorNodes.push(o);
+          }
+        });
+      }
+
       let shieldDome: THREE.Mesh | null = null;
       if (spec.maxShield > 0) {
         const domeMat = createLocalizedHexShieldMaterial(
@@ -749,7 +919,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           archetype === 'ares_boss'
         );
         shieldDome = new THREE.Mesh(shieldSphereGeo, domeMat);
-        shieldDome.position.y = archetype === 'ares_boss' ? 1.85 : spec.scaleDim * 0.42;
+        shieldDome.position.y = archetype === 'ares_boss' ? 2.75 : spec.scaleDim * 0.44;
         shieldDome.scale.setScalar(spec.hitRadius * 1.08);
         rigRoot.add(shieldDome);
       }
@@ -763,14 +933,15 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         modelPivot: pivot,
         joints,
         meshes,
+        rotorNodes,
+        gunshipFrame,
         shieldDome
       };
       enemyRigs.set(uid, rig);
       return rig;
     };
 
-    // Canvas Pointer & Aiming Handlers (live getBoundingClientRect!)
-    let draggingLook = false;
+    // Canvas PointerLock & Uniform-Sensitivity 3rd-Person Shooter Aiming
     let lastMouseX = 0;
     let lastMouseY = 0;
 
@@ -787,9 +958,22 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       lastMouseY = ev.clientY;
       inputHubRef.current.hasPointerSample = true;
       if (shellStateRef.current !== 'playing') return;
+
+      if (document.pointerLockElement !== renderer.domElement) {
+        try {
+          const lockPromise = renderer.domElement.requestPointerLock?.() as
+            | Promise<void>
+            | undefined;
+          if (lockPromise && typeof lockPromise.catch === 'function') {
+            lockPromise.catch(() => {});
+          }
+        } catch {
+          // Graceful fallback when PointerLock is disallowed in headless environments
+        }
+      }
+
       if (ev.button === 0) {
         inputHubRef.current.mouseHeldL = true;
-        draggingLook = true;
       } else if (ev.button === 1) {
         ev.preventDefault();
         inputHubRef.current.wingmanCommandJustPressed = true;
@@ -799,22 +983,30 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     };
 
     const onPointerMove = (ev: PointerEvent) => {
+      const isLocked = document.pointerLockElement === renderer.domElement;
       if (!inputHubRef.current.hasPointerSample) {
         lastMouseX = ev.clientX;
         lastMouseY = ev.clientY;
         inputHubRef.current.hasPointerSample = true;
       }
-      const dx = ev.clientX - lastMouseX;
-      const dy = ev.clientY - lastMouseY;
+      const dx = isLocked ? ev.movementX : ev.clientX - lastMouseX;
+      const dy = isLocked ? ev.movementY : ev.clientY - lastMouseY;
       lastMouseX = ev.clientX;
       lastMouseY = ev.clientY;
-      updateNdcFromClient(ev.clientX, ev.clientY);
+
+      if (isLocked) {
+        inputHubRef.current.pointerNdcX = 0;
+        inputHubRef.current.pointerNdcY = 0;
+      } else {
+        updateNdcFromClient(ev.clientX, ev.clientY);
+      }
 
       if (shellStateRef.current === 'playing') {
-        const sensitivity = draggingLook ? 0.0046 : 0.0016;
+        // Uniform shooter mouse sensitivity (zero 2.88x jump when holding LMB!)
+        const sensitivity = 0.0022;
         inputHubRef.current.camYaw += dx * sensitivity;
         inputHubRef.current.camPitch = THREE.MathUtils.clamp(
-          inputHubRef.current.camPitch - dy * sensitivity * 0.75,
+          inputHubRef.current.camPitch - dy * sensitivity * 0.78,
           -0.48,
           0.36
         );
@@ -824,7 +1016,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     const onPointerUp = (ev: PointerEvent) => {
       if (ev.button === 0) {
         inputHubRef.current.mouseHeldL = false;
-        draggingLook = false;
       }
     };
 
@@ -839,20 +1030,20 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     window.addEventListener('pointerup', onPointerUp);
     renderer.domElement.addEventListener('contextmenu', onContextMenu);
 
-    // ResizeObserver for crisp responsive viewport
     const resizeObs = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const w = Math.max(320, Math.floor(entry.contentRect.width));
         const h = Math.max(240, Math.floor(entry.contentRect.height));
+        const nextDpr = isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 2);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
+        renderer.setPixelRatio(nextDpr);
         renderer.setSize(w, h);
-        combatPost.setSize(w, h);
+        combatPost.setSize(w, h, nextDpr);
       }
     });
     resizeObs.observe(container);
 
-    // Software WebGL fence-paced loop helper
     function afterDraw(cb: () => void) {
       const gl = renderer.getContext() as WebGL2RenderingContext;
       if (gl && typeof gl.fenceSync === 'function') {
@@ -878,15 +1069,38 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     let simElapsed = 0;
     let lastHudSyncAt = 0;
 
+    const syncPlayerRigTransforms = (
+      wState: MarsCombatWorldState,
+      camYaw: number,
+      camPitch: number
+    ) => {
+      const legged = isLeggedCombatMech(selectedMechRef.current);
+      const heavyCrouchDrop = legged
+        ? Math.min(1, wState.heavyPostureTimer / 0.22) * 0.16
+        : 0;
+      playerRoot.position.set(wState.x, wState.y - heavyCrouchDrop, wState.z);
+      playerRoot.rotation.set(0, -wState.yaw, 0);
+      if (playerModelPivot) {
+        playerModelPivot.rotation.set(0, 0, wState.dodgeBankRad);
+      }
+      if (playerTurretMount) {
+        let relTurretYaw = camYaw - wState.yaw;
+        while (relTurretYaw > Math.PI) relTurretYaw -= Math.PI * 2;
+        while (relTurretYaw < -Math.PI) relTurretYaw += Math.PI * 2;
+        playerTurretMount.rotation.set(0, -relTurretYaw, camPitch + wState.recoilPos * 0.22);
+      }
+    };
+
     const tick = () => {
       if (disposed) return;
       const nowMs = performance.now();
       const rawDt = (nowMs - lastTime) / 1000;
       lastTime = nowMs;
       const dt = Math.min(Math.max(rawDt, 0.001), 0.1);
-      simElapsed += dt;
+      if (shellStateRef.current !== 'paused') {
+        simElapsed += dt;
+      }
 
-      // Sync player mech model if user switched loadout on Title Screen
       if (currentLoadedPlayerMechId !== selectedMechRef.current) {
         syncPlayerMechModel(selectedMechRef.current);
       }
@@ -895,16 +1109,17 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       const hub = inputHubRef.current;
 
       if (shellStateRef.current === 'title') {
-        // Live World Camera Tour orbiting Hero Mech on Mars!
         const tourAngle = simElapsed * 0.28 + hub.pointerNdcX * 0.35;
         const heroY = wState.y;
         playerRoot.position.set(0, heroY, 0);
         playerRoot.rotation.set(0, 0.45, 0);
         if (playerModelPivot) playerModelPivot.rotation.set(0, 0, 0);
         dodgeThrusterRig.update(0, false, simElapsed);
-        if (playerRifle) playerRifle.updateWeaponVisuals('pulse_rifle', 0, 0);
+        if (playerRifle) playerRifle.updateWeaponVisuals('pulse_rifle', 0, 0, dt);
 
-        // Pose Wingman Go2 beside Hero Mech on Title Screen!
+        sunKey.target.position.set(0, heroY, 0);
+        sunKey.position.set(28, heroY + 42, -24);
+
         wingmanRoot.visible = true;
         wingmanRoot.position.set(1.15, heroY, 1.45);
         wingmanRoot.rotation.set(0, 0.38, 0);
@@ -944,7 +1159,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           j.node.quaternion.copy(j.baseQuat).multiply(_qAxis);
         }
 
-        // Frame hero mech on right-center so left-third negative space holds Title Lockup cleanly!
         const camDist = 6.2;
         camera.position.set(
           Math.cos(tourAngle) * camDist - 1.1,
@@ -954,7 +1168,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         camera.lookAt(-1.25, heroY + 1.25, 0.2);
         marsEnv.updateAtmosphere(dt, 0, 0, simElapsed);
       } else if (shellStateRef.current === 'playing') {
-        // Gather movement & raycast world aim point
         const moveFwd =
           (hub.keysHeld.has('KeyW') || hub.keysHeld.has('ArrowUp') ? 1 : 0) -
           (hub.keysHeld.has('KeyS') || hub.keysHeld.has('ArrowDown') ? 1 : 0);
@@ -963,23 +1176,40 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           (hub.keysHeld.has('KeyA') || hub.keysHeld.has('ArrowLeft') ? 1 : 0);
         const fireHeld = hub.mouseHeldL || hub.keysHeld.has('Enter');
 
-        // Raycast center reticle (0, 0.06) against enemy rigs + Mars terrain for accurate 3rd-person shooting!
+        // Keyboard left/right camera assist when turning with arrow keys
+        if (hub.keysHeld.has('ArrowLeft')) hub.camYaw -= 1.8 * dt;
+        if (hub.keysHeld.has('ArrowRight')) hub.camYaw += 1.8 * dt;
+
+        // Raycast center reticle (0, 0.06) === screen (50%, calc(50% - 3vh)), filtering out behind-player parallax hits!
         _ndc.set(0, 0.06);
         _raycaster.setFromCamera(_ndc, camera);
-        let aimWorld: [number, number, number] | null = null;
-        const pickMeshes: THREE.Object3D[] = [marsEnv.terrainMesh];
+        const camToPlayerDist = Math.hypot(
+          wState.x - camera.position.x,
+          wState.y + 1.2 - camera.position.y,
+          wState.z - camera.position.z
+        );
+        const minAimHitDist = Math.max(1.5, camToPlayerDist + 0.5);
+
+        const pickMeshes: THREE.Object3D[] = [
+          marsEnv.terrainMesh,
+          marsEnv.coverBoulderInst,
+          marsEnv.pylonGroup
+        ];
         enemyRigs.forEach((r) => {
           if (r.root.visible) pickMeshes.push(r.modelPivot);
         });
         const hits = _raycaster.intersectObjects(pickMeshes, true);
-        if (hits.length > 0) {
-          aimWorld = [hits[0].point.x, hits[0].point.y, hits[0].point.z];
+        const validHit = hits.find((h) => h.distance > minAimHitDist);
+        let aimWorld: [number, number, number];
+        if (validHit) {
+          aimWorld = [validHit.point.x, validHit.point.y, validHit.point.z];
         } else {
-          _projVec.copy(_raycaster.ray.direction).multiplyScalar(48).add(_raycaster.ray.origin);
+          _projVec.copy(_raycaster.ray.direction).multiplyScalar(56).add(_raycaster.ray.origin);
           aimWorld = [_projVec.x, _projVec.y, _projVec.z];
         }
 
-        // Extract exact 3D Muzzle World Coordinate from mounted rifle barrel socket!
+        // Pre-sync turret/chassis orientation to current aim BEFORE reading muzzle socket (eliminates 1-frame muzzle lag!)
+        syncPlayerRigTransforms(wState, hub.camYaw, hub.camPitch);
         let muzzleWorldPoint: [number, number, number] | null = null;
         if (playerRifle) {
           playerRoot.updateMatrixWorld(true);
@@ -987,7 +1217,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           muzzleWorldPoint = [_muzzleWorldVec.x, _muzzleWorldVec.y, _muzzleWorldVec.z];
         }
 
-        // Consume one-shot edge triggers
         const stepInput = {
           moveForward: moveFwd,
           moveRight,
@@ -1001,6 +1230,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           wingmanCommandJustPressed: hub.wingmanCommandJustPressed,
           ultimateJustPressed: hub.ultimateJustPressed,
           summonBossJustPressed: hub.summonBossJustPressed,
+          ventJustPressed: hub.ventJustPressed,
           aimYaw: hub.camYaw,
           aimPitch: hub.camPitch,
           aimWorldPoint: aimWorld,
@@ -1013,37 +1243,13 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         hub.wingmanCommandJustPressed = false;
         hub.ultimateJustPressed = false;
         hub.summonBossJustPressed = false;
+        hub.ventJustPressed = false;
 
-        // Keyboard left/right camera assist when turning with arrow keys
-        if (hub.keysHeld.has('ArrowLeft')) hub.camYaw -= 1.8 * dt;
-        if (hub.keysHeld.has('ArrowRight')) hub.camYaw += 1.8 * dt;
+        // Engine natively handles hitstop + lossless one-shot input buffering (zero double-hitstop!)
+        stepMarsCombatWorld(wState, dt, stepInput);
 
-        // 40ms Combat Hitstop Freeze: render & camera micro-impulse continue while simulation dt pauses!
-        const hasPendingOneShot =
-          stepInput.missileJustPressed ||
-          stepInput.jumpJustPressed ||
-          stepInput.dashJustPressed ||
-          stepInput.empJustPressed ||
-          stepInput.wingmanCommandJustPressed ||
-          stepInput.ultimateJustPressed ||
-          stepInput.summonBossJustPressed;
-        if (extraHitstopTimer > 0 && !hasPendingOneShot) {
-          extraHitstopTimer = Math.max(0, extraHitstopTimer - dt);
-          wState.events.firedWeapon = null;
-          wState.events.hitConfirmed = null;
-          wState.events.bossCue = null;
-          wState.events.wingmanPounced = false;
-          wState.events.ejectedShell = null;
-          wState.events.sparkImpacts = [];
-          wState.events.explosions = [];
-        } else {
-          extraHitstopTimer = Math.max(0, extraHitstopTimer - dt);
-          stepMarsCombatWorld(wState, dt, stepInput);
-        }
-
-        // Trigger 40ms Hitstop + Micro Camera Impulse on heavy weapons, explosions, Boss ACS stagger & shield shatter
+        // Tactile Camera Micro-Impulse on heavy weapon fire, shield shatter, kills, and Boss ACS breaks
         if (wState.events.firedWeapon === 'railgun' || wState.events.firedWeapon === 'orbital_ion') {
-          extraHitstopTimer = Math.max(extraHitstopTimer, 0.04);
           camMicroImpulse = triggerCameraMicroImpulse(
             wState.events.firedWeapon === 'orbital_ion' ? 1.05 : 0.78,
             [-Math.cos(hub.camYaw), 0.25, -Math.sin(hub.camYaw)],
@@ -1052,21 +1258,15 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         } else if (wState.events.firedWeapon === 'missile_pod') {
           camMicroImpulse = triggerCameraMicroImpulse(0.52, [0, -0.8, 0.2], 0.11);
         }
-        if (wState.events.explosions.length > 0) {
-          extraHitstopTimer = Math.max(extraHitstopTimer, 0.04);
-          camMicroImpulse = triggerCameraMicroImpulse(0.82, [0, -1, 0], 0.14);
-        }
         if (
           wState.events.hitConfirmed?.shieldShattered ||
           wState.events.hitConfirmed?.kill ||
           wState.events.bossCue === 'acs_stagger_break' ||
           wState.events.bossCue === 'emp_nova'
         ) {
-          extraHitstopTimer = Math.max(extraHitstopTimer, 0.04);
-          camMicroImpulse = triggerCameraMicroImpulse(0.92, [0.18, -0.95, 0.12], 0.15);
+          camMicroImpulse = triggerCameraMicroImpulse(0.9, [0.18, -0.95, 0.12], 0.14);
         }
 
-        // Trigger procedural WebAudio cues & pooled 3D shell/spark VFX from emitted events
         if (wState.events.ejectedShell) {
           vfxCtrl.spawnEjectedShell(wState.events.ejectedShell);
         }
@@ -1096,25 +1296,33 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           }
         }
 
-        // Transition to GameOver modal if world state reached gameover
         if (wState.shellState === 'gameover') {
           shellStateRef.current = 'gameover';
           setRunSummary(wState.runSnapshot);
           setShellState('gameover');
         }
 
-        // Update Player 3D Pose, Tactical Dodge Bank + Thrusters, & Split Upper/Lower Body Aiming IK!
-        const heavyCrouchDrop = Math.min(1, wState.heavyPostureTimer / 0.22) * 0.16;
-        playerRoot.position.set(wState.x, wState.y - heavyCrouchDrop, wState.z);
-        playerRoot.rotation.set(0, -wState.yaw, 0);
-        if (playerModelPivot) {
-          playerModelPivot.rotation.set(0, 0, wState.dodgeBankRad);
+        // Update Player 3D Pose, Carrier/Rover Wheel Spin, & Split Upper/Lower Body Aiming IK
+        syncPlayerRigTransforms(wState, hub.camYaw, hub.camPitch);
+
+        // Snap shadow frustum center to 0.5m texels around player to prevent shadow-edge swimming
+        const snapX = Math.round(wState.x * 2) * 0.5;
+        const snapZ = Math.round(wState.z * 2) * 0.5;
+        sunKey.target.position.set(snapX, wState.y, snapZ);
+        sunKey.position.set(snapX + 28, wState.y + 42, snapZ - 24);
+
+        if (playerCarrier) {
+          const wheelAngle = -wState.gaitDist / Math.max(0.12, playerCarrier.wheelRadius);
+          for (const w of playerCarrier.wheels) {
+            w.rotation.z = wheelAngle;
+          }
         }
-        if (playerTurretMount) {
-          let relTurretYaw = hub.camYaw - wState.yaw;
-          while (relTurretYaw > Math.PI) relTurretYaw -= Math.PI * 2;
-          while (relTurretYaw < -Math.PI) relTurretYaw += Math.PI * 2;
-          playerTurretMount.rotation.set(0, -relTurretYaw, hub.camPitch + wState.recoilPos * 0.22);
+        if (playerRoverWheels.length > 0) {
+          const rSpin = wState.gaitDist / 0.26;
+          for (const rw of playerRoverWheels) {
+            _wheelSpinQuat.setFromAxisAngle(rw.axis, rSpin);
+            rw.node.quaternion.copy(rw.baseQuat).multiply(_wheelSpinQuat);
+          }
         }
 
         const pSpeed = Math.hypot(wState.vx, wState.vz);
@@ -1157,7 +1365,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           playerRifle.updateWeaponVisuals(
             wState.activeWeapon,
             wState.muzzleFlashTimer,
-            wState.recoilPos
+            wState.recoilPos,
+            dt
           );
         }
         dodgeThrusterRig.update(
@@ -1166,7 +1375,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           simElapsed
         );
 
-        // Update Allied Wingman Go2 Companion 3D Rig & URDF Gait!
+        // Update Allied Wingman Go2 Companion 3D Rig & URDF Gait
         wingmanRoot.visible = true;
         wingmanRoot.position.set(wState.wingman.x, wState.wingman.y, wState.wingman.z);
         const leapPitch =
@@ -1195,36 +1404,76 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           j.node.quaternion.copy(j.baseQuat).multiply(_qAxis);
         }
 
-        // Over-the-Shoulder 3rd-Person Tactical Camera with Exponential Damping + Trauma Shake
+        // Over-the-Shoulder 3rd-Person Spring-Arm Camera with Terrain/Obstacle Anti-Clipping
         const camBackDist = wState.dashTimer > 0 ? 7.6 : wState.heavyPostureTimer > 0 ? 6.15 : 6.6;
         const fwdX = Math.cos(hub.camYaw);
         const fwdZ = Math.sin(hub.camYaw);
         const rightX = -fwdZ;
         const rightZ = fwdX;
 
-        _camDesired.set(
-          wState.x - fwdX * camBackDist + rightX * 1.15,
-          Math.max(
-            wState.y + 2.85 - Math.sin(hub.camPitch) * 3.2,
-            marsEnv.terrainMesh ? wState.y + 1.35 : 2.0
-          ),
-          wState.z - fwdZ * camBackDist + rightZ * 1.15
+        const anchorX = wState.x + rightX * 0.55;
+        const anchorY = wState.y + 1.65;
+        const anchorZ = wState.z + rightZ * 0.55;
+
+        const rawCamX = wState.x - fwdX * camBackDist + rightX * 1.15;
+        const rawCamY = wState.y + 2.85 - Math.sin(hub.camPitch) * 3.2;
+        const rawCamZ = wState.z - fwdZ * camBackDist + rightZ * 1.15;
+
+        // 6-step Spring-Arm sweep from shoulder anchor to rawCam against MARS_BATTLEFIELD_OBSTACLES
+        let armFraction = 1.0;
+        for (let s = 1; s <= 6; s++) {
+          const t = s / 6;
+          const sx = anchorX + (rawCamX - anchorX) * t;
+          const sy = anchorY + (rawCamY - anchorY) * t;
+          const sz = anchorZ + (rawCamZ - anchorZ) * t;
+          let blocked = false;
+          for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
+            const dx = sx - obs.x;
+            const dz = sz - obs.z;
+            if (dx * dx + dz * dz < (obs.radius + 0.48) * (obs.radius + 0.48)) {
+              const obsTop = sampleMarsArenaSurfaceHeight(obs.x, obs.z) + obs.height + 0.35;
+              if (sy < obsTop) {
+                blocked = true;
+                break;
+              }
+            }
+          }
+          if (blocked) {
+            armFraction = Math.max(0.24, (s - 1) / 6);
+            break;
+          }
+        }
+
+        const resolvedCamX = anchorX + (rawCamX - anchorX) * armFraction;
+        const resolvedCamZ = anchorZ + (rawCamZ - anchorZ) * armFraction;
+        const terrainFloorAtCam = sampleMarsArenaSurfaceHeight(resolvedCamX, resolvedCamZ) + 0.65;
+        const resolvedCamY = Math.max(
+          anchorY + (rawCamY - anchorY) * armFraction,
+          terrainFloorAtCam
         );
+
+        _camDesired.set(resolvedCamX, resolvedCamY, resolvedCamZ);
         const dampK = 1 - Math.exp(-14 * dt);
         camera.position.lerp(_camDesired, dampK);
+        const liveFloorY = sampleMarsArenaSurfaceHeight(camera.position.x, camera.position.z) + 0.55;
+        if (camera.position.y < liveFloorY) {
+          camera.position.y = liveFloorY;
+        }
 
-        const shake = wState.cameraTrauma * wState.cameraTrauma * 0.36;
-        const sx = (Math.random() - 0.5) * shake;
-        const sy = (Math.random() - 0.5) * shake;
+        // Smooth Multi-Sine Camera-Local Trauma Shake (projected strictly along camera Right & Up — zero Math.random jitter!)
+        const shake = wState.cameraTrauma * wState.cameraTrauma * 0.34;
+        const shakeRight =
+          (Math.sin(simElapsed * 37.0) * 0.6 + Math.sin(simElapsed * 61.0 + 1.3) * 0.4) * shake;
+        const shakeUp =
+          (Math.cos(simElapsed * 43.0 + 0.7) * 0.6 + Math.sin(simElapsed * 73.0) * 0.4) * shake;
 
         _camTarget.set(
-          wState.x + fwdX * 14 + rightX * 0.65,
-          wState.y + 1.45 + Math.sin(hub.camPitch) * 12 + sy,
-          wState.z + fwdZ * 14 + rightZ * 0.65 + sx
+          wState.x + fwdX * 14 + rightX * (0.65 + shakeRight),
+          wState.y + 1.45 + Math.sin(hub.camPitch) * 12 + shakeUp,
+          wState.z + fwdZ * 14 + rightZ * (0.65 + shakeRight)
         );
         camera.lookAt(_camTarget);
 
-        // Dynamic FOV punch during Vector Dash or Heavy Skill Braced Firing Posture!
         const targetFov =
           wState.dashTimer > 0 ? 60 : wState.heavyPostureTimer > 0 ? 56.8 : 52;
         if (Math.abs(camera.fov - targetFov) > 0.1) {
@@ -1232,7 +1481,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           camera.updateProjectionMatrix();
         }
 
-        // Sync 3D Enemy Robot Rigs + Localized Fresnel Hex Shield Ripple + Physical Spring Hit-Stagger!
+        // Sync 3D Enemy Robot Rigs + Runtime Meshopt LOD0/1/2 + VTOL Rotors + Localized Shield!
         const liveUids = new Set<number>();
         for (const e of wState.enemies) {
           liveUids.add(e.uid);
@@ -1244,12 +1493,18 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           const dropOffset = e.dropPodProgress < 1 ? invDrop * invDrop * 16 : 0;
           rig.root.position.set(e.x, e.y + dropOffset, e.z);
 
-          // KO topple pitch/roll or Stagger/Shield-Break kneel + Physical Spring Hit-Stagger on modelPivot!
           const koTilt = e.koTimer > 0 ? (1 - e.koTimer / 0.42) * 1.15 : 0;
           const staggerPitch =
             e.staggeredTimer > 0 ? 0.24 : e.shieldBreakStunTimer > 0 ? 0.16 : 0;
           rig.root.rotation.set(staggerPitch, -e.yaw, koTilt);
           rig.modelPivot.rotation.set(e.hitTiltRoll, 0, -e.hitTiltPitch);
+
+          if (rig.rotorNodes.length > 0) {
+            for (const rn of rig.rotorNodes) {
+              _wheelSpinQuat.setFromAxisAngle(_wheelSpinAxis, 28 * dt);
+              rn.quaternion.multiply(_wheelSpinQuat);
+            }
+          }
 
           if (rig.shieldDome) {
             const showShield = (e.shield > 0 || e.shieldShatterTimer > 0) && e.koTimer <= 0;
@@ -1269,7 +1524,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             }
           }
 
-          // Animate Enemy URDF Joints
+          // Animate Enemy URDF Joints (TALOS Boss uses 32-DOF 'talos_humanoid' bipedal gait!)
           const eSpd = Math.hypot(e.vx, e.vz);
           const actorKey =
             e.archetype === 'go2_hound'
@@ -1278,7 +1533,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                 ? 'unitree_g1'
                 : e.archetype === 'sar_siege'
                   ? 'sar'
-                  : 'rexrov2';
+                  : e.archetype === 'ares_boss'
+                    ? 'talos_humanoid'
+                    : 'rexrov2';
           _tmpUrdfKin.gaitDistance = e.gaitDist;
           _tmpUrdfKin.speed = eSpd;
           _tmpUrdfKin.vy = e.vy;
@@ -1301,8 +1558,30 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             j.node.quaternion.copy(j.baseQuat).multiply(_qAxis);
           }
 
-          // Clean PBR Armor Shading: NO blind-white full-body flash! Only Boss Phase 2 Coral, ACS Stagger, or Shield-Break electric shimmer!
+          // Runtime Distance-Based Meshopt LOD0 / LOD1 / LOD2 Switching + Emissive State Feedback
+          const distToCam = Math.hypot(
+            e.x - camera.position.x,
+            e.y - camera.position.y,
+            e.z - camera.position.z
+          );
+          const lodTier = e.isBoss
+            ? distToCam > 52
+              ? 1
+              : 0
+            : distToCam > 42
+              ? 2
+              : distToCam > 20
+                ? 1
+                : 0;
+
           for (const m of rig.meshes) {
+            if (m.lods) {
+              const targetGeo =
+                lodTier === 2 ? m.lods.lod2 : lodTier === 1 ? m.lods.lod1 : m.baseGeo;
+              if (m.mesh.geometry !== targetGeo) {
+                m.mesh.geometry = targetGeo;
+              }
+            }
             if (e.shieldBreakStunTimer > 0) {
               m.mat.emissive.setHex(0x00b8d4);
               m.mat.emissiveIntensity = 0.45 + Math.sin(simElapsed * 32) * 0.25;
@@ -1319,18 +1598,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           }
         }
 
-        // Clean up defeated enemy 3D rigs
+        // Clean up defeated enemy 3D rigs + cloned materials (zero VRAM leak!)
         enemyRigs.forEach((rig, uid) => {
           if (!liveUids.has(uid)) {
-            if (rig.shieldDome) {
-              (rig.shieldDome.material as THREE.Material).dispose();
-            }
-            enemyGroupRoot.remove(rig.root);
+            disposeEnemyRig(rig);
             enemyRigs.delete(uid);
           }
         });
 
-        // Update Combat VFX & Martian Dust Atmosphere
         vfxCtrl.update({
           dt,
           simTime: simElapsed,
@@ -1353,7 +1628,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         });
         marsEnv.updateAtmosphere(dt, wState.x, wState.z, simElapsed);
 
-        // Throttled ~15Hz HUD Sync (keeps React reconciliation completely off the 60fps loop!)
+        // Throttled ~15Hz HUD Sync
         if (simElapsed - lastHudSyncAt >= 0.065) {
           lastHudSyncAt = simElapsed;
           const rectW = container.clientWidth || 1280;
@@ -1362,7 +1637,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           const enemyBars: HudSyncSnapshot['enemyScreenBars'] = [];
           for (const e of wState.enemies) {
             if (e.isBoss || e.koTimer > 0 || e.dropPodProgress < 0.85) continue;
-            _projVec.set(e.x, e.y + (e.archetype === 'aero_hunter' ? 1.2 : 2.2), e.z);
+            _projVec.set(e.x, e.y + (e.archetype === 'aero_hunter' ? 1.5 : 2.2), e.z);
             _projVec.project(camera);
             if (_projVec.z >= -1 && _projVec.z <= 1) {
               const sx = (_projVec.x * 0.5 + 0.5) * rectW;
@@ -1376,7 +1651,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   shieldPct:
                     e.maxShield > 0 ? Math.max(0, Math.round((e.shield / e.maxShield) * 100)) : 0,
                   staggered: e.staggeredTimer > 0,
-                  locked: Math.hypot(_projVec.x, _projVec.y) < 0.16
+                  locked: Math.hypot(_projVec.x, _projVec.y - 0.06) < 0.16
                 });
               }
             }
@@ -1389,7 +1664,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               attackWarning = 'ACS 架势崩溃 · 2.5x 弱点直击窗口';
             } else if (activeBoss.attackPhase === 'windup') {
               if (activeBoss.bossAttackKind === 'balteus_salvo') {
-                attackWarning = '高危预警 · 环形蜂群追踪导弹齐射 [Shift 瞬步规避 / E 脉冲拦截]';
+                attackWarning = '高危预警 · 环形蜂群追踪导弹齐射 [C 瞬步规避 / E 脉冲拦截]';
               } else if (activeBoss.bossAttackKind === 'coral_laser_sweep') {
                 attackWarning = '高危预警 · 360° 红莲高能扫射巨炮 [Space 腾空跃过]';
               } else if (activeBoss.bossAttackKind === 'orbital_pillars') {
@@ -1478,9 +1753,13 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         }
       }
 
-      const impStep = stepCameraMicroImpulse(camMicroImpulse, dt);
-      camMicroImpulse = impStep.next;
-      const [impX, impY, impZ] = impStep.offsetMeters;
+      // Freeze camera impulse & trauma vignette cleanly when paused
+      const isPlayingNow = shellStateRef.current === 'playing';
+      const impStep = stepCameraMicroImpulse(camMicroImpulse, isPlayingNow ? dt : 0);
+      if (isPlayingNow) {
+        camMicroImpulse = impStep.next;
+      }
+      const [impX, impY, impZ] = isPlayingNow ? impStep.offsetMeters : [0, 0, 0];
       camera.position.x += impX;
       camera.position.y += impY;
       camera.position.z += impZ;
@@ -1489,7 +1768,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         rawDt: Math.max(0.001, rawDt),
         simTime: simElapsed,
         anamorphicStrength: 0.44,
-        impulseIntensity01: Math.max(impStep.vignette01, worldRef.current.cameraTrauma * 0.45)
+        impulseIntensity01: isPlayingNow
+          ? Math.max(impStep.vignette01, worldRef.current.cameraTrauma * 0.45)
+          : 0
       });
 
       camera.position.x -= impX;
@@ -1510,11 +1791,33 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
       resizeObs.disconnect();
+      if (document.pointerLockElement === renderer.domElement) {
+        try {
+          document.exitPointerLock?.();
+        } catch {
+          // Ignore
+        }
+      }
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('contextmenu', onContextMenu);
+
+      enemyRigs.forEach((rig) => disposeEnemyRig(rig));
+      enemyRigs.clear();
+      disposeClonedRigMeshes(playerMeshes);
+      disposeClonedRigMeshes(wingmanMeshes);
+      if (playerCarrier) playerCarrier.dispose();
       if (playerRifle) playerRifle.dispose();
+      glbCache.forEach((tpl) =>
+        disposeSceneHierarchy(tpl, {
+          disposeGeometries: true,
+          disposeMaterials: true,
+          disposeTextures: true
+        })
+      );
+      glbCache.clear();
+
       dodgeThrusterRig.dispose();
       wingmanRingGeo.dispose();
       wingmanRingMat.dispose();
@@ -1571,7 +1874,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               'linear-gradient(90deg, rgba(11,8,10,0.88) 0%, rgba(11,8,10,0.58) 38%, rgba(11,8,10,0.0) 68%)'
           }}
         >
-          {/* Top-Right Secondary Mode Entry Points (Preserves Free Sandbox & Digital Twin Hub 100%!) */}
           <div className="flex items-center justify-between">
             <div className="text-xs font-mono tracking-widest text-amber-300/90">
               JEZERO SECTOR · ORBITAL DEFENSE PROTOCOL
@@ -1596,9 +1898,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             </div>
           </div>
 
-          {/* Left-Third Asymmetric Title Lockup + Mech Loadout + Primary Start CTA */}
-          <div className="pointer-events-auto max-w-[440px] space-y-6 my-auto">
-            {/* Bespoke Inline <svg> Sci-Fi Crest Emblem & Display Title Lockup */}
+          <div className="pointer-events-auto max-w-[440px] space-y-5 my-auto">
             <div className="space-y-3">
               <svg
                 width="340"
@@ -1642,15 +1942,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               </p>
             </div>
 
-            {/* Playable Real .GLB Mech Loadout Selector */}
             <div className="space-y-2">
               <div className="text-xs font-medium text-slate-300 flex items-center justify-between">
-                <span>选择出击机体</span>
+                <span>选择出击机体 ({PLAYABLE_MECH_SPECS.length} 款实装)</span>
                 <span className="font-mono tabular-nums text-cyan-300">
                   AP {currentMechSpec.maxHp} · 护盾 {currentMechSpec.maxShield}
                 </span>
               </div>
-              <div className="grid grid-cols-1 gap-1.5">
+              <div className="grid grid-cols-1 gap-1.5 max-h-[290px] overflow-y-auto pr-1">
                 {PLAYABLE_MECH_SPECS.map((m) => {
                   const active = m.id === selectedMechId;
                   return (
@@ -1684,7 +1983,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               </div>
             </div>
 
-            {/* Primary Start CTA (data-start="true") */}
             <div className="flex items-center gap-3 pt-1">
               <button
                 type="button"
@@ -1705,9 +2003,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             </div>
           </div>
 
-          {/* Flat Single-Line Control Hint in Bottom Safe Margin */}
           <div className="text-xs font-mono text-slate-300/85 tracking-wide">
-            WASD 机动 · 鼠标举枪瞄准射击 · 右键/F 蜂群导弹 · 1-3 切换武器 · Shift 瞬步闪避 · Q/中键 僚机Go2扑咬 · E 脉冲盾 · V 天基离子炮
+            WASD 机动 · Shift 推进冲刺 · 鼠标锁定瞄准射击 · 右键/F 蜂群导弹 · 1-3 切枪 · C/Alt 瞬步闪避 · R 散热校射 · Q 僚机扑咬 · E 脉冲盾 · V 天基离子炮
           </div>
         </div>
       )}
@@ -1717,7 +2014,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       {/* ===================================================================== */}
       {shellState === 'playing' && (
         <div className="fixed inset-0 pointer-events-none z-20">
-          {/* 1A. Floating 3D Projected Damage & CRIT Numbers */}
           {hud.damagePopupsScreen.map((dp) => (
             <div
               key={dp.id}
@@ -1737,7 +2033,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             </div>
           ))}
 
-          {/* 1B. Projected Compact Enemy Health / Shield Micro-Bars (non-occluding, 44px slim!) */}
           {hud.enemyScreenBars.map((eb) => (
             <div
               key={eb.uid}
@@ -1747,7 +2042,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               className="absolute top-0 left-0 w-12 space-y-0.5"
             >
               {eb.shieldPct > 0 && (
-                <div className="h-1 w-full bg-black/75 overflow-hidden rounded-xs">
+                <div className="h-1 w-full bg-black/75 overflow-hidden rounded-sm">
                   <div
                     style={{
                       transform: `scaleX(${eb.shieldPct / 100})`,
@@ -1757,7 +2052,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   />
                 </div>
               )}
-              <div className="h-1.5 w-full bg-black/80 border border-white/15 overflow-hidden rounded-xs">
+              <div className="h-1.5 w-full bg-black/80 border border-white/15 overflow-hidden rounded-sm">
                 <div
                   style={{
                     transform: `scaleX(${eb.hpPct / 100})`,
@@ -1774,14 +2069,13 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             </div>
           ))}
 
-          {/* 2. EXACT CENTER (50%, 50%) CoD Dynamic Tactical Reticle + Hitmarker + Directional Threat Arcs */}
+          {/* 2. EXACT NDC (0, +0.06) === (50%, calc(50% - 3vh)) CoD Dynamic Tactical Reticle */}
           <div
             aria-hidden="true"
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-            style={{ marginTop: '-3%' }}
+            className="fixed left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ top: 'calc(50% - 3vh)' }}
           >
             <svg width="260" height="260" viewBox="-130 -130 260 260" className="overflow-visible">
-              {/* CoD Directional Incoming Threat Arcs */}
               {hud.threatAnglesDeg.map((th) => (
                 <g key={th.id} transform={`rotate(${th.deg})`} opacity={th.opacity}>
                   <path
@@ -1795,7 +2089,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                 </g>
               ))}
 
-              {/* Center Dot + Dynamic Spread Crosshair Ticks */}
               <circle cx="0" cy="0" r="2" fill="#00e5ff" />
               <line
                 x1={-reticleGapPx - 10}
@@ -1830,7 +2123,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                 strokeWidth="1.6"
               />
 
-              {/* CoD 45° X-Tick Hitmarker */}
               {hud.hitmarker.timer > 0 && (
                 <g
                   stroke={
@@ -1877,7 +2169,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               )}
             </div>
 
-            {/* Boss Arrival Alert Banner */}
             {hud.bossBannerTimer > 0 && (
               <div
                 data-testid="boss-arrival-warning-banner"
@@ -1887,7 +2178,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               </div>
             )}
 
-            {/* Armored Core 6 Style Boss Vitality + ACS Attitude Stagger Bar */}
             {hud.bossHud && (
               <div
                 data-testid="mars-boss-hud-bar"
@@ -1902,8 +2192,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   </span>
                 </div>
 
-                {/* Boss HP Bar with Delayed White Ghost Drain Bar */}
-                <div className="relative h-2.5 w-full bg-black/80 rounded-xs overflow-hidden border border-white/10">
+                <div className="relative h-2.5 w-full bg-black/80 rounded-sm overflow-hidden border border-white/10">
                   <div
                     style={{
                       transform: `scaleX(${hud.bossHud.ghostHpPct / 100})`,
@@ -1922,10 +2211,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   />
                 </div>
 
-                {/* Boss Shield & ACS Stagger Gauge */}
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-mono text-amber-300 shrink-0">ACS 架势</span>
-                  <div className="relative h-1.5 flex-1 bg-black/80 rounded-xs overflow-hidden">
+                  <div className="relative h-1.5 flex-1 bg-black/80 rounded-sm overflow-hidden">
                     <div
                       style={{
                         transform: `scaleX(${hud.bossHud.staggerPct / 100})`,
@@ -2043,7 +2331,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               </button>
             </div>
 
-            {/* CoD Minimalist Tactical Killfeed */}
             <div className="flex flex-col items-end gap-1">
               {hud.killfeed.map((kf) => (
                 <div
@@ -2061,10 +2348,10 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             </div>
           </div>
 
-          {/* 5. BOTTOM-LEFT: Pilot Mech Vitality & Thruster Cluster (CoD:IW Visor Style) */}
+          {/* 5. BOTTOM-LEFT: Pilot Mech Vitality & Thruster Cluster */}
           <div
             data-testid="mars-pilot-vitality-hud"
-            className="absolute bottom-4 left-4 w-[256px] p-3 rounded-lg bg-[#0b0e14]/85 border border-white/12 space-y-2"
+            className="absolute bottom-4 left-4 w-[256px] p-3 rounded-lg bg-[#0b0e14]/85 border border-white/15 space-y-2"
           >
             <div className="flex items-baseline justify-between">
               <div>
@@ -2084,16 +2371,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               </div>
             </div>
 
-            {/* Shield Bar */}
-            <div className="h-1.5 w-full bg-black/80 rounded-xs overflow-hidden">
+            <div className="h-1.5 w-full bg-black/80 rounded-sm overflow-hidden">
               <div
                 style={{ transform: `scaleX(${shieldPct / 100})`, transformOrigin: 'left' }}
                 className="h-full w-full bg-[#00e5ff]"
               />
             </div>
 
-            {/* Armor Bar with Delayed White Damage Ghost Bar */}
-            <div className="relative h-2.5 w-full bg-black/80 rounded-xs overflow-hidden">
+            <div className="relative h-2.5 w-full bg-black/80 rounded-sm overflow-hidden">
               <div
                 style={{ transform: `scaleX(${ghostHpPct / 100})`, transformOrigin: 'left' }}
                 className="absolute inset-0 bg-white/70 transition-transform duration-150"
@@ -2104,10 +2389,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               />
             </div>
 
-            {/* Thruster Boost Energy */}
             <div className="flex items-center gap-2 pt-0.5">
               <span className="text-[10px] font-mono text-slate-400 shrink-0">BOOST</span>
-              <div className="h-1 flex-1 bg-black/80 rounded-xs overflow-hidden">
+              <div className="h-1 flex-1 bg-black/80 rounded-sm overflow-hidden">
                 <div
                   style={{
                     transform: `scaleX(${hud.boostEnergy / 100})`,
@@ -2127,7 +2411,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             data-testid="mars-weapon-skill-rack"
             className="pointer-events-auto absolute bottom-4 right-4 flex flex-col items-end gap-2"
           >
-            {/* 3 Tactical Rig Abilities */}
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
@@ -2136,9 +2419,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   e.currentTarget.blur();
                   inputHubRef.current.dashJustPressed = true;
                 }}
-                className="px-2.5 py-1.5 rounded-md bg-[#0b0e14]/88 border border-white/12 hover:border-amber-400/60 text-[11px] font-mono tabular-nums text-slate-200 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-md bg-[#0b0e14]/88 border border-white/15 hover:border-amber-400/60 text-[11px] font-mono tabular-nums text-slate-200 cursor-pointer"
               >
-                <span className="text-amber-300 font-bold">[Shift]</span> 矢量瞬步
+                <span className="text-amber-300 font-bold">[C]</span> 矢量瞬步
               </button>
 
               <button
@@ -2201,8 +2484,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               </button>
             </div>
 
-            {/* 3 Sci-Fi Primary Weapons */}
-            <div className="flex items-center gap-1.5 bg-[#0b0e14]/88 border border-white/12 rounded-lg p-1.5">
+            <div className="flex items-center gap-1.5 bg-[#0b0e14]/88 border border-white/15 rounded-lg p-1.5">
               {COMBAT_WEAPONS.map((w) => {
                 const active = hud.activeWeapon === w.id;
                 return (
@@ -2249,19 +2531,19 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             </div>
 
             <div className="grid grid-cols-3 gap-2.5 text-center">
-              <div className="p-2.5 rounded-lg bg-[#0b0d13] border border-white/8">
+              <div className="p-2.5 rounded-lg bg-[#0b0d13] border border-white/10">
                 <div className="text-[11px] text-slate-400">当前得分</div>
                 <div className="text-lg font-mono font-bold tabular-nums text-cyan-300">
                   {hud.score}
                 </div>
               </div>
-              <div className="p-2.5 rounded-lg bg-[#0b0d13] border border-white/8">
+              <div className="p-2.5 rounded-lg bg-[#0b0d13] border border-white/10">
                 <div className="text-[11px] text-slate-400">歼灭机体</div>
                 <div className="text-lg font-mono font-bold tabular-nums text-white">
                   {hud.kills}
                 </div>
               </div>
-              <div className="p-2.5 rounded-lg bg-[#0b0d13] border border-white/8">
+              <div className="p-2.5 rounded-lg bg-[#0b0d13] border border-white/10">
                 <div className="text-[11px] text-slate-400">作战波次</div>
                 <div className="text-lg font-mono font-bold tabular-nums text-rose-300">
                   WAVE {hud.wave}
@@ -2341,7 +2623,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             </div>
 
             <div className="grid grid-cols-3 gap-2.5 text-center">
-              <div className="p-3 rounded-lg bg-[#0b0d13] border border-white/8">
+              <div className="p-3 rounded-lg bg-[#0b0d13] border border-white/10">
                 <div className="text-[11px] text-slate-400">战区得分</div>
                 <div className="text-lg font-mono font-bold tabular-nums text-cyan-300">
                   {runSummary.score}
@@ -2350,13 +2632,13 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   纪录 {runSummary.bestScore}
                 </div>
               </div>
-              <div className="p-3 rounded-lg bg-[#0b0d13] border border-white/8">
+              <div className="p-3 rounded-lg bg-[#0b0d13] border border-white/10">
                 <div className="text-[11px] text-slate-400">歼灭敌机</div>
                 <div className="text-lg font-mono font-bold tabular-nums text-white">
                   {runSummary.kills}
                 </div>
               </div>
-              <div className="p-3 rounded-lg bg-[#0b0d13] border border-white/8">
+              <div className="p-3 rounded-lg bg-[#0b0d13] border border-white/10">
                 <div className="text-[11px] text-slate-400">
                   {runSummary.outcome === 'victory' ? '作战用时' : '泰坦剩余装甲'}
                 </div>

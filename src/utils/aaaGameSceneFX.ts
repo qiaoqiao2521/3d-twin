@@ -96,7 +96,13 @@ function buildCurved3DArcGaugeGeometry(
   return g;
 }
 
-function createDiegeticHeaderLegendTexture(): THREE.CanvasTexture {
+function createDiegeticHeaderLegendTexture(): THREE.Texture {
+  if (typeof document === 'undefined') {
+    const fallback = new THREE.DataTexture(new Uint8Array(16 * 4 * 4), 16, 4, THREE.RGBAFormat);
+    fallback.colorSpace = THREE.SRGBColorSpace;
+    fallback.needsUpdate = true;
+    return fallback;
+  }
   const canvas = document.createElement('canvas');
   canvas.width = 512;
   canvas.height = 96;
@@ -639,12 +645,20 @@ export function createAaaSandboxSceneFXController(): AaaSandboxSceneFXController
   const _tmpSplineMid = new THREE.Vector3();
   const _tmpSplineTangent = new THREE.Vector3();
   const _tmpCamOffset = new THREE.Vector3();
+  const _vortexTangent = new THREE.Vector3();
+  const _vortexView = new THREE.Vector3();
+  const _vortexSide = new THREE.Vector3();
+  const _worldUp = new THREE.Vector3(0, 1, 0);
+  const _worldRight = new THREE.Vector3(1, 0, 0);
 
   const updateVortexStrip = (
     vortex: ReturnType<typeof buildVortexRibbon>,
     tipWorld: THREE.Vector3,
     active: boolean,
-    opacity: number
+    opacity: number,
+    fallbackFwdX: number,
+    fallbackFwdZ: number,
+    cameraPos?: THREE.Vector3
   ) => {
     if (!active || opacity < 0.02) {
       vortex.mesh.visible = false;
@@ -666,14 +680,44 @@ export function createAaaSandboxSceneFXController(): AaaSandboxSceneFXController
 
     for (let i = 0; i < VORTEX_SEGS; i++) {
       const p = vortex.history[i];
+      if (i === 0) {
+        _vortexTangent.subVectors(vortex.history[0], vortex.history[1]);
+      } else if (i === VORTEX_SEGS - 1) {
+        _vortexTangent.subVectors(vortex.history[i - 1], vortex.history[i]);
+      } else {
+        _vortexTangent.subVectors(vortex.history[i - 1], vortex.history[i + 1]);
+      }
+      if (_vortexTangent.lengthSq() < 1e-6) {
+        _vortexTangent.set(fallbackFwdX, 0, fallbackFwdZ);
+      }
+      _vortexTangent.normalize();
+
+      if (cameraPos) {
+        _vortexView.subVectors(cameraPos, p);
+        if (_vortexView.lengthSq() < 1e-6) _vortexView.copy(_worldUp);
+        else _vortexView.normalize();
+      } else {
+        _vortexView.copy(_worldUp);
+      }
+
+      // Billboard ribbon width perpendicular to trail tangent & view/up so top-down and banking views never collapse!
+      _vortexSide.crossVectors(_vortexTangent, _vortexView);
+      if (_vortexSide.lengthSq() < 1e-5) {
+        _vortexSide.crossVectors(_vortexTangent, _worldUp);
+        if (_vortexSide.lengthSq() < 1e-5) {
+          _vortexSide.crossVectors(_vortexTangent, _worldRight);
+        }
+      }
       const halfW = 0.03 + (i / VORTEX_SEGS) * 0.11;
+      _vortexSide.normalize().multiplyScalar(halfW);
+
       const b = i * 6;
-      vortex.pos[b] = p.x;
-      vortex.pos[b + 1] = p.y - halfW;
-      vortex.pos[b + 2] = p.z;
-      vortex.pos[b + 3] = p.x;
-      vortex.pos[b + 4] = p.y + halfW;
-      vortex.pos[b + 5] = p.z;
+      vortex.pos[b] = p.x - _vortexSide.x;
+      vortex.pos[b + 1] = p.y - _vortexSide.y;
+      vortex.pos[b + 2] = p.z - _vortexSide.z;
+      vortex.pos[b + 3] = p.x + _vortexSide.x;
+      vortex.pos[b + 4] = p.y + _vortexSide.y;
+      vortex.pos[b + 5] = p.z + _vortexSide.z;
     }
     vortex.g.attributes.position.needsUpdate = true;
   };
@@ -813,8 +857,8 @@ export function createAaaSandboxSceneFXController(): AaaSandboxSceneFXController
       actorWorldPos.y + modelHeightSpan * 0.55,
       actorWorldPos.z - fz * 0.45 + rz * 0.92
     );
-    updateVortexStrip(leftVortex, _tmpLeftTip, aeroLoad > 0.08, aeroLoad * 0.55);
-    updateVortexStrip(rightVortex, _tmpRightTip, aeroLoad > 0.08, aeroLoad * 0.55);
+    updateVortexStrip(leftVortex, _tmpLeftTip, aeroLoad > 0.08, aeroLoad * 0.55, fx, fz, cameraWorldPos);
+    updateVortexStrip(rightVortex, _tmpRightTip, aeroLoad > 0.08, aeroLoad * 0.55, fx, fz, cameraWorldPos);
 
     // 5. Horizon Golden Patrol Navigation Chevron Ribbon (+0.25m above terrain)
     if (patrolRibbonActive && patrolTargetWorld) {
@@ -1056,10 +1100,8 @@ export function createShipbreakerSalvageController(): ShipbreakerSalvageControll
       waveBeamLine.visible = true;
       captureHaloLoop.visible = true;
 
-      _ctrlPt
-        .copy(emitterWorld)
-        .lerp(grappledPartCenterWorld, 0.45)
-        .add(new THREE.Vector3(0, 0.32 + Math.sin(simTime * 6.0) * 0.06, 0));
+      _ctrlPt.copy(emitterWorld).lerp(grappledPartCenterWorld, 0.45);
+      _ctrlPt.y += 0.32 + Math.sin(simTime * 6.0) * 0.06;
 
       for (let i = 0; i < BEAM_SEGS; i++) {
         const t = i / (BEAM_SEGS - 1);

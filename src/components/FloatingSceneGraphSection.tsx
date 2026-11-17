@@ -7,6 +7,139 @@ export interface SceneGraphNodeItem {
   layer: 'L1' | 'L2' | 'L3';
 }
 
+interface SceneGraphRowProps {
+  name: string;
+  tris: number;
+  layer: 'L1' | 'L2' | 'L3';
+  idx: number;
+  isSelected: boolean;
+  isRowHovered: boolean;
+  isHidden: boolean;
+  isLayerDimmed: boolean;
+  rowTestIdPrefix?: string;
+  onSelectPart: (partName: string | null) => void;
+  onFocusPart: (partName: string) => void;
+  onToggleHidePart: (partName: string) => void;
+  onHoverPart: (partName: string | null) => void;
+}
+
+const SceneGraphRow = React.memo<SceneGraphRowProps>(
+  ({
+    name,
+    tris,
+    layer,
+    idx,
+    isSelected,
+    isRowHovered,
+    isHidden,
+    isLayerDimmed,
+    rowTestIdPrefix,
+    onSelectPart,
+    onFocusPart,
+    onToggleHidePart,
+    onHoverPart
+  }) => {
+    const layerBarColor =
+      layer === 'L1' ? 'bg-sky-400' : layer === 'L2' ? 'bg-slate-400' : 'bg-amber-400';
+
+    const layerTextColor =
+      layer === 'L1' ? 'text-sky-300' : layer === 'L2' ? 'text-slate-300' : 'text-amber-300';
+
+    return (
+      <div
+        onMouseEnter={() => onHoverPart(name)}
+        className={`group relative flex items-center justify-between gap-1.5 pl-2 pr-1.5 py-1 rounded-md border transition ${
+          isSelected
+            ? 'bg-cyan-500/[0.14] border-[#00e5ff]/65 text-cyan-50'
+            : isRowHovered
+              ? 'bg-white/[0.07] border-cyan-400/45 text-white'
+              : isHidden
+                ? 'bg-transparent border-transparent opacity-40 text-slate-500'
+                : isLayerDimmed
+                  ? 'bg-transparent border-transparent opacity-50 hover:opacity-90 hover:bg-white/[0.04] text-slate-400'
+                  : 'bg-transparent border-transparent hover:bg-white/[0.05] hover:border-white/[0.08] text-slate-200'
+        }`}
+      >
+        {/* Left Precision Layer Indicator Bar */}
+        <span
+          aria-hidden="true"
+          className={`w-[2px] h-3.5 rounded-full shrink-0 ${layerBarColor}`}
+        />
+
+        {/* Primary Part Select Button */}
+        <button
+          type="button"
+          data-testid={rowTestIdPrefix ? `${rowTestIdPrefix}-${idx}` : undefined}
+          onClick={() => onSelectPart(isSelected ? null : name)}
+          className="flex-1 min-w-0 flex items-center justify-between gap-1.5 text-left cursor-pointer py-0.5"
+          title={`${layer} · ${name} (${tris.toLocaleString()} tris)`}
+        >
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[10px] font-mono tabular-nums text-slate-500 shrink-0">
+              {String(idx + 1).padStart(2, '0')}
+            </span>
+            <span className={`text-[10px] font-mono shrink-0 ${layerTextColor}`}>{layer}</span>
+            <span
+              className={`truncate font-mono text-[11px] ${
+                isHidden ? 'line-through text-slate-500' : ''
+              }`}
+            >
+              {name}
+            </span>
+          </div>
+          <span className="text-[10px] font-mono tabular-nums text-slate-500 group-hover:text-slate-300 shrink-0">
+            {tris.toLocaleString()}
+          </span>
+        </button>
+
+        {/* Right CAD Quick Actions: Visibility (Eye/EyeOff) & Camera Focus (Crosshair) */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          <button
+            type="button"
+            data-testid={rowTestIdPrefix ? `${rowTestIdPrefix}-eye-${idx}` : undefined}
+            aria-label={`${isHidden ? '显示' : '隐藏'}部件 ${name}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleHidePart(name);
+            }}
+            className={`p-1 rounded border transition cursor-pointer ${
+              isHidden
+                ? 'border-amber-400/50 bg-amber-500/15 text-amber-300'
+                : 'border-transparent text-slate-500 opacity-70 group-hover:opacity-100 hover:border-white/15 hover:bg-white/[0.06] hover:text-slate-100'
+            }`}
+            title={isHidden ? '恢复显示该部件' : '隐藏该部件 (透视内部结构)'}
+          >
+            {isHidden ? (
+              <EyeOff className="w-3 h-3" strokeWidth={1.5} />
+            ) : (
+              <Eye className="w-3 h-3" strokeWidth={1.5} />
+            )}
+          </button>
+
+          <button
+            type="button"
+            data-testid={rowTestIdPrefix ? `${rowTestIdPrefix}-focus-${idx}` : undefined}
+            aria-label={`聚焦部件 ${name}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onFocusPart(name);
+            }}
+            className={`p-1 rounded border transition cursor-pointer ${
+              isSelected
+                ? 'border-[#00e5ff]/55 bg-cyan-500/15 text-cyan-200'
+                : 'border-transparent text-slate-500 opacity-70 group-hover:opacity-100 hover:border-white/15 hover:bg-white/[0.06] hover:text-cyan-200'
+            }`}
+            title="镜头平滑推进聚焦并打开工程尺寸蓝图"
+          >
+            <Crosshair className="w-3 h-3" strokeWidth={1.5} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+);
+SceneGraphRow.displayName = 'SceneGraphRow';
+
 interface FloatingSceneGraphSectionProps {
   nodes: SceneGraphNodeItem[];
   isOpen: boolean;
@@ -123,115 +256,28 @@ export const FloatingSceneGraphSection: React.FC<FloatingSceneGraphSectionProps>
             const isRowHovered = hoveredPart === node.name || viewportHoveredPart === node.name;
             const isHidden = Boolean(hiddenParts[node.name]);
             const isLayerDimmed =
-              activeDrillLevel !== 'L0' && node.layer !== activeDrillLevel && !isSelected && !isRowHovered;
-
-            const layerBarColor =
-              node.layer === 'L1'
-                ? 'bg-sky-400'
-                : node.layer === 'L2'
-                  ? 'bg-slate-400'
-                  : 'bg-amber-400';
-
-            const layerTextColor =
-              node.layer === 'L1'
-                ? 'text-sky-300'
-                : node.layer === 'L2'
-                  ? 'text-slate-300'
-                  : 'text-amber-300';
+              activeDrillLevel !== 'L0' &&
+              node.layer !== activeDrillLevel &&
+              !isSelected &&
+              !isRowHovered;
 
             return (
-              <div
+              <SceneGraphRow
                 key={`${node.name}_${idx}`}
-                onMouseEnter={() => onHoverPart(node.name)}
-                className={`group relative flex items-center justify-between gap-1.5 pl-2 pr-1.5 py-1 rounded-md border transition ${
-                  isSelected
-                    ? 'bg-cyan-500/[0.14] border-[#00e5ff]/65 text-cyan-50'
-                    : isRowHovered
-                      ? 'bg-white/[0.07] border-cyan-400/45 text-white'
-                      : isHidden
-                        ? 'bg-transparent border-transparent opacity-40 text-slate-500'
-                        : isLayerDimmed
-                          ? 'bg-transparent border-transparent opacity-50 hover:opacity-90 hover:bg-white/[0.04] text-slate-400'
-                          : 'bg-transparent border-transparent hover:bg-white/[0.05] hover:border-white/[0.08] text-slate-200'
-                }`}
-              >
-                {/* Left Precision Layer Indicator Bar */}
-                <span
-                  aria-hidden="true"
-                  className={`w-[2px] h-3.5 rounded-full shrink-0 ${layerBarColor}`}
-                />
-
-                {/* Primary Part Select Button */}
-                <button
-                  type="button"
-                  data-testid={rowTestIdPrefix ? `${rowTestIdPrefix}-${idx}` : undefined}
-                  onClick={() => onSelectPart(isSelected ? null : node.name)}
-                  className="flex-1 min-w-0 flex items-center justify-between gap-1.5 text-left cursor-pointer py-0.5"
-                  title={`${node.layer} · ${node.name} (${node.tris.toLocaleString()} tris)`}
-                >
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[10px] font-mono tabular-nums text-slate-500 shrink-0">
-                      {String(idx + 1).padStart(2, '0')}
-                    </span>
-                    <span className={`text-[10px] font-mono shrink-0 ${layerTextColor}`}>
-                      {node.layer}
-                    </span>
-                    <span
-                      className={`truncate font-mono text-[11px] ${
-                        isHidden ? 'line-through text-slate-500' : ''
-                      }`}
-                    >
-                      {node.name}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono tabular-nums text-slate-500 group-hover:text-slate-300 shrink-0">
-                    {node.tris.toLocaleString()}
-                  </span>
-                </button>
-
-                {/* Right CAD Quick Actions: Visibility (Eye/EyeOff) & Camera Focus (Crosshair) */}
-                <div className="flex items-center gap-0.5 shrink-0">
-                  <button
-                    type="button"
-                    data-testid={rowTestIdPrefix ? `${rowTestIdPrefix}-eye-${idx}` : undefined}
-                    aria-label={`${isHidden ? '显示' : '隐藏'}部件 ${node.name}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleHidePart(node.name);
-                    }}
-                    className={`p-1 rounded border transition cursor-pointer ${
-                      isHidden
-                        ? 'border-amber-400/50 bg-amber-500/15 text-amber-300'
-                        : 'border-transparent text-slate-500 opacity-70 group-hover:opacity-100 hover:border-white/15 hover:bg-white/[0.06] hover:text-slate-100'
-                    }`}
-                    title={isHidden ? '恢复显示该部件' : '隐藏该部件 (透视内部结构)'}
-                  >
-                    {isHidden ? (
-                      <EyeOff className="w-3 h-3" strokeWidth={1.5} />
-                    ) : (
-                      <Eye className="w-3 h-3" strokeWidth={1.5} />
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    data-testid={rowTestIdPrefix ? `${rowTestIdPrefix}-focus-${idx}` : undefined}
-                    aria-label={`聚焦部件 ${node.name}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onFocusPart(node.name);
-                    }}
-                    className={`p-1 rounded border transition cursor-pointer ${
-                      isSelected
-                        ? 'border-[#00e5ff]/55 bg-cyan-500/15 text-cyan-200'
-                        : 'border-transparent text-slate-500 opacity-70 group-hover:opacity-100 hover:border-white/15 hover:bg-white/[0.06] hover:text-cyan-200'
-                    }`}
-                    title="镜头平滑推进聚焦并打开工程尺寸蓝图"
-                  >
-                    <Crosshair className="w-3 h-3" strokeWidth={1.5} />
-                  </button>
-                </div>
-              </div>
+                name={node.name}
+                tris={node.tris}
+                layer={node.layer}
+                idx={idx}
+                isSelected={isSelected}
+                isRowHovered={isRowHovered}
+                isHidden={isHidden}
+                isLayerDimmed={isLayerDimmed}
+                rowTestIdPrefix={rowTestIdPrefix}
+                onSelectPart={onSelectPart}
+                onFocusPart={onFocusPart}
+                onToggleHidePart={onToggleHidePart}
+                onHoverPart={onHoverPart}
+              />
             );
           })}
         </div>

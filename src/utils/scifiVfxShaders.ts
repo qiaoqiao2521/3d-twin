@@ -252,7 +252,7 @@ export function createSciFiHangarVfxController(): SciFiHangarVfxController {
         vLocalPos = position;
         vec4 wp = modelMatrix * vec4(position, 1.0);
         vWorldPos = wp.xyz;
-        vWorldNorm = normalize(mat3(modelMatrix) * normal);
+        vWorldNorm = normalize(mat3(transpose(inverse(modelMatrix))) * normal);
         gl_Position = projectionMatrix * viewMatrix * wp;
       }
     `,
@@ -267,16 +267,17 @@ export function createSciFiHangarVfxController(): SciFiHangarVfxController {
       varying vec3 vWorldNorm;
       varying vec3 vLocalPos;
 
-      // Procedural 2D hexagonal grid edge distance
+      // Procedural 2D hexagonal grid edge distance with fwidth() derivative AA
       float hexEdgeMask(vec2 p) {
         p *= 9.5;
+        float fw = max(max(fwidth(p.x), fwidth(p.y)), 1e-4);
         const vec2 s = vec2(1.0, 1.7320508);
         vec4 hC = floor(vec4(p, p - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
         vec4 h = vec4(p - hC.xy * s, p - (hC.zw + 0.5) * s);
-        vec2 nearest = dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw;
-        nearest = abs(nearest);
-        float d = max(dot(nearest, s * 0.5), nearest.x);
-        return smoothstep(0.41, 0.495, d);
+        vec2 nearest = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
+        float dEdge = 0.5 - max(dot(nearest, s * 0.5), nearest.x);
+        float halfW = max(0.042, fw * 0.75);
+        return (1.0 - smoothstep(halfW - fw * 0.55, halfW + fw * 0.65, dEdge)) * (1.0 - clamp(fw * 1.15, 0.0, 1.0));
       }
 
       float evalHitRipple(vec3 hitPos, float age) {
@@ -370,11 +371,23 @@ export function createSciFiHangarVfxController(): SciFiHangarVfxController {
         float leadWave = 1.0 - smoothstep(0.0, 0.18, abs(dist - uRadius));
         float trailWake = smoothstep(uRadius - 2.6, uRadius, dist) * step(dist, uRadius);
 
-        // Topographic contour isolines & subsurface power bus conduits
-        vec2 gridCell = abs(fract(vWorldPos.xz * 2.0) - 0.5);
-        float fineGrid = 1.0 - smoothstep(0.46, 0.50, max(gridCell.x, gridCell.y));
-        float radialRings = 1.0 - smoothstep(0.0, 0.045, abs(fract(dist * 1.25) - 0.5));
-        float conduitBus = 1.0 - smoothstep(0.0, 0.035, min(abs(vWorldPos.x), abs(vWorldPos.z)));
+        // Topographic contour isolines & subsurface power bus conduits with fwidth() derivative AA
+        vec2 gridCoord = vWorldPos.xz * 2.0;
+        vec2 gridFw = max(fwidth(gridCoord), vec2(1e-4));
+        vec2 gridDistToEdge = 0.5 - abs(fract(gridCoord) - 0.5);
+        vec2 gridHalfW = max(vec2(0.022), gridFw * 0.75);
+        vec2 gridAxis = (1.0 - smoothstep(gridHalfW - gridFw * 0.55, gridHalfW + gridFw * 0.65, gridDistToEdge)) * (1.0 - clamp(gridFw * 1.2, vec2(0.0), vec2(1.0)));
+        float fineGrid = max(gridAxis.x, gridAxis.y);
+
+        float radCoord = dist * 1.25;
+        float radFw = max(fwidth(radCoord), 1e-4);
+        float radHalfW = max(0.025, radFw * 0.75);
+        float radialRings = (1.0 - smoothstep(radHalfW - radFw * 0.55, radHalfW + radFw * 0.65, abs(fract(radCoord) - 0.5))) * (1.0 - clamp(radFw * 1.2, 0.0, 1.0));
+
+        vec2 busFw = max(fwidth(vWorldPos.xz), vec2(1e-4));
+        vec2 busHalfW = max(vec2(0.018), busFw * 0.85);
+        vec2 busAxis = 1.0 - smoothstep(busHalfW - busFw * 0.55, busHalfW + busFw * 0.65, abs(vWorldPos.xz));
+        float conduitBus = max(busAxis.x, busAxis.y);
 
         vec3 cyanCol = vec3(0.02, 0.88, 1.0);
         vec3 emeraldCol = vec3(0.12, 0.96, 0.68);
@@ -393,20 +406,39 @@ export function createSciFiHangarVfxController(): SciFiHangarVfxController {
   // --------------------------------------------------------------------------
   // 3. Pooled Nanite Embers + Overdrive Cold-Gas Seam Venting + Chromatic Ghosts
   // --------------------------------------------------------------------------
-  const softCanvas = document.createElement('canvas');
-  softCanvas.width = 32;
-  softCanvas.height = 32;
-  const sCtx = softCanvas.getContext('2d');
-  if (sCtx) {
-    const g = sCtx.createRadialGradient(16, 16, 1, 16, 16, 15);
-    g.addColorStop(0, 'rgba(255,255,255,1)');
-    g.addColorStop(0.45, 'rgba(103,232,249,0.75)');
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    sCtx.fillStyle = g;
-    sCtx.fillRect(0, 0, 32, 32);
+  let softTex: THREE.Texture;
+  if (typeof document !== 'undefined') {
+    const softCanvas = document.createElement('canvas');
+    softCanvas.width = 32;
+    softCanvas.height = 32;
+    const sCtx = softCanvas.getContext('2d');
+    if (sCtx) {
+      const g = sCtx.createRadialGradient(16, 16, 1, 16, 16, 15);
+      g.addColorStop(0, 'rgba(255,255,255,1)');
+      g.addColorStop(0.45, 'rgba(103,232,249,0.75)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      sCtx.fillStyle = g;
+      sCtx.fillRect(0, 0, 32, 32);
+    }
+    softTex = new THREE.CanvasTexture(softCanvas);
+    softTex.colorSpace = THREE.SRGBColorSpace;
+  } else {
+    const data = new Uint8Array(32 * 32 * 4);
+    for (let y = 0; y < 32; y++) {
+      for (let x = 0; x < 32; x++) {
+        const r = Math.hypot(x - 15.5, y - 15.5) / 15.5;
+        const a = r > 1 ? 0 : Math.pow(1 - r * r, 1.8);
+        const idx = (y * 32 + x) * 4;
+        data[idx] = 200;
+        data[idx + 1] = 245;
+        data[idx + 2] = 255;
+        data[idx + 3] = Math.round(a * 255);
+      }
+    }
+    softTex = new THREE.DataTexture(data, 32, 32, THREE.RGBAFormat);
+    softTex.colorSpace = THREE.SRGBColorSpace;
+    softTex.needsUpdate = true;
   }
-  const softTex = new THREE.CanvasTexture(softCanvas);
-  softTex.colorSpace = THREE.SRGBColorSpace;
 
   const particleCap = 120;
   const pPos = new Float32Array(particleCap * 3);

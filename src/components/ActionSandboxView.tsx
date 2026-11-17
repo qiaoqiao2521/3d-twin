@@ -23,7 +23,11 @@ import {
   Swords
 } from 'lucide-react';
 import { UrdfJointDef, parseUrdfJoints, classifyMeshLayer } from '../utils/manifestUtils';
-import { loadGlbSceneResilient, fetchTextAssetResilient } from '../utils/resilientGlbLoader';
+import {
+  loadGlbSceneResilient,
+  fetchTextAssetResilient,
+  disposeSceneHierarchy
+} from '../utils/resilientGlbLoader';
 import {
   SANDBOX_ACTORS,
   SandboxActorSpec,
@@ -77,6 +81,7 @@ import {
   EmissiveAreaLightSource,
   DynamicEmissivePoint,
   DualGearRayTracingController,
+  detectSoftwareWebGL,
   createStudioLightboxPmrem,
   upgradeGlbPbrAndBuildStaticBvh,
   createDualGearRayTracingPipeline
@@ -242,11 +247,17 @@ const PARTICLE_POOL_SIZE = 320;
 const _vA = new THREE.Vector3();
 const _vB = new THREE.Vector3();
 const _vCorner = new THREE.Vector3();
+const _decompPos = new THREE.Vector3();
+const _parentQuat = new THREE.Quaternion();
+const _parentScale = new THREE.Vector3();
+const _holderQuat = new THREE.Quaternion();
+const _localDelta = new THREE.Vector3();
+const _ikTgtLocal = new THREE.Vector3();
+const _endEffectorWorld = new THREE.Vector3();
 const _qA = new THREE.Quaternion();
 const _eulerA = new THREE.Euler(0, 0, 0, 'YXZ');
 const _axisX = new THREE.Vector3(1, 0, 0);
 const _axisY = new THREE.Vector3(0, 1, 0);
-const _box3 = new THREE.Box3();
 const _invActorMat = new THREE.Matrix4();
 const _partToActorMat = new THREE.Matrix4();
 const _raycaster = new THREE.Raycaster();
@@ -398,100 +409,11 @@ function createCustomDiscGeometry(radius: number, segs: number = 32): THREE.Buff
   return g;
 }
 
-class TacticalSynthAudio {
-  private ctx: AudioContext | null = null;
-  public muted = false;
-
-  private ensureCtx(): AudioContext | null {
-    if (this.muted || typeof window === 'undefined') return null;
-    if (!this.ctx) {
-      const AC =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (AC) this.ctx = new AC();
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume().catch(() => {});
-    }
-    return this.ctx;
-  }
-
-  playFire(domain: 'land' | 'sea' | 'air') {
-    const ctx = this.ensureCtx();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    if (domain === 'air') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(145, now);
-      osc.frequency.exponentialRampToValueAtTime(32, now + 0.48);
-      gain.gain.setValueAtTime(0.18, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-      osc.start(now);
-      osc.stop(now + 0.52);
-    } else if (domain === 'sea') {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(620, now);
-      osc.frequency.exponentialRampToValueAtTime(190, now + 0.36);
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
-      osc.start(now);
-      osc.stop(now + 0.4);
-    } else {
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(980, now);
-      osc.frequency.exponentialRampToValueAtTime(160, now + 0.28);
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-      osc.start(now);
-      osc.stop(now + 0.32);
-    }
-  }
-
-  playScan() {
-    const ctx = this.ensureCtx();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(440, now);
-    osc.frequency.exponentialRampToValueAtTime(1120, now + 0.35);
-    gain.gain.setValueAtTime(0.11, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.44);
-  }
-
-  playBulletTimeSnap(entering: boolean) {
-    const ctx = this.ensureCtx();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(entering ? 520 : 120, now);
-    osc.frequency.exponentialRampToValueAtTime(entering ? 54 : 680, now + 0.28);
-    gain.gain.setValueAtTime(0.14, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.32);
-  }
-}
-
 export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
   initialActorId,
   onExitSandbox,
   onEnterMarsCombat,
-  audioSynthEnabled = false,
+  audioSynthEnabled = true,
   onChangeAudioSynth
 }) => {
   const [actorSpec, setActorSpec] = useState<SandboxActorSpec>(() =>
@@ -500,7 +422,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
   const [camMode, setCamMode] = useState<SandboxCamMode>('chase');
   const [visionMode, setVisionMode] = useState<SandboxVisionMode>('normal');
   const [autoPatrol, setAutoPatrol] = useState<boolean>(false);
-  const [muted, setMuted] = useState<boolean>(false);
+  const [muted, setMuted] = useState<boolean>(() => !audioSynthEnabled);
   const [isLoadingModel, setIsLoadingModel] = useState<boolean>(true);
   const [glbLoadError, setGlbLoadError] = useState<string | null>(null);
   const [glbReloadNonce, setGlbReloadNonce] = useState<number>(0);
@@ -599,7 +521,10 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
   const canvasMountRef = useRef<HTMLDivElement | null>(null);
   const rayTracerRef = useRef<DualGearRayTracingController | null>(null);
   const renderOnceRef = useRef<(() => void) | null>(null);
-  const audioRef = useRef<TacticalSynthAudio>(new TacticalSynthAudio());
+  const onChangeAudioSynthRef = useRef(onChangeAudioSynth);
+  useEffect(() => {
+    onChangeAudioSynthRef.current = onChangeAudioSynth;
+  }, [onChangeAudioSynth]);
 
   const waypoints = useMemo(() => buildArenaWaypoints(actorSpec.domain), [actorSpec.domain]);
 
@@ -709,11 +634,24 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
   }, [onExitSandbox]);
 
   useEffect(() => {
-    audioRef.current.muted = muted;
+    setMuted(!audioSynthEnabled);
+  }, [audioSynthEnabled]);
+
+  useEffect(() => {
     if (muted) {
       proceduralAudioSynth.silenceContinuousLoops();
     }
   }, [muted]);
+
+  const toggleSandboxMute = () => {
+    setMuted((prevMuted) => {
+      const nextMuted = !prevMuted;
+      const nextEnabled = !nextMuted;
+      proceduralAudioSynth.setEnabled(nextEnabled);
+      onChangeAudioSynthRef.current?.(nextEnabled);
+      return nextMuted;
+    });
+  };
 
   useEffect(() => {
     document.body.dataset.state = 'playing';
@@ -745,7 +683,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     setPathTracingEnabled(false);
     runtimeRef.current.pathTracingEnabled = false;
     runtimeRef.current.triggerUltimateRequested = true;
-    audioRef.current.playFire(actorSpec.domain);
+    proceduralAudioSynth.playSandboxFireCue(actorSpec.domain);
     if (runtimeRef.current.audioSynthEnabled) {
       proceduralAudioSynth.playSubBassImpact('emp_bullettime');
     }
@@ -798,7 +736,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
 
   const triggerFireAction = () => {
     runtimeRef.current.triggerFireRequested = true;
-    audioRef.current.playFire(actorSpec.domain);
+    proceduralAudioSynth.playSandboxFireCue(actorSpec.domain);
     if (runtimeRef.current.audioSynthEnabled) {
       proceduralAudioSynth.playSubBassImpact('laser');
     }
@@ -849,7 +787,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
   const toggleBulletTimeAction = () => {
     setBulletTimeActive((prev) => {
       const next = !prev;
-      audioRef.current.playBulletTimeSnap(next);
+      proceduralAudioSynth.playBulletTimeSnap(next);
       if (runtimeRef.current.audioSynthEnabled) {
         proceduralAudioSynth.playSubBassImpact('emp_bullettime');
       }
@@ -898,14 +836,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     const width = container.clientWidth || 1280;
     const height = container.clientHeight || 760;
 
-    const probeCanvas = document.createElement('canvas');
-    const probeGl = probeCanvas.getContext('webgl2');
-    const dbgExt = probeGl?.getExtension('WEBGL_debug_renderer_info');
-    const gpuStr = probeGl
-      ? String(probeGl.getParameter(dbgExt ? dbgExt.UNMASKED_RENDERER_WEBGL : probeGl.RENDERER))
-      : '';
-    probeGl?.getExtension('WEBGL_lose_context')?.loseContext();
-    const isSoftwareGl = /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpuStr);
+    const isSoftwareGl = detectSoftwareWebGL();
 
     const scene = new THREE.Scene();
     const domainBgHex =
@@ -933,6 +864,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setSize(width, height);
     renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = !isSoftwareGl;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.18;
     container.innerHTML = '';
@@ -953,7 +886,19 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       scene.add(hemi);
       keyLight = new THREE.DirectionalLight(0xffedd5, 2.6);
       keyLight.position.set(28, 42, 18);
+      if (!isSoftwareGl) {
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.set(1024, 1024);
+        keyLight.shadow.camera.near = 2;
+        keyLight.shadow.camera.far = 110;
+        keyLight.shadow.camera.left = -22;
+        keyLight.shadow.camera.right = 22;
+        keyLight.shadow.camera.top = 22;
+        keyLight.shadow.camera.bottom = -22;
+        keyLight.shadow.bias = -0.0005;
+      }
       scene.add(keyLight);
+      scene.add(keyLight.target);
       rimLight = new THREE.DirectionalLight(0x38bdf8, 1.1);
       rimLight.position.set(-24, 15, -20);
       scene.add(rimLight);
@@ -1083,6 +1028,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       });
       terrainWaveUniforms = attachTopographicWavefrontToTerrain(primaryTerrainMat, false);
       clickableGroundMesh = new THREE.Mesh(terrainGeo, primaryTerrainMat);
+      clickableGroundMesh.receiveShadow = !isSoftwareGl;
       envGroup.add(clickableGroundMesh);
 
       // Analytical natural terrain ridges & crater rims ONLY — zero fake chocolate-cone rocks!
@@ -1670,6 +1616,12 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     setGlbLoadError(null);
     const boundJoints: BoundSandboxJoint[] = [];
     const cadParts: SandboxCadPart[] = [];
+    const cadMeshes: THREE.Mesh[] = [];
+    const bulletTraceAnchors: {
+      originWorld: THREE.Vector3;
+      currentWorld: THREE.Vector3;
+      visible: boolean;
+    }[] = [];
     const realMeshesForStrobe: THREE.Mesh[] = [];
     let odradekSensorJointIdx = -1;
     let modelHeightSpan = 1.65;
@@ -1681,7 +1633,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     let ikChainIndices: number[] = [];
     let ikChainSpecs: IkJointLinkSpec[] = [];
     let ikAngles: number[] = [];
-    const ikChainRootInv = new THREE.Matrix4();
+    let ikTipLocalOffset: [number, number, number] = [0.2, 0.02, 0];
     const ikTargetLocalOffset = new THREE.Vector3(1.15, 0.75, 0.35);
     const ikTargetWorld = new THREE.Vector3();
     let kerfNodes: MoltenKerfNode[] = [];
@@ -1696,7 +1648,10 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
 
     Promise.all([Promise.all(actorSpec.glbUrls.map(loadGlbPromise)), urdfPromise])
       .then(([scenes, parsedJoints]) => {
-        if (disposed) return;
+        if (disposed) {
+          scenes.forEach((sc) => disposeSceneHierarchy(sc, { disposeTextures: true }));
+          return;
+        }
         const combined = new THREE.Group();
         scenes.forEach((sc, idx) => {
           sc.name = `glb_layer_${idx}`;
@@ -1782,6 +1737,10 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
             ) as THREE.MeshStandardMaterial;
             const twinUniforms = attachTwinShaderEffects(stdMat, layer === 'L1');
             m.material = stdMat;
+            if (!isSoftwareGl && actorSpec.domain === 'land') {
+              m.castShadow = true;
+              m.receiveShadow = true;
+            }
 
             rawMeshMeta.push({
               mesh: m,
@@ -1809,6 +1768,21 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         );
 
         const boundJointNodes = new Set<THREE.Object3D>();
+        const prismaticJointNodes = new Set<THREE.Object3D>();
+        const rawPlanByMesh = new Map<THREE.Object3D, OrthogonalExplosionPlan>();
+        for (const rm of rawMeshMeta) {
+          rawPlanByMesh.set(
+            rm.mesh,
+            computePartOrthogonalExplosionPlan(
+              actorSpec.id,
+              rm.name,
+              rm.layer,
+              [rm.worldCenter.x, rm.worldCenter.y - 1.0, rm.worldCenter.z],
+              subMatrix
+            )
+          );
+        }
+
         for (const rm of rawMeshMeta) {
           const m = rm.mesh;
           const bb = m.geometry.boundingBox;
@@ -1826,13 +1800,34 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
             );
           }
 
-          const orthoPlan = computePartOrthogonalExplosionPlan(
-            actorSpec.id,
-            rm.name,
-            rm.layer,
-            [rm.worldCenter.x, rm.worldCenter.y - 1.0, rm.worldCenter.z],
-            subMatrix
-          );
+          const rawPlan = rawPlanByMesh.get(m)!;
+          let anc = m.parent;
+          let parentRawPlan: OrthogonalExplosionPlan | undefined;
+          while (anc) {
+            const hit = rawPlanByMesh.get(anc);
+            if (hit) {
+              parentRawPlan = hit;
+              break;
+            }
+            anc = anc.parent;
+          }
+          const adjVec: [number, number, number] = [
+            rawPlan.orthoVector[0],
+            rawPlan.orthoVector[1],
+            rawPlan.orthoVector[2]
+          ];
+          if (parentRawPlan) {
+            for (let a = 0; a < 3; a++) {
+              const c = rawPlan.orthoVector[a];
+              const p = parentRawPlan.orthoVector[a];
+              if (c * p > 0) {
+                adjVec[a] = Math.sign(c) * Math.max(Math.abs(c) * 0.15, Math.abs(c) - Math.abs(p));
+              }
+            }
+          }
+          const orthoPlan: OrthogonalExplosionPlan = parentRawPlan
+            ? { ...rawPlan, orthoVector: adjVec }
+            : rawPlan;
           const parentNode = m.parent;
           const originParentLocal = parentNode
             ? parentNode.worldToLocal(rm.worldCenter.clone())
@@ -1863,6 +1858,15 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
             role = 'mast';
           else if (n.includes('turret') || n.includes('arm')) role = 'arm';
 
+          const mountOriginWorld = rm.worldCenter.clone();
+          const currentCenterWorld = rm.worldCenter.clone();
+          cadMeshes.push(m);
+          bulletTraceAnchors.push({
+            originWorld: mountOriginWorld,
+            currentWorld: currentCenterWorld,
+            visible: true
+          });
+
           cadParts.push({
             mesh: m,
             partName: rm.name,
@@ -1873,8 +1877,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
             socketInParentLocal: rm.socketInParentLocal,
             localOrthoVec,
             orthoPlan,
-            mountOriginWorld: rm.worldCenter.clone(),
-            currentCenterWorld: rm.worldCenter.clone(),
+            mountOriginWorld,
+            currentCenterWorld,
             origMat: rm.stdMat,
             origColor: rm.stdMat.color ? rm.stdMat.color.clone() : new THREE.Color(0x94a3b8),
             origEmissive: rm.stdMat.emissive
@@ -1911,10 +1915,23 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
               omegaRadS: 0
             });
             boundJointNodes.add(target);
+            if (j.type === 'prismatic') {
+              prismaticJointNodes.add(target);
+            }
           }
         }
-        (modelHolder.userData as { boundJointNodes?: Set<THREE.Object3D> }).boundJointNodes =
-          boundJointNodes;
+        (
+          modelHolder.userData as {
+            boundJointNodes?: Set<THREE.Object3D>;
+            prismaticJointNodes?: Set<THREE.Object3D>;
+          }
+        ).boundJointNodes = boundJointNodes;
+        (
+          modelHolder.userData as {
+            boundJointNodes?: Set<THREE.Object3D>;
+            prismaticJointNodes?: Set<THREE.Object3D>;
+          }
+        ).prismaticJointNodes = prismaticJointNodes;
 
         modelHolder.add(combined);
 
@@ -1939,6 +1956,12 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
 
         // Build Static per-mesh BLAS (MeshBVH) once & upgrade PBR microfacet / Emissive Area Light tags!
         const bvhInfo = upgradeGlbPbrAndBuildStaticBvh(combined, actorSpec.id, classifyMeshLayer);
+        for (let i = 0; i < cadParts.length; i++) {
+          const cp = cadParts[i];
+          cp.twinUniforms.uMicroSurfaceClass.value = Number(
+            cp.origMat.userData?.microSurfaceClass ?? 0
+          );
+        }
         emissiveSources = bvhInfo.emissiveSources;
         setBvhStats({ meshes: bvhInfo.bvhMeshCount, emissives: bvhInfo.emissiveSources.length });
         rayTracer.resetAccumulation();
@@ -1954,6 +1977,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           const firstB = boundJoints[ikChainIndices[0]];
           const chainParent = firstB.node.parent || combined;
           chainParent.updateMatrixWorld(true);
+          const ikChainScale = Math.max(1e-6, chainParent.getWorldScale(new THREE.Vector3()).x);
+          ikTipLocalOffset = [0.2 / ikChainScale, 0.02 / ikChainScale, 0];
           let prevWorldPos = chainParent.getWorldPosition(new THREE.Vector3());
           let prevWorldQuat = chainParent.getWorldQuaternion(new THREE.Quaternion());
           for (let k = 0; k < ikChainIndices.length; k++) {
@@ -1961,7 +1986,11 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
             const wPos = b.node.getWorldPosition(new THREE.Vector3());
             const wQuat = b.node.getWorldQuaternion(new THREE.Quaternion());
             const invPrevQ = prevWorldQuat.clone().invert();
-            const locOff = wPos.clone().sub(prevWorldPos).applyQuaternion(invPrevQ);
+            const locOff = wPos
+              .clone()
+              .sub(prevWorldPos)
+              .applyQuaternion(invPrevQ)
+              .divideScalar(ikChainScale);
             const origQ = invPrevQ.multiply(wQuat);
             ikChainSpecs.push({
               name: b.def.name,
@@ -2004,7 +2033,10 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
 
       Promise.all([Promise.all(wSpec.glbUrls.map(loadGlbPromise)), wUrdfP])
         .then(([wScenes, wJoints]) => {
-          if (disposed) return;
+          if (disposed) {
+            wScenes.forEach((sc) => disposeSceneHierarchy(sc, { disposeTextures: true }));
+            return;
+          }
           const wRoot = new THREE.Group();
           const wInner = new THREE.Group();
           wScenes.forEach((s) => wInner.add(s));
@@ -2035,6 +2067,10 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
                 bm ? bm.clone() : new THREE.MeshStandardMaterial({ color: 0x94a3b8 })
               ) as THREE.MeshStandardMaterial;
               m.material = sm;
+              if (!isSoftwareGl && wSpec.domain === 'land') {
+                m.castShadow = true;
+                m.receiveShadow = true;
+              }
               wMeshes.push({
                 mesh: m,
                 origMat: sm,
@@ -2144,10 +2180,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
 
       if (runtimeRef.current.magLensEnabled) {
         _raycaster.setFromCamera(_pointerNdc, camera);
-        const hits = _raycaster.intersectObjects(
-          cadParts.map((c) => c.mesh),
-          false
-        );
+        const hits = _raycaster.intersectObjects(cadMeshes, false);
         if (hits.length > 0) {
           runtimeRef.current.magLensCenter.copy(hits[0].point);
           runtimeRef.current.magLensHoverValid = true;
@@ -2163,13 +2196,21 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       runtimeRef.current.magLensHoverValid = false;
     };
 
+    let magWheelRaf = 0;
     const onWheel = (ev: WheelEvent) => {
       if (!runtimeRef.current.magLensEnabled) return;
       ev.preventDefault();
       ev.stopPropagation();
       const nextR = clampMagLensRadius(runtimeRef.current.magLensRadius, ev.deltaY);
       runtimeRef.current.magLensRadius = nextR;
-      setMagLensRadius(nextR);
+      if (!magWheelRaf) {
+        magWheelRaf = requestAnimationFrame(() => {
+          magWheelRaf = 0;
+          if (!disposed) {
+            setMagLensRadius(runtimeRef.current.magLensRadius);
+          }
+        });
+      }
     };
 
     const onPointerUp = (ev: PointerEvent) => {
@@ -2190,10 +2231,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       _raycaster.setFromCamera(_pointerNdc, camera);
 
       if (runtimeRef.current.faultInjectMode || runtimeRef.current.ikEnabled) {
-        const hits = _raycaster.intersectObjects(
-          cadParts.map((c) => c.mesh),
-          false
-        );
+        const hits = _raycaster.intersectObjects(cadMeshes, false);
         if (hits.length > 0) {
           const hitMesh = hits[0].object as THREE.Mesh;
           const found = cadParts.find((c) => c.mesh === hitMesh);
@@ -2219,7 +2257,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         if (matchedTarget) {
           tacticalScore = { ...tacticalScore, lockedTargetId: matchedTarget.id };
           runtimeRef.current.triggerFireRequested = true;
-          audioRef.current.playFire(actorSpec.domain);
+          proceduralAudioSynth.playSandboxFireCue(actorSpec.domain);
           setActiveActionToast(`已锁定并齐射标靶：${matchedTarget.codeName}`);
           return;
         }
@@ -2258,26 +2296,16 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     const keysDown = new Set<string>();
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      const code = e.code;
-      if (code === 'Tab') {
-        e.preventDefault();
-        if (!e.repeat) {
-          setBulletTimeActive((prev) => {
-            const next = !prev;
-            audioRef.current.playBulletTimeSnap(next);
-            setActiveActionToast(
-              next
-                ? `子弹时间慢放 [${runtimeRef.current.bulletSlowMoScale}x] 已开启 · 电影光学细节增强与慢动作检视中`
-                : '1.0x 全速机动已恢复！'
-            );
-            return next;
-          });
-        }
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
         return;
       }
+      const code = e.code;
 
-      if (code === 'AltLeft' || code === 'AltRight') {
+      if ((code === 'AltLeft' || code === 'AltRight') && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         if (!e.repeat) {
           runtimeRef.current.triggerDashRequested = true;
@@ -2287,6 +2315,33 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
               : keysDown.has('KeyD') || keysDown.has('ArrowRight')
                 ? 1
                 : 0;
+        }
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      if (code === 'Tab') {
+        const activeEl = document.activeElement;
+        if (
+          activeEl instanceof HTMLButtonElement ||
+          activeEl instanceof HTMLAnchorElement ||
+          (activeEl instanceof HTMLElement && activeEl.closest('[role="menu"]'))
+        ) {
+          return;
+        }
+        e.preventDefault();
+        if (!e.repeat) {
+          setBulletTimeActive((prev) => {
+            const next = !prev;
+            proceduralAudioSynth.playBulletTimeSnap(next);
+            setActiveActionToast(
+              next
+                ? `子弹时间慢放 [${runtimeRef.current.bulletSlowMoScale}x] 已开启 · 电影光学细节增强与慢动作检视中`
+                : '1.0x 全速机动已恢复！'
+            );
+            return next;
+          });
         }
         return;
       }
@@ -2312,7 +2367,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           setPathTracingEnabled(false);
           runtimeRef.current.pathTracingEnabled = false;
           runtimeRef.current.triggerUltimateRequested = true;
-          audioRef.current.playFire(actorSpec.domain);
+          proceduralAudioSynth.playSandboxFireCue(actorSpec.domain);
           const meta = getRobotUltimateMeta(actorSpec.id);
           setActiveActionToast(`终极绝技激发：${meta.skillName}`);
         } else if (code === 'KeyK') {
@@ -2337,7 +2392,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           }
         } else if (code === 'KeyF') {
           runtimeRef.current.triggerFireRequested = true;
-          audioRef.current.playFire(actorSpec.domain);
+          proceduralAudioSynth.playSandboxFireCue(actorSpec.domain);
         } else if (code === 'KeyE') {
           runtimeRef.current.triggerScanRequested = true;
           proceduralAudioSynth.playOdradekScanSignature(!runtimeRef.current.muted);
@@ -2387,7 +2442,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         } else if (code === 'KeyR') {
           setPathTracingEnabled((v) => !v);
         } else if (code === 'KeyM') {
-          setMuted((m) => !m);
+          toggleSandboxMute();
         } else if (code === 'KeyG') {
           onExitSandboxRef.current(actorSpec.id);
         }
@@ -2766,7 +2821,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         kin.trauma = Math.min(1.0, kin.trauma + 0.75);
         shockTimer = 1.0;
         shockCenter.set(kin.x, kin.y + 0.3, kin.z);
-        audioRef.current.playFire(actorSpec.domain);
+        proceduralAudioSynth.playSandboxFireCue(actorSpec.domain);
         for (const tgt of interactiveTargets) {
           if (!tgt.alive) continue;
           const dist = Math.hypot(tgt.x - kin.x, tgt.z - kin.z);
@@ -3042,6 +3097,11 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           1.15 - Math.max(0, actorRoot.position.y - groundH) * 0.18
         );
         contactShadow.scale.setScalar(shadowScale);
+        if (!isSoftwareGl) {
+          keyLight.position.set(kin.x + 28, groundH + 42, kin.z + 18);
+          keyLight.target.position.set(kin.x, groundH, kin.z);
+          keyLight.target.updateMatrixWorld();
+        }
       }
 
       if (fireAnimTimer > 0 && simDt > 0) {
@@ -3051,27 +3111,34 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       // =======================================================================
       // MODULE 5: REAL URDF 6-DOF CCD IK + NOMINAL / LIMP-HOME JOINT DRIVERS
       // =======================================================================
-      let endEffectorWorld = actorRoot.position.clone().add(new THREE.Vector3(0, 0.8, 0));
+      const endEffectorWorld = _endEffectorWorld.set(
+        actorRoot.position.x,
+        actorRoot.position.y + 0.8,
+        actorRoot.position.z
+      );
       ikTargetWorld.copy(ikTargetLocalOffset).applyMatrix4(actorRoot.matrixWorld);
 
       if (rt.ikEnabled && ikChainSpecs.length > 0 && boundJoints.length > 0) {
         const firstB = boundJoints[ikChainIndices[0]];
         const chainParent = firstB.node.parent || modelHolder;
         chainParent.updateMatrixWorld(true);
-        ikChainRootInv.copy(chainParent.matrixWorld).invert();
-        const tgtLocal = ikTargetWorld.clone().applyMatrix4(ikChainRootInv);
+        _ikTgtLocal.copy(ikTargetWorld);
+        chainParent.worldToLocal(_ikTgtLocal);
         const solved = solveCcdIkChain(
           ikChainSpecs,
           ikAngles,
-          [tgtLocal.x, tgtLocal.y, tgtLocal.z],
-          [0.2, 0.02, 0],
+          [_ikTgtLocal.x, _ikTgtLocal.y, _ikTgtLocal.z],
+          ikTipLocalOffset,
           10,
           0.35
         );
         ikAngles = solved.angles;
-        endEffectorWorld
-          .set(solved.endEffectorPos[0], solved.endEffectorPos[1], solved.endEffectorPos[2])
-          .applyMatrix4(chainParent.matrixWorld);
+        endEffectorWorld.set(
+          solved.endEffectorPos[0],
+          solved.endEffectorPos[1],
+          solved.endEffectorPos[2]
+        );
+        chainParent.localToWorld(endEffectorWorld);
       }
 
       let poseChecksum = kin.x * 0.5 + kin.y * 0.7 + kin.z * 0.9 + kin.yaw * 1.3;
@@ -3148,6 +3215,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         if (bj.def.type === 'prismatic') {
           bj.node.position.copy(bj.basePos).addScaledVector(bj.axisVec, angle);
         } else {
+          bj.node.position.copy(bj.basePos);
           _qA.setFromAxisAngle(bj.axisVec, angle);
           bj.node.quaternion.copy(bj.baseQuat).multiply(_qA);
         }
@@ -3207,8 +3275,10 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           primaryTerrainMat.visible = true;
           const lumT = computeFlirWhiteHotLuminance('terrain');
           primaryTerrainMat.color.setRGB(lumT, lumT, lumT);
-          primaryTerrainMat.map = null;
-          primaryTerrainMat.needsUpdate = true;
+          if (primaryTerrainMat.map !== null) {
+            primaryTerrainMat.map = null;
+            primaryTerrainMat.needsUpdate = true;
+          }
         }
         if (obstacleMat) {
           obstacleMat.wireframe = false;
@@ -3233,28 +3303,31 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         }
       }
 
-      const boundJointNodeSet = (
-        modelHolder.userData as { boundJointNodes?: Set<THREE.Object3D> }
-      ).boundJointNodes;
+      const holderData = modelHolder.userData as {
+        boundJointNodes?: Set<THREE.Object3D>;
+        prismaticJointNodes?: Set<THREE.Object3D>;
+      };
+      const boundJointNodeSet = holderData.boundJointNodes;
+      const prismaticJointNodeSet = holderData.prismaticJointNodes;
+      const anyExplosionActive = expProg > 1e-4 || overheatState.armorGapRatio > 1e-4;
+      if (anyExplosionActive) {
+        modelHolder.updateMatrixWorld(true);
+        modelHolder.getWorldQuaternion(_holderQuat);
+      }
 
       for (let i = 0; i < cadParts.length; i++) {
         const cp = cadParts[i];
         const m = cp.mesh;
         const isUrdfJointNode = Boolean(boundJointNodeSet && boundJointNodeSet.has(m));
+        const isPrismaticJointNode = Boolean(
+          prismaticJointNodeSet && prismaticJointNodeSet.has(m)
+        );
 
-        // 4-Stage Mid-Air Orthogonal Explosion displacement + AC6 12% Overheat Outer-Armor Pop!
-        const [w0, w1] = windows[cp.orthoPlan.stage];
-        const rawU = expProg <= w0 ? 0 : expProg >= w1 ? 1 : (expProg - w0) / (w1 - w0);
-        const stageU = rawU * rawU * (3 - 2 * rawU);
-        const ac6ArmorPop = cp.layer === 'L1' ? overheatState.armorGapRatio : 0.0;
-        const orthoDisp = stageU * 1.15 + ac6ArmorPop;
-
-        if (isUrdfJointNode) {
-          if (orthoDisp > 1e-4) {
-            m.position.addScaledVector(cp.localOrthoVec, orthoDisp);
-          }
-        } else {
-          m.position.copy(cp.basePos).addScaledVector(cp.localOrthoVec, orthoDisp);
+        // Reset base position EVERY frame before applying explosion delta (eliminates 60Hz runaway joint drift!)
+        if (!isPrismaticJointNode) {
+          m.position.copy(cp.basePos);
+        }
+        if (!isUrdfJointNode) {
           m.quaternion.copy(cp.baseQuat);
         }
 
@@ -3307,6 +3380,40 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           } else if (cp.role === 'reverser_port' || cp.role === 'reverser_stbd') {
             m.position.x += kin.reverserStroke * 0.46;
           }
+        }
+
+        // 4-Stage Mid-Air Orthogonal Explosion displacement + AC6 12% Overheat Outer-Armor Pop!
+        // Transformed dynamically via live parent world quaternion/scale so spinning joints/rotors NEVER tumble explosion vectors!
+        const [w0, w1] = windows[cp.orthoPlan.stage];
+        const rawU = expProg <= w0 ? 0 : expProg >= w1 ? 1 : (expProg - w0) / (w1 - w0);
+        const stageU = rawU * rawU * (3 - 2 * rawU);
+        const ac6ArmorPop = cp.layer === 'L1' ? overheatState.armorGapRatio : 0.0;
+        const orthoDisp = stageU * 1.15 + ac6ArmorPop;
+
+        if (orthoDisp > 1e-4) {
+          const wx = cp.orthoPlan.orthoVector[0] * orthoDisp;
+          const wy = cp.orthoPlan.orthoVector[1] * orthoDisp;
+          const wz = cp.orthoPlan.orthoVector[2] * orthoDisp;
+          if (m.parent) {
+            m.parent.matrixWorld.decompose(_decompPos, _parentQuat, _parentScale);
+            _parentQuat.invert().multiply(_holderQuat);
+            _localDelta
+              .set(wx, wy, wz)
+              .applyQuaternion(_parentQuat)
+              .set(
+                _localDelta.x / (Math.abs(_parentScale.x) > 1e-6 ? _parentScale.x : 1),
+                _localDelta.y / (Math.abs(_parentScale.y) > 1e-6 ? _parentScale.y : 1),
+                _localDelta.z / (Math.abs(_parentScale.z) > 1e-6 ? _parentScale.z : 1)
+              );
+            m.position.add(_localDelta);
+          } else {
+            m.position.x += wx;
+            m.position.y += wy;
+            m.position.z += wz;
+          }
+        }
+        if (anyExplosionActive && m.children.length > 0) {
+          m.updateMatrixWorld();
         }
 
         // Material appearance for Fault Flash vs Machine-Eye Visions vs Standard PBR
@@ -3411,22 +3518,19 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         actorRoot.updateMatrixWorld(true);
       }
 
-      // Update Mid-Air Bullet-Time Dashed Assembly Trace Lines
+      // Update Mid-Air Bullet-Time Dashed Assembly Trace Lines (zero per-frame GC allocations!)
       if (expProg > 0.015 && cadParts.length > 0) {
-        const anchors = cadParts.map((cp) => {
+        for (let i = 0; i < cadParts.length; i++) {
+          const cp = cadParts[i];
           if (cp.mesh.parent) {
             cp.mountOriginWorld.copy(cp.socketInParentLocal);
             cp.mesh.parent.localToWorld(cp.mountOriginWorld);
           }
           cp.currentCenterWorld.copy(cp.geomLocalCenter);
           cp.mesh.localToWorld(cp.currentCenterWorld);
-          return {
-            originWorld: cp.mountOriginWorld,
-            currentWorld: cp.currentCenterWorld,
-            visible: cp.mesh.visible
-          };
-        });
-        bulletTraceController.updateTraces(anchors, true);
+          bulletTraceAnchors[i].visible = cp.mesh.visible;
+        }
+        bulletTraceController.updateTraces(bulletTraceAnchors, true);
       } else {
         bulletTraceController.updateTraces([], false);
       }
@@ -4058,6 +4162,9 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           if (actorSpec.domain === 'land') {
             const camGround = sampleLandTerrainHeight(dPose.position[0], dPose.position[2]) + 0.55;
             desiredCamY = Math.max(camGround, desiredCamY);
+          } else if (actorSpec.domain === 'sea') {
+            const camBed = sampleSeabedHeight(dPose.position[0], dPose.position[2]) + 0.95;
+            desiredCamY = Math.max(camBed, desiredCamY);
           }
           const dLerp = 1 - Math.exp(-8.5 * realDt);
           camera.position.x += (dPose.position[0] + shakeX - camera.position.x) * dLerp;
@@ -4085,6 +4192,9 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           if (actorSpec.domain === 'land') {
             const camGround = sampleLandTerrainHeight(desiredCamX, desiredCamZ) + 0.85;
             desiredCamY = Math.max(camGround, desiredCamY);
+          } else if (actorSpec.domain === 'sea') {
+            const camBed = sampleSeabedHeight(desiredCamX, desiredCamZ) + 0.95;
+            desiredCamY = Math.max(camBed, desiredCamY);
           }
 
           const camLerp = 1 - Math.exp(-6.5 * realDt);
@@ -4443,6 +4553,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       const h = container.clientHeight || 760;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
       renderer.setSize(w, h);
       rayTracer.setSize(w, h);
     };
@@ -4451,6 +4562,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     return () => {
       disposed = true;
       cancelAnimationFrame(frameId);
+      cancelAnimationFrame(magWheelRaf);
       clearTimeout(frameId);
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
@@ -4475,6 +4587,21 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       ikPlasmaController.dispose();
       rayTracer.dispose();
       rayTracerRef.current = null;
+      disposeSceneHierarchy(actorRoot, { disposeTextures: true });
+      disposeSceneHierarchy(swarmUnitsGroup, { disposeTextures: true });
+      disposeSceneHierarchy(envGroup, { disposeTextures: true });
+      disposeSceneHierarchy(wpGroup);
+      disposeSceneHierarchy(contactShadow);
+      particleGeo.dispose();
+      (particleMesh.material as THREE.Material).dispose();
+      laserGeo.dispose();
+      laserMat.dispose();
+      projGeo.dispose();
+      (projectileMesh.material as THREE.Material).dispose();
+      pulseScanWave.loop.geometry.dispose();
+      pulseScanWave.mat.dispose();
+      impactShockRing.loop.geometry.dispose();
+      impactShockRing.mat.dispose();
       surfaceTex?.dispose();
       fbmCloudTex?.dispose();
       softParticleTex.dispose();
@@ -5294,13 +5421,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
                     type="button"
                     onClick={(e) => {
                       e.currentTarget.blur();
-                      const nextMuted = !muted;
-                      setMuted(nextMuted);
-                      if (onChangeAudioSynth) {
-                        onChangeAudioSynth(!nextMuted);
-                      } else {
-                        proceduralAudioSynth.setEnabled(!nextMuted);
-                      }
+                      toggleSandboxMute();
                     }}
                     aria-label={muted ? '开启物理声效合成' : '静音音效'}
                     className="p-2 rounded-xl bg-[#0a101a]/90 border border-white/10 text-slate-200 hover:border-white/25 shadow-xl transition cursor-pointer"

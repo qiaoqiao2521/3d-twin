@@ -83,7 +83,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'urdf/sar_urdf.urdf',
     upstreamUrl: 'https://github.com/nikhil-prasad-k/Search-and-Rescue-Robot',
     specs: [
-      { label: '网格精度', value: '208,744 Tris / 66 STL' },
+      { label: '网格精度', value: '83,306 Tris / 29 CAD 部件 (Draco 0.48MB)' },
       { label: '运动关节', value: '19 Joints (4 Flippers + 6-DOF AR4)' },
       { label: '现实基准', value: 'sar_urdf.urdf + gz_ar4.urdf.xacro' }
     ]
@@ -99,7 +99,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'rexrov2_description/robots/rexrov2_oberon7.xacro',
     upstreamUrl: 'https://github.com/uuvsimulator/uuv_simulator',
     specs: [
-      { label: '网格精度', value: '843,403 Tris / 74 CAD 部件' },
+      { label: '网格精度', value: '127,418 Tris / 72 CAD 部件 (Draco 0.52MB)' },
       { label: '作业机械臂', value: 'Oberon7 7-DOF 液压串联臂' },
       { label: '现实基准', value: 'rexrov2_oberon7.xacro + serial_arm.xacro' }
     ]
@@ -115,7 +115,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'bluerov2_description/urdf/thrusters.xacro',
     upstreamUrl: 'https://github.com/CentraleNantesROV/bluerov2',
     specs: [
-      { label: '网格精度', value: '380,683 Tris / 202 CAD 零件' },
+      { label: '网格精度', value: '286,968 Tris / 25 CAD 部件 (Draco 1.79MB)' },
       { label: '推进配置', value: '6 × T200 矢量螺旋桨推进器' },
       { label: '现实基准', value: 'thrusters.xacro + sensors.xacro' }
     ]
@@ -132,7 +132,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     upstreamUrl: 'https://github.com/unitreerobotics/unitree_ros',
     specs: [
       { label: '全身自由度', value: '29-DOF 主躯干 + 灵巧手 (53 Joints)' },
-      { label: '网格精度', value: '630,394 Tris / 49 STL CAD 部件' },
+      { label: '网格精度', value: '117,085 Tris / 49 CAD 部件 (Draco 0.71MB)' },
       { label: '现实基准', value: 'g1_29dof_with_hand_rev_1_0.urdf' }
     ]
   },
@@ -148,7 +148,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     upstreamUrl: 'https://github.com/unitreerobotics/unitree_ros',
     specs: [
       { label: '运动关节', value: '12-DOF (FL/FR/RL/RR Hip-Thigh-Calf)' },
-      { label: '网格精度', value: '398,632 Tris / 17 DAE CAD 部件' },
+      { label: '网格精度', value: '104,168 Tris / 17 CAD 部件 (Draco 0.82MB)' },
       { label: '现实基准', value: 'go2_description.urdf' }
     ]
   },
@@ -164,7 +164,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     upstreamUrl: 'https://github.com/unitreerobotics/unitree_ros',
     specs: [
       { label: '运动关节', value: '6-DOF 串联旋转关节 + Gripper 夹爪' },
-      { label: '网格精度', value: '244,392 Tris / 9 STL CAD 部件' },
+      { label: '网格精度', value: '86,960 Tris / 9 CAD 部件 (Draco 0.24MB)' },
       { label: '现实基准', value: 'z1.urdf + robot.xacro' }
     ]
   },
@@ -179,7 +179,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'robots/h1_description/urdf/h1_with_hand.urdf',
     upstreamUrl: 'https://github.com/unitreerobotics/unitree_ros',
     specs: [
-      { label: '网格精度', value: '634,936 Tris / 49 CAD 部件 (Draco 2.4MB)' },
+      { label: '网格精度', value: '124,438 Tris / 49 CAD 部件 (Draco 0.64MB)' },
       { label: '驱动结构', value: '全尺寸双足 + 双灵巧手' },
       { label: '现实基准', value: 'h1_with_hand.urdf' }
     ]
@@ -195,7 +195,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'robots/b2_description/urdf/b2_description.urdf',
     upstreamUrl: 'https://github.com/unitreerobotics/unitree_ros',
     specs: [
-      { label: '网格精度', value: '242,429 Tris / 13 DAE 部件 (Draco 643KB)' },
+      { label: '网格精度', value: '89,914 Tris / 13 DAE 部件 (Draco 0.55MB)' },
       { label: '运动关节', value: '12-DOF 工业重载四足' },
       { label: '现实基准', value: 'b2_description.urdf' }
     ]
@@ -211,7 +211,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: '_首选基准原件_PRIMARY/gr1t1_fourier_hand_6dof.urdf',
     upstreamUrl: 'https://github.com/FFTAI/Wiki-GRx-Models',
     specs: [
-      { label: '网格精度', value: '370,109 Tris / 35 STL 部件 (Draco 2.0MB)' },
+      { label: '网格精度', value: '255,470 Tris / 35 STL 部件 (Draco 1.66MB)' },
       { label: '驱动结构', value: '全身多自由度双足 + 上肢' },
       { label: '现实基准', value: 'gr1t2.urdf / gr1t1_fourier_hand_6dof.urdf' }
     ]
@@ -227,7 +227,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'urdf/talos_full_v2.urdf',
     upstreamUrl: 'https://github.com/stack-of-tasks/talos-data',
     specs: [
-      { label: '网格精度', value: '205,175 Tris / 48 CAD 部件 (Draco 1.1MB)' },
+      { label: '网格精度', value: '134,837 Tris / 48 CAD 部件 (Draco 1.11MB)' },
       { label: '运动自由度', value: '32-DOF 全身力控双足' },
       { label: '现实基准', value: 'talos_full_v2.urdf' }
     ]
@@ -243,7 +243,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'urdf/cassie_v4.urdf',
     upstreamUrl: 'https://github.com/robot-descriptions/cassie_description',
     specs: [
-      { label: '网格精度', value: '868,945 Tris / 17 STL 部件 (Draco 3.1MB)' },
+      { label: '网格精度', value: '211,478 Tris / 17 STL 部件 (Draco 0.96MB)' },
       { label: '腿部拓扑', value: '双足闭链弹簧连杆机构' },
       { label: '现实基准', value: 'cassie_v4.urdf' }
     ]
@@ -259,7 +259,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'urdf/anymal.urdf',
     upstreamUrl: 'https://github.com/ANYbotics/anymal_c_simple_description',
     specs: [
-      { label: '网格精度', value: '58,320 Tris / 45 DAE 部件 (Draco 216KB)' },
+      { label: '网格精度', value: '58,294 Tris / 45 DAE 部件 (Draco 0.35MB)' },
       { label: '运动关节', value: '12-DOF 全向旋转驱动四足' },
       { label: '现实基准', value: 'anymal.urdf' }
     ]
@@ -275,7 +275,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'baxter_description/urdf/baxter.urdf',
     upstreamUrl: 'https://github.com/RethinkRobotics/baxter_common',
     specs: [
-      { label: '网格精度', value: '395,574 Tris / 18 DAE 部件 (Draco 1.2MB)' },
+      { label: '网格精度', value: '100,949 Tris / 18 DAE 部件 (Draco 1.15MB)' },
       { label: '驱动结构', value: '双 7-DOF 串联机械臂 + 头部显示屏' },
       { label: '现实基准', value: 'baxter.urdf' }
     ]
@@ -291,7 +291,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     primaryUrdf: 'urdf/stretch.urdf',
     upstreamUrl: 'https://github.com/robot-descriptions/stretch_description',
     specs: [
-      { label: '网格精度', value: '515,428 Tris / 30 STL 部件 (Draco 1.7MB)' },
+      { label: '网格精度', value: '114,382 Tris / 30 STL 部件 (Draco 0.49MB)' },
       { label: '操作构型', value: '差速移动底盘 + 升降伸缩腕部夹爪' },
       { label: '现实基准', value: 'stretch.urdf' }
     ]

@@ -805,7 +805,46 @@ export function stepAutoDisassemblyDemo(
 }
 
 /**
+ * Computes rotation-invariant Oriented Bounding Box (OBB) principal dimensions `[lx, ly, lz]`
+ * from a mesh's local geometry bounding box `[min, max]` and optional 4x4 world matrix column norms.
+ * Eliminates world-AABB diagonal inflation on 45°-angled struts, rocker-bogie links, and articulated joints.
+ */
+export function computeLocalObbDimensions(
+  localGeomMin: [number, number, number],
+  localGeomMax: [number, number, number],
+  worldMatrixElements?: ArrayLike<number>
+): [number, number, number] {
+  const rawX = Math.max(0, Math.abs((localGeomMax[0] || 0) - (localGeomMin[0] || 0)));
+  const rawY = Math.max(0, Math.abs((localGeomMax[1] || 0) - (localGeomMin[1] || 0)));
+  const rawZ = Math.max(0, Math.abs((localGeomMax[2] || 0) - (localGeomMin[2] || 0)));
+
+  if (!worldMatrixElements || worldMatrixElements.length < 11) {
+    return [rawX, rawY, rawZ];
+  }
+
+  const sx = Math.hypot(
+    worldMatrixElements[0] || 0,
+    worldMatrixElements[1] || 0,
+    worldMatrixElements[2] || 0
+  ) || 1;
+  const sy = Math.hypot(
+    worldMatrixElements[4] || 0,
+    worldMatrixElements[5] || 0,
+    worldMatrixElements[6] || 0
+  ) || 1;
+  const sz = Math.hypot(
+    worldMatrixElements[8] || 0,
+    worldMatrixElements[9] || 0,
+    worldMatrixElements[10] || 0
+  ) || 1;
+
+  return [rawX * sx, rawY * sy, rawZ * sz];
+}
+
+/**
  * Computes CAD Drawing-Grade Blueprint Metadata (real L×W×H mm, Tris, Vertices, URDF Link & Joint Axis).
+ * Supports optional `localObbSize` for exact rotation-invariant OBB part dimensions while remaining
+ * 100% backward-compatible with `normalizedBoxSize`.
  */
 export function computePartBlueprintMetadata(
   contextId: string,
@@ -816,25 +855,49 @@ export function computePartBlueprintMetadata(
   normalizedAssemblyMaxDim: number,
   tris: number,
   vertices: number,
-  urdfJoints: UrdfJointDef[]
+  urdfJoints: UrdfJointDef[],
+  localObbSize?: [number, number, number]
 ): PartBlueprintMetadata {
   const refMaxMm = REAL_MAX_ENVELOPE_MM[contextId] || 1500;
-  const mmPerNormUnit = refMaxMm / Math.max(0.2, normalizedAssemblyMaxDim);
+  const safeAssemblyDim =
+    Number.isFinite(normalizedAssemblyMaxDim) && normalizedAssemblyMaxDim > 0
+      ? Math.max(0.2, normalizedAssemblyMaxDim)
+      : 1.0;
+  const mmPerNormUnit = refMaxMm / safeAssemblyDim;
+
+  const hasValidLocalObb = Boolean(
+    localObbSize &&
+      localObbSize.length === 3 &&
+      Number.isFinite(localObbSize[0]) &&
+      Number.isFinite(localObbSize[1]) &&
+      Number.isFinite(localObbSize[2]) &&
+      (localObbSize[0] > 0 || localObbSize[1] > 0 || localObbSize[2] > 0)
+  );
+  const effectiveExtents = hasValidLocalObb ? localObbSize! : normalizedBoxSize;
+
+  const sanitizeMm = (normVal: number): number => {
+    const cleanVal = Number.isFinite(normVal) ? Math.abs(normVal) : 0;
+    return Math.max(4, Math.min(refMaxMm * 2, Math.round(cleanVal * mmPerNormUnit)));
+  };
 
   const dimsMm: [number, number, number] = [
-    Math.max(4, Math.round(normalizedBoxSize[0] * mmPerNormUnit)),
-    Math.max(4, Math.round(normalizedBoxSize[1] * mmPerNormUnit)),
-    Math.max(4, Math.round(normalizedBoxSize[2] * mmPerNormUnit))
+    sanitizeMm(effectiveExtents[0]),
+    sanitizeMm(effectiveExtents[1]),
+    sanitizeMm(effectiveExtents[2])
   ];
 
-  const lower = partName.toLowerCase();
+  const lower = partName.trim().toLowerCase();
   const matchedJoint =
-    urdfJoints.find(
-      (j) =>
-        lower.includes(j.child.toLowerCase()) ||
-        j.child.toLowerCase().includes(lower) ||
-        lower.includes(j.name.toLowerCase())
-    ) || null;
+    lower.length > 0
+      ? urdfJoints.find((j) => {
+          const childLower = j.child.toLowerCase();
+          const jointLower = j.name.toLowerCase();
+          return (
+            (childLower.length > 0 && (lower.includes(childLower) || childLower.includes(lower))) ||
+            (jointLower.length > 0 && lower.includes(jointLower))
+          );
+        }) || null
+      : null;
 
   if (matchedJoint) {
     return {

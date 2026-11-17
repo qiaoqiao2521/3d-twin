@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as THREE from 'three';
 import {
   HANGAR_CAMERA_PRESETS,
   getHangarCameraPreset,
@@ -33,6 +34,24 @@ import {
   computeSceneStateSignature,
   stepPathTracerAccumulatorState
 } from './hybridRayTracingMath';
+import {
+  computePathTracerSceneSignatures,
+  upgradeGlbPbrAndBuildStaticBvh
+} from './hybridRayTracing';
+import {
+  attachTwinShaderEffects,
+  createOpticalSectionAssembly,
+  createFlowAndSensorField
+} from './liveTwinSceneFX';
+import { createBlueprintDimensionRig } from './cadBlueprintSceneFX';
+import {
+  computeLocalObbDimensions,
+  computePartBlueprintMetadata
+} from './cadDisassemblyEngine';
+import {
+  createDefaultScientificVizConfig,
+  createScientificVizSceneController
+} from './scientificVizEngine';
 import { UrdfJointDef } from './manifestUtils';
 
 test('Hangar fixed camera presets expose Top-Down, Front-Side, and Isometric specs without gimbal lock', () => {
@@ -273,4 +292,119 @@ test('Dual-Gear Hybrid Ray-Tracing PBR classification, restrained bloom/GTAO, Ha
   assert.equal(resetStep.didReset, true);
   assert.equal(resetStep.next.spp, 4);
   assert.equal(resetStep.next.converged, false);
+});
+
+test('Workstream C: decoupled GPU PathTracer geometrySig vs cameraSig, order-independent uMicroSurfaceClass, real LiDAR raycast & OBB/dispose', () => {
+  // 1. Camera orbiting changes cameraSig ONLY without invalidating geometrySig (preventing GPU BVH rebuilds!)
+  const camA = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 2.4, 1.6, 2.8, 1];
+  const camB = [0.7, 0, -0.7, 0, 0, 1, 0, 0, 0.7, 0, 0.7, 0, 3.1, 1.8, -1.9, 1];
+  const sigA = computePathTracerSceneSignatures({
+    camMatrixElements: camA,
+    explosionProgress: 0.0,
+    clipRatio: 1.0,
+    poseChecksum: 1.25,
+    sceneChildCount: 12,
+    visibleMeshChecksum: 4096
+  });
+  const sigOrbit = computePathTracerSceneSignatures({
+    camMatrixElements: camB,
+    explosionProgress: 0.0,
+    clipRatio: 1.0,
+    poseChecksum: 1.25,
+    sceneChildCount: 12,
+    visibleMeshChecksum: 4096
+  });
+  assert.equal(sigA.geometrySig, sigOrbit.geometrySig, 'Orbiting camera must NOT alter geometrySig');
+  assert.notEqual(sigA.cameraSig, sigOrbit.cameraSig, 'Orbiting camera must update cameraSig');
+
+  const sigExploded = computePathTracerSceneSignatures({
+    camMatrixElements: camB,
+    explosionProgress: 0.45,
+    clipRatio: 1.0,
+    poseChecksum: 1.25,
+    sceneChildCount: 12,
+    visibleMeshChecksum: 4096
+  });
+  assert.notEqual(sigA.geometrySig, sigExploded.geometrySig, 'Explosion change must update geometrySig');
+
+  // 2. Order-independent uMicroSurfaceClass sync between attachTwinShaderEffects & upgradeGlbPbrAndBuildStaticBvh
+  const rootOrder1 = new THREE.Group();
+  const matCarbonFirst = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  const twinU1 = attachTwinShaderEffects(matCarbonFirst, true, 'L1');
+  assert.equal(twinU1.uMicroSurfaceClass.value, 0);
+  const meshCarbon = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), matCarbonFirst);
+  meshCarbon.name = 'carbon_composite_boom';
+  rootOrder1.add(meshCarbon);
+  const bvhRes1 = upgradeGlbPbrAndBuildStaticBvh(rootOrder1, 'b737_cfm56', () => 'L1');
+  assert.equal(bvhRes1.bvhMeshCount, 1);
+  assert.equal(twinU1.uMicroSurfaceClass.value, 2, 'Carbon weave class (2) must sync even when attachTwinShaderEffects ran first');
+
+  const rootOrder2 = new THREE.Group();
+  const matLensSecond = new THREE.MeshStandardMaterial({ color: 0x88ccff });
+  const meshLens = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), matLensSecond);
+  meshLens.name = 'front_camera_lens_dome';
+  rootOrder2.add(meshLens);
+  upgradeGlbPbrAndBuildStaticBvh(rootOrder2, 'bluerov2', () => 'L1');
+  const twinU2 = attachTwinShaderEffects(matLensSecond, true, 'L1');
+  assert.equal(twinU2.uMicroSurfaceClass.value, 3, 'Optical AR lens class (3) must sync when upgradeGlbPbrAndBuildStaticBvh ran first');
+
+  // 3. ScientificVizSceneController LiDAR raycasts real 3D target meshes from upper head elevation & disposes cleanly
+  const sciCtrl = createScientificVizSceneController();
+  const obstacleMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 1.4, 0.8),
+    new THREE.MeshStandardMaterial({ color: 0x64748b })
+  );
+  obstacleMesh.position.set(1.5, 0.4, 0.0);
+  obstacleMesh.updateMatrixWorld(true);
+
+  const cfg = createDefaultScientificVizConfig();
+  cfg.lidarPersistEnabled = true;
+  const robotBox = new THREE.Box3(new THREE.Vector3(-0.4, -0.8, -0.4), new THREE.Vector3(0.4, 1.12, 0.4));
+  sciCtrl.update({
+    config: cfg,
+    contextId: 'unitree_g1',
+    floorY: -0.8,
+    simTime: 0.0,
+    dt: 0.016,
+    comZmp: null,
+    torqueSamples: [],
+    workspaceOriginWorld: new THREE.Vector3(0, 0.2, 0),
+    workspaceMaxRadius: 0.9,
+    lidarOriginWorld: new THREE.Vector3(0, 0, 0),
+    robotBoundsBox: robotBox,
+    raycastTargets: [obstacleMesh],
+    hidden: false
+  });
+  sciCtrl.dispose();
+  obstacleMesh.geometry.dispose();
+  (obstacleMesh.material as THREE.Material).dispose();
+
+  // 4. Rotation-invariant local OBB dimensions in CAD Blueprint Metadata & complete .dispose() on FX controllers
+  const rot45 = new THREE.Matrix4().makeRotationZ(Math.PI / 4).scale(new THREE.Vector3(2, 2, 2));
+  const obbDims = computeLocalObbDimensions([-0.15, -0.05, -0.04], [0.15, 0.05, 0.04], rot45.elements);
+  assert.ok(Math.abs(obbDims[0] - 0.6) < 1e-6 && Math.abs(obbDims[1] - 0.2) < 1e-6);
+
+  const obbMeta = computePartBlueprintMetadata(
+    'unitree_go2',
+    'FL_thigh_mesh',
+    'L2',
+    '左前腿',
+    [0.42, 0.42, 0.16], // inflated rotated AABB
+    1.0,
+    1200,
+    640,
+    [],
+    [0.24, 0.1, 0.08] // exact local OBB
+  );
+  assert.equal(obbMeta.dimensionsMm[0], Math.round(0.24 * 700));
+  assert.equal(obbMeta.dimensionsMm[1], Math.round(0.1 * 700));
+
+  const bpRig = createBlueprintDimensionRig();
+  bpRig.dispose();
+  const optSec = createOpticalSectionAssembly(1.2);
+  optSec.dispose();
+  for (const cid of ['b737_cfm56', 'bluerov2', 'unitree_go2']) {
+    const flowCtrl = createFlowAndSensorField(cid, -0.8);
+    flowCtrl.dispose();
+  }
 });
