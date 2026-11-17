@@ -452,3 +452,118 @@ test('AAA Overhaul: TALOS bipedal Boss spec, analytical spring stability at 20 F
   }
   assert.equal(sheltered.hp, shelteredHp, 'Midfield boulder cover must block pulse rifle shots');
 });
+
+test('Xenomorph Swarm, Alien Queen Boss, Deathless Tower-Shield Directional Counterplay, Compound Bow [4], Melee Axe [X], and Polar Ice Canyon', async () => {
+  const {
+    summonXenoQueenBoss,
+    BATTLEFIELD_MAP_SPECS,
+    COMBAT_WEAPONS
+  } = await import('./marsCombatEngine');
+
+  // 1. Verify standalone weapon & environment GLBs exist on disk alongside mech/enemy GLBs
+  for (const extraGlb of [
+    'robotics_glb/tactical_compound_bow.glb',
+    'robotics_glb/high_freq_combat_axe.glb',
+    'robotics_glb/infinigen_polar_ice_spires.glb'
+  ]) {
+    const full = path.join(process.cwd(), 'public', extraGlb);
+    assert.equal(fs.existsSync(full), true, `Missing tactical/environment GLB: ${full}`);
+  }
+  assert.equal(BATTLEFIELD_MAP_SPECS.length, 2);
+  assert.equal(COMBAT_WEAPONS.length, 4);
+
+  // 2. Polar Ice Canyon map spawns Xenomorph Queen Boss on vanguard escalation & executes 3 bio-attacks
+  const polar = createInitialMarsCombatState('nasa_valkyrie', 0, false, 'polar_ice_canyon');
+  polar.shellState = 'playing';
+  polar.spawnTimer = 999;
+  assert.equal(polar.mapId, 'polar_ice_canyon');
+
+  const queen = summonXenoQueenBoss(polar)!;
+  assert.ok(queen);
+  assert.equal(queen.archetype, 'xeno_queen_boss');
+  assert.equal(queen.isBoss, true);
+  assert.equal(polar.events.bossCue, 'xeno_screech');
+
+  queen.dropPodProgress = 1;
+  queen.aiCooldown = 0;
+  polar.hitstopTimer = 0;
+  stepMarsCombatWorld(polar, 0.04, idleInput());
+  assert.equal(queen.attackPhase, 'windup');
+  assert.equal(queen.bossAttackKind, 'queen_acid_barrage');
+
+  // Advance past windup so Queen spits corrosive xeno_acid barrage
+  for (let i = 0; i < 18; i++) {
+    polar.hitstopTimer = 0;
+    stepMarsCombatWorld(polar, 0.04, idleInput());
+  }
+  assert.ok(
+    polar.projectiles.some((p) => p.active && p.kind === 'xeno_acid') ||
+      polar.hazards.some((h) => h.kind === 'acid_pool'),
+    'Expected Xenomorph Queen to launch corrosive xeno_acid globs / acid_pool hazards'
+  );
+
+  // 3. Deathless Vanguard Frontal Tower-Shield blocks non-piercing front pulse, but is pierced by Bow [4] & Flanks!
+  const shieldArena = createInitialMarsCombatState('spot_arm', 0, false, 'jezero_crater');
+  shieldArena.shellState = 'playing';
+  shieldArena.spawnTimer = 999;
+
+  const deathless = spawnEnemyDropPod(shieldArena, 'deathless_vanguard', 0, 10);
+  deathless.dropPodProgress = 1;
+  deathless.shield = 0; // test physical tower-shield armor reduction directly on HP
+  deathless.x = 10;
+  deathless.z = 0;
+  deathless.y = sampleLandTerrainHeight(10, 0);
+  deathless.yaw = Math.PI; // facing -X directly toward player at (0, 0)!
+
+  const hpStart = deathless.hp;
+  // Front hit (+X in Deathless local frame -> world x = 9.0, since yaw = PI means local +X points toward -worldX)
+  damageEnemyEntity(shieldArena, deathless, 50, 20, '高频脉冲步枪', [9.0, deathless.y + 1.1, 0], 1.0);
+  const frontBlockedDmg = hpStart - deathless.hp;
+  assert.ok(frontBlockedDmg <= 15, `Expected Deathless frontal tower shield to block >=75% damage, got ${frontBlockedDmg}`);
+  assert.equal(shieldArena.events.bossCue, 'shield_clang');
+
+  // Rear flank hit (world x = 11.0 -> behind Deathless!) deals full unblocked damage
+  const hpAfterFront = deathless.hp;
+  damageEnemyEntity(shieldArena, deathless, 50, 20, '高频脉冲步枪', [11.0, deathless.y + 1.1, 0], 1.0);
+  assert.equal(hpAfterFront - deathless.hp, 50, 'Flanking behind Deathless tower shield must deal 100% damage');
+
+  // Electromagnetic Compound Bow [4] pierces straight through frontal tower shield!
+  shieldArena.activeWeapon = 'compound_bow';
+  shieldArena.weaponCooldown = 0;
+  shieldArena.hitstopTimer = 0;
+  deathless.hp = deathless.maxHp;
+  stepMarsCombatWorld(
+    shieldArena,
+    0.04,
+    idleInput({
+      fireHeld: true,
+      muzzleWorldPoint: [1.0, deathless.y + 1.1, 0],
+      aimWorldPoint: [10.0, deathless.y + 1.1, 0]
+    })
+  );
+  for (let s = 0; s < 5; s++) {
+    shieldArena.hitstopTimer = 0;
+    stepMarsCombatWorld(shieldArena, 0.03, idleInput());
+  }
+  assert.ok(
+    deathless.maxHp - deathless.hp >= 130,
+    `Compound Bow [4] must pierce Deathless frontal shield for full crit damage, dealt ${deathless.maxHp - deathless.hp}`
+  );
+
+  // 4. High-Frequency Combat War-Axe [X] cleaves frontal pack, shatters guard, and restores +18 Player Shield!
+  const meleeArena = createInitialMarsCombatState('husky_ugv', 0, false, 'polar_ice_canyon');
+  meleeArena.shellState = 'playing';
+  meleeArena.spawnTimer = 999;
+  meleeArena.shield = 50;
+  const spider = spawnEnemyDropPod(meleeArena, 'xeno_spider', 0, 2.8);
+  spider.dropPodProgress = 1;
+  spider.x = 2.8;
+  spider.z = 0;
+  spider.y = sampleLandTerrainHeight(2.8, 0);
+
+  stepMarsCombatWorld(meleeArena, 0.02, idleInput({ meleeJustPressed: true, aimYaw: 0 }));
+  assert.equal(meleeArena.events.firedWeapon, 'melee_axe');
+  assert.ok(meleeArena.meleeSwingTimer > 0.25);
+  assert.ok(spider.hp <= 0, 'High-frequency war-axe cleave must obliterate close-range xeno_spider');
+  assert.ok(meleeArena.shield >= 68, 'Melee cleave hit must leech +18 Shield back to player');
+});

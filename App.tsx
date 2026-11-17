@@ -316,6 +316,9 @@ function resolvePlayableCombatMechId(actorId: string): PlayerMechId {
   if (
     actorId === 'unitree_g1' ||
     actorId === 'unitree_go2' ||
+    actorId === 'nasa_valkyrie' ||
+    actorId === 'spot_arm' ||
+    actorId === 'husky_ugv' ||
     actorId === 'mars2020' ||
     actorId === 'unitree_z1' ||
     actorId === 'unitree_h1' ||

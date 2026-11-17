@@ -909,7 +909,7 @@ class ProceduralPhysicalAudioEngine {
    * Enriched with layered transient noise punch + sub-bass body.
    */
   public playCombatWeaponFire(
-    weapon: 'pulse_rifle' | 'railgun' | 'missile_pod' | 'orbital_ion',
+    weapon: 'pulse_rifle' | 'railgun' | 'missile_pod' | 'compound_bow' | 'melee_axe' | 'orbital_ion',
     forceAllow: boolean = false,
     pan?: number
   ): void {
@@ -918,6 +918,73 @@ class ProceduralPhysicalAudioEngine {
     const t = ctx.currentTime;
     const jitter = 0.94 + Math.random() * 0.12;
     const { dest, panner } = this.createOutputDestination(ctx, pan);
+
+    if (weapon === 'compound_bow') {
+      // Layer 1: High-tension carbon bowstring harmonic twang
+      const str = ctx.createOscillator();
+      const sg = ctx.createGain();
+      str.type = 'triangle';
+      str.frequency.setValueAtTime(340 * jitter, t);
+      str.frequency.exponentialRampToValueAtTime(118, t + 0.19);
+      sg.gain.setValueAtTime(0.18, t);
+      sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.21);
+      str.connect(sg);
+      sg.connect(dest);
+      this.registerTransientCleanup(str, [sg, panner], true);
+      str.start(t);
+      str.stop(t + 0.22);
+
+      // Layer 2: Electromagnetic arrow acceleration zip
+      const zip = ctx.createOscillator();
+      const zg = ctx.createGain();
+      zip.type = 'sine';
+      zip.frequency.setValueAtTime(1920 * jitter, t);
+      zip.frequency.exponentialRampToValueAtTime(520, t + 0.09);
+      zg.gain.setValueAtTime(0.095, t);
+      zg.gain.exponentialRampToValueAtTime(0.0001, t + 0.095);
+      zip.connect(zg);
+      zg.connect(dest);
+      this.registerTransientCleanup(zip, [zg], false);
+      zip.start(t);
+      zip.stop(t + 0.1);
+      return;
+    }
+
+    if (weapon === 'melee_axe') {
+      // Layer 1: High-frequency plasma blade cleave sub-sweep
+      const cleave = ctx.createOscillator();
+      const cg = ctx.createGain();
+      cleave.type = 'sawtooth';
+      cleave.frequency.setValueAtTime(480 * jitter, t);
+      cleave.frequency.exponentialRampToValueAtTime(62, t + 0.22);
+      cg.gain.setValueAtTime(0.19, t);
+      cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+      cleave.connect(cg);
+      cg.connect(dest);
+      this.registerTransientCleanup(cleave, [cg, panner], true);
+      cleave.start(t);
+      cleave.stop(t + 0.25);
+
+      // Layer 2: Air-cutting pink-noise whoosh
+      if (this.pinkNoiseBuf) {
+        const wSrc = ctx.createBufferSource();
+        wSrc.buffer = this.pinkNoiseBuf;
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(1650, t);
+        bp.frequency.exponentialRampToValueAtTime(420, t + 0.18);
+        bp.Q.value = 1.6;
+        const wg = ctx.createGain();
+        wg.gain.setValueAtTime(0.16, t);
+        wg.gain.exponentialRampToValueAtTime(0.0001, t + 0.19);
+        wSrc.connect(bp);
+        bp.connect(wg);
+        wg.connect(dest);
+        this.registerTransientCleanup(wSrc, [bp, wg], false);
+        wSrc.start(t, Math.random() * 1.1, 0.2);
+      }
+      return;
+    }
 
     if (weapon === 'pulse_rifle') {
       // Layer 1: Plasma carrier bolt
@@ -1102,7 +1169,13 @@ class ProceduralPhysicalAudioEngine {
    * Armored Core 6 Boss Arrival Horn, ACS Stagger Break, and Coral Laser Telegraph Cues.
    */
   public playBossEventCue(
-    event: 'boss_warning' | 'acs_stagger_break' | 'laser_charge' | 'emp_nova',
+    event:
+      | 'boss_warning'
+      | 'acs_stagger_break'
+      | 'laser_charge'
+      | 'emp_nova'
+      | 'xeno_screech'
+      | 'shield_clang',
     forceAllow: boolean = false,
     pan?: number
   ): void {
@@ -1110,6 +1183,60 @@ class ProceduralPhysicalAudioEngine {
     if (!ctx || !this.masterGain || !this.canSpawnTransient()) return;
     const t = ctx.currentTime;
     const { dest, panner } = this.createOutputDestination(ctx, pan);
+
+    if (event === 'xeno_screech') {
+      // Eerie FM-modulated Xenomorph predatory bio-shriek
+      const carrier = ctx.createOscillator();
+      const mod = ctx.createOscillator();
+      const modGain = ctx.createGain();
+      const cg = ctx.createGain();
+      carrier.type = 'sawtooth';
+      carrier.frequency.setValueAtTime(1420, t);
+      carrier.frequency.exponentialRampToValueAtTime(2480, t + 0.16);
+      carrier.frequency.exponentialRampToValueAtTime(690, t + 0.62);
+      mod.type = 'sine';
+      mod.frequency.setValueAtTime(58, t);
+      modGain.gain.setValueAtTime(340, t);
+      cg.gain.setValueAtTime(0.001, t);
+      cg.gain.linearRampToValueAtTime(0.16, t + 0.05);
+      cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+      mod.connect(modGain);
+      modGain.connect(carrier.frequency);
+      carrier.connect(cg);
+      cg.connect(dest);
+      this.registerTransientCleanup(mod, [modGain], false);
+      this.registerTransientCleanup(carrier, [cg, panner], true);
+      mod.start(t);
+      carrier.start(t);
+      mod.stop(t + 0.66);
+      carrier.stop(t + 0.66);
+      return;
+    }
+
+    if (event === 'shield_clang') {
+      // Metallic bronze/titanium tower shield deflection ring
+      const ringA = ctx.createOscillator();
+      const ringB = ctx.createOscillator();
+      const rg = ctx.createGain();
+      ringA.type = 'triangle';
+      ringB.type = 'sine';
+      ringA.frequency.setValueAtTime(890, t);
+      ringB.frequency.setValueAtTime(1375, t);
+      ringA.frequency.exponentialRampToValueAtTime(520, t + 0.18);
+      ringB.frequency.exponentialRampToValueAtTime(840, t + 0.18);
+      rg.gain.setValueAtTime(0.14, t);
+      rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      ringA.connect(rg);
+      ringB.connect(rg);
+      rg.connect(dest);
+      this.registerTransientCleanup(ringA, [], false);
+      this.registerTransientCleanup(ringB, [rg, panner], true);
+      ringA.start(t);
+      ringB.start(t);
+      ringA.stop(t + 0.21);
+      ringB.stop(t + 0.21);
+      return;
+    }
 
     if (event === 'boss_warning') {
       const hornA = ctx.createOscillator();

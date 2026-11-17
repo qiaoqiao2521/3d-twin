@@ -27,6 +27,8 @@ import {
   PlayerMechId,
   CombatWeaponId,
   EnemyArchetypeId,
+  BattlefieldMapId,
+  BATTLEFIELD_MAP_SPECS,
   PLAYABLE_MECH_SPECS,
   COMBAT_WEAPONS,
   ENEMY_ARCHETYPE_SPECS,
@@ -36,10 +38,12 @@ import {
   KillfeedEntry,
   HitmarkerFeedback,
   isLeggedCombatMech,
+  isBiologicalXenoEnemy,
   sampleMarsArenaSurfaceHeight,
   getPlayableMechSpec,
   createInitialMarsCombatState,
   summonAresBoss,
+  summonXenoQueenBoss,
   computeRelativeThreatAngleRad,
   computeCombatUpperLowerBodyIK,
   stepMarsCombatWorld
@@ -99,6 +103,7 @@ interface HudSyncSnapshot {
   shield: number;
   maxShield: number;
   boostEnergy: number;
+  meleeCooldown: number;
   empCooldown: number;
   ultimateCharge: number;
   activeWeapon: CombatWeaponId;
@@ -111,6 +116,7 @@ interface HudSyncSnapshot {
   wave: number;
   headingDeg: number;
   bossBannerTimer: number;
+  bossIsQueen: boolean;
   hitmarker: HitmarkerFeedback;
   threatAnglesDeg: { id: number; deg: number; opacity: number }[];
   killfeed: KillfeedEntry[];
@@ -243,6 +249,88 @@ function normalizeAndGroundGlbGroup(
   return { pivot, normScale: scale, meshes };
 }
 
+const SPOT_ARM_MJCF_JOINTS: UrdfJointDef[] = [
+  ...(['fl', 'fr', 'hl', 'hr'] as const).flatMap((leg) => [
+    {
+      name: `${leg}_hip_joint`,
+      type: 'revolute' as const,
+      parent: 'body',
+      child: `${leg}_hip`,
+      xyz: [0, 0, 0] as [number, number, number],
+      rpy: [0, 0, 0] as [number, number, number],
+      axis: [1, 0, 0] as [number, number, number],
+      lower: -0.78,
+      upper: 0.78
+    },
+    {
+      name: `${leg}_uleg_joint`,
+      type: 'revolute' as const,
+      parent: `${leg}_hip`,
+      child: `${leg}_uleg`,
+      xyz: [0, 0, 0] as [number, number, number],
+      rpy: [0, 0, 0] as [number, number, number],
+      axis: [0, 1, 0] as [number, number, number],
+      lower: -0.89,
+      upper: 2.24
+    },
+    {
+      name: `${leg}_lleg_joint`,
+      type: 'revolute' as const,
+      parent: `${leg}_uleg`,
+      child: `${leg}_lleg`,
+      xyz: [0, 0, 0] as [number, number, number],
+      rpy: [0, 0, 0] as [number, number, number],
+      axis: [0, 1, 0] as [number, number, number],
+      lower: -2.79,
+      upper: 0.65
+    }
+  ]),
+  {
+    name: 'arm_sh0',
+    type: 'revolute',
+    parent: 'body',
+    child: 'arm_link_sh0',
+    xyz: [0, 0, 0],
+    rpy: [0, 0, 0],
+    axis: [0, 0, 1],
+    lower: -2.6,
+    upper: 3.1
+  },
+  {
+    name: 'arm_sh1',
+    type: 'revolute',
+    parent: 'arm_link_sh0',
+    child: 'arm_link_sh1',
+    xyz: [0, 0, 0],
+    rpy: [0, 0, 0],
+    axis: [0, 1, 0],
+    lower: -3.1,
+    upper: 0.52
+  },
+  {
+    name: 'arm_el0',
+    type: 'revolute',
+    parent: 'arm_link_sh1',
+    child: 'arm_link_el0',
+    xyz: [0, 0, 0],
+    rpy: [0, 0, 0],
+    axis: [0, 1, 0],
+    lower: -0.5,
+    upper: 3.1
+  },
+  {
+    name: 'arm_wr0',
+    type: 'revolute',
+    parent: 'arm_link_el1',
+    child: 'arm_link_wr0',
+    xyz: [0, 0, 0],
+    rpy: [0, 0, 0],
+    axis: [0, 1, 0],
+    lower: -1.83,
+    upper: 1.83
+  }
+];
+
 function bindUrdfJointsToRoot(root: THREE.Object3D, defs: UrdfJointDef[]): BoundUrdfNode[] {
   if (!defs.length) return [];
   const byName = new Map<string, THREE.Object3D>();
@@ -323,6 +411,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
 }) => {
   const canvasMountRef = useRef<HTMLDivElement | null>(null);
   const [selectedMechId, setSelectedMechId] = useState<PlayerMechId>(initialMechId);
+  const [selectedMapId, setSelectedMapId] = useState<BattlefieldMapId>('jezero_crater');
   const [shellState, setShellState] = useState<GameShellState>(
     initialAutostart ? 'playing' : 'title'
   );
@@ -330,10 +419,11 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
   const [runSummary, setRunSummary] = useState<RunSummarySnapshot | null>(null);
 
   const worldRef = useRef<MarsCombatWorldState>(
-    createInitialMarsCombatState(initialMechId, 0, initialAutostart)
+    createInitialMarsCombatState(initialMechId, 0, initialAutostart, 'jezero_crater')
   );
   const shellStateRef = useRef<GameShellState>(initialAutostart ? 'playing' : 'title');
   const selectedMechRef = useRef<PlayerMechId>(initialMechId);
+  const selectedMapRef = useRef<BattlefieldMapId>('jezero_crater');
   const audioEnabledRef = useRef<boolean>(audioEnabled);
   audioEnabledRef.current = audioEnabled;
 
@@ -342,12 +432,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     keysHeld: new Set<string>(),
     mouseHeldL: false,
     missileJustPressed: false,
+    meleeJustPressed: false,
     jumpJustPressed: false,
     dashJustPressed: false,
     empJustPressed: false,
     wingmanCommandJustPressed: false,
     ultimateJustPressed: false,
     summonBossJustPressed: false,
+    summonQueenJustPressed: false,
     ventJustPressed: false,
     pointerNdcX: 0,
     pointerNdcY: 0,
@@ -365,6 +457,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       shield: spec.maxShield,
       maxShield: spec.maxShield,
       boostEnergy: 100,
+      meleeCooldown: 0,
       empCooldown: 0,
       ultimateCharge: 100,
       activeWeapon: 'pulse_rifle',
@@ -377,6 +470,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       wave: 1,
       headingDeg: 0,
       bossBannerTimer: 0,
+      bossIsQueen: false,
       hitmarker: { timer: 0, isCrit: false, isShield: false, isKill: false, lastDamage: 0 },
       threatAnglesDeg: [],
       killfeed: [],
@@ -409,10 +503,11 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     };
   }, [shellState]);
 
-  const startOrRestartDeployment = (mechOverride?: PlayerMechId) => {
+  const startOrRestartDeployment = (mechOverride?: PlayerMechId, mapOverride?: BattlefieldMapId) => {
     const mech = mechOverride || selectedMechRef.current;
+    const mapId = mapOverride || selectedMapRef.current;
     const prevBest = worldRef.current.bestScore;
-    const nextWorld = createInitialMarsCombatState(mech, prevBest, true);
+    const nextWorld = createInitialMarsCombatState(mech, prevBest, true, mapId);
     worldRef.current = nextWorld;
     inputHubRef.current.keysHeld.clear();
     inputHubRef.current.mouseHeldL = false;
@@ -489,6 +584,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         if (e.code === 'Digit1') selectWeaponSlot('pulse_rifle');
         else if (e.code === 'Digit2') selectWeaponSlot('railgun');
         else if (e.code === 'Digit3') selectWeaponSlot('missile_pod');
+        else if (e.code === 'Digit4') selectWeaponSlot('compound_bow');
         else if (e.code === 'Space') {
           e.preventDefault();
           hub.jumpJustPressed = true;
@@ -496,6 +592,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           // [C / Alt] Dedicated Vector Quick-Boost Dodge (decoupled from [Shift] Sprint!)
           e.preventDefault();
           hub.dashJustPressed = true;
+        } else if (e.code === 'KeyX') {
+          hub.meleeJustPressed = true;
         } else if (e.code === 'KeyE') {
           hub.empJustPressed = true;
         } else if (e.code === 'KeyQ') {
@@ -510,6 +608,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           hub.missileJustPressed = true;
         } else if (e.code === 'KeyB') {
           hub.summonBossJustPressed = true;
+        } else if (e.code === 'KeyN') {
+          hub.summonQueenJustPressed = true;
         } else if (e.code === 'KeyM') {
           onToggleAudio();
         }
@@ -605,15 +705,39 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     rimCool.position.set(-24, 16, 28);
     scene.add(rimCool);
 
-    // Martian Jezero Battlefield + Cover Boulders + Perimeter Towers + Static MeshBVH Acceleration
-    const marsEnv = createMarsBattlefieldEnvironment(
-      renderer.capabilities.getMaxAnisotropy(),
-      isSoftwareGl
-    );
+    // Battlefield Environment (`'jezero_crater'` vs `'polar_ice_canyon'`) + Live Sector Switcher
+    const maxAniso = renderer.capabilities.getMaxAnisotropy();
+    let currentLoadedMapId: BattlefieldMapId = selectedMapRef.current;
+    let marsEnv = createMarsBattlefieldEnvironment(maxAniso, isSoftwareGl, currentLoadedMapId);
     upgradeGlbPbrAndBuildStaticBvh(marsEnv.terrainMesh, 'mars_terrain', () => 'L1');
     upgradeGlbPbrAndBuildStaticBvh(marsEnv.coverBoulderInst, 'mars_boulders', () => 'L1');
     upgradeGlbPbrAndBuildStaticBvh(marsEnv.pylonGroup, 'mars_pylons', () => 'L1');
     scene.add(marsEnv.root);
+
+    const applySectorLighting = (mapId: BattlefieldMapId) => {
+      if (mapId === 'polar_ice_canyon') {
+        scene.background = new THREE.Color(0x0b1929);
+        scene.fog = new THREE.FogExp2(0x1e3a5f, 0.0068);
+        hemi.color.setHex(0xcffafe);
+        hemi.groundColor.setHex(0x0f172a);
+        hemi.intensity = 0.85;
+        sunKey.color.setHex(0xe0f2fe);
+        sunKey.intensity = 1.72;
+        rimCool.color.setHex(0x34d399);
+        rimCool.intensity = 0.82;
+      } else {
+        scene.background = new THREE.Color(0x3b1b13);
+        scene.fog = new THREE.FogExp2(0x6b3524, 0.0072);
+        hemi.color.setHex(0xffcfb3);
+        hemi.groundColor.setHex(0x1c1218);
+        hemi.intensity = 0.72;
+        sunKey.color.setHex(0xffdfa8);
+        sunKey.intensity = 1.65;
+        rimCool.color.setHex(0x38bdf8);
+        rimCool.intensity = 0.68;
+      }
+    };
+    applySectorLighting(currentLoadedMapId);
 
     // Pooled Zero-GC Combat & Boss VFX Controller
     const vfxCtrl = createMarsCombatVFXController();
@@ -639,11 +763,16 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
 
     let playerModelPivot: THREE.Group | null = null;
     let playerMeshes: RigMeshEntry[] = [];
+    let playerWeaponAddonMeshes: RigMeshEntry[] = [];
+    let playerHuskyCarrierMeshes: RigMeshEntry[] = [];
+    let playerHuskyCarrierPivot: THREE.Group | null = null;
     let playerUrdfJoints: BoundUrdfNode[] = [];
     let playerRoverWheels: { node: THREE.Object3D; baseQuat: THREE.Quaternion; axis: THREE.Vector3 }[] = [];
     let playerCarrier: ReturnType<typeof createArmoredManipulatorCarrierBase> | null = null;
     let currentLoadedPlayerMechId: PlayerMechId | null = null;
     let playerRifle: ReturnType<typeof createMountedSciFiPulseRifle> | null = null;
+    let playerBowGroup: THREE.Group | null = null;
+    let playerAxeGroup: THREE.Group | null = null;
     let playerTurretMount: THREE.Group | null = null;
 
     const dodgeThrusterRig = createPlayerDodgeThrusterRig();
@@ -712,6 +841,74 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       }
     };
 
+    const syncBattlefieldMap = (mapId: BattlefieldMapId) => {
+      if (disposed || currentLoadedMapId === mapId) return;
+      currentLoadedMapId = mapId;
+      scene.remove(marsEnv.root);
+      marsEnv.dispose();
+      marsEnv = createMarsBattlefieldEnvironment(maxAniso, isSoftwareGl, mapId);
+      upgradeGlbPbrAndBuildStaticBvh(marsEnv.terrainMesh, 'mars_terrain', () => 'L1');
+      upgradeGlbPbrAndBuildStaticBvh(marsEnv.coverBoulderInst, 'mars_boulders', () => 'L1');
+      upgradeGlbPbrAndBuildStaticBvh(marsEnv.pylonGroup, 'mars_pylons', () => 'L1');
+      scene.add(marsEnv.root);
+      applySectorLighting(mapId);
+      if (mapId === 'polar_ice_canyon') {
+        const cachedSpires = glbCache.get('/robotics_glb/infinigen_polar_ice_spires.glb');
+        if (cachedSpires) {
+          marsEnv.applyLoadedGlacialSpires(cachedSpires);
+        } else {
+          fetchTemplate(['/robotics_glb/infinigen_polar_ice_spires.glb'])
+            .then(({ template }) => {
+              if (!disposed && currentLoadedMapId === 'polar_ice_canyon') {
+                marsEnv.applyLoadedGlacialSpires(template);
+              }
+            })
+            .catch(() => {});
+        }
+      }
+    };
+
+    const attach3DCompoundBowAndAxe = async (rifleRig: ReturnType<typeof createMountedSciFiPulseRifle>) => {
+      try {
+        const [{ template: bowTpl }, { template: axeTpl }] = await Promise.all([
+          fetchTemplate(['/robotics_glb/tactical_compound_bow.glb']),
+          fetchTemplate(['/robotics_glb/high_freq_combat_axe.glb'])
+        ]);
+        if (disposed || playerRifle !== rifleRig) return;
+
+        const bowCloned = cloneSceneWithSkeletonSupport(bowTpl);
+        const { pivot: bowPivot, meshes: bowMeshes } = normalizeAndGroundGlbGroup(
+          bowCloned,
+          0.98,
+          isSoftwareGl,
+          '#10b981',
+          false
+        );
+        bowPivot.position.set(0.28, -0.44, 0);
+        bowPivot.visible = false;
+        rifleRig.group.add(bowPivot);
+        playerBowGroup = bowPivot;
+
+        const axeCloned = cloneSceneWithSkeletonSupport(axeTpl);
+        const { pivot: axePivot, meshes: axeMeshes } = normalizeAndGroundGlbGroup(
+          axeCloned,
+          0.95,
+          isSoftwareGl,
+          '#10b981',
+          false
+        );
+        axePivot.position.set(0.24, -0.22, 0);
+        axePivot.rotation.z = -Math.PI * 0.22;
+        axePivot.visible = false;
+        rifleRig.group.add(axePivot);
+        playerAxeGroup = axePivot;
+
+        playerWeaponAddonMeshes.push(...bowMeshes, ...axeMeshes);
+      } catch {
+        // Procedural fallback stays active if weapon GLB still streaming
+      }
+    };
+
     const syncPlayerMechModel = async (mechId: PlayerMechId) => {
       if (disposed || currentLoadedPlayerMechId === mechId) return;
       currentLoadedPlayerMechId = mechId;
@@ -722,6 +919,17 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         if (playerRifle) {
           playerRifle.dispose();
           playerRifle = null;
+        }
+        playerBowGroup = null;
+        playerAxeGroup = null;
+        disposeClonedRigMeshes(playerWeaponAddonMeshes);
+        playerWeaponAddonMeshes = [];
+
+        if (playerHuskyCarrierPivot) {
+          playerRoot.remove(playerHuskyCarrierPivot);
+          playerHuskyCarrierPivot = null;
+          disposeClonedRigMeshes(playerHuskyCarrierMeshes);
+          playerHuskyCarrierMeshes = [];
         }
         if (playerCarrier) {
           playerRoot.remove(playerCarrier.group);
@@ -738,7 +946,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
 
         const cloned = cloneSceneWithSkeletonSupport(template);
         const isStationaryArm = mechId === 'unitree_z1' || mechId === 'baxter_dual_arm';
-        const effectiveDim = isStationaryArm ? spec.targetMaxDim * 0.84 : spec.targetMaxDim;
+        const effectiveDim = isStationaryArm ? spec.targetMaxDim * 0.82 : spec.targetMaxDim;
         const { pivot, normScale, meshes } = normalizeAndGroundGlbGroup(
           cloned,
           effectiveDim,
@@ -747,27 +955,53 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           false
         );
 
-        // Mount stationary robotic arms onto an Armored 4-Wheel Combat UGV Rover Carrier Base!
+        // Mount stationary robotic arms onto a real Clearpath Husky 4x4 UGV Chassis (with procedural fallback)!
         if (isStationaryArm) {
-          const carrier = createArmoredManipulatorCarrierBase(mechId, isSoftwareGl);
-          playerRoot.add(carrier.group);
-          pivot.position.y = carrier.mountHeight;
-          playerCarrier = carrier;
+          try {
+            const { template: huskyTpl } = await fetchTemplate([
+              '/robotics_glb/clearpath_husky_ugv.glb'
+            ]);
+            if (disposed || selectedMechRef.current !== mechId) return;
+            const huskyCloned = cloneSceneWithSkeletonSupport(huskyTpl);
+            const { pivot: hPivot, meshes: hMeshes } = normalizeAndGroundGlbGroup(
+              huskyCloned,
+              mechId === 'baxter_dual_arm' ? 1.85 : 1.58,
+              isSoftwareGl,
+              '#38bdf8',
+              false
+            );
+            playerRoot.add(hPivot);
+            playerHuskyCarrierPivot = hPivot;
+            playerHuskyCarrierMeshes = hMeshes;
+            const hBox = new THREE.Box3().setFromObject(hPivot);
+            pivot.position.y = Math.max(0.42, hBox.max.y * 0.92);
+            playerRoverWheels.push(...collectRoverWheelNodes(hPivot));
+          } catch {
+            const carrier = createArmoredManipulatorCarrierBase(mechId, isSoftwareGl);
+            playerRoot.add(carrier.group);
+            pivot.position.y = carrier.mountHeight;
+            playerCarrier = carrier;
+          }
         }
 
         playerRoot.add(pivot);
         playerModelPivot = pivot;
         playerMeshes = meshes;
-        playerUrdfJoints = bindUrdfJointsToRoot(pivot, joints);
+        playerUrdfJoints = bindUrdfJointsToRoot(
+          pivot,
+          mechId === 'spot_arm' ? SPOT_ARM_MJCF_JOINTS : joints
+        );
 
-        if (mechId === 'mars2020' || mechId === 'hello_stretch') {
-          playerRoverWheels = collectRoverWheelNodes(pivot);
+        if (mechId === 'mars2020' || mechId === 'hello_stretch' || mechId === 'husky_ugv') {
+          playerRoverWheels.push(...collectRoverWheelNodes(pivot));
         }
 
-        // Attach Sci-Fi Pulse Rifle to humanoid/manipulator right hand or dorsal turret gimbal
+        // Attach Sci-Fi Pulse Rifle + 3D Compound Bow + 3D War-Axe to humanoid/manipulator/Spot-Arm hand or dorsal turret
         let handSocketNode: THREE.Object3D | null = null;
         if (
           mechId === 'unitree_g1' ||
+          mechId === 'nasa_valkyrie' ||
+          mechId === 'spot_arm' ||
           mechId === 'unitree_h1' ||
           mechId === 'fourier_gr1' ||
           mechId === 'talos_humanoid' ||
@@ -776,15 +1010,19 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           const priorityPatterns =
             mechId === 'unitree_z1'
               ? ['link06', 'joint6', 'link05']
-              : [
-                  'right_hand_palm_link',
-                  'right_wrist_yaw_link',
-                  'right_wrist_pitch_link',
-                  'right_hand',
-                  'arm_right_7_link',
-                  'r_wrist',
-                  'right_elbow'
-                ];
+              : mechId === 'spot_arm'
+                ? ['arm_link_wr0', 'arm_link_fngr']
+                : [
+                    'right_hand_palm_link',
+                    'rightpalm',
+                    'right_wrist_yaw_link',
+                    'right_wrist_pitch_link',
+                    'rightforearm',
+                    'right_hand',
+                    'arm_right_7_link',
+                    'r_wrist',
+                    'right_elbow'
+                  ];
           for (const pat of priorityPatterns) {
             pivot.traverse((o) => {
               if (!handSocketNode && o.name && o.name.toLowerCase().includes(pat)) {
@@ -800,13 +1038,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           rifle.group.position.set(0.03, 0, 0.01);
           (handSocketNode as THREE.Object3D).add(rifle.group);
           playerRifle = rifle;
+          attach3DCompoundBowAndAxe(rifle);
         } else {
           const turret = new THREE.Group();
           const mountY =
-            mechId === 'unitree_go2' || mechId === 'anymal_c'
-              ? 0.92
-              : mechId === 'unitree_b2'
-                ? 1.05
+            mechId === 'unitree_go2' || mechId === 'anymal_c' || mechId === 'spot_arm'
+              ? 0.94
+              : mechId === 'unitree_b2' || mechId === 'husky_ugv'
+                ? 1.06
                 : mechId === 'sar'
                   ? 1.18
                   : 1.48;
@@ -816,13 +1055,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           pivot.add(turret);
           playerTurretMount = turret;
           playerRifle = rifle;
+          attach3DCompoundBowAndAxe(rifle);
         }
       } catch (err) {
         console.warn('Player mech GLB load warning:', err);
       }
     };
 
-    // Pre-warm Player Mech + Allied Wingman Go2 + All Enemy Archetypes + TALOS ARES-09 Boss GLBs
+    // Pre-warm Player Mech + Allied Wingman Go2 + All Enemy Archetypes + Tactical Weapons & Polar Spires
     (async () => {
       setIsLoadingAssets(true);
       await syncPlayerMechModel(selectedMechRef.current);
@@ -848,11 +1088,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       } catch {
         // Wingman fallback safe
       }
-      await Promise.all(
-        Object.values(ENEMY_ARCHETYPE_SPECS).map((es) =>
+      await Promise.all([
+        ...Object.values(ENEMY_ARCHETYPE_SPECS).map((es) =>
           fetchTemplate(es.glbUrls, es.urdfUrl).catch(() => null)
-        )
-      );
+        ),
+        fetchTemplate(['/robotics_glb/tactical_compound_bow.glb']).catch(() => null),
+        fetchTemplate(['/robotics_glb/high_freq_combat_axe.glb']).catch(() => null),
+        fetchTemplate(['/robotics_glb/infinigen_polar_ice_spires.glb']).catch(() => null)
+      ]);
       if (!disposed) setIsLoadingAssets(false);
     })();
 
@@ -885,7 +1128,13 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       const urdfDefs = spec.urdfUrl ? urdfCache.get(spec.urdfUrl) || [] : [];
       const rigRoot = new THREE.Group();
       const shadow = new THREE.Mesh(contactShadowGeo, contactShadowMat);
-      shadow.scale.setScalar(archetype === 'ares_boss' ? 2.8 : 1.0);
+      shadow.scale.setScalar(
+        archetype === 'ares_boss' || archetype === 'xeno_queen_boss'
+          ? 2.85
+          : archetype === 'xeno_spider'
+            ? 0.65
+            : 1.0
+      );
       shadow.position.y = 0.03;
       rigRoot.add(shadow);
 
@@ -899,14 +1148,12 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       );
       rigRoot.add(pivot);
 
-      // Wrap `aero_hunter` nacelle core in a swept-wing VTOL Gunship airframe & collect spinning fan rotors!
-      let gunshipFrame: ReturnType<typeof createAeroHunterGunshipFrame> | null = null;
+      // Collect spinning Skydio X2 quadrotor prop nodes on `aero_hunter`!
+      const gunshipFrame: ReturnType<typeof createAeroHunterGunshipFrame> | null = null;
       const rotorNodes: THREE.Object3D[] = [];
       if (archetype === 'aero_hunter') {
-        gunshipFrame = createAeroHunterGunshipFrame(isSoftwareGl);
-        pivot.add(gunshipFrame.group);
         pivot.traverse((o) => {
-          if (o.name && /fan|blade|rotor|impeller|lpc|hpc|spinner/i.test(o.name)) {
+          if (o.name && /fan|blade|rotor|prop|impeller|spinner/i.test(o.name)) {
             rotorNodes.push(o);
           }
         });
@@ -1104,6 +1351,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       if (currentLoadedPlayerMechId !== selectedMechRef.current) {
         syncPlayerMechModel(selectedMechRef.current);
       }
+      if (currentLoadedMapId !== selectedMapRef.current) {
+        syncBattlefieldMap(selectedMapRef.current);
+      }
 
       const wState = worldRef.current;
       const hub = inputHubRef.current;
@@ -1223,6 +1473,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           sprintHeld: hub.keysHeld.has('ShiftLeft') || hub.keysHeld.has('ShiftRight'),
           fireHeld,
           missileJustPressed: hub.missileJustPressed,
+          meleeJustPressed: hub.meleeJustPressed,
           jumpJustPressed: hub.jumpJustPressed,
           jumpHeld: hub.keysHeld.has('Space'),
           dashJustPressed: hub.dashJustPressed,
@@ -1230,6 +1481,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           wingmanCommandJustPressed: hub.wingmanCommandJustPressed,
           ultimateJustPressed: hub.ultimateJustPressed,
           summonBossJustPressed: hub.summonBossJustPressed,
+          summonQueenJustPressed: hub.summonQueenJustPressed,
           ventJustPressed: hub.ventJustPressed,
           aimYaw: hub.camYaw,
           aimPitch: hub.camPitch,
@@ -1237,25 +1489,34 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           muzzleWorldPoint
         };
         hub.missileJustPressed = false;
+        hub.meleeJustPressed = false;
         hub.jumpJustPressed = false;
         hub.dashJustPressed = false;
         hub.empJustPressed = false;
         hub.wingmanCommandJustPressed = false;
         hub.ultimateJustPressed = false;
         hub.summonBossJustPressed = false;
+        hub.summonQueenJustPressed = false;
         hub.ventJustPressed = false;
 
         // Engine natively handles hitstop + lossless one-shot input buffering (zero double-hitstop!)
         stepMarsCombatWorld(wState, dt, stepInput);
 
-        // Tactile Camera Micro-Impulse on heavy weapon fire, shield shatter, kills, and Boss ACS breaks
-        if (wState.events.firedWeapon === 'railgun' || wState.events.firedWeapon === 'orbital_ion') {
+        // Tactile Camera Micro-Impulse on heavy weapon fire, melee cleave, shield shatter, kills, and Boss breaks
+        if (
+          wState.events.firedWeapon === 'railgun' ||
+          wState.events.firedWeapon === 'orbital_ion' ||
+          wState.events.firedWeapon === 'melee_axe'
+        ) {
           camMicroImpulse = triggerCameraMicroImpulse(
             wState.events.firedWeapon === 'orbital_ion' ? 1.05 : 0.78,
             [-Math.cos(hub.camYaw), 0.25, -Math.sin(hub.camYaw)],
             0.14
           );
-        } else if (wState.events.firedWeapon === 'missile_pod') {
+        } else if (
+          wState.events.firedWeapon === 'missile_pod' ||
+          wState.events.firedWeapon === 'compound_bow'
+        ) {
           camMicroImpulse = triggerCameraMicroImpulse(0.52, [0, -0.8, 0.2], 0.11);
         }
         if (
@@ -1355,13 +1616,20 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             aimPitch: hub.camPitch,
             recoilPos: wState.recoilPos,
             heavyPostureTimer: wState.heavyPostureTimer,
-            wingmanCommandTimer: wState.wingmanCommandTimer
+            wingmanCommandTimer: wState.wingmanCommandTimer,
+            activeWeapon: wState.activeWeapon,
+            meleeSwingTimer: wState.meleeSwingTimer
           });
           _qAxis.setFromAxisAngle(j.axisVec, ikAng);
           j.node.quaternion.copy(j.baseQuat).multiply(_qAxis);
         }
 
         if (playerRifle) {
+          const showAxe = wState.meleeSwingTimer > 0 && Boolean(playerAxeGroup);
+          const showBow = !showAxe && wState.activeWeapon === 'compound_bow' && Boolean(playerBowGroup);
+          playerRifle.barrelCluster.visible = !showAxe && !showBow;
+          if (playerBowGroup) playerBowGroup.visible = showBow;
+          if (playerAxeGroup) playerAxeGroup.visible = showAxe;
           playerRifle.updateWeaponVisuals(
             wState.activeWeapon,
             wState.muzzleFlashTimer,
@@ -1496,24 +1764,49 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           const koTilt = e.koTimer > 0 ? (1 - e.koTimer / 0.42) * 1.15 : 0;
           const staggerPitch =
             e.staggeredTimer > 0 ? 0.24 : e.shieldBreakStunTimer > 0 ? 0.16 : 0;
-          rig.root.rotation.set(staggerPitch, -e.yaw, koTilt);
-          rig.modelPivot.rotation.set(e.hitTiltRoll, 0, -e.hitTiltPitch);
+          const isBioOrWarrior =
+            isBiologicalXenoEnemy(e.archetype) || e.archetype === 'deathless_vanguard';
+          const eSpd = Math.hypot(e.vx, e.vz);
+          const strideFreq = e.archetype === 'xeno_spider' ? 6.5 : e.isBoss ? 1.85 : 3.4;
+          const bioBob =
+            isBioOrWarrior && e.koTimer <= 0 && e.dropPodProgress >= 1
+              ? Math.abs(Math.sin(e.gaitDist * strideFreq)) *
+                Math.min(0.18, eSpd * (e.archetype === 'xeno_spider' ? 0.012 : 0.018))
+              : 0;
+          const bioLungePitch =
+            isBioOrWarrior && e.attackPhase === 'active'
+              ? -0.22
+              : isBioOrWarrior && e.attackPhase === 'windup'
+                ? 0.16
+                : 0;
+          const bioSwayRoll =
+            isBioOrWarrior && eSpd > 0.5
+              ? Math.sin(e.gaitDist * strideFreq) * (e.archetype === 'xeno_spider' ? 0.14 : 0.09)
+              : 0;
+
+          rig.root.position.set(e.x, e.y + dropOffset + bioBob, e.z);
+          rig.root.rotation.set(staggerPitch, -e.yaw, koTilt + bioLungePitch);
+          rig.modelPivot.rotation.set(e.hitTiltRoll + bioSwayRoll, 0, -e.hitTiltPitch);
 
           if (rig.rotorNodes.length > 0) {
             for (const rn of rig.rotorNodes) {
-              _wheelSpinQuat.setFromAxisAngle(_wheelSpinAxis, 28 * dt);
+              _wheelSpinQuat.setFromAxisAngle(_wheelSpinAxis, 34 * dt);
               rn.quaternion.multiply(_wheelSpinQuat);
             }
           }
 
           if (rig.shieldDome) {
-            const showShield = (e.shield > 0 || e.shieldShatterTimer > 0) && e.koTimer <= 0;
+            const showShield =
+              (e.shield > 0 || e.shieldShatterTimer > 0 || e.shieldRippleTimer > 0) &&
+              e.koTimer <= 0;
             rig.shieldDome.visible = showShield;
             if (showShield) {
               const sMat = rig.shieldDome.material as THREE.ShaderMaterial;
               sMat.uniforms.uTime.value = simElapsed;
               sMat.uniforms.uShieldRatio.value =
-                e.maxShield > 0 ? Math.max(0, e.shield / e.maxShield) : 0;
+                e.maxShield > 0
+                  ? Math.max(e.shieldRippleTimer > 0 ? 0.25 : 0, e.shield / e.maxShield)
+                  : 0;
               sMat.uniforms.uRippleTimer.value = e.shieldRippleTimer;
               sMat.uniforms.uShatterTimer.value = e.shieldShatterTimer;
               sMat.uniforms.uHitLocalDir.value.set(
@@ -1525,7 +1818,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           }
 
           // Animate Enemy URDF Joints (TALOS Boss uses 32-DOF 'talos_humanoid' bipedal gait!)
-          const eSpd = Math.hypot(e.vx, e.vz);
           const actorKey =
             e.archetype === 'go2_hound'
               ? 'unitree_go2'
@@ -1624,6 +1916,13 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             z: wState.wingman.z,
             yaw: wState.wingman.yaw,
             flashTimer: wState.wingman.slashFlashTimer
+          },
+          playerMeleeSlash: {
+            x: wState.x,
+            y: wState.y,
+            z: wState.z,
+            yaw: hub.camYaw,
+            swingTimer: wState.meleeSwingTimer
           }
         });
         marsEnv.updateAtmosphere(dt, wState.x, wState.z, simElapsed);
@@ -1669,6 +1968,12 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                 attackWarning = '高危预警 · 360° 红莲高能扫射巨炮 [Space 腾空跃过]';
               } else if (activeBoss.bossAttackKind === 'orbital_pillars') {
                 attackWarning = '高危预警 · 天基电磁轰炸圈锁定 [脱离红圈]';
+              } else if (activeBoss.bossAttackKind === 'queen_acid_barrage') {
+                attackWarning = '高危预警 · 女皇强酸流星雨喷吐 [机动规避酸液池]';
+              } else if (activeBoss.bossAttackKind === 'queen_tail_scythe') {
+                attackWarning = '高危预警 · 女皇巨尾横扫突刺 [Space 跃起 / C 瞬步闪避]';
+              } else if (activeBoss.bossAttackKind === 'queen_brood_call') {
+                attackWarning = '高危预警 · 巢穴虫潮孵化召唤 [X 高周波战斧顺劈清群]';
               }
             }
           }
@@ -1682,6 +1987,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             shield: Math.round(wState.shield),
             maxShield: wState.maxShield,
             boostEnergy: Math.round(wState.boostEnergy),
+            meleeCooldown: wState.meleeCooldown,
             empCooldown: wState.empCooldown,
             ultimateCharge: Math.round(wState.ultimateCharge),
             activeWeapon: wState.activeWeapon,
@@ -1694,6 +2000,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             wave: wState.wave,
             headingDeg: degHeading,
             bossBannerTimer: wState.bossBannerTimer,
+            bossIsQueen: activeBoss?.archetype === 'xeno_queen_boss',
             hitmarker: { ...wState.hitmarker },
             threatAnglesDeg: wState.threats.map((t) => ({
               id: t.id,
@@ -1716,7 +2023,11 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               ? {
                   codeName:
                     activeBoss.bossPhase === 2
-                      ? `${activeBoss.codeName} [红莲二阶段]`
+                      ? `${activeBoss.codeName} ${
+                          activeBoss.archetype === 'xeno_queen_boss'
+                            ? '[狂暴产卵二阶段]'
+                            : '[红莲二阶段]'
+                        }`
                       : activeBoss.codeName,
                   hp: Math.round(activeBoss.hp),
                   maxHp: activeBoss.maxHp,
@@ -1806,6 +2117,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       enemyRigs.forEach((rig) => disposeEnemyRig(rig));
       enemyRigs.clear();
       disposeClonedRigMeshes(playerMeshes);
+      disposeClonedRigMeshes(playerWeaponAddonMeshes);
+      disposeClonedRigMeshes(playerHuskyCarrierMeshes);
       disposeClonedRigMeshes(wingmanMeshes);
       if (playerCarrier) playerCarrier.dispose();
       if (playerRifle) playerRifle.dispose();
@@ -1938,8 +2251,42 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                 </text>
               </svg>
               <p className="text-sm text-slate-300 leading-relaxed max-w-[38ch]">
-                驾驶真实运动学机甲空降杰泽罗赤红战区，迎击轨道空投机械军团与多阶段核能泰坦领主。
+                驾驶真实运动学机甲空降杰泽罗赤红战区或极冠冰封巢谷，迎击异形虫潮、不死重盾禁卫与双领主 Boss。
               </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-slate-300">选择空降战区地图</div>
+              <div className="grid grid-cols-2 gap-2">
+                {BATTLEFIELD_MAP_SPECS.map((mp) => {
+                  const activeMap = mp.id === selectedMapId;
+                  return (
+                    <button
+                      key={mp.id}
+                      type="button"
+                      data-testid={`combat-map-select-${mp.id}`}
+                      onClick={() => {
+                        selectedMapRef.current = mp.id;
+                        worldRef.current.mapId = mp.id;
+                        setSelectedMapId(mp.id);
+                        if (audioEnabledRef.current) {
+                          proceduralAudioSynth.playMechanicalLatchClick(840, true);
+                        }
+                      }}
+                      className={`px-3 py-2 rounded-lg border text-left transition cursor-pointer ${
+                        activeMap
+                          ? mp.id === 'polar_ice_canyon'
+                            ? 'bg-[#0e2030]/95 border-cyan-400 text-white'
+                            : 'bg-[#1f1218]/95 border-[#ff3b5c] text-white'
+                          : 'bg-[#11151e]/85 border-white/10 text-slate-300 hover:border-white/25'
+                      }`}
+                    >
+                      <div className="text-xs font-semibold truncate">{mp.title}</div>
+                      <div className="text-[10px] text-slate-400 truncate">{mp.subtitle}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -1949,7 +2296,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   AP {currentMechSpec.maxHp} · 护盾 {currentMechSpec.maxShield}
                 </span>
               </div>
-              <div className="grid grid-cols-1 gap-1.5 max-h-[290px] overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 gap-1.5 max-h-[245px] overflow-y-auto pr-1">
                 {PLAYABLE_MECH_SPECS.map((m) => {
                   const active = m.id === selectedMechId;
                   return (
@@ -2004,7 +2351,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           </div>
 
           <div className="text-xs font-mono text-slate-300/85 tracking-wide">
-            WASD 机动 · Shift 推进冲刺 · 鼠标锁定瞄准射击 · 右键/F 蜂群导弹 · 1-3 切枪 · C/Alt 瞬步闪避 · R 散热校射 · Q 僚机扑咬 · E 脉冲盾 · V 天基离子炮
+            WASD 机动 · Shift 推进冲刺 · 鼠标瞄准射击 · 1-4 切枪(含复合穿甲弓) · X 高周波战斧顺劈 · 右键/F 蜂群导弹 · C/Alt 瞬步 · Q 僚机扑咬 · E 脉冲盾 · V 天基离子炮 · B/N 召唤双领主
           </div>
         </div>
       )}
@@ -2172,9 +2519,15 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             {hud.bossBannerTimer > 0 && (
               <div
                 data-testid="boss-arrival-warning-banner"
-                className="px-5 py-1.5 rounded-md bg-[#280810]/95 border border-[#ff2a55] text-rose-100 text-xs font-mono font-bold tracking-widest shadow-2xl"
+                className={`px-5 py-1.5 rounded-md border text-xs font-mono font-bold tracking-widest shadow-2xl ${
+                  hud.bossIsQueen
+                    ? 'bg-[#10260d]/95 border-lime-400 text-lime-100'
+                    : 'bg-[#280810]/95 border-[#ff2a55] text-rose-100'
+                }`}
               >
-                WARNING · 轨道核能泰坦领主已空降战区
+                {hud.bossIsQueen
+                  ? 'WARNING · 巢穴异形禁卫女皇已破冰苏醒'
+                  : 'WARNING · 轨道核能泰坦领主已空降战区'}
               </div>
             )}
 
@@ -2246,23 +2599,42 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
             <div className="pointer-events-auto flex items-center gap-1.5">
               {!hud.bossHud && (
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  data-testid="summon-boss-now-btn"
-                  onClick={(e) => {
-                    e.currentTarget.blur();
-                    worldRef.current.aimYaw = inputHubRef.current.camYaw;
-                    summonAresBoss(worldRef.current);
-                    if (audioEnabledRef.current) {
-                      proceduralAudioSynth.playBossEventCue('boss_warning', true);
-                    }
-                  }}
-                  className="px-2.5 py-1.5 rounded-md bg-[#260b12]/90 hover:border-rose-400 border border-rose-500/50 text-[11px] font-mono font-semibold text-rose-200 cursor-pointer whitespace-nowrap"
-                  title="立即空投召唤 ARES-09 核能泰坦 Boss (快捷键 B)"
-                >
-                  召唤泰坦 Boss [B]
-                </button>
+                <>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    data-testid="summon-queen-now-btn"
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      worldRef.current.aimYaw = inputHubRef.current.camYaw;
+                      summonXenoQueenBoss(worldRef.current);
+                      if (audioEnabledRef.current) {
+                        proceduralAudioSynth.playBossEventCue('xeno_screech', true);
+                      }
+                    }}
+                    className="px-2.5 py-1.5 rounded-md bg-[#11260e]/90 hover:border-lime-400 border border-lime-500/55 text-[11px] font-mono font-semibold text-lime-200 cursor-pointer whitespace-nowrap"
+                    title="立即召唤 XENO-OMEGA 巢穴异形禁卫女皇 Boss (快捷键 N)"
+                  >
+                    召唤异形女皇 [N]
+                  </button>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    data-testid="summon-boss-now-btn"
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      worldRef.current.aimYaw = inputHubRef.current.camYaw;
+                      summonAresBoss(worldRef.current);
+                      if (audioEnabledRef.current) {
+                        proceduralAudioSynth.playBossEventCue('boss_warning', true);
+                      }
+                    }}
+                    className="px-2.5 py-1.5 rounded-md bg-[#260b12]/90 hover:border-rose-400 border border-rose-500/50 text-[11px] font-mono font-semibold text-rose-200 cursor-pointer whitespace-nowrap"
+                    title="立即空投召唤 ARES-09 核能泰坦 Boss (快捷键 B)"
+                  >
+                    召唤泰坦 Boss [B]
+                  </button>
+                </>
               )}
 
               <button
@@ -2415,6 +2787,24 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               <button
                 type="button"
                 tabIndex={-1}
+                data-testid="combat-skill-melee-btn"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  inputHubRef.current.meleeJustPressed = true;
+                }}
+                className={`px-2.5 py-1.5 rounded-md border text-[11px] font-mono tabular-nums cursor-pointer ${
+                  hud.meleeCooldown <= 0
+                    ? 'bg-[#0b2019]/90 border-emerald-400/65 text-emerald-100'
+                    : 'bg-[#0b0e14]/80 border-white/10 text-slate-400'
+                }`}
+              >
+                <span className="text-emerald-300 font-bold">[X]</span>{' '}
+                {hud.meleeCooldown > 0 ? `战斧顺劈 ${hud.meleeCooldown.toFixed(1)}s` : '战斧顺劈'}
+              </button>
+
+              <button
+                type="button"
+                tabIndex={-1}
                 onClick={(e) => {
                   e.currentTarget.blur();
                   inputHubRef.current.dashJustPressed = true;
@@ -2484,7 +2874,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               </button>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-[#0b0e14]/88 border border-white/15 rounded-lg p-1.5">
+            <div className="flex items-center gap-1.5 bg-[#080c14]/95 border border-white/20 shadow-2xl rounded-lg p-1.5">
               {COMBAT_WEAPONS.map((w) => {
                 const active = hud.activeWeapon === w.id;
                 return (
@@ -2499,15 +2889,15 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                     }}
                     className={`px-3 py-1.5 rounded-md border text-left transition cursor-pointer ${
                       active
-                        ? 'bg-white/10 border-cyan-400 text-white'
-                        : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                        ? 'bg-cyan-500/15 border-cyan-400 text-white'
+                        : 'border-transparent text-slate-200 hover:text-white hover:bg-white/10'
                     }`}
                   >
                     <div className="text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap">
                       <span className="font-mono text-cyan-300">[{w.slotKey}]</span>
                       <span>{w.name}</span>
                     </div>
-                    <div className="text-[10px] text-slate-400 whitespace-nowrap">{w.roleHint}</div>
+                    <div className="text-[10px] text-slate-300/85 whitespace-nowrap">{w.roleHint}</div>
                   </button>
                 );
               })}

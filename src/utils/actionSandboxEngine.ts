@@ -333,6 +333,53 @@ export const SANDBOX_ACTORS: SandboxActorSpec[] = [
     groundClearanceOffset: 0.0,
     fireActionTitle: '垂直立柱升降 + 伸缩臂采样激光',
     fireActionDesc: '差速底盘灵活转向，垂直立柱与伸缩腕部同步前伸采样'
+  },
+  {
+    id: 'nasa_valkyrie',
+    name: 'NASA Johnson Space Center Valkyrie R5 宇航人形机甲',
+    shortName: 'NASA Valkyrie 女武神',
+    domain: 'land',
+    domainBadge: '火星极冠与戈壁场',
+    glbUrls: ['/robotics_glb/nasa_valkyrie_r5.glb'],
+    urdfUrl: '/baselines/06-双足人形具身智能机器人/nasa-urdf-robots/val_description/model/robots/valkyrie_sim_angled_legj1s.urdf',
+    modelYawOffset: 0,
+    cruiseSpeed: 5.8,
+    boostSpeed: 10.4,
+    turnRate: 2.35,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '深空宇航重甲双臂展开 + 电弧脉冲波',
+    fireActionDesc: 'NASA R5 宇航双足全身力控推进，胸甲核芯释放高能电磁扫描波'
+  },
+  {
+    id: 'spot_arm',
+    name: '波士顿动力 Spot + 6轴战斗机械臂 (Boston Dynamics Spot Arm)',
+    shortName: 'Spot 机械臂战犬',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/boston_dynamics_spot_arm.glb'],
+    modelYawOffset: 0,
+    cruiseSpeed: 7.2,
+    boostSpeed: 13.4,
+    turnRate: 2.75,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '四足腾跃扑击 + 背部蛇形臂电弧齐射',
+    fireActionDesc: '波士顿动力四足敏捷越障，背部六轴机械臂同步前探锁定目标'
+  },
+  {
+    id: 'husky_ugv',
+    name: 'Clearpath Husky A200 四驱装甲无人战车',
+    shortName: 'Husky 四驱战车',
+    domain: 'land',
+    domainBadge: '陆地越障戈壁场',
+    glbUrls: ['/robotics_glb/clearpath_husky_ugv.glb'],
+    urdfUrl: '/baselines/07-四足越野与移动操作复合机器人/husky/husky_description/urdf/husky.urdf.xacro',
+    modelYawOffset: 0,
+    cruiseSpeed: 6.8,
+    boostSpeed: 12.0,
+    turnRate: 2.3,
+    groundClearanceOffset: 0.0,
+    fireActionTitle: '4×4 差速越野冲锋 + 车载重炮测绘激光',
+    fireActionDesc: '全地形防滑宽胎翻越陨石坑陡坡，车顶武器站发射高能破岩激光'
   }
 ];
 
@@ -341,13 +388,15 @@ const HUMANOID_SANDBOX_IDS = new Set([
   'unitree_h1',
   'fourier_gr1',
   'talos_humanoid',
-  'cassie_biped'
+  'cassie_biped',
+  'nasa_valkyrie'
 ]);
 
 const QUADRUPED_SANDBOX_IDS = new Set([
   'unitree_go2',
   'unitree_b2',
-  'anymal_c'
+  'anymal_c',
+  'spot_arm'
 ]);
 
 export function getSandboxActorSpec(contextId: string): SandboxActorSpec {
@@ -466,8 +515,9 @@ export function sampleLandTerrainNormal(x: number, z: number): [number, number, 
  */
 export function sampleLandChassisSupportHeight(x: number, z: number, yaw: number, actorId: string): number {
   const hCenter = sampleLandTerrainHeight(x, z);
-  const halfLen = actorId === 'mars2020' || actorId === 'sar' ? 0.56 : 0.34;
-  const halfWid = actorId === 'mars2020' || actorId === 'sar' ? 0.46 : 0.26;
+  const isWideChassis = actorId === 'mars2020' || actorId === 'sar' || actorId === 'husky_ugv';
+  const halfLen = isWideChassis ? 0.56 : 0.34;
+  const halfWid = isWideChassis ? 0.46 : 0.26;
   const fx = Math.cos(yaw);
   const fz = Math.sin(yaw);
   const rx = -fz;
@@ -856,30 +906,37 @@ export function computeSandboxUrdfJointAngle(
     return clamp(0.18 * Math.sin(simTime * 1.3 + jointIndex * 0.6));
   }
 
-  // Quadruped family (Go2 / B2 / ANYmal C) — athletic crouched stance + diagonal trot / sprint!
+  // Quadruped family (Go2 / B2 / ANYmal C / Spot-Arm) — athletic crouched stance + diagonal trot / sprint!
   if (QUADRUPED_SANDBOX_IDS.has(actorId)) {
+    const isSpotArm = actorId === 'spot_arm';
     if (!kin.isGrounded) {
       if (name.includes('hip')) return clamp(0);
-      if (name.includes('thigh')) return clamp(name.startsWith('f') ? 0.32 : 1.08);
-      if (name.includes('calf')) return clamp(name.startsWith('f') ? -0.92 : -1.62);
+      if (name.includes('thigh') || name.includes('uleg')) return clamp(isSpotArm ? -0.22 : name.startsWith('f') ? 0.32 : 1.08);
+      if (name.includes('calf') || name.includes('lleg')) return clamp(isSpotArm ? 0.34 : name.startsWith('f') ? -0.92 : -1.62);
     }
-    const isDiagA = name.startsWith('fl_') || name.startsWith('rr_');
+    const isDiagA = name.startsWith('fl_') || name.startsWith('rr_') || name.startsWith('hr_');
     const ph = stridePhase + (isDiagA ? 0 : Math.PI);
     const amp = Math.min(1.05, speedNorm * 0.98);
     const idleBreath = (1.0 - Math.min(1.0, speedNorm)) * Math.sin(simTime * 2.4) * 0.035;
     if (name.includes('hip')) {
       return clamp(kin.turnVel * 0.08 + 0.05 * Math.sin(ph) * amp);
     }
-    if (name.includes('thigh')) {
-      return clamp(0.68 + idleBreath + 0.46 * Math.sin(ph) * amp);
+    if (name.includes('thigh') || name.includes('uleg')) {
+      return clamp((isSpotArm ? 0 : 0.68) + idleBreath + 0.44 * Math.sin(ph) * amp);
     }
-    if (name.includes('calf')) {
-      return clamp(-1.32 - idleBreath * 1.6 + 0.50 * Math.cos(ph) * amp);
+    if (name.includes('calf') || name.includes('lleg')) {
+      return clamp((isSpotArm ? 0 : -1.32) - idleBreath * 1.6 + 0.48 * Math.cos(ph) * amp);
     }
+    return clamp(0);
   }
 
-  // Humanoid / Biped family (G1 / H1 / GR-1 / TALOS / Cassie) — bipedal walk/sprint stride + counter-swinging arms!
+  // Humanoid / Biped family (G1 / H1 / GR-1 / TALOS / Cassie / NASA Valkyrie) — bipedal stride + counter-swinging arms!
   if (HUMANOID_SANDBOX_IDS.has(actorId)) {
+    if (name.includes('hokuyo')) {
+      const rawSpin = (simTime * 8.5) % (Math.PI * 2);
+      return rawSpin > Math.PI ? rawSpin - Math.PI * 2 : rawSpin;
+    }
+    const isValkyrie = actorId === 'nasa_valkyrie';
     const isLeft = name.includes('left');
     const ph = stridePhase + (isLeft ? 0 : Math.PI);
     const amp = Math.min(1.18, speedNorm * 1.05);
@@ -887,28 +944,31 @@ export function computeSandboxUrdfJointAngle(
 
     if (fireAnimTimer > 0 && (name.includes('shoulder') || name.includes('elbow'))) {
       const castEnv = Math.sin(Math.min(1, fireAnimTimer) * Math.PI);
-      if (name.includes('shoulder_pitch')) return clamp(-0.95 * castEnv);
-      if (name.includes('shoulder_roll')) return clamp((isLeft ? 0.65 : -0.65) * castEnv);
+      if (name.includes('shoulder_pitch') || name.includes('shoulderpitch')) return clamp(-0.95 * castEnv);
+      if (name.includes('shoulder_roll') || name.includes('shoulderroll')) return clamp((isLeft ? 0.65 : -0.65) * castEnv);
       if (name.includes('elbow')) return clamp(0.25 * (1 - castEnv));
     }
 
-    if (name.includes('hip_pitch')) {
-      return clamp(-0.18 - idleSway + 0.52 * Math.sin(ph) * amp);
+    if (name.includes('hip_pitch') || name.includes('hippitch')) {
+      return clamp((isValkyrie ? 0 : -0.18) - idleSway + 0.48 * Math.sin(ph) * amp);
     }
     if (name.includes('knee')) {
-      return clamp(0.34 + idleSway * 1.8 + 0.62 * Math.max(0, Math.sin(ph + 0.55)) * amp);
+      return clamp((isValkyrie ? 0.12 : 0.34) + idleSway * 1.8 + 0.58 * Math.max(0, Math.sin(ph + 0.55)) * amp);
     }
-    if (name.includes('ankle_pitch')) {
-      return clamp(-0.16 - 0.28 * Math.sin(ph) * amp);
+    if (name.includes('ankle_pitch') || name.includes('anklepitch')) {
+      return clamp((isValkyrie ? 0 : -0.16) - 0.26 * Math.sin(ph) * amp);
     }
-    if (name.includes('shoulder_pitch')) {
-      return clamp(0.12 - 0.50 * Math.sin(ph) * amp);
+    if (name.includes('shoulder_pitch') || name.includes('shoulderpitch')) {
+      return clamp(0.12 - 0.46 * Math.sin(ph) * amp);
     }
     if (name.includes('elbow')) {
-      return clamp(0.52 + 0.34 * Math.cos(ph) * amp);
+      return clamp((isValkyrie ? 0.15 : 0.52) + 0.30 * Math.cos(ph) * amp);
     }
-    if (name.includes('waist_yaw')) {
+    if (name.includes('waist_yaw') || name.includes('torsoyaw')) {
       return clamp(kin.turnVel * 0.12 + 0.16 * Math.sin(stridePhase) * amp);
+    }
+    if (isValkyrie && (name.includes('roll') || name.includes('thumb') || name.includes('finger') || name.includes('pinky'))) {
+      return clamp(0);
     }
     return clamp(0.05 * Math.sin(simTime * 2.0 + jointIndex));
   }
