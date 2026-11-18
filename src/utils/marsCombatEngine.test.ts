@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   PLAYABLE_MECH_SPECS,
+  MARS_BATTLEFIELD_OBSTACLES,
+  resolveCombatSoftCollisions,
   ENEMY_ARCHETYPE_SPECS,
   createInitialMarsCombatState,
   spawnEnemyDropPod,
@@ -13,7 +15,7 @@ import {
   stepMarsCombatWorld,
   CombatStepInput
 } from './marsCombatEngine';
-import { sampleLandTerrainHeight } from './actionSandboxEngine';
+import { sampleLandChassisSupportHeight, sampleLandTerrainHeight } from './actionSandboxEngine';
 
 function idleInput(overrides: Partial<CombatStepInput> = {}): CombatStepInput {
   return {
@@ -59,6 +61,57 @@ test('autostart boots into playing state with initial Martian drop-pod enemy wav
   assert.equal(playState.shellState, 'playing');
   assert.equal(playState.enemies.length, 3);
   assert.equal(playState.bestScore, 500);
+});
+
+test('walking and boosting into cover stop at contact while a glancing boost keeps its sideways speed', () => {
+  for (const mapId of ['jezero_crater', 'polar_ice_canyon'] as const) {
+    for (const kind of ['boulder', 'tower'] as const) {
+      const wall = MARS_BATTLEFIELD_OBSTACLES.find((obstacle) => obstacle.kind === kind)!;
+      const clearance = wall.radius + 0.96;
+      const state = createInitialMarsCombatState('unitree_g1', 0, false, mapId);
+      state.shellState = 'playing';
+      state.spawnTimer = 999;
+      state.x = wall.x - clearance - 0.15;
+      state.z = wall.z;
+      state.y = sampleLandChassisSupportHeight(state.x, state.z, 0, state.mechId);
+      for (let i = 0; i < 60; i++) {
+        stepMarsCombatWorld(state, 1 / 60, idleInput({ moveForward: 1, sprintHeld: true, dashJustPressed: i === 0 }));
+      }
+      assert.ok(Math.abs(state.x - (wall.x - clearance)) < 1e-6);
+      assert.ok(Math.abs(state.vx) < 1e-6);
+      assert.ok(Math.abs(state.gaitDist - 0.15) < 1e-6);
+
+      stepMarsCombatWorld(state, 0.05, idleInput({ moveForward: 1, moveRight: 1, dashJustPressed: true }));
+      assert.ok(state.z > wall.z + 0.7);
+      assert.ok(state.vz > 14);
+      assert.ok(Math.hypot(state.x - wall.x, state.z - wall.z) >= clearance - 1e-6);
+    }
+  }
+});
+
+test('a boss pushing the player against a rock cannot move them inside it, and a jump can clear it', () => {
+  const wall = MARS_BATTLEFIELD_OBSTACLES.find((obstacle) => obstacle.kind === 'boulder')!;
+  const state = createInitialMarsCombatState('unitree_g1');
+  const clearance = wall.radius + 0.96;
+  state.shellState = 'playing';
+  state.spawnTimer = 999;
+  state.x = wall.x - clearance;
+  state.z = wall.z;
+  state.y = sampleLandChassisSupportHeight(state.x, state.z, 0, state.mechId);
+  const boss = spawnEnemyDropPod(state, 'ares_boss', 0, 12);
+  boss.dropPodProgress = 1;
+  boss.x = state.x - 2;
+  boss.z = state.z;
+  boss.y = state.y;
+  resolveCombatSoftCollisions(state);
+  assert.ok(Math.abs(wall.x - state.x - clearance) < 1e-6);
+  assert.ok(Math.hypot(state.x - boss.x, state.z - boss.z) >= 2.65 + 0.96 - 1e-6);
+
+  state.enemies.length = 0;
+  state.isGrounded = false;
+  state.y = sampleLandTerrainHeight(wall.x, wall.z) + wall.height + 0.6;
+  stepMarsCombatWorld(state, 0.05, idleInput({ moveForward: 1, dashJustPressed: true }));
+  assert.ok(state.x > wall.x - clearance + 0.9);
 });
 
 test('CoD directional threat angle computes accurate front, right, left, and rear bearings', () => {

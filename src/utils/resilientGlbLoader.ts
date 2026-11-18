@@ -509,6 +509,7 @@ export function disposeSceneHierarchy(
     disposeTextures?: boolean;
     sharedGeometries?: Set<THREE.BufferGeometry>;
     sharedMaterials?: Set<THREE.Material>;
+    sharedTextures?: ReadonlySet<THREE.Texture>;
   }
 ): void {
   if (!root) return;
@@ -533,6 +534,12 @@ export function disposeSceneHierarchy(
         if (typeof anyGeo.disposeBoundsTree === 'function') {
           anyGeo.disposeBoundsTree();
         }
+        const lods = cachedLodGeometries.get(mesh.geometry);
+        if (lods) {
+          lods.lod1.dispose();
+          lods.lod2.dispose();
+          cachedLodGeometries.delete(mesh.geometry);
+        }
         mesh.geometry.dispose();
       }
     }
@@ -545,9 +552,10 @@ export function disposeSceneHierarchy(
         if (sharedMats && sharedMats.has(m)) continue;
         if (disposeTexs) {
           for (const val of Object.values(m)) {
-            if (val && (val as THREE.Texture).isTexture && !seenTex.has(val as THREE.Texture)) {
-              seenTex.add(val as THREE.Texture);
-              (val as THREE.Texture).dispose();
+            const texture = val as THREE.Texture | undefined;
+            if (texture?.isTexture && !seenTex.has(texture) && !options?.sharedTextures?.has(texture)) {
+              seenTex.add(texture);
+              texture.dispose();
             }
           }
         }

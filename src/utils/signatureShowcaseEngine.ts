@@ -1266,7 +1266,8 @@ export function findBestInteractiveTarget(
   fromY: number,
   fromZ: number,
   yaw: number,
-  preferredLockId: string | null
+  preferredLockId: string | null,
+  minimumHeadingDot = -1
 ): InteractiveFieldTarget | null {
   if (preferredLockId) {
     const locked = targets.find((t) => t.id === preferredLockId && t.alive);
@@ -1284,6 +1285,7 @@ export function findBestInteractiveTarget(
     const dist = Math.hypot(dx, t.y - fromY, dz);
     if (dist < 0.5) continue;
     const dirDot = (dx * fx + dz * fz) / Math.max(0.5, Math.hypot(dx, dz));
+    if (dirDot < minimumHeadingDot) continue;
     // Prefer targets ahead of the robot's heading
     const weightedDist = dist * (1.35 - 0.55 * dirDot);
     if (weightedDist < bestScore) {

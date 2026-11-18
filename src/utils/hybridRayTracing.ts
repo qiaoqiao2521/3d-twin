@@ -69,7 +69,7 @@ let _sharedBeadBlastBumpTex: THREE.DataTexture | null = null;
  * Generates a tileable 128x128 isotropic bead-blasted anodized aluminum micro-grain bump texture
  * so matte structural castings & housings exhibit tactile industrial sandblasted relief rather than plastic flatness.
  */
-function getSharedBeadBlastBumpMap(): THREE.DataTexture {
+export function getSharedBeadBlastBumpMap(): THREE.DataTexture {
   if (_sharedBeadBlastBumpTex) return _sharedBeadBlastBumpTex;
   const size = 128;
   const data = new Uint8Array(size * size * 4);

@@ -1,15 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { cloneSceneWithSkeletonSupport, getOrBuildDecimatedLodGeometries } from '../utils/resilientGlbLoader';
+import { alignCombatWeapon, attachBowArrowSocket, COMBAT_RETICLE_NDC_Y, sampleCombatReticle, updateCombatShoulderCamera } from '../utils/marsCombatAim';
+import { createMarsCombatAssets } from '../utils/marsCombatAssets';
+import { bindDriveWheels, DriveWheelRig, updateDriveWheels } from '../utils/groundDriveWheels';
+import { UrdfJointDef } from '../utils/manifestUtils';
 import {
-  loadGlbSceneResilient,
-  fetchTextAssetResilient,
-  cloneSceneWithSkeletonSupport,
-  ensureMeshoptLodReady,
-  getOrBuildDecimatedLodGeometries,
-  disposeSceneHierarchy
-} from '../utils/resilientGlbLoader';
-import { UrdfJointDef, parseUrdfJoints } from '../utils/manifestUtils';
-import { computeSandboxUrdfJointAngle, SandboxKinematicState } from '../utils/actionSandboxEngine';
+  computeSandboxUrdfJointAngle,
+  getSandboxActorSpec,
+  isGroundDriveVehicle,
+  sampleLandTerrainHeight,
+  sampleLandTerrainNormal,
+  type SandboxKinematicState
+} from '../utils/actionSandboxEngine';
 import {
   detectSoftwareWebGL,
   createStudioLightboxPmrem,
@@ -32,14 +35,12 @@ import {
   PLAYABLE_MECH_SPECS,
   COMBAT_WEAPONS,
   ENEMY_ARCHETYPE_SPECS,
-  MARS_BATTLEFIELD_OBSTACLES,
   MarsCombatWorldState,
   RunSummarySnapshot,
   KillfeedEntry,
   HitmarkerFeedback,
   isLeggedCombatMech,
   isBiologicalXenoEnemy,
-  sampleMarsArenaSurfaceHeight,
   getPlayableMechSpec,
   createInitialMarsCombatState,
   summonAresBoss,
@@ -92,6 +93,7 @@ interface Spawned3DEnemyRig {
   joints: BoundUrdfNode[];
   meshes: RigMeshEntry[];
   rotorNodes: THREE.Object3D[];
+  driveWheels?: DriveWheelRig;
   gunshipFrame: ReturnType<typeof createAeroHunterGunshipFrame> | null;
   shieldDome: THREE.Mesh | null;
 }
@@ -153,12 +155,56 @@ interface HudSyncSnapshot {
   }[];
 }
 
+function createDeploymentHud(world: MarsCombatWorldState): HudSyncSnapshot {
+  return {
+    hp: world.hp,
+    maxHp: world.maxHp,
+    ghostHp: world.ghostHp,
+    shield: world.shield,
+    maxShield: world.maxShield,
+    boostEnergy: world.boostEnergy,
+    meleeCooldown: world.meleeCooldown,
+    empCooldown: world.empCooldown,
+    ultimateCharge: world.ultimateCharge,
+    activeWeapon: world.activeWeapon,
+    spreadBloom: world.spreadBloom,
+    score: world.score,
+    bestScore: world.bestScore,
+    kills: world.kills,
+    vanguardTarget: world.vanguardKillsTarget,
+    combo: world.combo,
+    wave: world.wave,
+    headingDeg: 0,
+    bossBannerTimer: 0,
+    bossIsQueen: false,
+    hitmarker: { ...world.hitmarker },
+    threatAnglesDeg: [],
+    killfeed: [],
+    enemyScreenBars: [],
+    bossHud: null,
+    wingmanCooldown: world.wingman.commandCooldown,
+    wingmanMode: world.wingman.mode,
+    damagePopupsScreen: []
+  };
+}
+
+const releasedCombatActions = {
+  missileJustPressed: false,
+  meleeJustPressed: false,
+  jumpJustPressed: false,
+  dashJustPressed: false,
+  empJustPressed: false,
+  wingmanCommandJustPressed: false,
+  ultimateJustPressed: false,
+  summonBossJustPressed: false,
+  summonQueenJustPressed: false,
+  ventJustPressed: false
+};
+
 const _muzzleWorldVec = new THREE.Vector3();
-const _raycaster = new THREE.Raycaster();
-const _ndc = new THREE.Vector2();
+const _weaponOrigin = new THREE.Vector3();
+const _reticleTarget = new THREE.Vector3();
 const _projVec = new THREE.Vector3();
-const _camTarget = new THREE.Vector3();
-const _camDesired = new THREE.Vector3();
 const _qAxis = new THREE.Quaternion();
 const _wheelSpinQuat = new THREE.Quaternion();
 const _wheelSpinAxis = new THREE.Vector3(0, 1, 0);
@@ -201,13 +247,15 @@ function normalizeAndGroundGlbGroup(
   targetMaxDim: number,
   isSoftwareGl: boolean,
   tintAccentHex?: string,
-  buildRuntimeLods: boolean = false
+  buildRuntimeLods: boolean = false,
+  modelYawOffset = 0
 ): {
   pivot: THREE.Group;
   normScale: number;
   meshes: RigMeshEntry[];
 } {
   const pivot = new THREE.Group();
+  rawGroup.rotation.y += modelYawOffset;
   rawGroup.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(rawGroup);
   const size = box.getSize(new THREE.Vector3());
@@ -364,43 +412,6 @@ function bindUrdfJointsToRoot(root: THREE.Object3D, defs: UrdfJointDef[]): Bound
   return bound;
 }
 
-function collectRoverWheelNodes(
-  root: THREE.Object3D
-): { node: THREE.Object3D; baseQuat: THREE.Quaternion; axis: THREE.Vector3 }[] {
-  const found: { node: THREE.Object3D; baseQuat: THREE.Quaternion; axis: THREE.Vector3 }[] = [];
-  root.traverse((o) => {
-    if (!o.name) return;
-    const n = o.name.toLowerCase();
-    if (
-      /wheel/.test(n) &&
-      !/steer|bogie|rocker|bracket|fender|hub_mount|fork|strut/.test(n) &&
-      !found.some((f) => {
-        let p = o.parent;
-        while (p) {
-          if (p === f.node) return true;
-          p = p.parent;
-        }
-        return false;
-      })
-    ) {
-      // Determine thin cylinder spin axis from local geometry bounds if mesh, else local Z/Y
-      let spinAxis = new THREE.Vector3(0, 0, 1);
-      if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry) {
-        const g = (o as THREE.Mesh).geometry;
-        if (!g.boundingBox) g.computeBoundingBox();
-        if (g.boundingBox) {
-          const sz = g.boundingBox.getSize(new THREE.Vector3());
-          if (sz.x <= sz.y && sz.x <= sz.z) spinAxis.set(1, 0, 0);
-          else if (sz.y <= sz.x && sz.y <= sz.z) spinAxis.set(0, 1, 0);
-          else spinAxis.set(0, 0, 1);
-        }
-      }
-      found.push({ node: o, baseQuat: o.quaternion.clone(), axis: spinAxis });
-    }
-  });
-  return found;
-}
-
 export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
   initialAutostart = false,
   initialMechId = 'unitree_g1',
@@ -418,9 +429,12 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
   const [isLoadingAssets, setIsLoadingAssets] = useState<boolean>(true);
   const [runSummary, setRunSummary] = useState<RunSummarySnapshot | null>(null);
 
-  const worldRef = useRef<MarsCombatWorldState>(
-    createInitialMarsCombatState(initialMechId, 0, initialAutostart, 'jezero_crater')
-  );
+  // Build the projectile pool once per deployment, including direct autostart.
+  const worldRef = useRef<MarsCombatWorldState>(null!);
+  if (worldRef.current === null) {
+    worldRef.current = createInitialMarsCombatState(initialMechId, 0, initialAutostart);
+  }
+  const requestSceneFrameRef = useRef<(() => void) | null>(null);
   const shellStateRef = useRef<GameShellState>(initialAutostart ? 'playing' : 'title');
   const selectedMechRef = useRef<PlayerMechId>(initialMechId);
   const selectedMapRef = useRef<BattlefieldMapId>('jezero_crater');
@@ -431,16 +445,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
   const inputHubRef = useRef({
     keysHeld: new Set<string>(),
     mouseHeldL: false,
-    missileJustPressed: false,
-    meleeJustPressed: false,
-    jumpJustPressed: false,
-    dashJustPressed: false,
-    empJustPressed: false,
-    wingmanCommandJustPressed: false,
-    ultimateJustPressed: false,
-    summonBossJustPressed: false,
-    summonQueenJustPressed: false,
-    ventJustPressed: false,
+    ...releasedCombatActions,
     pointerNdcX: 0,
     pointerNdcY: 0,
     hasPointerSample: false,
@@ -448,54 +453,34 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     camPitch: -0.09
   });
 
-  const [hud, setHud] = useState<HudSyncSnapshot>(() => {
-    const spec = getPlayableMechSpec(initialMechId);
-    return {
-      hp: spec.maxHp,
-      maxHp: spec.maxHp,
-      ghostHp: spec.maxHp,
-      shield: spec.maxShield,
-      maxShield: spec.maxShield,
-      boostEnergy: 100,
-      meleeCooldown: 0,
-      empCooldown: 0,
-      ultimateCharge: 100,
-      activeWeapon: 'pulse_rifle',
-      spreadBloom: 0,
-      score: 0,
-      bestScore: 0,
-      kills: 0,
-      vanguardTarget: 6,
-      combo: 0,
-      wave: 1,
-      headingDeg: 0,
-      bossBannerTimer: 0,
-      bossIsQueen: false,
-      hitmarker: { timer: 0, isCrit: false, isShield: false, isKill: false, lastDamage: 0 },
-      threatAnglesDeg: [],
-      killfeed: [],
-      enemyScreenBars: [],
-      bossHud: null,
-      wingmanCooldown: 0,
-      wingmanMode: 'escort',
-      damagePopupsScreen: []
-    };
-  });
+  const [hud, setHud] = useState(() => createDeploymentHud(worldRef.current));
 
-  // Sync Game Shell state to document.body.dataset.state & release PointerLock when leaving 'playing'
+  const clearCombatInputs = () => {
+    const hub = inputHubRef.current;
+    hub.keysHeld.clear();
+    hub.mouseHeldL = false;
+    hub.hasPointerSample = false;
+    Object.assign(hub, releasedCombatActions);
+  };
+
+  const enterShellState = (next: GameShellState) => {
+    worldRef.current.shellState = next;
+    shellStateRef.current = next;
+    clearCombatInputs();
+    setShellState(next);
+  };
+
   useEffect(() => {
-    shellStateRef.current = shellState;
     document.body.dataset.state = shellState;
+    requestSceneFrameRef.current?.();
     if (shellState !== 'playing') {
-      if (document.pointerLockElement) {
+      if (document.pointerLockElement && canvasMountRef.current?.contains(document.pointerLockElement)) {
         try {
           document.exitPointerLock?.();
         } catch {
           // Safe fallback if pointer lock unsupported
         }
       }
-      inputHubRef.current.keysHeld.clear();
-      inputHubRef.current.mouseHeldL = false;
       proceduralAudioSynth.silenceContinuousLoops();
     }
     return () => {
@@ -509,14 +494,11 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     const prevBest = worldRef.current.bestScore;
     const nextWorld = createInitialMarsCombatState(mech, prevBest, true, mapId);
     worldRef.current = nextWorld;
-    inputHubRef.current.keysHeld.clear();
-    inputHubRef.current.mouseHeldL = false;
-    inputHubRef.current.hasPointerSample = false;
     inputHubRef.current.camYaw = 0;
     inputHubRef.current.camPitch = -0.09;
+    setHud(createDeploymentHud(nextWorld));
     setRunSummary(null);
-    setShellState('playing');
-    document.body.dataset.state = 'playing';
+    enterShellState('playing');
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -527,11 +509,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
 
   const togglePauseGame = () => {
     if (shellStateRef.current === 'playing') {
-      worldRef.current.shellState = 'paused';
-      setShellState('paused');
+      enterShellState('paused');
     } else if (shellStateRef.current === 'paused') {
-      worldRef.current.shellState = 'playing';
-      setShellState('playing');
+      enterShellState('playing');
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
@@ -549,22 +529,38 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
   // Global Keyboard & Focus-Loss Listeners
   useEffect(() => {
     const hub = inputHubRef.current;
-    const onKeyDown = (e: KeyboardEvent) => {
-      // Never hijack browser shortcuts like Ctrl+R, Cmd+R, Ctrl+Shift+I
-      if (e.ctrlKey || e.metaKey) return;
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      const st = shellStateRef.current;
+    const canvasOwnsPointerLock = () => Boolean(
+      document.pointerLockElement && canvasMountRef.current?.contains(document.pointerLockElement)
+    );
+    let canvasWasLocked = canvasOwnsPointerLock();
+    let lastExternalUnlock = -Infinity;
 
-      if (st === 'title') {
-        if ((e.code === 'Enter' || e.code === 'Space') && !e.repeat) {
-          e.preventDefault();
-          startOrRestartDeployment();
-        }
-        return;
+    const pauseOnLeave = () => {
+      if (shellStateRef.current === 'playing') enterShellState('paused');
+    };
+    const onVisibilityChange = () => {
+      if (document.hidden) pauseOnLeave();
+      else requestSceneFrameRef.current?.();
+    };
+    const onPointerLockChange = () => {
+      const canvasIsLocked = canvasOwnsPointerLock();
+      if (canvasWasLocked && !canvasIsLocked && shellStateRef.current === 'playing') {
+        lastExternalUnlock = performance.now();
+        pauseOnLeave();
       }
+      canvasWasLocked = canvasIsLocked;
+    };
 
-      if (st === 'gameover') {
-        if ((e.code === 'Enter' || e.code === 'Space') && !e.repeat) {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || (e.altKey && e.code !== 'AltLeft')) return;
+      const target = e.target instanceof HTMLElement ? e.target : null;
+      if (target?.isContentEditable || target?.closest('input, textarea, select')) return;
+      const st = shellStateRef.current;
+      const activationKey = e.code === 'Enter' || e.code === 'Space';
+      if (activationKey && target?.closest('button, a[href], [role="button"]')) return;
+
+      if (st === 'title' || st === 'gameover') {
+        if (activationKey && !e.repeat) {
           e.preventDefault();
           startOrRestartDeployment();
         }
@@ -573,6 +569,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
 
       if ((e.code === 'Escape' || e.code === 'KeyP') && !e.repeat) {
         e.preventDefault();
+        // Chrome may deliver the same Escape after it has already released pointer lock.
+        if (e.code === 'Escape' && st === 'paused' && performance.now() - lastExternalUnlock < 200) return;
         togglePauseGame();
         return;
       }
@@ -620,20 +618,17 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       hub.keysHeld.delete(e.code);
     };
 
-    const clearHeldInputs = () => {
-      hub.keysHeld.clear();
-      hub.mouseHeldL = false;
-    };
-
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
-    window.addEventListener('blur', clearHeldInputs);
-    document.addEventListener('visibilitychange', clearHeldInputs);
+    window.addEventListener('blur', pauseOnLeave);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    document.addEventListener('pointerlockchange', onPointerLockChange);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
-      window.removeEventListener('blur', clearHeldInputs);
-      document.removeEventListener('visibilitychange', clearHeldInputs);
+      window.removeEventListener('blur', pauseOnLeave);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      document.removeEventListener('pointerlockchange', onPointerLockChange);
     };
   }, [onToggleAudio]);
 
@@ -713,6 +708,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     upgradeGlbPbrAndBuildStaticBvh(marsEnv.coverBoulderInst, 'mars_boulders', () => 'L1');
     upgradeGlbPbrAndBuildStaticBvh(marsEnv.pylonGroup, 'mars_pylons', () => 'L1');
     scene.add(marsEnv.root);
+    marsEnv.root.updateWorldMatrix(true, true);
 
     const applySectorLighting = (mapId: BattlefieldMapId) => {
       if (mapId === 'polar_ice_canyon') {
@@ -767,13 +763,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     let playerHuskyCarrierMeshes: RigMeshEntry[] = [];
     let playerHuskyCarrierPivot: THREE.Group | null = null;
     let playerUrdfJoints: BoundUrdfNode[] = [];
-    let playerRoverWheels: { node: THREE.Object3D; baseQuat: THREE.Quaternion; axis: THREE.Vector3 }[] = [];
+    let playerWheels: DriveWheelRig = { wheels: [] };
     let playerCarrier: ReturnType<typeof createArmoredManipulatorCarrierBase> | null = null;
     let currentLoadedPlayerMechId: PlayerMechId | null = null;
+    let playerRequestVersion = 0;
     let playerRifle: ReturnType<typeof createMountedSciFiPulseRifle> | null = null;
     let playerBowGroup: THREE.Group | null = null;
     let playerAxeGroup: THREE.Group | null = null;
-    let playerTurretMount: THREE.Group | null = null;
+    let playerBowSocket: THREE.Object3D | null = null;
 
     const dodgeThrusterRig = createPlayerDodgeThrusterRig();
     playerRoot.add(dodgeThrusterRig.group);
@@ -802,38 +799,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     let wingmanUrdfJoints: BoundUrdfNode[] = [];
     let wingmanMeshes: RigMeshEntry[] = [];
 
-    // Template Cache for Real GLB Assets & URDFs (built with Static MeshBVH once at load!)
-    const glbCache = new Map<string, THREE.Group>();
-    const urdfCache = new Map<string, UrdfJointDef[]>();
-
-    const fetchTemplate = async (urls: string[], urdfUrl?: string) => {
-      const key = urls.join('|');
-      let master = glbCache.get(key);
-      if (!master) {
-        await ensureMeshoptLodReady();
-        const containerGroup = new THREE.Group();
-        const scenes = await Promise.all(urls.map((u) => loadGlbSceneResilient(u)));
-        for (const s of scenes) containerGroup.add(s);
-        upgradeGlbPbrAndBuildStaticBvh(containerGroup, key, () => 'L1');
-        glbCache.set(key, containerGroup);
-        master = containerGroup;
-      }
-      let joints: UrdfJointDef[] = [];
-      if (urdfUrl) {
-        if (urdfCache.has(urdfUrl)) {
-          joints = urdfCache.get(urdfUrl)!;
-        } else {
-          try {
-            const xml = await fetchTextAssetResilient(urdfUrl);
-            joints = parseUrdfJoints(xml);
-            urdfCache.set(urdfUrl, joints);
-          } catch {
-            joints = [];
-          }
-        }
-      }
-      return { template: master, joints };
-    };
+    const assets = createMarsCombatAssets();
+    const fetchTemplate = (urls: string[], urdfUrl?: string) => assets.request(urls, urdfUrl).promise;
 
     const disposeClonedRigMeshes = (entries: RigMeshEntry[]) => {
       for (const m of entries) {
@@ -851,71 +818,57 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       upgradeGlbPbrAndBuildStaticBvh(marsEnv.coverBoulderInst, 'mars_boulders', () => 'L1');
       upgradeGlbPbrAndBuildStaticBvh(marsEnv.pylonGroup, 'mars_pylons', () => 'L1');
       scene.add(marsEnv.root);
+      marsEnv.root.updateWorldMatrix(true, true);
       applySectorLighting(mapId);
       if (mapId === 'polar_ice_canyon') {
-        const cachedSpires = glbCache.get('/robotics_glb/infinigen_polar_ice_spires.glb');
-        if (cachedSpires) {
-          marsEnv.applyLoadedGlacialSpires(cachedSpires);
-        } else {
-          fetchTemplate(['/robotics_glb/infinigen_polar_ice_spires.glb'])
-            .then(({ template }) => {
-              if (!disposed && currentLoadedMapId === 'polar_ice_canyon') {
-                marsEnv.applyLoadedGlacialSpires(template);
-              }
-            })
-            .catch(() => {});
-        }
+        const targetEnvironment = marsEnv;
+        fetchTemplate(['/robotics_glb/infinigen_polar_ice_spires.glb'])
+          .then(({ template }) => {
+            if (!disposed && marsEnv === targetEnvironment) targetEnvironment.applyLoadedGlacialSpires(template);
+          })
+          .catch(() => {});
       }
     };
 
-    const attach3DCompoundBowAndAxe = async (rifleRig: ReturnType<typeof createMountedSciFiPulseRifle>) => {
-      try {
-        const [{ template: bowTpl }, { template: axeTpl }] = await Promise.all([
-          fetchTemplate(['/robotics_glb/tactical_compound_bow.glb']),
-          fetchTemplate(['/robotics_glb/high_freq_combat_axe.glb'])
-        ]);
-        if (disposed || playerRifle !== rifleRig) return;
-
-        const bowCloned = cloneSceneWithSkeletonSupport(bowTpl);
-        const { pivot: bowPivot, meshes: bowMeshes } = normalizeAndGroundGlbGroup(
-          bowCloned,
-          0.98,
-          isSoftwareGl,
-          '#10b981',
-          false
-        );
-        bowPivot.position.set(0.28, -0.44, 0);
-        bowPivot.visible = false;
-        rifleRig.group.add(bowPivot);
-        playerBowGroup = bowPivot;
-
-        const axeCloned = cloneSceneWithSkeletonSupport(axeTpl);
-        const { pivot: axePivot, meshes: axeMeshes } = normalizeAndGroundGlbGroup(
-          axeCloned,
-          0.95,
-          isSoftwareGl,
-          '#10b981',
-          false
-        );
-        axePivot.position.set(0.24, -0.22, 0);
-        axePivot.rotation.z = -Math.PI * 0.22;
-        axePivot.visible = false;
-        rifleRig.group.add(axePivot);
-        playerAxeGroup = axePivot;
-
-        playerWeaponAddonMeshes.push(...bowMeshes, ...axeMeshes);
-      } catch {
-        // Procedural fallback stays active if weapon GLB still streaming
+    const attach3DCompoundBowAndAxe = (rifleRig: ReturnType<typeof createMountedSciFiPulseRifle>) => {
+      for (const kind of ['bow', 'axe'] as const) {
+        const isBow = kind === 'bow';
+        const url = isBow ? '/robotics_glb/tactical_compound_bow.glb' : '/robotics_glb/high_freq_combat_axe.glb';
+        fetchTemplate([url]).then(({ template }) => {
+          if (disposed || playerRifle !== rifleRig) return;
+          const { pivot, meshes } = normalizeAndGroundGlbGroup(
+            cloneSceneWithSkeletonSupport(template), isBow ? 0.98 : 0.95, isSoftwareGl, '#10b981'
+          );
+          if (isBow) {
+            pivot.position.set(0.28, -0.44, 0);
+            playerBowGroup = pivot;
+            playerBowSocket = attachBowArrowSocket(pivot);
+          } else {
+            pivot.position.set(0.24, -0.22, 0);
+            pivot.rotation.z = -Math.PI * 0.22;
+            playerAxeGroup = pivot;
+          }
+          pivot.visible = false;
+          rifleRig.group.add(pivot);
+          playerWeaponAddonMeshes.push(...meshes);
+        }).catch(() => { /* The procedural weapon remains usable while the add-on is unavailable. */ });
       }
     };
 
     const syncPlayerMechModel = async (mechId: PlayerMechId) => {
       if (disposed || currentLoadedPlayerMechId === mechId) return;
-      currentLoadedPlayerMechId = mechId;
       const spec = getPlayableMechSpec(mechId);
+      const request = assets.request(spec.glbUrls, spec.urdfUrl);
+      if (request.retryAt !== undefined && !request.value) return;
+      currentLoadedPlayerMechId = mechId;
+      const version = ++playerRequestVersion;
+      const isStationaryArm = mechId === 'unitree_z1' || mechId === 'baxter_dual_arm';
       try {
-        const { template, joints } = await fetchTemplate(spec.glbUrls, spec.urdfUrl);
-        if (disposed || selectedMechRef.current !== mechId) return;
+        const [{ template, joints }, carrierAsset] = await Promise.all([
+          request.promise,
+          isStationaryArm ? fetchTemplate(['/robotics_glb/clearpath_husky_ugv.glb']).catch(() => null) : null
+        ]);
+        if (disposed || version !== playerRequestVersion || selectedMechRef.current !== mechId) return;
         if (playerRifle) {
           playerRifle.dispose();
           playerRifle = null;
@@ -936,8 +889,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           playerCarrier.dispose();
           playerCarrier = null;
         }
-        playerTurretMount = null;
-        playerRoverWheels = [];
+        playerBowSocket = null;
+        playerWheels = { wheels: [] };
         if (playerModelPivot) {
           playerRoot.remove(playerModelPivot);
           disposeClonedRigMeshes(playerMeshes);
@@ -945,56 +898,53 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         }
 
         const cloned = cloneSceneWithSkeletonSupport(template);
-        const isStationaryArm = mechId === 'unitree_z1' || mechId === 'baxter_dual_arm';
         const effectiveDim = isStationaryArm ? spec.targetMaxDim * 0.82 : spec.targetMaxDim;
         const { pivot, normScale, meshes } = normalizeAndGroundGlbGroup(
           cloned,
           effectiveDim,
           isSoftwareGl,
           '#00e5ff',
-          false
+          false,
+          getSandboxActorSpec(mechId).modelYawOffset
         );
 
         // Mount stationary robotic arms onto a real Clearpath Husky 4x4 UGV Chassis (with procedural fallback)!
-        if (isStationaryArm) {
-          try {
-            const { template: huskyTpl } = await fetchTemplate([
-              '/robotics_glb/clearpath_husky_ugv.glb'
-            ]);
-            if (disposed || selectedMechRef.current !== mechId) return;
-            const huskyCloned = cloneSceneWithSkeletonSupport(huskyTpl);
-            const { pivot: hPivot, meshes: hMeshes } = normalizeAndGroundGlbGroup(
-              huskyCloned,
-              mechId === 'baxter_dual_arm' ? 1.85 : 1.58,
-              isSoftwareGl,
-              '#38bdf8',
-              false
-            );
-            playerRoot.add(hPivot);
-            playerHuskyCarrierPivot = hPivot;
-            playerHuskyCarrierMeshes = hMeshes;
-            const hBox = new THREE.Box3().setFromObject(hPivot);
-            pivot.position.y = Math.max(0.42, hBox.max.y * 0.92);
-            playerRoverWheels.push(...collectRoverWheelNodes(hPivot));
-          } catch {
-            const carrier = createArmoredManipulatorCarrierBase(mechId, isSoftwareGl);
-            playerRoot.add(carrier.group);
-            pivot.position.y = carrier.mountHeight;
-            playerCarrier = carrier;
-          }
+        if (carrierAsset) {
+          const huskyCloned = cloneSceneWithSkeletonSupport(carrierAsset.template);
+          const { pivot: hPivot, meshes: hMeshes } = normalizeAndGroundGlbGroup(
+            huskyCloned,
+            mechId === 'baxter_dual_arm' ? 1.85 : 1.58,
+            isSoftwareGl,
+            '#38bdf8',
+            false
+          );
+          const hBox = new THREE.Box3().setFromObject(hPivot);
+          playerRoot.add(hPivot);
+          playerHuskyCarrierPivot = hPivot;
+          playerHuskyCarrierMeshes = hMeshes;
+          pivot.position.y = Math.max(0.42, hBox.max.y * 0.92);
+          playerWheels = bindDriveWheels(playerRoot, hPivot, 'husky_ugv');
+        } else if (isStationaryArm) {
+          const carrier = createArmoredManipulatorCarrierBase(mechId, isSoftwareGl);
+          playerRoot.add(carrier.group);
+          pivot.position.y = carrier.mountHeight;
+          playerCarrier = carrier;
+          playerWheels = bindDriveWheels(playerRoot, carrier.group, 'husky_ugv');
         }
 
         playerRoot.add(pivot);
         playerModelPivot = pivot;
         playerMeshes = meshes;
-        playerUrdfJoints = bindUrdfJointsToRoot(
-          pivot,
-          mechId === 'spot_arm' ? SPOT_ARM_MJCF_JOINTS : joints
-        );
-
-        if (mechId === 'mars2020' || mechId === 'hello_stretch' || mechId === 'husky_ugv') {
-          playerRoverWheels.push(...collectRoverWheelNodes(pivot));
+        if (!isStationaryArm && !isLeggedCombatMech(mechId)) {
+          playerWheels = bindDriveWheels(playerRoot, pivot, mechId);
         }
+        const wheelNodes = new Set(playerWheels.wheels.map((wheel) => wheel.node));
+        playerUrdfJoints = mechId === 'spot_arm' ? bindUrdfJointsToRoot(pivot, SPOT_ARM_MJCF_JOINTS) : [];
+        joints?.then((defs) => {
+          if (!disposed && playerModelPivot === pivot) {
+            playerUrdfJoints = bindUrdfJointsToRoot(pivot, defs).filter((joint) => !wheelNodes.has(joint.node));
+          }
+        });
 
         // Attach Sci-Fi Pulse Rifle + 3D Compound Bow + 3D War-Axe to humanoid/manipulator/Spot-Arm hand or dorsal turret
         let handSocketNode: THREE.Object3D | null = null;
@@ -1053,19 +1003,22 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           const rifle = createMountedSciFiPulseRifle(mechId, false, 1.0);
           turret.add(rifle.group);
           pivot.add(turret);
-          playerTurretMount = turret;
           playerRifle = rifle;
           attach3DCompoundBowAndAxe(rifle);
         }
       } catch (err) {
-        console.warn('Player mech GLB load warning:', err);
+        if (!disposed && version === playerRequestVersion) {
+          currentLoadedPlayerMechId = null;
+          console.warn('Player mech GLB load warning:', err);
+        }
       }
     };
 
-    // Pre-warm Player Mech + Allied Wingman Go2 + All Enemy Archetypes + Tactical Weapons & Polar Spires
+    // Warm combat rigs on deployment; the polar scenery streams when its map is selected.
     (async () => {
       setIsLoadingAssets(true);
       await syncPlayerMechModel(selectedMechRef.current);
+      if (disposed) return;
       const go2Spec = ENEMY_ARCHETYPE_SPECS.go2_hound;
       try {
         const { template: wTpl, joints: wJoints } = await fetchTemplate(
@@ -1083,18 +1036,20 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           );
           wingmanRoot.add(wPivot);
           wingmanMeshes = wMeshes;
-          wingmanUrdfJoints = bindUrdfJointsToRoot(wPivot, wJoints);
+          wJoints?.then((defs) => {
+            if (!disposed) wingmanUrdfJoints = bindUrdfJointsToRoot(wPivot, defs);
+          });
         }
       } catch {
         // Wingman fallback safe
       }
+      if (disposed) return;
       await Promise.all([
         ...Object.values(ENEMY_ARCHETYPE_SPECS).map((es) =>
           fetchTemplate(es.glbUrls, es.urdfUrl).catch(() => null)
         ),
         fetchTemplate(['/robotics_glb/tactical_compound_bow.glb']).catch(() => null),
-        fetchTemplate(['/robotics_glb/high_freq_combat_axe.glb']).catch(() => null),
-        fetchTemplate(['/robotics_glb/infinigen_polar_ice_spires.glb']).catch(() => null)
+        fetchTemplate(['/robotics_glb/high_freq_combat_axe.glb']).catch(() => null)
       ]);
       if (!disposed) setIsLoadingAssets(false);
     })();
@@ -1117,15 +1072,15 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     };
 
     const ensureEnemyRig = (uid: number, archetype: EnemyArchetypeId) => {
-      if (enemyRigs.has(uid)) return enemyRigs.get(uid)!;
-      const spec = ENEMY_ARCHETYPE_SPECS[archetype];
-      const key = spec.glbUrls.join('|');
-      const cached = glbCache.get(key);
-      if (!cached) {
-        fetchTemplate(spec.glbUrls, spec.urdfUrl).catch(() => null);
-        return null;
+      const previous = enemyRigs.get(uid);
+      if (previous?.archetype === archetype) return previous;
+      if (previous) {
+        disposeEnemyRig(previous);
+        enemyRigs.delete(uid);
       }
-      const urdfDefs = spec.urdfUrl ? urdfCache.get(spec.urdfUrl) || [] : [];
+      const spec = ENEMY_ARCHETYPE_SPECS[archetype];
+      const asset = assets.request(spec.glbUrls, spec.urdfUrl).value;
+      if (!asset) return null;
       const rigRoot = new THREE.Group();
       const shadow = new THREE.Mesh(contactShadowGeo, contactShadowMat);
       shadow.scale.setScalar(
@@ -1138,15 +1093,17 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       shadow.position.y = 0.03;
       rigRoot.add(shadow);
 
-      const cloned = cloneSceneWithSkeletonSupport(cached);
+      const cloned = cloneSceneWithSkeletonSupport(asset.template);
       const { pivot, meshes } = normalizeAndGroundGlbGroup(
         cloned,
         spec.scaleDim,
         isSoftwareGl,
         spec.accentHex,
-        true
+        true,
+        archetype === 'sar_siege' ? getSandboxActorSpec('sar').modelYawOffset : 0
       );
       rigRoot.add(pivot);
+      rigRoot.userData.combatEnemyUid = uid;
 
       // Collect spinning Skydio X2 quadrotor prop nodes on `aero_hunter`!
       const gunshipFrame: ReturnType<typeof createAeroHunterGunshipFrame> | null = null;
@@ -1171,20 +1128,23 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         rigRoot.add(shieldDome);
       }
 
-      const joints = bindUrdfJointsToRoot(pivot, urdfDefs);
       enemyGroupRoot.add(rigRoot);
       const rig: Spawned3DEnemyRig = {
         uid,
         archetype,
         root: rigRoot,
+        driveWheels: archetype === 'sar_siege' ? bindDriveWheels(rigRoot, pivot, 'sar') : undefined,
         modelPivot: pivot,
-        joints,
+        joints: [],
         meshes,
         rotorNodes,
         gunshipFrame,
         shieldDome
       };
       enemyRigs.set(uid, rig);
+      asset.joints?.then((defs) => {
+        if (!disposed && enemyRigs.get(uid) === rig) rig.joints = bindUrdfJointsToRoot(pivot, defs);
+      });
       return rig;
     };
 
@@ -1248,7 +1208,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         updateNdcFromClient(ev.clientX, ev.clientY);
       }
 
-      if (shellStateRef.current === 'playing') {
+      if (shellStateRef.current === 'playing' && (isLocked || ev.target === renderer.domElement)) {
         // Uniform shooter mouse sensitivity (zero 2.88x jump when holding LMB!)
         const sensitivity = 0.0022;
         inputHubRef.current.camYaw += dx * sensitivity;
@@ -1287,6 +1247,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         renderer.setPixelRatio(nextDpr);
         renderer.setSize(w, h);
         combatPost.setSize(w, h, nextDpr);
+        requestSceneFrameRef.current?.();
       }
     });
     resizeObs.observe(container);
@@ -1316,30 +1277,35 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     let simElapsed = 0;
     let lastHudSyncAt = 0;
 
-    const syncPlayerRigTransforms = (
-      wState: MarsCombatWorldState,
-      camYaw: number,
-      camPitch: number
-    ) => {
+    const syncPlayerRigTransforms = (wState: MarsCombatWorldState) => {
       const legged = isLeggedCombatMech(selectedMechRef.current);
       const heavyCrouchDrop = legged
         ? Math.min(1, wState.heavyPostureTimer / 0.22) * 0.16
         : 0;
       playerRoot.position.set(wState.x, wState.y - heavyCrouchDrop, wState.z);
-      playerRoot.rotation.set(0, -wState.yaw, 0);
+      if (!legged) {
+        const [nx, ny, nz] = sampleLandTerrainNormal(wState.x, wState.z);
+        const fx = Math.cos(wState.yaw);
+        const fz = Math.sin(wState.yaw);
+        const pitch = Math.atan2(-nx * fx - nz * fz, ny);
+        const roll = Math.atan2(-nx * fz + nz * fx, ny);
+        playerRoot.rotation.set(roll, -wState.yaw, pitch, 'YXZ');
+      } else {
+        playerRoot.rotation.set(0, -wState.yaw, 0, 'YXZ');
+      }
       if (playerModelPivot) {
         playerModelPivot.rotation.set(0, 0, wState.dodgeBankRad);
       }
-      if (playerTurretMount) {
-        let relTurretYaw = camYaw - wState.yaw;
-        while (relTurretYaw > Math.PI) relTurretYaw -= Math.PI * 2;
-        while (relTurretYaw < -Math.PI) relTurretYaw += Math.PI * 2;
-        playerTurretMount.rotation.set(0, -relTurretYaw, camPitch + wState.recoilPos * 0.22);
-      }
+
     };
 
+    const landingPadY = sampleLandTerrainHeight(0, 0);
+    let viewWorld: MarsCombatWorldState | null = null;
+    let previousCamYaw = 0;
+    const previousCameraOffset = new THREE.Vector3();
     const tick = () => {
-      if (disposed) return;
+      frameId = 0;
+      if (disposed || document.hidden) return;
       const nowMs = performance.now();
       const rawDt = (nowMs - lastTime) / 1000;
       lastTime = nowMs;
@@ -1357,15 +1323,35 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
 
       const wState = worldRef.current;
       const hub = inputHubRef.current;
+      const isPlayingNow = shellStateRef.current === 'playing';
+      const onTitle = shellStateRef.current === 'title';
+      enemyGroupRoot.visible = !onTitle;
+      vfxCtrl.root.visible = !onTitle;
+      if (isPlayingNow && viewWorld !== wState) {
+        playerWheels.lastDistance = wState.gaitDist;
+        playerWheels.lastYaw = wState.yaw;
+        camMicroImpulse = createInitialCameraMicroImpulse();
+      }
+      if (isPlayingNow && viewWorld !== wState) camMicroImpulse = createInitialCameraMicroImpulse();
+      const impStep = stepCameraMicroImpulse(camMicroImpulse, isPlayingNow ? dt : 0);
+      if (isPlayingNow) camMicroImpulse = impStep.next;
+      const [impX, impY, impZ] = isPlayingNow ? impStep.offsetMeters : [0, 0, 0];
 
-      if (shellStateRef.current === 'title') {
+      if (onTitle) {
+        previousCameraOffset.set(0, 0, 0);
         const tourAngle = simElapsed * 0.28 + hub.pointerNdcX * 0.35;
-        const heroY = wState.y;
+        const heroY = landingPadY;
         playerRoot.position.set(0, heroY, 0);
         playerRoot.rotation.set(0, 0.45, 0);
         if (playerModelPivot) playerModelPivot.rotation.set(0, 0, 0);
         dodgeThrusterRig.update(0, false, simElapsed);
-        if (playerRifle) playerRifle.updateWeaponVisuals('pulse_rifle', 0, 0, dt);
+        if (playerRifle) {
+          playerRifle.group.quaternion.copy(playerRifle.restQuaternion);
+          playerRifle.barrelCluster.visible = true;
+          if (playerBowGroup) playerBowGroup.visible = false;
+          if (playerAxeGroup) playerAxeGroup.visible = false;
+          playerRifle.updateWeaponVisuals('pulse_rifle', 0, 0, dt);
+        }
 
         sunKey.target.position.set(0, heroY, 0);
         sunKey.position.set(28, heroY + 42, -24);
@@ -1430,42 +1416,80 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         if (hub.keysHeld.has('ArrowLeft')) hub.camYaw -= 1.8 * dt;
         if (hub.keysHeld.has('ArrowRight')) hub.camYaw += 1.8 * dt;
 
-        // Raycast center reticle (0, 0.06) === screen (50%, calc(50% - 3vh)), filtering out behind-player parallax hits!
-        _ndc.set(0, 0.06);
-        _raycaster.setFromCamera(_ndc, camera);
-        const camToPlayerDist = Math.hypot(
-          wState.x - camera.position.x,
-          wState.y + 1.2 - camera.position.y,
-          wState.z - camera.position.z
-        );
-        const minAimHitDist = Math.max(1.5, camToPlayerDist + 0.5);
+        let sampledView = false;
+        let reticleEnemyUid: number | null = null;
+        const sampleView = () => {
+          sampledView = true;
+          camera.position.sub(previousCameraOffset);
+          updateCombatShoulderCamera(camera, wState, hub.camYaw, hub.camPitch, dt, simElapsed,
+            viewWorld === wState ? previousCamYaw : null);
+          viewWorld = wState;
+          previousCamYaw = hub.camYaw;
+          previousCameraOffset.set(impX, impY, impZ);
+          camera.position.add(previousCameraOffset);
 
-        const pickMeshes: THREE.Object3D[] = [
-          marsEnv.terrainMesh,
-          marsEnv.coverBoulderInst,
-          marsEnv.pylonGroup
-        ];
-        enemyRigs.forEach((r) => {
-          if (r.root.visible) pickMeshes.push(r.modelPivot);
-        });
-        const hits = _raycaster.intersectObjects(pickMeshes, true);
-        const validHit = hits.find((h) => h.distance > minAimHitDist);
-        let aimWorld: [number, number, number];
-        if (validHit) {
-          aimWorld = [validHit.point.x, validHit.point.y, validHit.point.z];
-        } else {
-          _projVec.copy(_raycaster.ray.direction).multiplyScalar(56).add(_raycaster.ray.origin);
-          aimWorld = [_projVec.x, _projVec.y, _projVec.z];
-        }
+          syncPlayerRigTransforms(wState);
+          const pSpeed = Math.hypot(wState.vx, wState.vz);
+          _tmpUrdfKin.gaitDistance = wState.gaitDist;
+          _tmpUrdfKin.speed = pSpeed;
+          _tmpUrdfKin.vy = wState.vy;
+          _tmpUrdfKin.turnVel = 0;
+          _tmpUrdfKin.pitch = 0;
+          _tmpUrdfKin.isBoosting = wState.dashTimer > 0;
+          _tmpUrdfKin.isGrounded = wState.isGrounded;
+          for (let ji = 0; ji < playerUrdfJoints.length; ji++) {
+            const j = playerUrdfJoints[ji];
+            const baseGait = computeSandboxUrdfJointAngle(
+              selectedMechRef.current,
+              j.def,
+              ji,
+              _tmpUrdfKin,
+              simElapsed,
+              0
+            );
+            const ikAng = computeCombatUpperLowerBodyIK({
+              mechId: selectedMechRef.current,
+              jointName: j.def.name,
+              axis: j.def.axis,
+              limitLower: j.def.lower,
+              limitUpper: j.def.upper,
+              baseGaitAngle: baseGait,
+              chassisYaw: wState.yaw,
+              aimYaw: hub.camYaw,
+              aimPitch: hub.camPitch,
+              recoilPos: wState.recoilPos,
+              heavyPostureTimer: wState.heavyPostureTimer,
+              wingmanCommandTimer: wState.wingmanCommandTimer,
+              activeWeapon: wState.activeWeapon,
+              meleeSwingTimer: wState.meleeSwingTimer
+            });
+            _qAxis.setFromAxisAngle(j.axisVec, ikAng);
+            j.node.quaternion.copy(j.baseQuat).multiply(_qAxis);
+          }
 
-        // Pre-sync turret/chassis orientation to current aim BEFORE reading muzzle socket (eliminates 1-frame muzzle lag!)
-        syncPlayerRigTransforms(wState, hub.camYaw, hub.camPitch);
-        let muzzleWorldPoint: [number, number, number] | null = null;
-        if (playerRifle) {
-          playerRoot.updateMatrixWorld(true);
-          playerRifle.muzzleSocket.getWorldPosition(_muzzleWorldVec);
-          muzzleWorldPoint = [_muzzleWorldVec.x, _muzzleWorldVec.y, _muzzleWorldVec.z];
-        }
+          const pickedMeshes: THREE.Object3D[] = [marsEnv.terrainMesh, marsEnv.coverBoulderInst, marsEnv.pylonGroup];
+          enemyRigs.forEach((rig) => { if (rig.root.visible) pickedMeshes.push(rig.modelPivot); });
+          const socket = wState.activeWeapon === 'compound_bow' && playerBowSocket
+            ? playerBowSocket : playerRifle?.muzzleSocket;
+          _weaponOrigin.set(wState.x, wState.y + 1.25, wState.z);
+          let reach = 0.95;
+          if (playerRifle && socket) {
+            playerRifle.updateWeaponVisuals(wState.activeWeapon, wState.muzzleFlashTimer, wState.recoilPos, 0);
+            playerRifle.group.getWorldPosition(_weaponOrigin);
+            reach = socket.getWorldPosition(_muzzleWorldVec).distanceTo(_weaponOrigin);
+          }
+          reticleEnemyUid = sampleCombatReticle(camera, _weaponOrigin, reach, pickedMeshes, _reticleTarget);
+          let muzzleWorldPoint: [number, number, number] | null = null;
+          if (playerRifle && socket) {
+            if (wState.meleeSwingTimer <= 0 || fireHeld || stepInput.missileJustPressed) {
+              alignCombatWeapon(playerRifle.group, socket, _reticleTarget);
+            } else {
+              playerRifle.group.quaternion.copy(playerRifle.restQuaternion);
+            }
+            muzzleWorldPoint = socket.getWorldPosition(_muzzleWorldVec).toArray();
+          }
+          return { aimWorldPoint: _reticleTarget.toArray(), muzzleWorldPoint, reticleEnemyUid };
+        };
 
         const stepInput = {
           moveForward: moveFwd,
@@ -1485,22 +1509,13 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           ventJustPressed: hub.ventJustPressed,
           aimYaw: hub.camYaw,
           aimPitch: hub.camPitch,
-          aimWorldPoint: aimWorld,
-          muzzleWorldPoint
+          aimWorldPoint: null
         };
-        hub.missileJustPressed = false;
-        hub.meleeJustPressed = false;
-        hub.jumpJustPressed = false;
-        hub.dashJustPressed = false;
-        hub.empJustPressed = false;
-        hub.wingmanCommandJustPressed = false;
-        hub.ultimateJustPressed = false;
-        hub.summonBossJustPressed = false;
-        hub.summonQueenJustPressed = false;
-        hub.ventJustPressed = false;
+        Object.assign(hub, releasedCombatActions);
 
         // Engine natively handles hitstop + lossless one-shot input buffering (zero double-hitstop!)
-        stepMarsCombatWorld(wState, dt, stepInput);
+        stepMarsCombatWorld(wState, dt, stepInput, sampleView);
+        if (!sampledView) sampleView();
 
         // Tactile Camera Micro-Impulse on heavy weapon fire, melee cleave, shield shatter, kills, and Boss breaks
         if (
@@ -1558,75 +1573,22 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         }
 
         if (wState.shellState === 'gameover') {
-          shellStateRef.current = 'gameover';
           setRunSummary(wState.runSnapshot);
-          setShellState('gameover');
+          enterShellState('gameover');
         }
 
         // Update Player 3D Pose, Carrier/Rover Wheel Spin, & Split Upper/Lower Body Aiming IK
-        syncPlayerRigTransforms(wState, hub.camYaw, hub.camPitch);
-
         // Snap shadow frustum center to 0.5m texels around player to prevent shadow-edge swimming
         const snapX = Math.round(wState.x * 2) * 0.5;
         const snapZ = Math.round(wState.z * 2) * 0.5;
         sunKey.target.position.set(snapX, wState.y, snapZ);
         sunKey.position.set(snapX + 28, wState.y + 42, snapZ - 24);
 
-        if (playerCarrier) {
-          const wheelAngle = -wState.gaitDist / Math.max(0.12, playerCarrier.wheelRadius);
-          for (const w of playerCarrier.wheels) {
-            w.rotation.z = wheelAngle;
-          }
-        }
-        if (playerRoverWheels.length > 0) {
-          const rSpin = wState.gaitDist / 0.26;
-          for (const rw of playerRoverWheels) {
-            _wheelSpinQuat.setFromAxisAngle(rw.axis, rSpin);
-            rw.node.quaternion.copy(rw.baseQuat).multiply(_wheelSpinQuat);
-          }
-        }
-
-        const pSpeed = Math.hypot(wState.vx, wState.vz);
-        _tmpUrdfKin.gaitDistance = wState.gaitDist;
-        _tmpUrdfKin.speed = pSpeed;
-        _tmpUrdfKin.vy = wState.vy;
-        _tmpUrdfKin.turnVel = 0;
-        _tmpUrdfKin.pitch = 0;
-        _tmpUrdfKin.isBoosting = wState.dashTimer > 0;
-        _tmpUrdfKin.isGrounded = wState.isGrounded;
-        for (let ji = 0; ji < playerUrdfJoints.length; ji++) {
-          const j = playerUrdfJoints[ji];
-          const baseGait = computeSandboxUrdfJointAngle(
-            selectedMechRef.current,
-            j.def,
-            ji,
-            _tmpUrdfKin,
-            simElapsed,
-            0
-          );
-          const ikAng = computeCombatUpperLowerBodyIK({
-            mechId: selectedMechRef.current,
-            jointName: j.def.name,
-            axis: j.def.axis,
-            limitLower: j.def.lower,
-            limitUpper: j.def.upper,
-            baseGaitAngle: baseGait,
-            chassisYaw: wState.yaw,
-            aimYaw: hub.camYaw,
-            aimPitch: hub.camPitch,
-            recoilPos: wState.recoilPos,
-            heavyPostureTimer: wState.heavyPostureTimer,
-            wingmanCommandTimer: wState.wingmanCommandTimer,
-            activeWeapon: wState.activeWeapon,
-            meleeSwingTimer: wState.meleeSwingTimer
-          });
-          _qAxis.setFromAxisAngle(j.axisVec, ikAng);
-          j.node.quaternion.copy(j.baseQuat).multiply(_qAxis);
-        }
+        updateDriveWheels(playerWheels, wState.gaitDist, wState.yaw);
 
         if (playerRifle) {
           const showAxe = wState.meleeSwingTimer > 0 && Boolean(playerAxeGroup);
-          const showBow = !showAxe && wState.activeWeapon === 'compound_bow' && Boolean(playerBowGroup);
+          const showBow = !showAxe && wState.activeWeapon === 'compound_bow' && Boolean(playerBowSocket);
           playerRifle.barrelCluster.visible = !showAxe && !showBow;
           if (playerBowGroup) playerBowGroup.visible = showBow;
           if (playerAxeGroup) playerAxeGroup.visible = showAxe;
@@ -1670,83 +1632,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           );
           _qAxis.setFromAxisAngle(j.axisVec, wAng);
           j.node.quaternion.copy(j.baseQuat).multiply(_qAxis);
-        }
-
-        // Over-the-Shoulder 3rd-Person Spring-Arm Camera with Terrain/Obstacle Anti-Clipping
-        const camBackDist = wState.dashTimer > 0 ? 7.6 : wState.heavyPostureTimer > 0 ? 6.15 : 6.6;
-        const fwdX = Math.cos(hub.camYaw);
-        const fwdZ = Math.sin(hub.camYaw);
-        const rightX = -fwdZ;
-        const rightZ = fwdX;
-
-        const anchorX = wState.x + rightX * 0.55;
-        const anchorY = wState.y + 1.65;
-        const anchorZ = wState.z + rightZ * 0.55;
-
-        const rawCamX = wState.x - fwdX * camBackDist + rightX * 1.15;
-        const rawCamY = wState.y + 2.85 - Math.sin(hub.camPitch) * 3.2;
-        const rawCamZ = wState.z - fwdZ * camBackDist + rightZ * 1.15;
-
-        // 6-step Spring-Arm sweep from shoulder anchor to rawCam against MARS_BATTLEFIELD_OBSTACLES
-        let armFraction = 1.0;
-        for (let s = 1; s <= 6; s++) {
-          const t = s / 6;
-          const sx = anchorX + (rawCamX - anchorX) * t;
-          const sy = anchorY + (rawCamY - anchorY) * t;
-          const sz = anchorZ + (rawCamZ - anchorZ) * t;
-          let blocked = false;
-          for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
-            const dx = sx - obs.x;
-            const dz = sz - obs.z;
-            if (dx * dx + dz * dz < (obs.radius + 0.48) * (obs.radius + 0.48)) {
-              const obsTop = sampleMarsArenaSurfaceHeight(obs.x, obs.z) + obs.height + 0.35;
-              if (sy < obsTop) {
-                blocked = true;
-                break;
-              }
-            }
-          }
-          if (blocked) {
-            armFraction = Math.max(0.24, (s - 1) / 6);
-            break;
-          }
-        }
-
-        const resolvedCamX = anchorX + (rawCamX - anchorX) * armFraction;
-        const resolvedCamZ = anchorZ + (rawCamZ - anchorZ) * armFraction;
-        const terrainFloorAtCam = sampleMarsArenaSurfaceHeight(resolvedCamX, resolvedCamZ) + 0.65;
-        const resolvedCamY = Math.max(
-          anchorY + (rawCamY - anchorY) * armFraction,
-          terrainFloorAtCam
-        );
-
-        _camDesired.set(resolvedCamX, resolvedCamY, resolvedCamZ);
-        const dampK = 1 - Math.exp(-14 * dt);
-        camera.position.lerp(_camDesired, dampK);
-        const liveFloorY = sampleMarsArenaSurfaceHeight(camera.position.x, camera.position.z) + 0.55;
-        if (camera.position.y < liveFloorY) {
-          camera.position.y = liveFloorY;
-        }
-
-        // Smooth Multi-Sine Camera-Local Trauma Shake (projected strictly along camera Right & Up — zero Math.random jitter!)
-        const shake = wState.cameraTrauma * wState.cameraTrauma * 0.34;
-        const shakeRight =
-          (Math.sin(simElapsed * 37.0) * 0.6 + Math.sin(simElapsed * 61.0 + 1.3) * 0.4) * shake;
-        const shakeUp =
-          (Math.cos(simElapsed * 43.0 + 0.7) * 0.6 + Math.sin(simElapsed * 73.0) * 0.4) * shake;
-
-        _camTarget.set(
-          wState.x + fwdX * 14 + rightX * (0.65 + shakeRight),
-          wState.y + 1.45 + Math.sin(hub.camPitch) * 12 + shakeUp,
-          wState.z + fwdZ * 14 + rightZ * (0.65 + shakeRight)
-        );
-        camera.lookAt(_camTarget);
-
-        const targetFov =
-          wState.dashTimer > 0 ? 60 : wState.heavyPostureTimer > 0 ? 56.8 : 52;
-        if (Math.abs(camera.fov - targetFov) > 0.1) {
-          camera.fov += (targetFov - camera.fov) * (1 - Math.exp(-14 * dt));
-          camera.updateProjectionMatrix();
         }
 
         // Sync 3D Enemy Robot Rigs + Runtime Meshopt LOD0/1/2 + VTOL Rotors + Localized Shield!
@@ -1850,6 +1735,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             j.node.quaternion.copy(j.baseQuat).multiply(_qAxis);
           }
 
+          if (rig.driveWheels) updateDriveWheels(rig.driveWheels, e.gaitDist, e.yaw);
+
           // Runtime Distance-Based Meshopt LOD0 / LOD1 / LOD2 Switching + Emissive State Feedback
           const distToCam = Math.hypot(
             e.x - camera.position.x,
@@ -1950,7 +1837,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   shieldPct:
                     e.maxShield > 0 ? Math.max(0, Math.round((e.shield / e.maxShield) * 100)) : 0,
                   staggered: e.staggeredTimer > 0,
-                  locked: Math.hypot(_projVec.x, _projVec.y - 0.06) < 0.16
+                  locked: e.uid === reticleEnemyUid
                 });
               }
             }
@@ -1963,7 +1850,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               attackWarning = 'ACS 架势崩溃 · 2.5x 弱点直击窗口';
             } else if (activeBoss.attackPhase === 'windup') {
               if (activeBoss.bossAttackKind === 'balteus_salvo') {
-                attackWarning = '高危预警 · 环形蜂群追踪导弹齐射 [C 瞬步规避 / E 脉冲拦截]';
+                attackWarning = '高危预警 · 环形蜂群追踪导弹齐射 [C 推进规避 / E 脉冲拦截]';
               } else if (activeBoss.bossAttackKind === 'coral_laser_sweep') {
                 attackWarning = '高危预警 · 360° 红莲高能扫射巨炮 [Space 腾空跃过]';
               } else if (activeBoss.bossAttackKind === 'orbital_pillars') {
@@ -1971,7 +1858,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               } else if (activeBoss.bossAttackKind === 'queen_acid_barrage') {
                 attackWarning = '高危预警 · 女皇强酸流星雨喷吐 [机动规避酸液池]';
               } else if (activeBoss.bossAttackKind === 'queen_tail_scythe') {
-                attackWarning = '高危预警 · 女皇巨尾横扫突刺 [Space 跃起 / C 瞬步闪避]';
+                attackWarning = '高危预警 · 女皇巨尾横扫突刺 [Space 跃起 / C 推进规避]';
               } else if (activeBoss.bossAttackKind === 'queen_brood_call') {
                 attackWarning = '高危预警 · 巢穴虫潮孵化召唤 [X 高周波战斧顺劈清群]';
               }
@@ -2064,17 +1951,6 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         }
       }
 
-      // Freeze camera impulse & trauma vignette cleanly when paused
-      const isPlayingNow = shellStateRef.current === 'playing';
-      const impStep = stepCameraMicroImpulse(camMicroImpulse, isPlayingNow ? dt : 0);
-      if (isPlayingNow) {
-        camMicroImpulse = impStep.next;
-      }
-      const [impX, impY, impZ] = isPlayingNow ? impStep.offsetMeters : [0, 0, 0];
-      camera.position.x += impX;
-      camera.position.y += impY;
-      camera.position.z += impZ;
-
       combatPost.render(scene, camera, {
         rawDt: Math.max(0.001, rawDt),
         simTime: simElapsed,
@@ -2084,21 +1960,23 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           : 0
       });
 
-      camera.position.x -= impX;
-      camera.position.y -= impY;
-      camera.position.z -= impZ;
-
-      if (isSoftwareGl) {
-        afterDraw(tick);
-      } else {
-        frameId = requestAnimationFrame(tick);
+      if (shellStateRef.current === 'title' || shellStateRef.current === 'playing') {
+        if (isSoftwareGl) afterDraw(tick);
+        else frameId = requestAnimationFrame(tick);
       }
     };
 
-    frameId = requestAnimationFrame(tick);
+    // Paused and finished runs keep the last frame until a resize or a state change.
+    requestSceneFrameRef.current = () => {
+      if (disposed || frameId || document.hidden) return;
+      lastTime = performance.now();
+      frameId = requestAnimationFrame(tick);
+    };
+    requestSceneFrameRef.current();
 
     return () => {
       disposed = true;
+      requestSceneFrameRef.current = null;
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
       resizeObs.disconnect();
@@ -2122,14 +2000,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       disposeClonedRigMeshes(wingmanMeshes);
       if (playerCarrier) playerCarrier.dispose();
       if (playerRifle) playerRifle.dispose();
-      glbCache.forEach((tpl) =>
-        disposeSceneHierarchy(tpl, {
-          disposeGeometries: true,
-          disposeMaterials: true,
-          disposeTextures: true
-        })
-      );
-      glbCache.clear();
+      assets.dispose();
 
       dodgeThrusterRig.dispose();
       wingmanRingGeo.dispose();
@@ -2147,6 +2018,11 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
   }, []);
 
   const currentMechSpec = getPlayableMechSpec(selectedMechId);
+  const selectedMap = BATTLEFIELD_MAP_SPECS.find((map) => map.id === selectedMapId)!;
+  const groundDrive = isGroundDriveVehicle(selectedMechId);
+  const movementHint = groundDrive
+    ? 'W/S 前进与倒车 · A/D 车身转向 · 鼠标独立瞄准'
+    : 'WASD 移动 · 鼠标瞄准';
   const hpPct = Math.max(0, Math.min(100, (hud.hp / Math.max(1, hud.maxHp)) * 100));
   const ghostHpPct = Math.max(0, Math.min(100, (hud.ghostHp / Math.max(1, hud.maxHp)) * 100));
   const shieldPct = Math.max(0, Math.min(100, (hud.shield / Math.max(1, hud.maxShield)) * 100));
@@ -2181,15 +2057,15 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       {shellState === 'title' && (
         <div
           data-testid="mars-combat-title-screen"
-          className="fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-8 md:p-12"
+          className="fixed inset-0 z-20 flex flex-col justify-between gap-3 overflow-y-auto p-4 sm:px-8 lg:px-12 sm:py-[clamp(1rem,4vh,3rem)]"
           style={{
             background:
               'linear-gradient(90deg, rgba(11,8,10,0.88) 0%, rgba(11,8,10,0.58) 38%, rgba(11,8,10,0.0) 68%)'
           }}
         >
-          <div className="flex items-center justify-between">
-            <div className="text-xs font-mono tracking-widest text-amber-300/90">
-              JEZERO SECTOR · ORBITAL DEFENSE PROTOCOL
+          <div className="flex shrink-0 items-center justify-between gap-3">
+            <div className="text-xs font-mono tracking-widest" style={{ color: selectedMap.accentHex }}>
+              {selectedMap.codeName}
             </div>
             <div className="pointer-events-auto flex items-center gap-2.5">
               <button
@@ -2211,14 +2087,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             </div>
           </div>
 
-          <div className="pointer-events-auto max-w-[440px] space-y-5 my-auto">
+          <div className="max-w-[440px] shrink-0 space-y-3 my-auto">
             <div className="space-y-3">
               <svg
                 width="340"
                 height="68"
                 viewBox="0 0 340 68"
                 aria-label="赤星战区 MARS FRONTLINE"
-                className="overflow-visible"
+                className="w-full max-w-[340px] h-auto overflow-visible"
               >
                 <polygon
                   points="0,12 12,0 44,0 56,12 44,56 12,56"
@@ -2251,7 +2127,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                 </text>
               </svg>
               <p className="text-sm text-slate-300 leading-relaxed max-w-[38ch]">
-                驾驶真实运动学机甲空降杰泽罗赤红战区或极冠冰封巢谷，迎击异形虫潮、不死重盾禁卫与双领主 Boss。
+                空降{selectedMap.title}，清除 {hud.vanguardTarget} 名先遣敌人，引出并击败镇守领主。
               </p>
             </div>
 
@@ -2264,6 +2140,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                     <button
                       key={mp.id}
                       type="button"
+                      aria-pressed={activeMap}
                       data-testid={`combat-map-select-${mp.id}`}
                       onClick={() => {
                         selectedMapRef.current = mp.id;
@@ -2296,13 +2173,14 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   AP {currentMechSpec.maxHp} · 护盾 {currentMechSpec.maxShield}
                 </span>
               </div>
-              <div className="grid grid-cols-1 gap-1.5 max-h-[245px] overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 gap-1.5 max-h-[clamp(7rem,26vh,245px)] overflow-y-auto pr-1">
                 {PLAYABLE_MECH_SPECS.map((m) => {
                   const active = m.id === selectedMechId;
                   return (
                     <button
                       key={m.id}
                       type="button"
+                      aria-pressed={active}
                       data-testid={`combat-mech-select-${m.id}`}
                       onClick={() => {
                         selectedMechRef.current = m.id;
@@ -2350,8 +2228,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             </div>
           </div>
 
-          <div className="text-xs font-mono text-slate-300/85 tracking-wide">
-            WASD 机动 · Shift 推进冲刺 · 鼠标瞄准射击 · 1-4 切枪(含复合穿甲弓) · X 高周波战斧顺劈 · 右键/F 蜂群导弹 · C/Alt 瞬步 · Q 僚机扑咬 · E 脉冲盾 · V 天基离子炮 · B/N 召唤双领主
+          <div className="shrink-0 text-xs font-mono text-slate-300/85 tracking-wide">
+            {movementHint} · 左键射击 · Shift 加速 · 1–4 切换武器 · X 近战 · 右键/F 导弹 · C/Alt 推进 · Q 僚机 · E 脉冲盾 · V 离子炮 · B/N 召唤领主 · Esc/P 暂停
           </div>
         </div>
       )}
@@ -2420,7 +2298,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           <div
             aria-hidden="true"
             className="fixed left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-            style={{ top: 'calc(50% - 3vh)' }}
+            style={{ top: `${(1 - COMBAT_RETICLE_NDC_Y) * 50}%` }}
           >
             <svg width="260" height="260" viewBox="-130 -130 260 260" className="overflow-visible">
               {hud.threatAnglesDeg.map((th) => (
@@ -2809,9 +2687,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                   e.currentTarget.blur();
                   inputHubRef.current.dashJustPressed = true;
                 }}
-                className="px-2.5 py-1.5 rounded-md bg-[#0b0e14]/88 border border-white/15 hover:border-amber-400/60 text-[11px] font-mono tabular-nums text-slate-200 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-md bg-[#0b0e14]/90 border border-white/15 hover:border-amber-400/60 text-[11px] font-mono tabular-nums text-slate-200 cursor-pointer"
               >
-                <span className="text-amber-300 font-bold">[C]</span> 矢量瞬步
+                <span className="text-amber-300 font-bold">[C]</span> {groundDrive ? '纵向推进' : '矢量瞬步'}
               </button>
 
               <button
@@ -2917,7 +2795,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           <div className="w-full max-w-md rounded-xl bg-[#11141c] border border-white/15 p-6 space-y-5 shadow-2xl">
             <div className="space-y-1">
               <div className="text-xs font-mono text-cyan-300">TACTICAL PAUSE</div>
-              <h2 className="text-xl font-bold text-white">战术链路已挂起</h2>
+              <h2 className="text-xl font-bold text-white">战斗已暂停</h2>
+              <p className="text-xs text-slate-300">{movementHint} · P 继续战斗</p>
             </div>
 
             <div className="grid grid-cols-3 gap-2.5 text-center">
@@ -2959,10 +2838,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               <div className="grid grid-cols-3 gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    worldRef.current.shellState = 'title';
-                    setShellState('title');
-                  }}
+                  onClick={() => enterShellState('title')}
                   className="py-2 rounded-lg bg-[#141821] hover:border-white/25 border border-white/10 text-xs text-slate-300 cursor-pointer"
                 >
                   返回标题页
@@ -3030,12 +2906,12 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               </div>
               <div className="p-3 rounded-lg bg-[#0b0d13] border border-white/10">
                 <div className="text-[11px] text-slate-400">
-                  {runSummary.outcome === 'victory' ? '作战用时' : '泰坦剩余装甲'}
+                  {runSummary.outcome === 'victory' ? '作战用时' : '领主剩余装甲'}
                 </div>
                 <div className="text-lg font-mono font-bold tabular-nums text-amber-300">
                   {runSummary.outcome === 'victory'
                     ? `${runSummary.clearTimeSec}s`
-                    : `${runSummary.bossHpRemainingPct}%`}
+                    : runSummary.bossHpRemainingPct === null ? '尚未遭遇' : `${runSummary.bossHpRemainingPct}%`}
                 </div>
               </div>
             </div>
@@ -3053,10 +2929,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    worldRef.current.shellState = 'title';
-                    setShellState('title');
-                  }}
+                  onClick={() => enterShellState('title')}
                   className="py-2 rounded-lg bg-[#161a24] border border-white/10 text-xs text-slate-300 cursor-pointer"
                 >
                   更换出击机体

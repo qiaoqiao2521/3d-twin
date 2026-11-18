@@ -28,6 +28,8 @@ import {
   fetchTextAssetResilient,
   disposeSceneHierarchy
 } from '../utils/resilientGlbLoader';
+import { bindDriveWheels, DriveWheelRig, updateDriveWheels } from '../utils/groundDriveWheels';
+import { createArmoredManipulatorCarrierBase } from '../utils/marsCombatSceneFX';
 import {
   SANDBOX_ACTORS,
   SandboxActorSpec,
@@ -35,6 +37,7 @@ import {
   SandboxInputState,
   SandboxKinematicState,
   getSandboxActorSpec,
+  isGroundDriveVehicle,
   buildArenaWaypoints,
   buildNaturalLandTerrainFeatures,
   createInitialKinematicState,
@@ -174,7 +177,7 @@ import {
   stepInteractiveTargets,
   findBestInteractiveTarget
 } from '../utils/signatureShowcaseEngine';
-import { createSignatureShowcaseSceneFXController } from '../utils/signatureShowcaseSceneFX';
+import { createSignatureShowcaseSceneFXController, placePracticeProjectile } from '../utils/signatureShowcaseSceneFX';
 
 interface ActionSandboxViewProps {
   initialActorId: string;
@@ -1614,6 +1617,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
     // =========================================================================
     setIsLoadingModel(true);
     setGlbLoadError(null);
+    const driving = isGroundDriveVehicle(actorSpec.id);
+    let driveWheels: DriveWheelRig = { wheels: [] };
     const boundJoints: BoundSandboxJoint[] = [];
     const cadParts: SandboxCadPart[] = [];
     const cadMeshes: THREE.Mesh[] = [];
@@ -1646,10 +1651,15 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           .catch(() => [] as UrdfJointDef[])
       : Promise.resolve([] as UrdfJointDef[]);
 
-    Promise.all([Promise.all(actorSpec.glbUrls.map(loadGlbPromise)), urdfPromise])
-      .then(([scenes, parsedJoints]) => {
+    const armId = actorSpec.id === 'unitree_z1' || actorSpec.id === 'baxter_dual_arm' ? actorSpec.id : null;
+    const driveBasePromise = armId
+      ? loadGlbPromise('/robotics_glb/clearpath_husky_ugv.glb').catch(() => null)
+      : Promise.resolve(null);
+    Promise.all([Promise.all(actorSpec.glbUrls.map(loadGlbPromise)), urdfPromise, driveBasePromise])
+      .then(([scenes, parsedJoints, driveBase]) => {
         if (disposed) {
           scenes.forEach((sc) => disposeSceneHierarchy(sc, { disposeTextures: true }));
+          if (driveBase) disposeSceneHierarchy(driveBase, { disposeTextures: true });
           return;
         }
         const combined = new THREE.Group();
@@ -1658,6 +1668,24 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           combined.add(sc);
         });
 
+        if (armId) {
+          const arm = new THREE.Group();
+          arm.add(...scenes);
+          const armBounds = new THREE.Box3().setFromObject(arm);
+          const armSize = armBounds.getSize(new THREE.Vector3());
+          const armCenter = armBounds.getCenter(new THREE.Vector3());
+          const chassis = driveBase || createArmoredManipulatorCarrierBase(armId, isSoftwareGl).group;
+          chassis.traverse((part) => { if (part.name) part.name = 'carrier_' + part.name; });
+          const baseBounds = new THREE.Box3().setFromObject(chassis);
+          const baseSize = baseBounds.getSize(new THREE.Vector3());
+          const baseCenter = baseBounds.getCenter(new THREE.Vector3());
+          const baseScale = Math.max(armSize.x, armSize.y, armSize.z) * 0.95 / Math.max(baseSize.x, baseSize.y, baseSize.z, 0.01);
+          chassis.scale.multiplyScalar(baseScale);
+          chassis.position.set(-baseCenter.x * baseScale, -baseBounds.min.y * baseScale, -baseCenter.z * baseScale);
+          arm.position.set(-armCenter.x, baseSize.y * baseScale * 0.94 - armBounds.min.y, -armCenter.z);
+          combined.add(chassis, arm);
+        }
+        combined.rotation.y = actorSpec.modelYawOffset;
         combined.updateMatrixWorld(true);
         const box = new THREE.Box3().setFromObject(combined);
         const size = box.getSize(new THREE.Vector3());
@@ -1668,7 +1696,6 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
 
         combined.scale.setScalar(scale);
         combined.position.sub(center.multiplyScalar(scale));
-        combined.rotation.y = actorSpec.modelYawOffset;
         combined.updateMatrixWorld(true);
 
         const normBox = new THREE.Box3().setFromObject(combined);
@@ -1934,6 +1961,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         ).prismaticJointNodes = prismaticJointNodes;
 
         modelHolder.add(combined);
+        if (driving) driveWheels = bindDriveWheels(modelHolder, combined, actorSpec.id);
 
         // Locate primary real .glb sensor joint for Death Stranding Odradek 0.15s snap & flare!
         odradekSensorJointIdx = findOdradekSensorJointIndex(boundJoints.map((b) => b.def));
@@ -2255,6 +2283,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           ? interactiveTargets.find((t) => t.id === hitTargetId && t.alive)
           : undefined;
         if (matchedTarget) {
+          selectedPracticeTarget = matchedTarget.id;
           tacticalScore = { ...tacticalScore, lockedTargetId: matchedTarget.id };
           runtimeRef.current.triggerFireRequested = true;
           proceduralAudioSynth.playSandboxFireCue(actorSpec.domain);
@@ -2482,6 +2511,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       sampleArenaGroundY
     );
     let tacticalScore: TacticalScoreState = createInitialTacticalScoreState();
+    let selectedPracticeTarget: string | null = null;
     let ultimateSkill: UltimateSkillState = createInitialUltimateSkillState();
     let dashState: VectorDashState = createInitialVectorDashState();
     let rallyPoint: { active: boolean; x: number; y: number; z: number } | null = null;
@@ -2598,6 +2628,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
             );
           }
           if (dmgRes.justDestroyed) {
+            if (selectedPracticeTarget === targetId) selectedPracticeTarget = null;
             proceduralAudioSynth.playSubBassImpact('laser');
             setActiveActionToast(
               `击破标靶 [${struck.codeName}] · 连击 x${tacticalScore.comboCount} (6s 后重组)`
@@ -2619,12 +2650,13 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         kin.y,
         kin.z,
         kin.yaw,
-        tacticalScore.lockedTargetId
+        selectedPracticeTarget,
+        Math.cos(Math.PI / 18)
       );
-      if (lockedCandidate) {
-        tacticalScore = { ...tacticalScore, lockedTargetId: lockedCandidate.id };
-      }
-      const targetPos = findNearestTargetWorldPos(kin.x, kin.y, kin.z, kin.yaw);
+      tacticalScore = { ...tacticalScore, lockedTargetId: lockedCandidate?.id ?? null };
+      const targetPos = lockedCandidate
+        ? new THREE.Vector3(lockedCandidate.x, lockedCandidate.y + 1.35, lockedCandidate.z)
+        : new THREE.Vector3(kin.x + fx * 14, kin.y + 1.1, kin.z + fz * 14);
 
       if (actorSpec.id === 'unitree_go2') {
         kin.vy = 6.6;
@@ -2694,7 +2726,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       } else {
         projActive = true;
         projTime = 0;
-        projStart.set(kin.x, kin.y + 1.25, kin.z);
+        projStart.set(kin.x + fx * 0.65, kin.y + 1.05, kin.z + fz * 0.65);
         projEnd.copy(targetPos);
         activeProjectileTargetId = null;
 
@@ -2903,7 +2935,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
 
       if (rt.triggerDashRequested) {
         rt.triggerDashRequested = false;
-        dashState = triggerVectorDash(dashState, kin.yaw, rt.dashStrafeSign, effectiveSpec.boostSpeed);
+        const reversing = driving && (input.backward || (!input.forward && kin.speed < -0.1));
+        dashState = triggerVectorDash(dashState, kin.yaw + (reversing ? Math.PI : 0), driving ? 0 : rt.dashStrafeSign, effectiveSpec.boostSpeed);
         const fxNow = Math.cos(kin.yaw);
         const fzNow = Math.sin(kin.yaw);
         for (let k = 0; k < 12; k++) {
@@ -2933,6 +2966,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
 
         const prevYaw = kin.yaw;
         const prevAutoPatrol = kin.autoPatrol;
+        const dashDistance = Math.hypot(dashStep.dispX, dashStep.dispZ);
+        const surgeDirection = Math.sign(dashStep.dispX * Math.cos(kin.yaw) + dashStep.dispZ * Math.sin(kin.yaw));
         kin = stepSandboxKinematics(
           kin,
           input,
@@ -2940,9 +2975,10 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           waypoints,
           simDt,
           jumpReq,
-          leapBoostTimer
+          leapBoostTimer,
+          driving && dashDistance > 0 ? surgeDirection * dashDistance / simDt : undefined
         );
-        if (Math.abs(dashStep.dispX) > 1e-5 || Math.abs(dashStep.dispZ) > 1e-5) {
+        if (!driving && dashDistance > 1e-5) {
           kin.x = Math.max(-62, Math.min(62, kin.x + dashStep.dispX));
           kin.z = Math.max(-62, Math.min(62, kin.z + dashStep.dispZ));
           if (actorSpec.domain === 'land' && kin.isGrounded) {
@@ -3053,7 +3089,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         actorSpec.domain
       );
 
-      const gaitBob =
+      const gaitBob = driving ? 0 :
         actorSpec.domain === 'land' && kin.isGrounded
           ? Math.abs(Math.sin(kin.gaitDistance * 2.55)) *
             Math.min(0.08, Math.abs(kin.speed) * 0.012) *
@@ -3080,7 +3116,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
       _eulerA.set(
         kin.roll * locoSpec.rollBankMultiplier +
           faultAttitude.rollOffset +
-          dashStep.rollOffset +
+          (driving ? 0 : dashStep.rollOffset) +
           ultimateSkill.rollOffset,
         -kin.yaw + ultimateSkill.yawSpinOffset,
         kin.pitch + locoSpec.pitchBiasRad + faultAttitude.pitchOffset + ultimateSkill.pitchOffset,
@@ -3332,20 +3368,7 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         }
 
         if (actorSpec.id === 'mars2020') {
-          if (cp.role === 'wheel') {
-            const locked = rt.activeFaults.some((f) => f.partName === cp.partName);
-            // Match Perseverance 0.525m diameter wheel circumference (ds / R, R = 0.2625m) for zero ground slip
-            _qA.setFromAxisAngle(_axisX, locked ? 0 : kin.gaitDistance / 0.2625);
-            m.quaternion.multiply(_qA);
-          } else if (cp.role === 'suspension') {
-            _qA.setFromAxisAngle(
-              _axisX,
-              Math.sin(kin.gaitDistance * 1.5) * 0.18 +
-                kin.pitch * 0.6 +
-                dropState.crouchCompression * 0.42
-            );
-            m.quaternion.multiply(_qA);
-          } else if (cp.role === 'mast') {
+          if (cp.role === 'mast') {
             const aimYaw =
               odradekSnap.active
                 ? odradekSnap.yawSnapOffsetRad * 1.4
@@ -3484,6 +3507,11 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         } else {
           cp.twinUniforms.uFeaActive.value = 0.0;
         }
+      }
+
+      if (driving) {
+        updateDriveWheels(driveWheels, kin.gaitDistance, kin.yaw,
+          (wheel) => rt.activeFaults.some((fault) => Boolean(wheel.getObjectByName(fault.partName))));
       }
 
       // Live Dynamic Lowest-Foot / Paw / Track / Wheel Grounding (Zero Underground Burial & Zero Floating!)
@@ -3953,12 +3981,8 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
         actorSpec.id !== 'unitree_go2' &&
         actorSpec.id !== 'unitree_g1'
       ) {
-        laserPosArr[0] = kin.x + fx * 0.65;
-        laserPosArr[1] = actorRoot.position.y + 1.05;
-        laserPosArr[2] = kin.z + fz * 0.65;
-        laserPosArr[3] = nearestTgtVec.x;
-        laserPosArr[4] = nearestTgtVec.y + 0.35;
-        laserPosArr[5] = nearestTgtVec.z;
+        projStart.toArray(laserPosArr, 0);
+        projEnd.toArray(laserPosArr, 3);
         laserGeo.attributes.position.needsUpdate = true;
         laserMat.opacity = 0.75 + 0.25 * Math.sin(simTime * 60);
         laserBeamLine.visible = true;
@@ -4004,11 +4028,9 @@ export const ActionSandboxView: React.FC<ActionSandboxViewProps> = ({
           }
         } else {
           projectileMesh.visible = true;
-          _vA.lerpVectors(projStart, projEnd, projTime);
-          const arcHeight = actorSpec.domain === 'sea' ? 0.35 : 3.4;
-          _vA.y += Math.sin(projTime * Math.PI) * arcHeight;
-          projectileMesh.position.copy(_vA);
-          projectileMesh.rotation.set(simTime * 12, -kin.yaw, 0);
+          const usesArc = actorSpec.id === 'unitree_go2' || actorSpec.id === 'unitree_g1';
+          const arcHeight = usesArc ? 3.4 : actorSpec.domain === 'sea' ? 0.35 : 0;
+          placePracticeProjectile(projectileMesh, projStart, projEnd, projTime, arcHeight, simTime * 12);
         }
       }
 

@@ -80,7 +80,7 @@ export const SANDBOX_ACTORS: SandboxActorSpec[] = [
     domainBadge: '陆地越障戈壁场',
     glbUrls: ['/robotics_glb/search_and_rescue_tracked_robot.glb'],
     urdfUrl: '/baselines/01-履带越障搜救机器人/Search-and-Rescue-Robot/urdf/sar_urdf.urdf',
-    modelYawOffset: 0,
+    modelYawOffset: Math.PI / 2,
     cruiseSpeed: 5.8,
     boostSpeed: 10.5,
     turnRate: 2.1,
@@ -127,7 +127,7 @@ export const SANDBOX_ACTORS: SandboxActorSpec[] = [
     domain: 'land',
     domainBadge: '火星杰泽罗赤红戈壁',
     glbUrls: [
-      '/twins/models/L1_mobility_rocker_bogie.glb',
+      '/robotics_glb/mars2020_mobility_drive.glb',
       '/twins/models/L2_turret_mast_robotics.glb',
       '/twins/models/L3_chassis_mmrtg_lab.glb'
     ],
@@ -399,6 +399,27 @@ const QUADRUPED_SANDBOX_IDS = new Set([
   'spot_arm'
 ]);
 
+const groundDriveVehicles = new Set(['husky_ugv', 'sar', 'mars2020', 'hello_stretch', 'unitree_z1', 'baxter_dual_arm']);
+
+export function isGroundDriveVehicle(actorId: string): boolean {
+  return groundDriveVehicles.has(actorId);
+}
+
+export function stepGroundDrive(
+  speed: number, yawRate: number, throttle: number, steering: number,
+  maxSpeed: number, maxYawRate: number, dt: number, surgeSpeed?: number
+) {
+  const target = throttle * maxSpeed * (throttle < 0 ? 0.58 : 1);
+  const reversing = speed * throttle < 0;
+  const response = reversing ? 6.8 : throttle === 0 ? 2.4 : 3.5;
+  let nextSpeed = damp(speed, target, response, dt);
+  if (surgeSpeed !== undefined) {
+    nextSpeed = surgeSpeed < 0 ? Math.min(nextSpeed, surgeSpeed) : Math.max(nextSpeed, surgeSpeed);
+  }
+  const turnLimit = maxYawRate / (1 + Math.abs(nextSpeed) * 0.075);
+  return { speed: nextSpeed, yawRate: damp(yawRate, steering * turnLimit, 7, dt) };
+}
+
 export function getSandboxActorSpec(contextId: string): SandboxActorSpec {
   if (contextId === 'b737_bridge') {
     return SANDBOX_ACTORS.find((a) => a.id === 'b737_cfm56')!;
@@ -642,7 +663,8 @@ export function stepSandboxKinematics(
   waypoints: SandboxWaypoint[],
   rawDt: number,
   jumpImpulseRequested: boolean = false,
-  leapBoostTimer: number = 0
+  leapBoostTimer: number = 0,
+  driveSurgeSpeed?: number
 ): SandboxKinematicState {
   const dt = Math.max(0.001, Math.min(0.05, rawDt));
   const next: SandboxKinematicState = {
@@ -800,8 +822,19 @@ export function stepSandboxKinematics(
 
   const leapBonus = leapBoostTimer > 0 ? 6.5 : 0;
   const targetSpeed = leapBoostTimer > 0 ? spec.boostSpeed + leapBonus : cmdForward * maxSpd;
-  next.speed = damp(next.speed, targetSpeed, 6.2, dt);
-  next.turnVel = damp(next.turnVel, cmdTurn * spec.turnRate, 7.0, dt);
+  const driving = isGroundDriveVehicle(spec.id);
+  if (driving) {
+    const drive = stepGroundDrive(next.speed, next.turnVel, cmdForward, cmdTurn, maxSpd, spec.turnRate, dt, driveSurgeSpeed);
+    if (next.isGrounded) {
+      next.speed = drive.speed;
+      next.turnVel = drive.yawRate;
+    } else {
+      next.turnVel = 0;
+    }
+  } else {
+    next.speed = damp(next.speed, targetSpeed, 6.2, dt);
+    next.turnVel = damp(next.turnVel, cmdTurn * spec.turnRate, 7.0, dt);
+  }
   next.yaw += next.turnVel * dt;
 
   const fx = Math.cos(next.yaw);
@@ -855,7 +888,7 @@ export function stepSandboxKinematics(
   next.roll = damp(next.roll, slopeRight + bankRoll, 8.0, dt);
 
   const prevStrideIdx = Math.floor(next.gaitDistance * 1.45);
-  next.gaitDistance += next.speed * dt;
+  next.gaitDistance += driving ? (next.x - prev.x) * fx + (next.z - prev.z) * fz : next.speed * dt;
   const curStrideIdx = Math.floor(next.gaitDistance * 1.45);
   if (next.isGrounded && curStrideIdx !== prevStrideIdx && Math.abs(next.speed) > 0.4) {
     next.emittedFootstep = true;

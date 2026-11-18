@@ -1792,6 +1792,7 @@ export function createArmoredManipulatorCarrierBase(
   ];
   for (const [ox, oz] of offsets) {
     const wPivot = new THREE.Group();
+    wPivot.name = `${ox > 0 ? 'front' : 'rear'}_${oz < 0 ? 'left' : 'right'}_wheel`;
     wPivot.position.set(ox, wheelRadius, oz);
     const tire = new THREE.Mesh(wheelGeo, tireMat);
     tire.castShadow = !isSoftwareGl;
@@ -1823,7 +1824,8 @@ export function createArmoredManipulatorCarrierBase(
 export function createMountedSciFiPulseRifle(
   mechId: PlayerMechId,
   isUrdfZUpLink: boolean = false,
-  parentScaleCompensation: number = 1.0
+  parentScaleCompensation: number = 1.0,
+  createFlashTexture: () => THREE.Texture = createSoftGlowSpriteTexture
 ) {
   const group = new THREE.Group();
   group.name = 'mounted_scifi_pulse_rifle';
@@ -1915,7 +1917,7 @@ export function createMountedSciFiPulseRifle(
   flashGroup.visible = false;
   muzzleSocket.add(flashGroup);
 
-  const flashTex = createSoftGlowSpriteTexture();
+  const flashTex = createFlashTexture();
   const flashMat = new THREE.MeshBasicMaterial({
     map: flashTex,
     color: 0x00e5ff,
@@ -1990,7 +1992,7 @@ export function createMountedSciFiPulseRifle(
     haloGeo.dispose();
   };
 
-  return { group, barrelCluster, muzzleSocket, updateWeaponVisuals, dispose };
+  return { group, restQuaternion: group.quaternion.clone(), barrelCluster, muzzleSocket, updateWeaponVisuals, dispose };
 }
 
 /**

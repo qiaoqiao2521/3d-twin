@@ -1,4 +1,4 @@
-import { sampleLandTerrainHeight, sampleLandChassisSupportHeight } from './actionSandboxEngine';
+import { sampleLandTerrainHeight, sampleLandChassisSupportHeight, isGroundDriveVehicle, getSandboxActorSpec, stepGroundDrive } from './actionSandboxEngine';
 
 export type GameShellState = 'title' | 'playing' | 'paused' | 'gameover';
 export type GameOutcome = 'none' | 'victory' | 'defeat';
@@ -217,7 +217,7 @@ export const PLAYABLE_MECH_SPECS: PlayableMechSpec[] = [
     title: '毅力号 核能重炮车',
     roleTag: '核动力护盾 · 远程压制',
     glbUrls: [
-      '/twins/models/L1_mobility_rocker_bogie.glb',
+      '/robotics_glb/mars2020_mobility_drive.glb',
       '/twins/models/L2_turret_mast_robotics.glb',
       '/twins/models/L3_chassis_mmrtg_lab.glb'
     ],
@@ -727,7 +727,7 @@ export interface RunSummarySnapshot {
   kills: number;
   waveReached: number;
   clearTimeSec: number;
-  bossHpRemainingPct: number;
+  bossHpRemainingPct: number | null;
   mechTitle: string;
 }
 
@@ -749,6 +749,7 @@ export interface MarsCombatWorldState {
   yaw: number;
   aimYaw: number;
   aimPitch: number;
+  driveYawRate: number;
   gaitDist: number;
   isGrounded: boolean;
   coyoteTimer: number;
@@ -866,7 +867,13 @@ export interface MarsCombatWorldState {
   };
 }
 
-export interface CombatStepInput {
+export interface CombatFrameAim {
+  aimWorldPoint: [number, number, number] | null;
+  muzzleWorldPoint?: [number, number, number] | null;
+  reticleEnemyUid?: number | null;
+}
+
+export interface CombatStepInput extends CombatFrameAim {
   moveForward: number; // -1..1
   moveRight: number; // -1..1
   sprintHeld: boolean;
@@ -884,8 +891,6 @@ export interface CombatStepInput {
   ventJustPressed?: boolean;
   aimYaw: number;
   aimPitch: number;
-  aimWorldPoint: [number, number, number] | null;
-  muzzleWorldPoint?: [number, number, number] | null;
 }
 
 export interface MarsBattlefieldObstacle {
@@ -898,6 +903,7 @@ export interface MarsBattlefieldObstacle {
 
 const MAX_PROJECTILES = 96;
 const ARENA_RADIUS = 68;
+const PLAYER_COLLISION_RADIUS = 0.96;
 
 const MIDFIELD_BOULDER_LAYOUT: readonly [number, number, number, number][] = [
   [15.5, 0.72, 1.65, 2.35],
@@ -1107,6 +1113,7 @@ export function createInitialMarsCombatState(
     yaw: 0,
     aimYaw: 0,
     aimPitch: -0.05,
+    driveYawRate: 0,
     gaitDist: 0,
     isGrounded: true,
     coyoteTimer: 0.1,
@@ -1484,7 +1491,7 @@ function applyDamageToPlayer(
       kills: state.kills,
       waveReached: state.wave,
       clearTimeSec: Math.round(state.elapsedPlaySec),
-      bossHpRemainingPct: boss ? Math.max(0, Math.round((boss.hp / boss.maxHp) * 100)) : 100,
+      bossHpRemainingPct: boss ? Math.max(0, Math.round((boss.hp / boss.maxHp) * 100)) : null,
       mechTitle: getPlayableMechSpec(state.mechId).title
     };
   }
@@ -1781,7 +1788,8 @@ function applyMissileSplashDamage(
 export function stepMarsCombatWorld(
   state: MarsCombatWorldState,
   rawDt: number,
-  input: CombatStepInput
+  input: CombatStepInput,
+  sampleView?: () => CombatFrameAim
 ): void {
   const dt = Math.min(Math.max(rawDt, 0.0001), 0.05);
   state.events.firedWeapon = null;
@@ -1932,20 +1940,38 @@ export function stepMarsCombatWorld(
     wishZ /= wishLen;
   }
 
+  const driving = isGroundDriveVehicle(state.mechId);
+  const signedSpeed = state.vx * Math.cos(state.yaw) + state.vz * Math.sin(state.yaw);
+
   // Vector Quick-Boost Dash [C / Alt / Shift-Tap] with i-frames
   if (dashTriggered && state.dashCooldown <= 0 && state.boostEnergy >= 28) {
     state.dashCooldown = 0.68;
     state.dashTimer = 0.22;
     state.invulnTimer = 0.34;
     state.boostEnergy = Math.max(0, state.boostEnergy - 28);
-    const dX = wishLen > 0.05 ? wishX : fwdX;
-    const dZ = wishLen > 0.05 ? wishZ : fwdZ;
+    const driveSign = Math.sign(input.moveForward || signedSpeed) || 1;
+    const dX = driving ? Math.cos(state.yaw) * driveSign : wishLen > 0.05 ? wishX : fwdX;
+    const dZ = driving ? Math.sin(state.yaw) * driveSign : wishLen > 0.05 ? wishZ : fwdZ;
     state.vx = dX * mechSpec.dashImpulse;
     state.vz = dZ * mechSpec.dashImpulse;
     state.cameraTrauma = Math.min(1, state.cameraTrauma + 0.16);
   }
 
-  if (state.dashTimer > 0) {
+  if (driving) {
+    const sprint = input.sprintHeld && input.moveForward !== 0 && state.boostEnergy > 5;
+    const speed = state.vx * Math.cos(state.yaw) + state.vz * Math.sin(state.yaw);
+    const surge = state.dashTimer > 0 ? speed : undefined;
+    if (surge === undefined) state.boostEnergy = Math.max(0, Math.min(100, state.boostEnergy + dt * (sprint ? -18 : 22)));
+    state.dashTimer = Math.max(0, state.dashTimer - dt);
+    if (state.isGrounded) {
+      const drive = stepGroundDrive(speed, state.driveYawRate, input.moveForward, input.moveRight,
+        sprint ? mechSpec.sprintSpeed : mechSpec.cruiseSpeed, getSandboxActorSpec(state.mechId).turnRate, dt, surge);
+      state.driveYawRate = drive.yawRate;
+      state.yaw += drive.yawRate * dt;
+      state.vx = Math.cos(state.yaw) * drive.speed;
+      state.vz = Math.sin(state.yaw) * drive.speed;
+    }
+  } else if (state.dashTimer > 0) {
     state.dashTimer -= dt;
   } else {
     const isSprinting = input.sprintHeld && wishLen > 0.1 && state.boostEnergy > 5;
@@ -1985,16 +2011,12 @@ export function stepMarsCombatWorld(
     state.vy -= grav * dt;
   }
 
+  const previousX = state.x;
+  const previousZ = state.z;
   state.x += state.vx * dt;
   state.z += state.vz * dt;
   state.y += state.vy * dt;
-
-  const rPlayer = Math.hypot(state.x, state.z);
-  if (rPlayer > ARENA_RADIUS) {
-    const s = ARENA_RADIUS / rPlayer;
-    state.x *= s;
-    state.z *= s;
-  }
+  resolvePlayerArenaContacts(state, previousX, previousZ);
 
   const floorY = sampleLandChassisSupportHeight(state.x, state.z, state.yaw, state.mechId);
   if (state.y <= floorY + 0.02 && state.vy <= 0) {
@@ -2008,30 +2030,32 @@ export function stepMarsCombatWorld(
   const horizSpeed = Math.hypot(state.vx, state.vz);
   const chassisFwdX = Math.cos(state.yaw);
   const chassisFwdZ = Math.sin(state.yaw);
-  const signedProjection = state.vx * chassisFwdX + state.vz * chassisFwdZ;
-  const gaitSign = signedProjection < -0.35 ? -1 : 1;
-  state.gaitDist += horizSpeed * gaitSign * dt;
+  const movedX = state.x - previousX;
+  const movedZ = state.z - previousZ;
+  const signedTravel = movedX * chassisFwdX + movedZ * chassisFwdZ;
+  state.gaitDist += driving ? signedTravel : Math.hypot(movedX, movedZ) * (signedTravel < -0.35 * dt ? -1 : 1);
 
-  const desiredYaw = horizSpeed > 1.05 ? Math.atan2(state.vz, state.vx) : state.aimYaw;
-  let yawDiff = desiredYaw - state.yaw;
-  while (yawDiff > Math.PI) yawDiff -= Math.PI * 2;
-  while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
-  state.yaw += yawDiff * (1 - Math.exp(-10 * dt));
+  if (!driving) {
+    const desiredYaw = horizSpeed > 1.05 ? Math.atan2(state.vz, state.vx) : state.aimYaw;
+    state.yaw += wrapAnglePi(desiredYaw - state.yaw) * (1 - Math.exp(-10 * dt));
+  }
 
   const latVel = state.vx * rightX + state.vz * rightZ;
-  const targetBank =
+  const targetBank = driving ? 0 :
     state.dashTimer > 0
       ? Math.max(-0.46, Math.min(0.46, (Math.abs(latVel) > 1.5 ? Math.sign(latVel) : 1) * 0.42))
       : Math.max(-0.16, Math.min(0.16, latVel * 0.012));
   state.dodgeBankRad += (targetBank - state.dodgeBankRad) * (1 - Math.exp(-14 * dt));
+
+  const view = sampleView?.() ?? input;
 
   // 2A. Allied Wingman Go2 Tactical Command [Q / Middle Mouse] (prefers grounded targets so Go2 never levitates!)
   state.wingman.commandCooldown = Math.max(0, state.wingman.commandCooldown - dt);
   if (wingmanTriggered && state.wingman.commandCooldown <= 0) {
     let bestEnemy: CombatEnemyEntity | null = null;
     let bestScoreDist = Infinity;
-    const refX = input.aimWorldPoint ? input.aimWorldPoint[0] : state.x + fwdX * 18;
-    const refZ = input.aimWorldPoint ? input.aimWorldPoint[2] : state.z + fwdZ * 18;
+    const refX = view.aimWorldPoint ? view.aimWorldPoint[0] : state.x + fwdX * 18;
+    const refZ = view.aimWorldPoint ? view.aimWorldPoint[2] : state.z + fwdZ * 18;
     const hasGrounded = state.enemies.some((e) => e.koTimer <= 0 && e.archetype !== 'aero_hunter');
     for (const e of state.enemies) {
       if (e.koTimer > 0) continue;
@@ -2097,9 +2121,9 @@ export function stepMarsCombatWorld(
     if (priorityEnemy) {
       tx = priorityEnemy.x;
       tz = priorityEnemy.z;
-    } else if (input.aimWorldPoint) {
-      tx = input.aimWorldPoint[0];
-      tz = input.aimWorldPoint[2];
+    } else if (view.aimWorldPoint) {
+      tx = view.aimWorldPoint[0];
+      tz = view.aimWorldPoint[2];
     }
     const ty = sampleLandTerrainHeight(tx, tz);
     state.ultimateBeamTimer = 1.65;
@@ -2174,8 +2198,8 @@ export function stepMarsCombatWorld(
 
   // 3. Player Primary Weapon Fire (LMB) & Quick Homing Missile Salvo (RMB / F) — 100% True Muzzle World Pos!
   const fireMissileSalvo = missileTriggered;
-  const effectiveMuzzle: [number, number, number] = input.muzzleWorldPoint
-    ? input.muzzleWorldPoint
+  const effectiveMuzzle: [number, number, number] = view.muzzleWorldPoint
+    ? view.muzzleWorldPoint
     : [
         state.x + fwdX * 0.92 + rightX * 0.28,
         state.y + 1.28,
@@ -2221,14 +2245,14 @@ export function stepMarsCombatWorld(
     let dirX = Math.cos(state.aimPitch) * Math.cos(state.aimYaw);
     let dirY = Math.sin(state.aimPitch);
     let dirZ = Math.cos(state.aimPitch) * Math.sin(state.aimYaw);
-    if (input.aimWorldPoint) {
-      const dx = input.aimWorldPoint[0] - muzzleX;
-      const dy = input.aimWorldPoint[1] - muzzleY;
-      const dz = input.aimWorldPoint[2] - muzzleZ;
+    if (view.aimWorldPoint) {
+      const dx = view.aimWorldPoint[0] - muzzleX;
+      const dy = view.aimWorldPoint[1] - muzzleY;
+      const dz = view.aimWorldPoint[2] - muzzleZ;
       const dLen = Math.hypot(dx, dy, dz);
       // Reject close behind-back parallax points (< 0.8m or pointing >75 deg behind aimYaw)
       const aimDot = (dx / Math.max(0.001, dLen)) * fwdX + (dz / Math.max(0.001, dLen)) * fwdZ;
-      if (dLen > 0.8 && aimDot > 0.15) {
+      if (dLen > 0.0001 && (sampleView || (dLen > 0.8 && aimDot > 0.15))) {
         dirX = dx / dLen;
         dirY = dy / dLen;
         dirZ = dz / dLen;
@@ -2236,27 +2260,30 @@ export function stepMarsCombatWorld(
     }
 
     if (wSpec.id === 'missile_pod') {
-      const liveTargets = state.enemies.filter((e) => e.koTimer <= 0);
+      const liveTargets = state.enemies.filter((enemy) =>
+        enemy.koTimer <= 0 && (view.reticleEnemyUid === undefined || enemy.uid === view.reticleEnemyUid)
+      );
       for (let m = 0; m < 4; m++) {
         const proj = allocProjectile(state);
         if (!proj) break;
         const fanAng = (m - 1.5) * 0.22;
-        const cosF = Math.cos(fanAng);
-        const sinF = Math.sin(fanAng);
-        const vxDir = dirX * cosF - dirZ * sinF;
-        const vzDir = dirX * sinF + dirZ * cosF;
+        const horizontal = Math.hypot(dirX, dirZ) || 1;
+        const side = Math.sin(fanAng);
+        const forward = Math.cos(fanAng);
+        const vxDir = dirX * forward - (dirZ / horizontal) * side;
+        const vzDir = dirZ * forward + (dirX / horizontal) * side;
         const lockEnemy = liveTargets.length > 0 ? liveTargets[m % liveTargets.length] : null;
         proj.active = true;
         proj.fromPlayer = true;
         proj.kind = 'missile';
         proj.x = muzzleX;
-        proj.y = muzzleY + 0.06;
+        proj.y = muzzleY;
         proj.z = muzzleZ;
         proj.prevX = proj.x;
         proj.prevY = proj.y;
         proj.prevZ = proj.z;
         proj.vx = vxDir * wSpec.projectileSpeed;
-        proj.vy = (dirY + 0.22) * wSpec.projectileSpeed;
+        proj.vy = dirY * forward * wSpec.projectileSpeed;
         proj.vz = vzDir * wSpec.projectileSpeed;
         proj.damage = wSpec.damage;
         proj.staggerDamage = wSpec.staggerDamage;
@@ -2765,9 +2792,10 @@ export function stepMarsCombatWorld(
     } else if (e.archetype === 'sar_siege') {
       // POLICY 3: Armored Area-Denial Mortar Tank
       const moveScale = distP > 22 ? 1 : distP < 12 ? -0.5 : 0.15;
-      e.vx = dirPX * spec.speed * moveScale;
-      e.vz = dirPZ * spec.speed * moveScale;
       e.yaw = turnTowardsAngle(e.yaw, Math.atan2(dzP, dxP), 3.4 * dt);
+      const facing = Math.max(0, Math.cos(e.yaw) * dirPX + Math.sin(e.yaw) * dirPZ);
+      e.vx = Math.cos(e.yaw) * spec.speed * moveScale * facing;
+      e.vz = Math.sin(e.yaw) * spec.speed * moveScale * facing;
       e.aiCooldown -= dt;
 
       if (e.attackPhase === 'idle' && e.aiCooldown <= 0 && activeCrowdAttackers < 4) {
@@ -3515,30 +3543,45 @@ export function stepWingmanGo2Companion(
   }
 }
 
+function slidePlayerAlongContact(state: MarsCombatWorldState, nx: number, nz: number, penetration: number): void {
+  state.x += nx * penetration;
+  state.z += nz * penetration;
+  const inwardSpeed = Math.min(0, state.vx * nx + state.vz * nz);
+  state.vx -= nx * inwardSpeed;
+  state.vz -= nz * inwardSpeed;
+}
+
+function resolvePlayerArenaContacts(state: MarsCombatWorldState, fromX: number, fromZ: number): void {
+  for (const obstacle of MARS_BATTLEFIELD_OBSTACLES) {
+    const clearance = PLAYER_COLLISION_RADIUS + obstacle.radius;
+    const entry = segmentIntersectsCircle2D(fromX, fromZ, state.x, state.z, obstacle.x, obstacle.z, clearance);
+    if (entry === null) continue;
+    const top = sampleMarsArenaSurfaceHeight(obstacle.x, obstacle.z) + obstacle.height;
+    if (state.y >= top - 0.25) continue;
+
+    // Keep the first contact normal even when a dash or a crowd push crosses the center.
+    const hitX = fromX + (state.x - fromX) * entry - obstacle.x;
+    const hitZ = fromZ + (state.z - fromZ) * entry - obstacle.z;
+    const distance = Math.hypot(hitX, hitZ);
+    const nx = distance > 1e-6 ? hitX / distance : 1;
+    const nz = distance > 1e-6 ? hitZ / distance : 0;
+    const penetration = clearance - (state.x - obstacle.x) * nx - (state.z - obstacle.z) * nz;
+    if (penetration >= 0) slidePlayerAlongContact(state, nx, nz, penetration);
+  }
+
+  const distance = Math.hypot(state.x, state.z);
+  if (distance >= ARENA_RADIUS) {
+    slidePlayerAlongContact(state, -state.x / distance, -state.z / distance, distance - ARENA_RADIUS);
+  }
+}
+
 export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
-  const playerR = 0.96;
+  const previousX = state.x;
+  const previousZ = state.z;
   const wingmanR = 0.72;
+  resolvePlayerArenaContacts(state, previousX, previousZ);
 
-  // 0. Physical Cover Obstacle Separation (6 Towers + 10 Midfield Basalt Cover Outcrops)
   for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
-    const obsTopY = sampleLandTerrainHeight(obs.x, obs.z) + obs.height;
-    if (state.y < obsTopY - 0.25) {
-      const dx = state.x - obs.x;
-      const dz = state.z - obs.z;
-      const minD = playerR + obs.radius;
-      const d = Math.hypot(dx, dz);
-      if (d < minD) {
-        const nx = d > 1e-4 ? dx / d : 1;
-        const nz = d > 1e-4 ? dz / d : 0;
-        const push = minD - d;
-        state.x += nx * push;
-        state.z += nz * push;
-        if (state.isGrounded) {
-          state.y = sampleLandChassisSupportHeight(state.x, state.z, state.yaw, state.mechId);
-        }
-      }
-    }
-
     if (state.wingman.mode === 'escort') {
       const dxW = state.wingman.x - obs.x;
       const dzW = state.wingman.z - obs.z;
@@ -3558,7 +3601,7 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
   if (state.wingman.mode === 'escort') {
     const dx = state.wingman.x - state.x;
     const dz = state.wingman.z - state.z;
-    const minD = playerR + wingmanR;
+    const minD = PLAYER_COLLISION_RADIUS + wingmanR;
     const d = Math.hypot(dx, dz);
     if (d < minD) {
       const nx = d > 1e-4 ? dx / d : 1;
@@ -3580,26 +3623,23 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
     if (verticalGap < 1.65) {
       const dxP = a.x - state.x;
       const dzP = a.z - state.z;
-      const minDP = playerR + rA;
+      const minDP = PLAYER_COLLISION_RADIUS + rA;
       const dP = Math.hypot(dxP, dzP);
       if (dP < minDP) {
         const nx = dP > 1e-4 ? dxP / dP : Math.cos(a.uid * 1.7);
         const nz = dP > 1e-4 ? dzP / dP : Math.sin(a.uid * 1.7);
         const overlap = minDP - dP;
-        if (a.isBoss) {
-          state.x -= nx * overlap * 0.82;
-          state.z -= nz * overlap * 0.82;
-          a.x += nx * overlap * 0.18;
-          a.z += nz * overlap * 0.18;
-        } else {
-          state.x -= nx * overlap * 0.28;
-          state.z -= nz * overlap * 0.28;
-          a.x += nx * overlap * 0.72;
-          a.z += nz * overlap * 0.72;
-        }
-        if (state.isGrounded) {
-          state.y = sampleLandChassisSupportHeight(state.x, state.z, state.yaw, state.mechId);
-        }
+        const beforePushX = state.x;
+        const beforePushZ = state.z;
+        const playerPush = overlap * (a.isBoss ? 0.82 : 0.28);
+        state.x -= nx * playerPush;
+        state.z -= nz * playerPush;
+        resolvePlayerArenaContacts(state, beforePushX, beforePushZ);
+        // When cover limits the player's displacement, the other body takes the remaining separation.
+        const playerTravel = (beforePushX - state.x) * nx + (beforePushZ - state.z) * nz;
+        const remaining = Math.max(0, overlap - playerTravel);
+        a.x += nx * remaining;
+        a.z += nz * remaining;
       }
     }
 
@@ -3638,6 +3678,10 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
       }
     }
     a.y = sampleLandTerrainHeight(a.x, a.z);
+  }
+
+  if (state.isGrounded && (state.x !== previousX || state.z !== previousZ)) {
+    state.y = sampleLandChassisSupportHeight(state.x, state.z, state.yaw, state.mechId);
   }
 }
 

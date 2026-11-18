@@ -8,6 +8,22 @@ import { InteractiveFieldTarget, UltimateSkillState } from './signatureShowcaseE
 // converging plasma beams), and custom GLSL ShaderMaterials!
 // ============================================================================
 
+const projectileTangent = new THREE.Vector3();
+const projectileForward = new THREE.Vector3(1, 0, 0);
+
+export function placePracticeProjectile(
+  mesh: THREE.Object3D, start: THREE.Vector3, end: THREE.Vector3, t: number, arcHeight: number, roll: number
+) {
+  mesh.position.lerpVectors(start, end, t);
+  mesh.position.y += Math.sin(t * Math.PI) * arcHeight;
+  projectileTangent.subVectors(end, start);
+  projectileTangent.y += Math.cos(t * Math.PI) * Math.PI * arcHeight;
+  if (projectileTangent.lengthSq() > 1e-8) {
+    mesh.quaternion.setFromUnitVectors(projectileForward, projectileTangent.normalize());
+    mesh.rotateX(roll);
+  }
+}
+
 export interface SignatureShowcaseSceneFXController {
   rootGroup: THREE.Group;
   targetHitProxies: THREE.Mesh[];
