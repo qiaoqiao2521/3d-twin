@@ -25,6 +25,7 @@ import {
   stepCameraMicroImpulse
 } from '../utils/tactileCameraRig';
 import { proceduralAudioSynth } from '../utils/proceduralAudioSynth';
+import { POLAR_RELAY, POLAR_HOLD, POLAR_JAMMER, POLAR_HOLD_SECONDS, readPolarMissionPrompt } from '../utils/marsPolarMission';
 import {
   GameShellState,
   PlayerMechId,
@@ -46,6 +47,7 @@ import {
   summonAresBoss,
   summonXenoQueenBoss,
   computeRelativeThreatAngleRad,
+  sampleMarsCombatNormal,
   computeCombatUpperLowerBodyIK,
   stepMarsCombatWorld
 } from '../utils/marsCombatEngine';
@@ -99,6 +101,7 @@ interface Spawned3DEnemyRig {
 }
 
 interface HudSyncSnapshot {
+  polar: { text: string; routeText: string; jammerBearing: number | null; meters: number; phase: 'relay' | 'hold' | 'boss'; hold: number; bearing: number } | null;
   hp: number;
   maxHp: number;
   ghostHp: number;
@@ -157,6 +160,7 @@ interface HudSyncSnapshot {
 
 function createDeploymentHud(world: MarsCombatWorldState): HudSyncSnapshot {
   return {
+    polar: null,
     hp: world.hp,
     maxHp: world.maxHp,
     ghostHp: world.ghostHp,
@@ -198,7 +202,8 @@ const releasedCombatActions = {
   ultimateJustPressed: false,
   summonBossJustPressed: false,
   summonQueenJustPressed: false,
-  ventJustPressed: false
+  ventJustPressed: false,
+  interactPressed: false
 };
 
 const _muzzleWorldVec = new THREE.Vector3();
@@ -422,7 +427,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
 }) => {
   const canvasMountRef = useRef<HTMLDivElement | null>(null);
   const [selectedMechId, setSelectedMechId] = useState<PlayerMechId>(initialMechId);
-  const [selectedMapId, setSelectedMapId] = useState<BattlefieldMapId>('jezero_crater');
+  const [selectedMapId, setSelectedMapId] = useState<BattlefieldMapId>(() =>
+    new URLSearchParams(window.location.search).get('map') === 'polar_ice_canyon' ? 'polar_ice_canyon' : 'jezero_crater'
+  );
   const [shellState, setShellState] = useState<GameShellState>(
     initialAutostart ? 'playing' : 'title'
   );
@@ -432,12 +439,12 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
   // Build the projectile pool once per deployment, including direct autostart.
   const worldRef = useRef<MarsCombatWorldState>(null!);
   if (worldRef.current === null) {
-    worldRef.current = createInitialMarsCombatState(initialMechId, 0, initialAutostart);
+    worldRef.current = createInitialMarsCombatState(initialMechId, 0, initialAutostart, selectedMapId);
   }
   const requestSceneFrameRef = useRef<(() => void) | null>(null);
   const shellStateRef = useRef<GameShellState>(initialAutostart ? 'playing' : 'title');
   const selectedMechRef = useRef<PlayerMechId>(initialMechId);
-  const selectedMapRef = useRef<BattlefieldMapId>('jezero_crater');
+  const selectedMapRef = useRef<BattlefieldMapId>(selectedMapId);
   const audioEnabledRef = useRef<boolean>(audioEnabled);
   audioEnabledRef.current = audioEnabled;
 
@@ -449,7 +456,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     pointerNdcX: 0,
     pointerNdcY: 0,
     hasPointerSample: false,
-    camYaw: 0,
+    camYaw: selectedMapId === 'polar_ice_canyon' ? Math.atan2(POLAR_RELAY.z, POLAR_RELAY.x) : 0,
     camPitch: -0.09
   });
 
@@ -494,7 +501,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
     const prevBest = worldRef.current.bestScore;
     const nextWorld = createInitialMarsCombatState(mech, prevBest, true, mapId);
     worldRef.current = nextWorld;
-    inputHubRef.current.camYaw = 0;
+    inputHubRef.current.camYaw = mapId === 'polar_ice_canyon' ? Math.atan2(POLAR_RELAY.z, POLAR_RELAY.x) : 0;
     inputHubRef.current.camPitch = -0.09;
     setHud(createDeploymentHud(nextWorld));
     setRunSummary(null);
@@ -604,6 +611,8 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           hub.ventJustPressed = true;
         } else if (e.code === 'KeyF') {
           hub.missileJustPressed = true;
+        } else if (e.code === 'KeyG') {
+          hub.interactPressed = true;
         } else if (e.code === 'KeyB') {
           hub.summonBossJustPressed = true;
         } else if (e.code === 'KeyN') {
@@ -1284,7 +1293,9 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         : 0;
       playerRoot.position.set(wState.x, wState.y - heavyCrouchDrop, wState.z);
       if (!legged) {
-        const [nx, ny, nz] = sampleLandTerrainNormal(wState.x, wState.z);
+        const [nx, ny, nz] = wState.polarMission
+          ? sampleMarsCombatNormal(wState.x, wState.z, wState.mapId, wState.polarMission.gateOpen)
+          : sampleLandTerrainNormal(wState.x, wState.z);
         const fx = Math.cos(wState.yaw);
         const fz = Math.sin(wState.yaw);
         const pitch = Math.atan2(-nx * fx - nz * fz, ny);
@@ -1322,6 +1333,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
       }
 
       const wState = worldRef.current;
+      marsEnv.updatePolarEncounter(wState.polarMission ?? null, simElapsed);
       const hub = inputHubRef.current;
       const isPlayingNow = shellStateRef.current === 'playing';
       const onTitle = shellStateRef.current === 'title';
@@ -1467,7 +1479,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
             j.node.quaternion.copy(j.baseQuat).multiply(_qAxis);
           }
 
-          const pickedMeshes: THREE.Object3D[] = [marsEnv.terrainMesh, marsEnv.coverBoulderInst, marsEnv.pylonGroup];
+          const pickedMeshes: THREE.Object3D[] = [marsEnv.terrainMesh, marsEnv.coverBoulderInst, marsEnv.pylonGroup, ...marsEnv.polarPickables()];
           enemyRigs.forEach((rig) => { if (rig.root.visible) pickedMeshes.push(rig.modelPivot); });
           const socket = wState.activeWeapon === 'compound_bow' && playerBowSocket
             ? playerBowSocket : playerRifle?.muzzleSocket;
@@ -1507,6 +1519,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           summonBossJustPressed: hub.summonBossJustPressed,
           summonQueenJustPressed: hub.summonQueenJustPressed,
           ventJustPressed: hub.ventJustPressed,
+          interactPressed: hub.interactPressed,
           aimYaw: hub.camYaw,
           aimPitch: hub.camPitch,
           aimWorldPoint: null
@@ -1514,7 +1527,15 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
         Object.assign(hub, releasedCombatActions);
 
         // Engine natively handles hitstop + lossless one-shot input buffering (zero double-hitstop!)
+        const priorPolarPhase = wState.polarMission?.phase;
+        const priorJammerActive = wState.polarMission?.jammerActive;
         stepMarsCombatWorld(wState, dt, stepInput, sampleView);
+        if (wState.polarMission?.phase !== priorPolarPhase && wState.polarMission?.phase === 'hold' && audioEnabledRef.current) {
+          proceduralAudioSynth.playMechanicalLatchClick(760, true);
+        }
+        if (!priorJammerActive && wState.polarMission?.jammerActive && audioEnabledRef.current) {
+          proceduralAudioSynth.playMechanicalLatchClick(520, true);
+        }
         if (!sampledView) sampleView();
 
         // Tactile Camera Micro-Impulse on heavy weapon fire, melee cleave, shield shatter, kills, and Boss breaks
@@ -1867,7 +1888,27 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
 
           const degHeading = (((Math.round((hub.camYaw * 180) / Math.PI) % 360) + 360) % 360);
 
+          let polar: HudSyncSnapshot['polar'] = null;
+          if (wState.polarMission) {
+            const m = wState.polarMission;
+            const target = m.phase === 'relay' ? POLAR_RELAY : POLAR_HOLD;
+            const hint = readPolarMissionPrompt(m, wState.x, wState.z);
+            const text = m.phase === 'relay' ? (hint?.interaction === 'relay' ? '按 G 启动中继塔' : '前往中继塔')
+              : m.phase === 'hold' ? (hint?.inHoldZone ? '保持在圈内，守住中继区' : '通道已打开 · 进入中继区') : '中继区已稳固 · 击退巢主';
+            const routeText = m.phase === 'boss' ? ''
+              : hint?.canJam ? '按 G 启动侧崖干扰器'
+              : m.jammerActive ? '侧崖干扰已生效 · 桥上增援被截断'
+              : hint?.jammerAvailable ? `谷底直行较快 · 侧崖可截断增援（${Math.round(Math.hypot(wState.x - POLAR_JAMMER.x, wState.z - POLAR_JAMMER.z))} m）`
+              : '桥上增援已出动 · 注意身后';
+            polar = { text, routeText,
+              jammerBearing: hint?.jammerAvailable && !hint.canJam
+                ? computeRelativeThreatAngleRad(wState.x, wState.z, hub.camYaw, POLAR_JAMMER.x, POLAR_JAMMER.z) * 180 / Math.PI : null,
+              phase: m.phase, hold: m.holdElapsed,
+              meters: Math.round(Math.hypot(wState.x - target.x, wState.z - target.z)),
+              bearing: computeRelativeThreatAngleRad(wState.x, wState.z, hub.camYaw, target.x, target.z) * 180 / Math.PI };
+          }
           setHud({
+            polar,
             hp: Math.round(wState.hp),
             maxHp: wState.maxHp,
             ghostHp: Math.round(wState.ghostHp),
@@ -2229,7 +2270,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           </div>
 
           <div className="shrink-0 text-xs font-mono text-slate-300/85 tracking-wide">
-            {movementHint} · 左键射击 · Shift 加速 · 1–4 切换武器 · X 近战 · 右键/F 导弹 · C/Alt 推进 · Q 僚机 · E 脉冲盾 · V 离子炮 · B/N 召唤领主 · Esc/P 暂停
+            {movementHint} · 左键射击 · Shift 加速 · 1–4 切换武器 · X 近战 · 右键/F 导弹 · C/Alt 推进 · Q 僚机 · E 脉冲盾 · V 离子炮 · {selectedMapId === 'polar_ice_canyon' ? 'G 操作中继塔 / 干扰器' : 'B/N 召唤领主'} · Esc/P 暂停
           </div>
         </div>
       )}
@@ -2385,7 +2426,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
               <span className="text-slate-600">|</span>
               <span className="text-slate-200">
                 歼敌 {hud.kills}
-                {!hud.bossHud ? ` / ${hud.vanguardTarget}` : ''}
+                {!hud.bossHud && !hud.polar ? ` / ${hud.vanguardTarget}` : ''}
               </span>
               <span className="text-slate-600">|</span>
               <span className="text-cyan-300 font-bold">SCORE {hud.score}</span>
@@ -2406,6 +2447,20 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
                 {hud.bossIsQueen
                   ? 'WARNING · 巢穴异形禁卫女皇已破冰苏醒'
                   : 'WARNING · 轨道核能泰坦领主已空降战区'}
+              </div>
+            )}
+
+            {hud.polar && (
+              <div data-testid="polar-relay-objective" className="w-full max-w-md rounded border border-cyan-300/35 bg-slate-950/90 px-3 py-2 text-center text-xs text-white">
+                <p className="font-semibold text-cyan-200">{hud.polar.text}</p>
+                {hud.polar.phase !== 'boss' && <p className="mt-1 tabular-nums text-slate-200">
+                  <span aria-hidden="true" className="mr-2 inline-block text-cyan-200" style={{ transform: `rotate(${hud.polar.bearing}deg)` }}>↑</span>{hud.polar.meters} m
+                  {hud.polar.phase === 'hold' && ` · 守住 ${hud.polar.hold.toFixed(1)} / ${POLAR_HOLD_SECONDS} 秒`}
+                </p>}
+                {hud.polar.routeText && <p data-testid="polar-route-hint" className="mt-1.5 border-t border-slate-700 pt-1.5 text-emerald-200">
+                  {hud.polar.jammerBearing !== null && <span aria-hidden="true" className="mr-1.5 inline-block" style={{ transform: `rotate(${hud.polar.jammerBearing}deg)` }}>↑</span>}
+                  {hud.polar.routeText}
+                </p>}
               </div>
             )}
 
@@ -2476,7 +2531,7 @@ export const MarsSciFiCombatGame: React.FC<MarsSciFiCombatGameProps> = ({
           {/* 4. TOP-RIGHT: Compact Utility Strip + CoD Tactical Killfeed */}
           <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
             <div className="pointer-events-auto flex items-center gap-1.5">
-              {!hud.bossHud && (
+              {!hud.bossHud && !hud.polar && selectedMapId !== 'polar_ice_canyon' && (
                 <>
                   <button
                     type="button"

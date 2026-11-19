@@ -1,3 +1,5 @@
+import { createMarsPolarScene } from './marsPolarScene';
+import type { PolarMissionState } from './marsPolarMission';
 import * as THREE from 'three';
 import {
   CombatProjectile,
@@ -7,7 +9,7 @@ import {
   PlayerMechId,
   CombatWeaponId,
   BattlefieldMapId,
-  MARS_BATTLEFIELD_OBSTACLES,
+  getMarsBattlefieldObstacles,
   sampleMarsArenaSurfaceHeight
 } from './marsCombatEngine';
 
@@ -313,6 +315,10 @@ export function createMarsBattlefieldEnvironment(
 ) {
   const isPolar = mapId === 'polar_ice_canyon';
   const root = new THREE.Group();
+  const obstacles = getMarsBattlefieldObstacles(mapId, true);
+  const groundAt = (x:number,z:number) => sampleMarsArenaSurfaceHeight(x,z,mapId);
+  const polar = isPolar ? createMarsPolarScene(groundAt) : null;
+  if (polar) root.add(polar.root);
   const { albedoMap, bumpMap } = isPolar
     ? createPolarIceCanyonTextures(maxAnisotropy, isSoftwareGl)
     : createMartianBattlefieldTextures(maxAnisotropy, isSoftwareGl);
@@ -390,7 +396,7 @@ export function createMarsBattlefieldEnvironment(
     const vx = pos.getX(i);
     const vz = pos.getZ(i);
     const r = Math.hypot(vx, vz);
-    const h = sampleMarsArenaSurfaceHeight(vx, vz);
+    const h = groundAt(vx, vz);
     pos.setY(i, h);
 
     const macroWave =
@@ -457,7 +463,7 @@ export function createMarsBattlefieldEnvironment(
     const rad = 72 + (i % 4) * 5.5;
     const x = Math.cos(ang) * rad;
     const z = Math.sin(ang) * rad;
-    const y = sampleMarsArenaSurfaceHeight(x, z) - 0.3;
+    const y = groundAt(x, z) - 0.3;
     _dummyObj.position.set(x, y, z);
     _dummyObj.rotation.set((i % 5) * 0.08, ang + i * 0.7, 0);
     const sx = 3.2 + (i % 4) * 1.3;
@@ -479,13 +485,13 @@ export function createMarsBattlefieldEnvironment(
   root.add(rockInst);
 
   // 2B. Tactical Midfield Cover Outcrops (1:1 synced with MARS_BATTLEFIELD_OBSTACLES!)
-  const midfieldBoulders = MARS_BATTLEFIELD_OBSTACLES.filter((o) => o.kind === 'boulder');
+  const midfieldBoulders = obstacles.filter((o) => o.kind === 'boulder');
   const coverBoulderInst = new THREE.InstancedMesh(rockGeo, rockMat, midfieldBoulders.length);
   coverBoulderInst.castShadow = !isSoftwareGl;
   coverBoulderInst.receiveShadow = !isSoftwareGl;
   for (let i = 0; i < midfieldBoulders.length; i++) {
     const obs = midfieldBoulders[i];
-    const groundY = sampleMarsArenaSurfaceHeight(obs.x, obs.z);
+    const groundY = groundAt(obs.x, obs.z);
     _dummyObj.position.set(obs.x, groundY + 0.12, obs.z);
     _dummyObj.rotation.set((i % 3) * 0.06, i * 1.15 + 0.4, ((i + 1) % 3) * 0.05);
     const sy = obs.height / (isPolar ? 1.75 : 1.25);
@@ -523,7 +529,7 @@ export function createMarsBattlefieldEnvironment(
       const rad = 76 + (i % 3) * 7.5;
       const gx = Math.cos(ang) * rad;
       const gz = Math.sin(ang) * rad;
-      const gy = sampleMarsArenaSurfaceHeight(gx, gz) - 0.8;
+      const gy = groundAt(gx, gz) - 0.8;
 
       const inst = spireTemplate.clone(true);
       const targetSpan = 22 + (i % 4) * 5.5;
@@ -571,7 +577,7 @@ export function createMarsBattlefieldEnvironment(
   const finGeo = new THREE.BoxGeometry(0.14, 3.8, 1.35);
   const emitterGeo = new THREE.OctahedronGeometry(0.52, 0);
 
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < (isPolar ? 0 : 6); i++) {
     const ang = (i / 6) * Math.PI * 2 + 0.38;
     const rad = 56;
     const px = Math.cos(ang) * rad;
@@ -679,6 +685,7 @@ export function createMarsBattlefieldEnvironment(
   };
 
   const dispose = () => {
+    polar?.dispose();
     for (const m of clonedSpireMaterials) m.dispose();
     albedoMap.dispose();
     bumpMap.dispose();
@@ -712,6 +719,8 @@ export function createMarsBattlefieldEnvironment(
     terrainMesh,
     coverBoulderInst,
     pylonGroup,
+    updatePolarEncounter: (mission: PolarMissionState | null, elapsed: number) => polar?.update(mission, elapsed),
+    polarPickables: () => polar?.pickables() ?? [],
     applyLoadedGlacialSpires,
     updateAtmosphere,
     dispose

@@ -1,5 +1,10 @@
 import { sampleLandTerrainHeight, sampleLandChassisSupportHeight, isGroundDriveVehicle, getSandboxActorSpec, stepGroundDrive } from './actionSandboxEngine';
 
+import {
+  POLAR_BRIDGE, POLAR_GATE, POLAR_RIDGE_COVER, createPolarMission,
+  samplePolarArenaHeight, stepPolarMission, type PolarMissionState
+} from './marsPolarMission';
+
 export type GameShellState = 'title' | 'playing' | 'paused' | 'gameover';
 export type GameOutcome = 'none' | 'victory' | 'defeat';
 export type BattlefieldMapId = 'jezero_crater' | 'polar_ice_canyon';
@@ -560,6 +565,7 @@ export const ENEMY_ARCHETYPE_SPECS: Record<EnemyArchetypeId, CombatEnemySpec> = 
 };
 
 export interface CombatEnemyEntity {
+  polarBridgeEntry?: boolean;
   uid: number;
   archetype: EnemyArchetypeId;
   codeName: string;
@@ -737,6 +743,7 @@ export interface MarsCombatWorldState {
   outcomeDelayTimer: number;
   runSnapshot: RunSummarySnapshot | null;
   mapId: BattlefieldMapId;
+  polarMission: PolarMissionState | null;
 
   // Player state
   mechId: PlayerMechId;
@@ -889,6 +896,7 @@ export interface CombatStepInput extends CombatFrameAim {
   summonBossJustPressed: boolean;
   summonQueenJustPressed?: boolean;
   ventJustPressed?: boolean;
+  interactPressed?: boolean;
   aimYaw: number;
   aimPitch: number;
 }
@@ -898,7 +906,7 @@ export interface MarsBattlefieldObstacle {
   z: number;
   radius: number;
   height: number;
-  kind: 'tower' | 'boulder';
+  kind: 'tower' | 'boulder' | 'gate';
 }
 
 const MAX_PROJECTILES = 96;
@@ -945,13 +953,59 @@ export const MARS_BATTLEFIELD_OBSTACLES: MarsBattlefieldObstacle[] = [
   }))
 ];
 
+const polarCoverOpen: MarsBattlefieldObstacle[] = [
+  ...MARS_BATTLEFIELD_OBSTACLES.filter(o => o.kind === 'tower'),
+  ...POLAR_RIDGE_COVER,
+  { x: 12, z: -7, radius: 1.9, height: 2.6, kind: 'boulder' },
+  { x: 29, z: -13, radius: 2.1, height: 2.9, kind: 'boulder' },
+  { x: 34, z: 14, radius: 2.4, height: 2.9, kind: 'boulder' }
+];
+const polarCoverClosed: MarsBattlefieldObstacle[] = [...polarCoverOpen, POLAR_GATE];
+
+export function getMarsBattlefieldObstacles(mapId: BattlefieldMapId, gateOpen = false) {
+  return mapId === 'polar_ice_canyon' ? gateOpen ? polarCoverOpen : polarCoverClosed : MARS_BATTLEFIELD_OBSTACLES;
+}
+
 /**
- * Samples the exact rendered Martian arena surface height (including `r > 70m` crater-rim uplift).
+ * Samples the rendered Martian arena surface height (including `r > 70m` crater-rim uplift).
  */
-export function sampleMarsArenaSurfaceHeight(x: number, z: number): number {
+export function sampleMarsArenaSurfaceHeight(x: number, z: number, mapId: BattlefieldMapId = 'jezero_crater'): number {
   const r = Math.hypot(x, z);
   const rimRise = r > 70 ? Math.pow((r - 70) / 28, 1.85) * 6.5 : 0;
-  return sampleLandTerrainHeight(x, z) + rimRise;
+  const baseline = sampleLandTerrainHeight(x, z);
+  return (mapId === 'polar_ice_canyon' ? samplePolarArenaHeight(x, z, baseline) : baseline) + rimRise;
+}
+
+export function sampleMarsCombatFloor(x: number, z: number, mapId: BattlefieldMapId, gateOpen = false): number {
+  if (mapId === 'jezero_crater') return sampleLandTerrainHeight(x, z);
+  const height = sampleMarsArenaSurfaceHeight(x, z, mapId);
+  const b = POLAR_BRIDGE;
+  return gateOpen && Math.abs(x - b.x) <= b.length / 2 && Math.abs(z - b.z) <= b.width / 2
+    ? Math.max(height, b.floorY)
+    : height;
+}
+export function sampleMarsCombatNormal(x: number, z: number, mapId: BattlefieldMapId, gateOpen = false): [number, number, number] {
+  const s = 0.18;
+  const dx = sampleMarsCombatFloor(x - s, z, mapId, gateOpen) - sampleMarsCombatFloor(x + s, z, mapId, gateOpen);
+  const dz = sampleMarsCombatFloor(x, z - s, mapId, gateOpen) - sampleMarsCombatFloor(x, z + s, mapId, gateOpen);
+  const norm = Math.hypot(dx, 2 * s, dz);
+  return [dx / norm, 2 * s / norm, dz / norm];
+}
+function worldFloor(state: MarsCombatWorldState, x: number, z: number): number {
+  return sampleMarsCombatFloor(x, z, state.mapId, state.polarMission?.gateOpen);
+}
+function chassisFloor(state: MarsCombatWorldState): number {
+  const {x, z, yaw, mechId, mapId} = state;
+  if (mapId === 'jezero_crater') return sampleLandChassisSupportHeight(x, z, yaw, mechId);
+  const wide = mechId === 'mars2020' || mechId === 'sar' || mechId === 'husky_ugv';
+  const len = wide ? 0.56 : 0.34, wid = wide ? 0.46 : 0.26;
+  const c = Math.cos(yaw), n = Math.sin(yaw);
+  const center = worldFloor(state, x, z);
+  const h1 = worldFloor(state, x + c*len - n*wid, z + n*len + c*wid);
+  const h2 = worldFloor(state, x + c*len + n*wid, z + n*len - c*wid);
+  const h3 = worldFloor(state, x - c*len - n*wid, z - n*len + c*wid);
+  const h4 = worldFloor(state, x - c*len + n*wid, z - n*len - c*wid);
+  return Math.max(center, .104*(center + h1 + h2 + h3 + h4) + .48*Math.max(h1,h2,h3,h4));
 }
 
 /**
@@ -1068,7 +1122,7 @@ export function createInitialMarsCombatState(
   mapId: BattlefieldMapId = 'jezero_crater'
 ): MarsCombatWorldState {
   const spec = getPlayableMechSpec(mechId);
-  const startY = sampleLandChassisSupportHeight(0, 0, 0, mechId);
+  const startY = mapId === 'jezero_crater' ? sampleLandChassisSupportHeight(0, 0, 0, mechId) : sampleMarsCombatFloor(0, 0, mapId);
 
   const projectiles: CombatProjectile[] = [];
   for (let i = 0; i < MAX_PROJECTILES; i++) {
@@ -1102,6 +1156,7 @@ export function createInitialMarsCombatState(
     outcomeDelayTimer: 0,
     runSnapshot: null,
     mapId,
+    polarMission: mapId === 'polar_ice_canyon' ? createPolarMission() : null,
 
     mechId,
     x: 0,
@@ -1150,7 +1205,7 @@ export function createInitialMarsCombatState(
 
     wingman: {
       x: 2.15,
-      y: sampleLandTerrainHeight(2.15, 2.35),
+      y: sampleMarsCombatFloor(2.15, 2.35, mapId),
       z: 2.35,
       vx: 0,
       vy: 0,
@@ -1251,7 +1306,7 @@ export function spawnEnemyDropPod(
   let x = rawX * scaleBack;
   let z = rawZ * scaleBack;
   if (archetype !== 'aero_hunter') {
-    for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
+    for (const obs of getMarsBattlefieldObstacles(state.mapId, state.polarMission?.gateOpen)) {
       const dx = x - obs.x;
       const dz = z - obs.z;
       const d = Math.hypot(dx, dz);
@@ -1264,7 +1319,7 @@ export function spawnEnemyDropPod(
       }
     }
   }
-  const groundY = sampleLandTerrainHeight(x, z);
+  const groundY = worldFloor(state, x, z);
   const y = archetype === 'aero_hunter' ? groundY + 6.8 : groundY;
 
   const waveMult = isBossArch ? 1 : 1 + (state.wave - 1) * 0.16;
@@ -1374,6 +1429,7 @@ export function spawnRandomEnemyWave(
 }
 
 export function summonAresBoss(state: MarsCombatWorldState): CombatEnemyEntity | null {
+  if (state.polarMission) return null;
   const existing = state.enemies.find((e) => e.isBoss && e.koTimer <= 0);
   if (existing) return existing;
   state.bossSpawned = true;
@@ -1393,13 +1449,18 @@ export function summonAresBoss(state: MarsCombatWorldState): CombatEnemyEntity |
 }
 
 export function summonXenoQueenBoss(state: MarsCombatWorldState): CombatEnemyEntity | null {
+  if (state.polarMission && state.polarMission.phase !== 'boss') return null;
   const existing = state.enemies.find((e) => e.isBoss && e.koTimer <= 0);
   if (existing) return existing;
   state.bossSpawned = true;
   state.bossBannerTimer = 2.8;
   state.cameraTrauma = Math.max(state.cameraTrauma, 0.72);
   state.events.bossCue = 'xeno_screech';
-  const queen = spawnEnemyDropPod(state, 'xeno_queen_boss', state.aimYaw, 22);
+  // Mission Queen drops beyond the capture pad regardless of player camera direction.
+  const dropX = 53 - state.x, dropZ = 7 - state.z;
+  const queen = state.polarMission?.phase === 'boss'
+    ? spawnEnemyDropPod(state, 'xeno_queen_boss', Math.atan2(dropZ, dropX), Math.hypot(dropX, dropZ))
+    : spawnEnemyDropPod(state, 'xeno_queen_boss', state.aimYaw, 22);
   queen.aiCooldown = 0.3;
   state.events.explosions.push({
     x: queen.x,
@@ -1730,7 +1791,7 @@ export function damageEnemyEntity(
       id: state.nextUid++,
       kind: state.kills % 2 === 0 ? 'repair_core' : 'overcharge_cell',
       x: enemy.x,
-      y: sampleLandTerrainHeight(enemy.x, enemy.z) + 0.55,
+      y: worldFloor(state, enemy.x, enemy.z) + 0.55,
       z: enemy.z,
       life: 18
     });
@@ -1813,6 +1874,7 @@ export function stepMarsCombatWorld(
   if (input.summonBossJustPressed) state.bufferedSummonBoss = true;
   if (input.summonQueenJustPressed) state.bufferedSummonQueen = true;
   if (input.ventJustPressed) state.bufferedVent = true;
+  if (input.interactPressed && state.polarMission) state.polarMission.interactBuffered = true;
 
   // Real-time visual feedback timers continue ticking during hitstop
   state.cameraTrauma = Math.max(0, state.cameraTrauma - dt * 1.45);
@@ -1892,9 +1954,9 @@ export function stepMarsCombatWorld(
   state.aimYaw = input.aimYaw;
   state.aimPitch = input.aimPitch;
 
-  if (summonQueenTriggered && !state.bossSpawned) {
+  if (!state.polarMission && summonQueenTriggered && !state.bossSpawned) {
     summonXenoQueenBoss(state);
-  } else if (summonBossTriggered && !state.bossSpawned) {
+  } else if (!state.polarMission && summonBossTriggered && !state.bossSpawned) {
     summonAresBoss(state);
   }
 
@@ -2018,7 +2080,7 @@ export function stepMarsCombatWorld(
   state.y += state.vy * dt;
   resolvePlayerArenaContacts(state, previousX, previousZ);
 
-  const floorY = sampleLandChassisSupportHeight(state.x, state.z, state.yaw, state.mechId);
+  const floorY = chassisFloor(state);
   if (state.y <= floorY + 0.02 && state.vy <= 0) {
     state.y = floorY;
     state.vy = 0;
@@ -2125,7 +2187,7 @@ export function stepMarsCombatWorld(
       tx = view.aimWorldPoint[0];
       tz = view.aimWorldPoint[2];
     }
-    const ty = sampleLandTerrainHeight(tx, tz);
+    const ty = worldFloor(state, tx, tz);
     state.ultimateBeamTimer = 1.65;
     state.ultimateBeamTarget = [tx, ty, tz];
     state.cameraTrauma = Math.min(1, state.cameraTrauma + 0.65);
@@ -2345,13 +2407,22 @@ export function stepMarsCombatWorld(
   // 4. Random Wave Spawner & Boss Escalation (Jezero -> ARES-09 Titan; Polar Ice Canyon -> XENO-OMEGA Queen!)
   const activeVanguardCount = state.enemies.filter((e) => !e.isBoss && e.koTimer <= 0).length;
   if (!state.bossSpawned) {
-    if (state.kills >= state.vanguardKillsTarget) {
-      state.wave = 2;
-      if (state.mapId === 'polar_ice_canyon') {
-        summonXenoQueenBoss(state);
-      } else {
-        summonAresBoss(state);
+    const polarReady = state.polarMission && stepPolarMission(state.polarMission, dt, state.x, state.z, state.isGrounded);
+    if (state.polarMission?.phase === 'hold' && state.polarMission.holdElapsed > 0 && !state.polarMission.bridgeWaveSent) {
+      state.polarMission.bridgeWaveSent = true;
+      if (!state.polarMission.jammerActive) {
+        const x = POLAR_BRIDGE.x - POLAR_BRIDGE.length / 2 - 1.6;
+        const z = POLAR_BRIDGE.z;
+        const dx = x - state.x, dz = z - state.z;
+        const incoming = spawnEnemyDropPod(state, 'xeno_runner', Math.atan2(dz, dx), Math.hypot(dx, dz));
+        incoming.polarBridgeEntry = true;
       }
+    }
+
+    if (state.outcome === 'none' && (polarReady || (!state.polarMission && state.kills >= state.vanguardKillsTarget))) {
+      state.wave = 2;
+      if (state.polarMission) summonXenoQueenBoss(state);
+      else summonAresBoss(state);
     } else {
       state.spawnTimer -= dt;
       if (state.spawnTimer <= 0 && activeVanguardCount < 5) {
@@ -2412,7 +2483,7 @@ export function stepMarsCombatWorld(
       e.z += (e.vz + e.knockVz) * dt;
       e.knockVx *= knockDecay;
       e.knockVz *= knockDecay;
-      const gStunY = sampleLandTerrainHeight(e.x, e.z);
+      const gStunY = worldFloor(state, e.x, e.z);
       e.y = e.archetype === 'aero_hunter' ? gStunY + 6.4 : gStunY;
       continue;
     }
@@ -2424,7 +2495,7 @@ export function stepMarsCombatWorld(
       e.z += e.knockVz * dt;
       e.knockVx *= knockDecay;
       e.knockVz *= knockDecay;
-      const gStagY = sampleLandTerrainHeight(e.x, e.z);
+      const gStagY = worldFloor(state, e.x, e.z);
       e.y = e.archetype === 'aero_hunter' ? gStagY + 6.4 : gStagY;
       if (e.staggeredTimer <= 0) {
         e.stagger = 0;
@@ -2447,7 +2518,13 @@ export function stepMarsCombatWorld(
     const spec = ENEMY_ARCHETYPE_SPECS[e.archetype];
     const slowMult = e.slowTimer > 0 ? 0.48 : 1.0;
 
-    if (e.archetype === 'xeno_queen_boss') {
+    if (e.polarBridgeEntry && state.polarMission?.gateOpen && e.x < POLAR_BRIDGE.x + POLAR_BRIDGE.length / 2 + 0.8) {
+      // On the first defense surge, this runner uses the newly opened span before pursuing the player.
+      const routeYaw = Math.atan2(POLAR_BRIDGE.z - e.z, Math.max(0.25, POLAR_BRIDGE.x + POLAR_BRIDGE.length / 2 + 1 - e.x));
+      e.vx = Math.cos(routeYaw) * spec.speed;
+      e.vz = Math.sin(routeYaw) * spec.speed;
+      e.yaw = turnTowardsAngle(e.yaw, routeYaw, 6 * dt);
+    } else if (e.archetype === 'xeno_queen_boss') {
       // XENO-OMEGA CROWNED ALIEN QUEEN BOSS AI & 3 SIGNATURE TELEGRAPHED ATTACKS
       const speedMult = (e.bossPhase === 2 ? 1.32 : 1.0) * slowMult;
       if (e.attackPhase === 'idle') {
@@ -2535,7 +2612,7 @@ export function stepMarsCombatWorld(
               const brood = spawnEnemyDropPod(state, bArch, bAng, 14);
               brood.x = e.x + Math.cos(bAng) * 4.2;
               brood.z = e.z + Math.sin(bAng) * 4.2;
-              brood.y = sampleLandTerrainHeight(brood.x, brood.z);
+              brood.y = worldFloor(state, brood.x, brood.z);
               brood.dropPodProgress = 0.85;
             }
             e.phaseTimer = 0.35;
@@ -2544,7 +2621,7 @@ export function stepMarsCombatWorld(
       } else if (e.attackPhase === 'active') {
         e.phaseTimer -= dt;
         if (e.bossAttackKind === 'queen_tail_scythe') {
-          const playerClear = state.y - sampleLandTerrainHeight(state.x, state.z);
+          const playerClear = state.y - worldFloor(state, state.x, state.z);
           if (distP < 5.6 && playerClear < 1.65 && state.invulnTimer <= 0) {
             applyDamageToPlayer(state, 32, e.x, e.z);
             state.invulnTimer = 0.38;
@@ -2603,7 +2680,7 @@ export function stepMarsCombatWorld(
               state.hazards.push({
                 id: state.nextUid++,
                 x: hx,
-                y: sampleLandTerrainHeight(hx, hz),
+                y: worldFloor(state, hx, hz),
                 z: hz,
                 radius: 3.4,
                 elapsed: 0,
@@ -2667,7 +2744,7 @@ export function stepMarsCombatWorld(
           const projDist = (state.x - e.x) * lx + (state.z - e.z) * lz;
           if (projDist > 1.5 && projDist < 38) {
             const perpDist = Math.abs((state.x - e.x) * -lz + (state.z - e.z) * lx);
-            const playerClearance = state.y - sampleLandTerrainHeight(state.x, state.z);
+            const playerClearance = state.y - worldFloor(state, state.x, state.z);
             if (perpDist < 1.35 && playerClearance < 1.25 && state.invulnTimer <= 0) {
               applyDamageToPlayer(state, 28, e.x, e.z);
               state.invulnTimer = 0.35;
@@ -2807,7 +2884,7 @@ export function stepMarsCombatWorld(
         state.hazards.push({
           id: state.nextUid++,
           x: tx,
-          y: sampleLandTerrainHeight(tx, tz),
+          y: worldFloor(state, tx, tz),
           z: tz,
           radius: 3.1,
           elapsed: 0,
@@ -3073,7 +3150,7 @@ export function stepMarsCombatWorld(
       e.x *= s;
       e.z *= s;
     }
-    const gY = sampleLandTerrainHeight(e.x, e.z);
+    const gY = worldFloor(state, e.x, e.z);
     e.y = e.archetype === 'aero_hunter' ? gY + 6.4 + Math.sin(state.elapsedPlaySec * 2.4 + e.uid) * 0.45 : gY;
     const eFwdProj = e.vx * Math.cos(e.yaw) + e.vz * Math.sin(e.yaw);
     e.gaitDist += Math.hypot(e.vx * moveSlow, e.vz * moveSlow) * (eFwdProj < -0.4 ? -1 : 1) * dt;
@@ -3132,11 +3209,11 @@ export function stepMarsCombatWorld(
 
     // 6A. Check Physical Battlefield Cover Obstacles (Boulders & Defense Towers block Line-of-Fire!)
     let blockedByCover = false;
-    for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
+    for (const obs of getMarsBattlefieldObstacles(state.mapId, state.polarMission?.gateOpen)) {
       const tObs = segmentIntersectsCircle2D(p.prevX, p.prevZ, p.x, p.z, obs.x, obs.z, obs.radius);
       if (tObs !== null) {
         const hitY = p.prevY + (p.y - p.prevY) * tObs;
-        const obsFloorY = sampleLandTerrainHeight(obs.x, obs.z);
+        const obsFloorY = worldFloor(state, obs.x, obs.z);
         if (hitY <= obsFloorY + obs.height) {
           const hitX = p.prevX + (p.x - p.prevX) * tObs;
           const hitZ = p.prevZ + (p.z - p.prevZ) * tObs;
@@ -3172,7 +3249,7 @@ export function stepMarsCombatWorld(
     if (blockedByCover) continue;
 
     // 6B. Terrain Impact
-    const terrainY = sampleLandTerrainHeight(p.x, p.z);
+    const terrainY = worldFloor(state, p.x, p.z);
     if (p.y <= terrainY) {
       p.active = false;
       if (p.kind === 'xeno_acid') {
@@ -3310,7 +3387,7 @@ export function stepMarsCombatWorld(
         p.active = false;
         applyDamageToPlayer(state, p.damage, p.sourceX, p.sourceZ);
         if (p.kind === 'xeno_acid' && state.hazards.length < 22) {
-          const gy = sampleLandTerrainHeight(state.x, state.z);
+          const gy = worldFloor(state, state.x, state.z);
           state.hazards.push({
             id: state.nextUid++,
             x: state.x,
@@ -3386,7 +3463,7 @@ export function stepMarsCombatWorld(
     if (d < 6.5 && d > 0.05) {
       pk.x += (dx / d) * 14 * dt;
       pk.z += (dz / d) * 14 * dt;
-      pk.y = sampleLandTerrainHeight(pk.x, pk.z) + 0.6;
+      pk.y = worldFloor(state, pk.x, pk.z) + 0.6;
     }
     if (d < 1.55) {
       if (pk.kind === 'repair_core') {
@@ -3444,7 +3521,7 @@ export function stepWingmanGo2Companion(
       w.x += w.vx * dt;
       w.z += w.vz * dt;
       const prog = 1 - Math.max(0, Math.min(1, w.modeTimer / 0.52));
-      const baseH = sampleLandTerrainHeight(w.x, w.z);
+      const baseH = worldFloor(state, w.x, w.z);
       w.y = baseH + Math.sin(prog * Math.PI) * 2.15;
       w.gaitDist += leapSpeed * 0.65 * dt;
 
@@ -3453,7 +3530,7 @@ export function stepWingmanGo2Companion(
         w.mode = 'bite_slash';
         w.modeTimer = 0.86;
         w.biteTickTimer = 0;
-        w.y = sampleLandTerrainHeight(w.x, w.z);
+        w.y = worldFloor(state, w.x, w.z);
       }
       return;
     }
@@ -3470,7 +3547,7 @@ export function stepWingmanGo2Companion(
       const latchDist = Math.max(1.25, ENEMY_ARCHETYPE_SPECS[tgt.archetype].hitRadius * 1.05);
       w.x = tgt.x + Math.cos(orbitAng) * latchDist;
       w.z = tgt.z + Math.sin(orbitAng) * latchDist;
-      w.y = sampleLandTerrainHeight(w.x, w.z) + 0.18;
+      w.y = worldFloor(state, w.x, w.z) + 0.18;
       w.yaw = Math.atan2(tgt.z - w.z, tgt.x - w.x);
       w.gaitDist += 14 * dt;
 
@@ -3515,7 +3592,7 @@ export function stepWingmanGo2Companion(
 
   w.x += w.vx * dt;
   w.z += w.vz * dt;
-  w.y = sampleLandTerrainHeight(w.x, w.z);
+  w.y = worldFloor(state, w.x, w.z);
   w.gaitDist += Math.hypot(w.vx, w.vz) * dt;
 
   w.biteTickTimer = Math.max(0, w.biteTickTimer - dt);
@@ -3552,11 +3629,11 @@ function slidePlayerAlongContact(state: MarsCombatWorldState, nx: number, nz: nu
 }
 
 function resolvePlayerArenaContacts(state: MarsCombatWorldState, fromX: number, fromZ: number): void {
-  for (const obstacle of MARS_BATTLEFIELD_OBSTACLES) {
+  for (const obstacle of getMarsBattlefieldObstacles(state.mapId, state.polarMission?.gateOpen)) {
     const clearance = PLAYER_COLLISION_RADIUS + obstacle.radius;
     const entry = segmentIntersectsCircle2D(fromX, fromZ, state.x, state.z, obstacle.x, obstacle.z, clearance);
     if (entry === null) continue;
-    const top = sampleMarsArenaSurfaceHeight(obstacle.x, obstacle.z) + obstacle.height;
+    const top = worldFloor(state, obstacle.x, obstacle.z) + obstacle.height;
     if (state.y >= top - 0.25) continue;
 
     // Keep the first contact normal even when a dash or a crowd push crosses the center.
@@ -3581,7 +3658,7 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
   const wingmanR = 0.72;
   resolvePlayerArenaContacts(state, previousX, previousZ);
 
-  for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
+  for (const obs of getMarsBattlefieldObstacles(state.mapId, state.polarMission?.gateOpen)) {
     if (state.wingman.mode === 'escort') {
       const dxW = state.wingman.x - obs.x;
       const dzW = state.wingman.z - obs.z;
@@ -3592,7 +3669,7 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
         const nz = dW > 1e-4 ? dzW / dW : 0;
         state.wingman.x += nx * (minDW - dW);
         state.wingman.z += nz * (minDW - dW);
-        state.wingman.y = sampleLandTerrainHeight(state.wingman.x, state.wingman.z);
+        state.wingman.y = worldFloor(state, state.wingman.x, state.wingman.z);
       }
     }
   }
@@ -3609,7 +3686,7 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
       const push = minD - d;
       state.wingman.x += nx * push;
       state.wingman.z += nz * push;
-      state.wingman.y = sampleLandTerrainHeight(state.wingman.x, state.wingman.z);
+      state.wingman.y = worldFloor(state, state.wingman.x, state.wingman.z);
     }
   }
 
@@ -3661,11 +3738,11 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
         a.z -= nz * overlap * wA;
         b.x += nx * overlap * wB;
         b.z += nz * overlap * wB;
-        b.y = sampleLandTerrainHeight(b.x, b.z);
+        b.y = worldFloor(state, b.x, b.z);
       }
     }
 
-    for (const obs of MARS_BATTLEFIELD_OBSTACLES) {
+    for (const obs of getMarsBattlefieldObstacles(state.mapId, state.polarMission?.gateOpen)) {
       const dxO = a.x - obs.x;
       const dzO = a.z - obs.z;
       const minDO = rA * 0.8 + obs.radius;
@@ -3677,11 +3754,11 @@ export function resolveCombatSoftCollisions(state: MarsCombatWorldState): void {
         a.z += nz * (minDO - dO);
       }
     }
-    a.y = sampleLandTerrainHeight(a.x, a.z);
+    a.y = worldFloor(state, a.x, a.z);
   }
 
   if (state.isGrounded && (state.x !== previousX || state.z !== previousZ)) {
-    state.y = sampleLandChassisSupportHeight(state.x, state.z, state.yaw, state.mechId);
+    state.y = chassisFloor(state);
   }
 }
 
