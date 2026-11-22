@@ -192,7 +192,7 @@ export const LiveBusSparklines: React.FC<LiveBusSparklinesProps> = ({
             <Activity className="w-3.5 h-3.5 text-cyan-400 shrink-0" strokeWidth={1.5} />
           )}
           <span className="truncate">
-            {faultActive ? faultLabel || '谐波震荡告警 · FAULT' : 'DDS 60Hz 波形采样'}
+            {faultActive ? `故障演示 · ${faultLabel || '谐波震荡'}` : '程序波形 · 未连接设备'}
           </span>
         </div>
         <span
@@ -201,7 +201,7 @@ export const LiveBusSparklines: React.FC<LiveBusSparklinesProps> = ({
             faultActive ? 'text-amber-300 font-semibold' : 'text-cyan-300/90'
           }`}
         >
-          ROS2 /joint_states
+          演示数据
         </span>
       </div>
 

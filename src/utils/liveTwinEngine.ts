@@ -56,6 +56,8 @@ export interface AeroFadecTelemetry {
 }
 
 export interface TelemetryProbeReadout {
+  source: 'demo';
+  connected: false;
   id: string;
   label: string;
   partKeywords: string[];
@@ -390,7 +392,7 @@ export function estimatePartThermalNormalized(
 }
 
 /**
- * Generates deterministic + micro-jitter HIL telemetry callout probes for the 6 flagship robots & 3 workstations.
+ * Generates authored demo readings. No hardware sampling or HIL transport occurs.
  */
 export function buildSpatialTelemetryProbes(
   contextId: string,
@@ -398,6 +400,18 @@ export function buildSpatialTelemetryProbes(
   loadFactor: number,
   fadec?: AeroFadecTelemetry
 ): TelemetryProbeReadout[] {
+  return buildDemoTelemetryProbes(contextId, simTime, loadFactor, fadec).map(probe => ({
+    ...probe, source: 'demo', connected: false,
+    primaryValue: `演示 · ${probe.primaryValue}`
+  }));
+}
+
+function buildDemoTelemetryProbes(
+  contextId: string,
+  simTime: number,
+  loadFactor: number,
+  fadec?: AeroFadecTelemetry
+): Omit<TelemetryProbeReadout, 'source' | 'connected'>[] {
   const jitter = (seed: number, amp: number) =>
     Math.sin(simTime * 11.3 + seed * 4.7) * amp * 0.6 + Math.cos(simTime * 23.1 + seed * 2.1) * amp * 0.4;
 
@@ -533,7 +547,7 @@ export function buildSpatialTelemetryProbes(
         primaryValue: isRex
           ? `${(64.2 + loadFactor * 118 + jitter(5, 1.4)).toFixed(1)} N·m`
           : `${(15.8 - loadFactor * 0.9 + jitter(5, 0.06)).toFixed(2)} V · ${(8.4 + loadFactor * 26.5).toFixed(1)} A`,
-        secondaryValue: isRex ? `油压 20.8 MPa` : `MAVLink 100Hz 锁定`,
+        secondaryValue: isRex ? `预设油压 20.8 MPa` : `MAVLink 接口示意 · 未连接`,
         status: loadFactor > 0.8 ? 'ELEVATED' : 'NOMINAL'
       }
     ];
@@ -656,6 +670,8 @@ export function sampleTelemetryWaveforms(
   ch2Text: string;
   ch3Text: string;
   protocolBadge: string;
+  source: 'demo';
+  connected: false;
 } {
   const load = Math.max(0.12, Math.min(1.0, loadFactor));
   const n1 = 0.5 + 0.5 * Math.sin(simTime * 5.2);
@@ -674,7 +690,8 @@ export function sampleTelemetryWaveforms(
       ch1Text: `${(420 + ch1 * 2350).toFixed(0)} kg/h`,
       ch2Text: `${(0.18 + ch2 * 1.45).toFixed(2)} ips FFT`,
       ch3Text: `${(460 + ch3 * 510).toFixed(1)} °C EGT`,
-      protocolBadge: 'ARINC-429 / FADEC'
+      protocolBadge: '演示 · ARINC-429 / FADEC（未连接）',
+      source: 'demo', connected: false
     };
   }
 
@@ -686,7 +703,8 @@ export function sampleTelemetryWaveforms(
       ch1Text: `${(108.5 + ch1 * 4.2).toFixed(1)} W RTG`,
       ch2Text: `${(0.04 + ch2 * 0.38).toFixed(2)} g Vib`,
       ch3Text: `${(14.0 + ch3 * 36.0).toFixed(1)} N·m`,
-      protocolBadge: 'MIL-STD-1553 / FSW'
+      protocolBadge: '演示 · MIL-STD-1553 / FSW（未连接）',
+      source: 'demo', connected: false
     };
   }
 
@@ -698,7 +716,8 @@ export function sampleTelemetryWaveforms(
       ch1Text: `${(180 + ch1 * 920).toFixed(0)} W Bus`,
       ch2Text: `${(0.12 + ch2 * 0.85).toFixed(2)} m/s² IMU`,
       ch3Text: `${(22.0 + ch3 * 145.0).toFixed(1)} N Thrust`,
-      protocolBadge: 'MAVLink2 / ROS2 DDS'
+      protocolBadge: '演示 · MAVLink2 / ROS2 DDS（未连接）',
+      source: 'demo', connected: false
     };
   }
 
@@ -709,6 +728,7 @@ export function sampleTelemetryWaveforms(
     ch1Text: `${(95 + ch1 * 340).toFixed(0)} W Bus`,
     ch2Text: `${(0.08 + ch2 * 0.92).toFixed(2)} rad/s`,
     ch3Text: `${(12.5 + ch3 * 68.0).toFixed(1)} N·m Peak`,
-    protocolBadge: 'ROS2 /joint_states'
+    protocolBadge: '演示 · ROS2 /joint_states（未连接）',
+    source: 'demo', connected: false
   };
 }

@@ -22,7 +22,11 @@ export interface PartBlueprintMetadata {
   partName: string;
   layer: 'L1' | 'L2' | 'L3';
   subAssemblyLabel: string;
-  dimensionsMm: [number, number, number]; // [Length X, Height Y, Width Z] in real millimeters
+  /** Estimate from a declared reference envelope, never a measured part dimension. */
+  dimensionsMm: [number, number, number] | null;
+  dimensionsModelUnits: [number, number, number] | null;
+  dimensionSource: 'reference-envelope' | 'unknown';
+  bindingStatus: 'bound' | 'missing' | 'ambiguous';
   tris: number;
   vertices: number;
   urdfLinkName: string;
@@ -56,8 +60,8 @@ interface SubAssemblyRule {
 }
 
 /**
- * Real-world reference max envelope (in millimeters) for each real GLB twin so
- * CAD Blueprint dimensions reflect authentic physical scale.
+ * Configured reference envelopes for display estimates. These values are not
+ * per-part measurements or a calibration certificate.
  */
 const REAL_MAX_ENVELOPE_MM: Record<string, number> = {
   sar: 1180,
@@ -842,9 +846,8 @@ export function computeLocalObbDimensions(
 }
 
 /**
- * Computes CAD Drawing-Grade Blueprint Metadata (real L×W×H mm, Tris, Vertices, URDF Link & Joint Axis).
- * Supports optional `localObbSize` for exact rotation-invariant OBB part dimensions while remaining
- * 100% backward-compatible with `normalizedBoxSize`.
+ * Reports geometry extents and explicit URDF identity. A known model envelope
+ * permits a labelled scale estimate; an unknown scale stays unknown.
  */
 export function computePartBlueprintMetadata(
   contextId: string,
@@ -858,107 +861,33 @@ export function computePartBlueprintMetadata(
   urdfJoints: UrdfJointDef[],
   localObbSize?: [number, number, number]
 ): PartBlueprintMetadata {
-  const refMaxMm = REAL_MAX_ENVELOPE_MM[contextId] || 1500;
-  const safeAssemblyDim =
-    Number.isFinite(normalizedAssemblyMaxDim) && normalizedAssemblyMaxDim > 0
-      ? Math.max(0.2, normalizedAssemblyMaxDim)
-      : 1.0;
-  const mmPerNormUnit = refMaxMm / safeAssemblyDim;
+  const validExtents = (v: readonly number[] | undefined): v is [number, number, number] =>
+    !!v && v.length === 3 && v.every(n => Number.isFinite(n) && n >= 0);
+  const extents = validExtents(localObbSize) ? localObbSize : normalizedBoxSize;
+  const dimensionsModelUnits: [number, number, number] | null =
+    validExtents(extents) ? [extents[0], extents[1], extents[2]] : null;
+  const refMaxMm = Object.prototype.hasOwnProperty.call(REAL_MAX_ENVELOPE_MM, contextId)
+    ? REAL_MAX_ENVELOPE_MM[contextId] : undefined;
+  const hasScale = Number.isFinite(refMaxMm) && refMaxMm! > 0 &&
+    Number.isFinite(normalizedAssemblyMaxDim) && normalizedAssemblyMaxDim > 0;
+  const dimensionsMm: [number, number, number] | null = hasScale && dimensionsModelUnits
+    ? dimensionsModelUnits.map(v => Math.round(v * refMaxMm! / normalizedAssemblyMaxDim * 1000) / 1000) as [number, number, number]
+    : null;
 
-  const hasValidLocalObb = Boolean(
-    localObbSize &&
-      localObbSize.length === 3 &&
-      Number.isFinite(localObbSize[0]) &&
-      Number.isFinite(localObbSize[1]) &&
-      Number.isFinite(localObbSize[2]) &&
-      (localObbSize[0] > 0 || localObbSize[1] > 0 || localObbSize[2] > 0)
-  );
-  const effectiveExtents = hasValidLocalObb ? localObbSize! : normalizedBoxSize;
-
-  const sanitizeMm = (normVal: number): number => {
-    const cleanVal = Number.isFinite(normVal) ? Math.abs(normVal) : 0;
-    return Math.max(4, Math.min(refMaxMm * 2, Math.round(cleanVal * mmPerNormUnit)));
-  };
-
-  const dimsMm: [number, number, number] = [
-    sanitizeMm(effectiveExtents[0]),
-    sanitizeMm(effectiveExtents[1]),
-    sanitizeMm(effectiveExtents[2])
-  ];
-
-  const lower = partName.trim().toLowerCase();
-  const matchedJoint =
-    lower.length > 0
-      ? urdfJoints.find((j) => {
-          const childLower = j.child.toLowerCase();
-          const jointLower = j.name.toLowerCase();
-          return (
-            (childLower.length > 0 && (lower.includes(childLower) || childLower.includes(lower))) ||
-            (jointLower.length > 0 && lower.includes(jointLower))
-          );
-        }) || null
-      : null;
-
-  if (matchedJoint) {
-    return {
-      partName,
-      layer,
-      subAssemblyLabel,
-      dimensionsMm: dimsMm,
-      tris,
-      vertices,
-      urdfLinkName: matchedJoint.child,
-      urdfJointName: matchedJoint.name,
-      urdfJointType: matchedJoint.type.toUpperCase(),
-      urdfAxisText: `[${matchedJoint.axis.map((v) => Number(v.toFixed(2))).join(', ')}]`
-    };
-  }
-
-  // Domain-authentic kinematic metadata for NASA / CFM56 non-URDF CAD assemblies
-  if (contextId === 'b737_cfm56' || contextId === 'b737_bridge') {
-    const isRotor = lower.includes('n1_') || lower.includes('lpc') || lower.includes('hpc') || lower.includes('hpt') || lower.includes('lpt');
-    const isRev = lower.includes('reverser');
-    return {
-      partName,
-      layer,
-      subAssemblyLabel,
-      dimensionsMm: dimsMm,
-      tris,
-      vertices,
-      urdfLinkName: partName,
-      urdfJointName: isRev ? 'c_duct_translating_sleeve' : isRotor ? 'concentric_spool_bearing' : 'nacelle_flange_mount',
-      urdfJointType: isRev ? 'PRISMATIC' : isRotor ? 'CONTINUOUS' : 'FIXED',
-      urdfAxisText: isRev || isRotor ? '[1, 0, 0] (Engine X-Axis)' : '[0, 0, 0] (Bolted Flange)'
-    };
-  }
-
-  if (contextId === 'mars2020') {
-    const isWheel = lower.includes('wheel') || lower.includes('suspension');
-    const isMast = lower.includes('mast') || lower.includes('head') || lower.includes('cylinder015');
-    return {
-      partName,
-      layer,
-      subAssemblyLabel,
-      dimensionsMm: dimsMm,
-      tris,
-      vertices,
-      urdfLinkName: partName,
-      urdfJointName: isWheel ? 'rocker_bogie_diff_pivot' : isMast ? 'rsm_azimuth_gimbal' : 'rover_web_hardpoint',
-      urdfJointType: isWheel || isMast ? 'REVOLUTE' : 'FIXED',
-      urdfAxisText: isMast ? '[0, 1, 0] (Yaw Axis)' : isWheel ? '[0, 0, 1] (Pitch/Spin)' : '[0, 0, 0] (Ti-6Al-4V Bolt)'
-    };
-  }
-
+  // IDs are authoritative. Similar labels, case folding and invented mounts are
+  // not evidence that a rendered part is a particular mechanical joint.
+  const id = partName.trim().replace(/^\//, '');
+  const matches = id ? urdfJoints.filter(j =>
+    j.child.replace(/^\//, '') === id || j.name.replace(/^\//, '') === id) : [];
+  const bindingStatus = matches.length === 1 ? 'bound' : matches.length ? 'ambiguous' : 'missing';
+  const joint = bindingStatus === 'bound' ? matches[0] : null;
   return {
-    partName,
-    layer,
-    subAssemblyLabel,
-    dimensionsMm: dimsMm,
-    tris,
-    vertices,
-    urdfLinkName: partName,
-    urdfJointName: `${partName}_mount`,
-    urdfJointType: 'FIXED',
-    urdfAxisText: '[0, 0, 1]'
+    partName, layer, subAssemblyLabel, dimensionsMm, dimensionsModelUnits,
+    dimensionSource: dimensionsMm ? 'reference-envelope' : 'unknown',
+    bindingStatus, tris, vertices,
+    urdfLinkName: joint?.child ?? '',
+    urdfJointName: joint?.name ?? '',
+    urdfJointType: joint?.type.toUpperCase() ?? 'UNBOUND',
+    urdfAxisText: joint ? `[${joint.axis.map(v => Number(v.toFixed(2))).join(', ')}]` : '未绑定'
   };
 }

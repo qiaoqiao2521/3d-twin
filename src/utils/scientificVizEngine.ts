@@ -3,7 +3,7 @@ import * as THREE from 'three';
 export type FeaColorMapId = 'turbo' | 'viridis' | 'jet';
 
 export interface ScientificVizConfig {
-  /** Real-time Von Mises structural FEA stress cloud */
+  /** Illustrative load score; no finite-element solution or measured stress. */
   feaEnabled: boolean;
   /** Scientific colormap LUT */
   feaColorMap: FeaColorMapId;
@@ -86,9 +86,8 @@ export function evaluateScientificColorMap(
 }
 
 /**
- * Computes real-time Von Mises equivalent structural stress for a CAD link/part
- * based on kinematic joint load, cantilever lever arm, operating load factor,
- * and external kinetic push-recovery impulse.
+ * Computes a visual load score from authored heuristics. The legacy stressMpa
+ * field is retained for renderer compatibility, not as a physical measurement.
  */
 export function computeLinkVonMisesStress(params: {
   partName: string;
@@ -98,7 +97,7 @@ export function computeLinkVonMisesStress(params: {
   loadFactor: number;
   pushSpike01: number;
   isImpactTarget?: boolean;
-}): { sigma01: number; stressMpa: number } {
+}): { sigma01: number; stressMpa: number; evidence: 'illustrative'; unit: null } {
   const n = params.partName.toLowerCase();
   const isLoadBearingJoint =
     n.includes('hip') ||
@@ -127,9 +126,9 @@ export function computeLinkVonMisesStress(params: {
     0.03,
     Math.min(1.0, layerBase + momentArmTerm + dynamicTorqueTerm + jointConcentrator + pushSurge)
   );
-  // Calibrated to aerospace 7075-T6 / Ti-6Al-4V elastic-plastic structural range (12 MPa .. 415 MPa)
+  // Legacy colour-scale coordinate. No material or finite-element solve occurs.
   const stressMpa = Math.round(12 + Math.pow(sigma01, 1.28) * 403);
-  return { sigma01, stressMpa };
+  return { sigma01, stressMpa, evidence: 'illustrative', unit: null };
 }
 
 export interface PartMassSample {
@@ -144,7 +143,9 @@ export interface ComZmpSupportResult {
   zmpFloor: [number, number];
   supportHull2D: [number, number][];
   stabilityMargin01: number;
-  statusLevel: 'stable' | 'warning' | 'critical';
+  statusLevel: 'stable' | 'warning' | 'critical' | 'unknown';
+  evidence: 'illustrative';
+  supportAvailable: boolean;
 }
 
 function cross2D(o: [number, number], a: [number, number], b: [number, number]): number {
@@ -197,8 +198,8 @@ function signedDistanceToConvexPolygon(pt: [number, number], poly: [number, numb
 }
 
 /**
- * Computes 3D Center of Mass (CoM), Linear-Inverted-Pendulum Zero-Moment Point (ZMP),
- * 2D Convex Support Polygon on the floor, and dynamic stability margin [0..1].
+ * Volume-weighted centre and support projection for visual inspection. Contact
+ * candidates are not measured forces; this is not an engineering stability test.
  */
 export function computeRobotComAndSupportPolygon(params: {
   samples: PartMassSample[];
@@ -212,12 +213,14 @@ export function computeRobotComAndSupportPolygon(params: {
   const contactPts: [number, number][] = [];
 
   for (const s of params.samples) {
-    const w = Math.max(0.02, s.volumeWeight);
+    if (!Number.isFinite(s.volumeWeight) || s.volumeWeight <= 0 ||
+      !s.worldPos.every(Number.isFinite)) continue;
+    const w = s.volumeWeight;
     sumW += w;
     cx += s.worldPos[0] * w;
     cy += s.worldPos[1] * w;
     cz += s.worldPos[2] * w;
-    if (s.isGroundContactCandidate || s.worldPos[1] <= params.floorY + 0.34) {
+    if (s.isGroundContactCandidate) {
       contactPts.push([s.worldPos[0], s.worldPos[2]]);
     }
   }
@@ -227,30 +230,17 @@ export function computeRobotComAndSupportPolygon(params: {
     cy /= sumW;
     cz /= sumW;
   } else {
-    cy = params.floorY + 0.65;
-  }
-
-  // Ensure a well-formed support polygon even for fixed-base arms or ROVs
-  if (contactPts.length < 4) {
-    const r = 0.32;
-    contactPts.push(
-      [cx - r, cz - r * 0.85],
-      [cx + r, cz - r * 0.85],
-      [cx + r, cz + r * 0.85],
-      [cx - r, cz + r * 0.85]
-    );
-  } else {
-    // Expand contact points slightly by foot/tire pad radius (7.5cm)
-    const expanded: [number, number][] = [];
-    const pad = 0.075;
-    for (const [px, pz] of contactPts) {
-      expanded.push([px - pad, pz - pad], [px + pad, pz - pad], [px + pad, pz + pad], [px - pad, pz + pad]);
-    }
-    contactPts.length = 0;
-    contactPts.push(...expanded);
+    cy = params.floorY;
   }
 
   const hull = computeConvexHull2D(contactPts);
+  // Never invent a rectangular support area or pad radius when contact data is
+  // absent. Two points or a collinear set do not define a support polygon.
+  const area = Math.abs(hull.reduce((sum, p, i) => {
+    const next = hull[(i + 1) % hull.length];
+    return sum + p[0] * next[1] - next[0] * p[1];
+  }, 0)) / 2;
+  const supportAvailable = sumW > 0 && hull.length >= 3 && area > 1e-10;
   const comHeight = Math.max(0.18, cy - params.floorY);
   const g = 9.81;
   const ax = params.comAccelXZ ? params.comAccelXZ[0] : 0;
@@ -259,16 +249,18 @@ export function computeRobotComAndSupportPolygon(params: {
   const zmpZ = cz - (comHeight / g) * az;
 
   const signedDist = signedDistanceToConvexPolygon([zmpX, zmpZ], hull);
-  const stabilityMargin01 = Math.max(0, Math.min(1, (signedDist + 0.04) / 0.24));
-  const statusLevel: 'stable' | 'warning' | 'critical' =
+  const stabilityMargin01 = supportAvailable ? Math.max(0, Math.min(1, (signedDist + 0.04) / 0.24)) : 0;
+  const statusLevel: ComZmpSupportResult['statusLevel'] = !supportAvailable ? 'unknown' :
     stabilityMargin01 >= 0.42 ? 'stable' : stabilityMargin01 >= 0.16 ? 'warning' : 'critical';
 
   return {
     comWorld: [cx, cy, cz],
     zmpFloor: [zmpX, zmpZ],
-    supportHull2D: hull,
+    supportHull2D: supportAvailable ? hull : [],
     stabilityMargin01,
-    statusLevel
+    statusLevel,
+    evidence: 'illustrative',
+    supportAvailable
   };
 }
 
@@ -726,12 +718,14 @@ export function createScientificVizSceneController(): ScientificVizSceneControll
         plumbGeo.attributes.position.needsUpdate = true;
 
         const statusHex =
-          statusLevel === 'stable' ? 0x10b981 : statusLevel === 'warning' ? 0xf59e0b : 0xef4444;
+          statusLevel === 'unknown' ? 0x94a3b8 : statusLevel === 'stable' ? 0x10b981 : statusLevel === 'warning' ? 0xf59e0b : 0xef4444;
         polyLoopMat.color.setHex(statusHex);
         polyFillMat.color.setHex(statusHex);
         zmpRingMat.color.setHex(statusLevel === 'stable' ? 0x00e5ff : statusHex);
 
         const hullLen = Math.min(maxHullVerts, supportHull2D.length);
+        zmpRing.visible = statusLevel !== 'unknown';
+        zmpTrailLine.visible = statusLevel !== 'unknown';
         if (hullLen >= 3) {
           let cx = 0;
           let cz = 0;
@@ -764,6 +758,10 @@ export function createScientificVizSceneController(): ScientificVizSceneControll
           }
           polyFillGeo.setDrawRange(0, hullLen * 3);
           polyFillGeo.attributes.position.needsUpdate = true;
+        } else {
+          polyLoopGeo.setDrawRange(0, 0);
+          polyFillGeo.setDrawRange(0, 0);
+          zmpHistory.length = 0;
         }
 
         zmpRing.position.set(zmpFloor[0], floorLift + 0.003, zmpFloor[1]);

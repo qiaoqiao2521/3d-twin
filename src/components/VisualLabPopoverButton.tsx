@@ -98,7 +98,7 @@ export interface VisualLabPopoverProps {
   scientificConfig?: ScientificVizConfig;
   onChangeScientificConfig?: React.Dispatch<React.SetStateAction<ScientificVizConfig>>;
   peakStressMpa?: number;
-  comStabilityStatus?: 'stable' | 'warning' | 'critical';
+  comStabilityStatus?: 'stable' | 'warning' | 'critical' | 'unknown';
   hoverThermalReadout?: { tempC: number; zoneLabel: string; partName: string } | null;
 
   // Dimension 3: Hard-Surface Sci-Fi & Energy VFX
@@ -174,7 +174,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
   scientificConfig,
   onChangeScientificConfig,
   peakStressMpa = 0,
-  comStabilityStatus = 'stable',
+  comStabilityStatus = 'unknown',
   hoverThermalReadout = null,
   scifiConfig,
   onChangeScifiConfig,
@@ -572,7 +572,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                       <span className="flex items-center gap-1 truncate">
                         <Eye className="w-3 h-3 text-cyan-300 shrink-0" />
                         <span className="truncate">
-                          磁力透视球{magLensEnabled ? ` ${magLensRadius.toFixed(2)}m` : ''}
+                          磁力透视球{magLensEnabled ? ` ${magLensRadius.toFixed(2)} 场景单位` : ''}
                         </span>
                       </span>
                       {dot(magLensEnabled)}
@@ -583,11 +583,11 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                   {thermalMode && (
                     <div className="bg-[#0c111b] border border-amber-400/25 rounded-lg p-2 space-y-1">
                       <div className="flex items-center justify-between text-[10px] font-mono tabular-nums">
-                        <span className="text-amber-200">FLIR 多温区标定色标</span>
+                        <span className="text-amber-200">程序温区示例色标</span>
                         <span className="text-amber-300 font-semibold">
                           {hoverThermalReadout
-                            ? `${hoverThermalReadout.tempC.toFixed(1)} °C`
-                            : '悬停部件测温'}
+                            ? `示例 ${hoverThermalReadout.tempC.toFixed(1)} °C`
+                            : '悬停查看示例'}
                         </span>
                       </div>
                       <div
@@ -643,7 +643,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                         >
                           <span className="flex items-center gap-1 truncate">
                             <Activity className="w-3 h-3 text-amber-300 shrink-0" />
-                            <span className="truncate">FEA 等效应力云图</span>
+                            <span className="truncate">受力分布示意</span>
                           </span>
                           {dot(scientificConfig.feaEnabled, true)}
                         </button>
@@ -661,7 +661,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                         >
                           <span className="flex items-center gap-1 truncate">
                             <Crosshair className="w-3 h-3 text-cyan-300 shrink-0" />
-                            <span className="truncate">质心与支撑多边形</span>
+                            <span className="truncate">几何重心与支撑示意</span>
                           </span>
                           {dot(scientificConfig.comZmpEnabled)}
                         </button>
@@ -677,7 +677,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                           }
                           className={itemClass(scientificConfig.torqueVectorsEnabled)}
                         >
-                          <span className="truncate">关节力矩旋转矢量</span>
+                          <span className="truncate">关节力矩示意矢量</span>
                           {dot(scientificConfig.torqueVectorsEnabled)}
                         </button>
 
@@ -725,7 +725,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                       <span className="flex items-center gap-1 truncate">
                         <Cpu className="w-3 h-3 text-cyan-300 shrink-0" />
                         <span className="truncate">
-                          MPC 功率流
+                          路径与功率示意
                           {mpcEnabled && totalPowerWatts > 1 ? ` ${Math.round(totalPowerWatts)}W` : ''}
                         </span>
                       </span>
@@ -737,9 +737,9 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                   {scientificConfig?.feaEnabled && onChangeScientificConfig && (
                     <div className="bg-[#0c111b] border border-cyan-400/25 rounded-lg p-2 space-y-1.5">
                       <div className="flex items-center justify-between text-[10px] font-mono tabular-nums">
-                        <span className="text-slate-300">Von Mises 峰值应力</span>
+                        <span className="text-slate-300">程序估算着色</span>
                         <span className="text-amber-300 font-semibold">
-                          {peakStressMpa > 0 ? `${peakStressMpa} MPa` : '142 MPa'}
+                          非有限元结果
                         </span>
                       </div>
                       <div
@@ -795,7 +795,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                   {/* CoM / ZMP Stability Inline Status */}
                   {scientificConfig?.comZmpEnabled && (
                     <div className="flex items-center justify-between text-[10px] font-mono bg-[#0c111b] border border-white/[0.06] rounded-lg px-2 py-1">
-                      <span className="text-slate-400">ZMP 零力矩点包络裕度</span>
+                      <span className="text-slate-400">支撑几何估算</span>
                       <span
                         className={
                           comStabilityStatus === 'critical'
@@ -805,11 +805,13 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                               : 'text-emerald-300 font-semibold'
                         }
                       >
-                        {comStabilityStatus === 'critical'
-                          ? '倾覆临界预警'
-                          : comStabilityStatus === 'warning'
-                            ? '支撑边缘动态调整'
-                            : '支撑多边形内稳定'}
+                        {comStabilityStatus === 'unknown'
+                          ? '数据不足，未校验'
+                          : comStabilityStatus === 'critical'
+                            ? '投影位于边界外'
+                            : comStabilityStatus === 'warning'
+                              ? '投影接近边界'
+                              : '几何投影在内部'}
                       </span>
                     </div>
                   )}
@@ -906,7 +908,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                             }))
                           }
                           className={itemClass(scifiConfig.hexShieldEnabled)}
-                          title="开启后点击真机任意部位触发三维射线涟漪"
+                          title="开启后点击模型任意部位触发三维射线涟漪"
                         >
                           <span className="flex items-center gap-1 truncate">
                             <Shield className="w-3 h-3 text-cyan-300 shrink-0" />
@@ -1018,7 +1020,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                         />
                       </label>
                       <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                        <span>切换真机自动 0.65s 重构</span>
+                        <span>切换模型自动 0.65s 重构</span>
                         <button
                           type="button"
                           onClick={() =>
@@ -1073,7 +1075,7 @@ export const VisualLabPopoverButton: React.FC<VisualLabPopoverProps> = ({
                       >
                         <span className="truncate">
                           {tactileConfig.kineticImpactArmed
-                            ? '动能冲击弹已挂载（点击真机发射）'
+                            ? '动能冲击弹已挂载（点击模型发射）'
                             : '挂载抗扰动动能冲击弹测试'}
                         </span>
                         {dot(tactileConfig.kineticImpactArmed, true)}

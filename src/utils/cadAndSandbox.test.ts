@@ -90,10 +90,10 @@ test('System 1: 4-stage orthogonal explosion gating, surgical peel, and auto-dis
   assert.ok(demo.progress < 0.5, 'Auto disassembly smoothly re-assembles after hold pause');
 });
 
-test('System 1: computePartBlueprintMetadata outputs realistic mm dimensions and matches URDF joint axis', () => {
+test('System 1: computePartBlueprintMetadata labels a reference estimate and binds an exact URDF ID', () => {
   const meta = computePartBlueprintMetadata(
     'unitree_go2',
-    'FL_thigh_mesh',
+    'FL_thigh',
     'L2',
     '左前腿 FL 三轴高动态关节链',
     [0.24, 0.11, 0.09],
@@ -115,6 +115,9 @@ test('System 1: computePartBlueprintMetadata outputs realistic mm dimensions and
     ]
   );
 
+  assert.equal(meta.dimensionSource, 'reference-envelope');
+  assert.equal(meta.bindingStatus, 'bound');
+  assert.ok(meta.dimensionsMm);
   assert.ok(meta.dimensionsMm[0] > 100 && meta.dimensionsMm[0] < 300);
   assert.equal(meta.urdfLinkName, 'FL_thigh');
   assert.equal(meta.urdfJointName, 'FL_thigh_joint');

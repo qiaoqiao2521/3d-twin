@@ -41,6 +41,9 @@ export const PartBlueprintCapsule: React.FC<PartBlueprintCapsuleProps> = ({
   onResetAllParts,
   onCloseSelection
 }) => {
+  const dimensionText = (axis: number) => metadata?.dimensionsMm
+    ? `≈${metadata.dimensionsMm[axis]} mm`
+    : metadata?.dimensionsModelUnits ? `${metadata.dimensionsModelUnits[axis].toFixed(3)} 模型单位` : '未标定';
   const hasAnyModifiedParts = isIsolated || peeledCount > 0 || hiddenCount > 0;
 
   // Strictly dock Single-Part Precision Capsule in the left safe zone (x=16px, below top-left compact bar)
@@ -60,7 +63,7 @@ export const PartBlueprintCapsule: React.FC<PartBlueprintCapsuleProps> = ({
               }}
               className="absolute top-0 left-0 px-1.5 py-0.5 rounded bg-slate-950/95 border border-amber-400/80 text-[10px] font-mono font-bold tabular-nums text-amber-300 shadow-lg"
             >
-              L {metadata.dimensionsMm[0]} mm
+              L {dimensionText(0)}
             </div>
           )}
           {axisLabels.yScreen && (
@@ -70,7 +73,7 @@ export const PartBlueprintCapsule: React.FC<PartBlueprintCapsuleProps> = ({
               }}
               className="absolute top-0 left-0 px-1.5 py-0.5 rounded bg-slate-950/95 border border-sky-400/80 text-[10px] font-mono font-bold tabular-nums text-sky-300 shadow-lg"
             >
-              H {metadata.dimensionsMm[1]} mm
+              H {dimensionText(1)}
             </div>
           )}
           {axisLabels.zScreen && (
@@ -80,7 +83,7 @@ export const PartBlueprintCapsule: React.FC<PartBlueprintCapsuleProps> = ({
               }}
               className="absolute top-0 left-0 px-1.5 py-0.5 rounded bg-slate-950/95 border border-emerald-400/80 text-[10px] font-mono font-bold tabular-nums text-emerald-300 shadow-lg"
             >
-              W {metadata.dimensionsMm[2]} mm
+              W {dimensionText(2)}
             </div>
           )}
         </div>
@@ -172,13 +175,13 @@ export const PartBlueprintCapsule: React.FC<PartBlueprintCapsuleProps> = ({
           {/* Detailed CAD Engineering Blueprint Specification Sheet */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-1.5 border-t border-slate-800 text-[10px] font-mono tabular-nums">
             <div className="col-span-2 flex items-center justify-between">
-              <span className="text-slate-400">局部 OBB 尺寸 L × H × W (mm)</span>
+              <span className="text-slate-400">{metadata.dimensionsMm ? '外形参考估算 L × H × W' : '未标定尺寸 L × H × W'}</span>
               <span className="text-amber-300 font-bold">
-                {metadata.dimensionsMm[0]} × {metadata.dimensionsMm[1]} × {metadata.dimensionsMm[2]} mm
+                {metadata.dimensionsMm ? `≈ ${metadata.dimensionsMm.join(' × ')} mm` : metadata.dimensionsModelUnits ? `${metadata.dimensionsModelUnits.map((value) => value.toFixed(3)).join(' × ')} 模型单位` : '无有效尺度'}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">真实面数</span>
+              <span className="text-slate-400">网格面数</span>
               <span className="text-sky-300 font-semibold">{metadata.tris.toLocaleString()} Tris</span>
             </div>
             <div className="flex items-center justify-between">
@@ -187,12 +190,12 @@ export const PartBlueprintCapsule: React.FC<PartBlueprintCapsuleProps> = ({
             </div>
             <div className="col-span-2 flex items-center justify-between gap-2">
               <span className="text-slate-400 shrink-0">URDF 连杆</span>
-              <span className="text-emerald-300 truncate">{metadata.urdfLinkName}</span>
+              <span className="text-emerald-300 truncate">{metadata.bindingStatus === 'bound' ? metadata.urdfLinkName : metadata.bindingStatus === 'ambiguous' ? '重名冲突，未绑定' : '未绑定'}</span>
             </div>
             <div className="col-span-2 flex items-center justify-between gap-2">
               <span className="text-slate-400 shrink-0">运动轴 / 约束</span>
               <span className="text-slate-200 truncate">
-                {metadata.urdfJointType} · Axis {metadata.urdfAxisText}
+                {metadata.bindingStatus === 'bound' ? `${metadata.urdfJointType} · Axis ${metadata.urdfAxisText}` : '未确认'}
               </span>
             </div>
           </div>

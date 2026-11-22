@@ -46,7 +46,7 @@ test('cinemaOpticsPipeline: EV exposure multiplier and studio lighting presets a
   assert.ok(overloadedBudget.anamorphicTapScale < 0.7);
 });
 
-test('scientificVizEngine: FEA Von Mises stress responds to push-recovery impulse and colormaps stay in [0, 1]', () => {
+test('scientificVizEngine: illustrative load score responds to push-recovery impulse and colormaps stay in [0, 1]', () => {
   for (const map of ['turbo', 'viridis', 'jet'] as const) {
     for (const v of [0, 0.25, 0.5, 0.75, 1]) {
       const [r, g, b] = evaluateScientificColorMap(v, map);
@@ -73,6 +73,8 @@ test('scientificVizEngine: FEA Von Mises stress responds to push-recovery impuls
   });
   assert.ok(impactedHip.sigma01 > idleHip.sigma01);
   assert.ok(impactedHip.stressMpa > idleHip.stressMpa);
+  assert.equal(impactedHip.evidence, 'illustrative');
+  assert.equal(impactedHip.unit, null);
 });
 
 test('scientificVizEngine: CoM, ZMP, convex support polygon, and calibrated FLIR temperatures', () => {
@@ -88,8 +90,10 @@ test('scientificVizEngine: CoM, ZMP, convex support polygon, and calibrated FLIR
   const stableCom = computeRobotComAndSupportPolygon({
     samples: [
       { partName: 'torso', worldPos: [0, 0.85, 0], volumeWeight: 5.0, isGroundContactCandidate: false },
-      { partName: 'left_ankle', worldPos: [-0.18, 0.02, 0.05], volumeWeight: 1.0, isGroundContactCandidate: true },
-      { partName: 'right_ankle', worldPos: [0.18, 0.02, -0.05], volumeWeight: 1.0, isGroundContactCandidate: true }
+      ...[[-0.18, -0.15], [-0.18, 0.15], [0.18, -0.15], [0.18, 0.15]].map(([x, z], i) => ({
+        partName: `declared_contact_${i}`, worldPos: [x, 0.02, z] as [number, number, number],
+        volumeWeight: 0.5, isGroundContactCandidate: true
+      }))
     ],
     floorY: 0,
     comAccelXZ: [0, 0]
@@ -99,8 +103,10 @@ test('scientificVizEngine: CoM, ZMP, convex support polygon, and calibrated FLIR
   const pushedCom = computeRobotComAndSupportPolygon({
     samples: [
       { partName: 'torso', worldPos: [0, 0.85, 0], volumeWeight: 5.0, isGroundContactCandidate: false },
-      { partName: 'left_ankle', worldPos: [-0.12, 0.02, 0.0], volumeWeight: 1.0, isGroundContactCandidate: true },
-      { partName: 'right_ankle', worldPos: [0.12, 0.02, 0.0], volumeWeight: 1.0, isGroundContactCandidate: true }
+      ...[[-0.18, -0.15], [-0.18, 0.15], [0.18, -0.15], [0.18, 0.15]].map(([x, z], i) => ({
+        partName: `declared_contact_${i}`, worldPos: [x, 0.02, z] as [number, number, number],
+        volumeWeight: 0.5, isGroundContactCandidate: true
+      }))
     ],
     floorY: 0,
     comAccelXZ: [5.5, 4.5]

@@ -1,0 +1,40 @@
+name: Validate shared inspection contract
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inspection-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate inspection contract
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            /package.json
+            /src/shared/inspection/
+            /scripts/package_inspection.py
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check source contract without rendering dependencies
+        run: node --test src/shared/inspection/sceneInspection.test.ts
+      - name: Package the exact tested source revision
+        run: python3 scripts/package_inspection.py --revision "$GITHUB_SHA" --output "$RUNNER_TEMP/twin-inspection"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twin-inspection-${{ github.sha }}
+          path: ${{ runner.temp }}/twin-inspection/
+          if-no-files-found: error
+          retention-days: 14

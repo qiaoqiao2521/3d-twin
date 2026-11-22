@@ -53,7 +53,7 @@ export const HoveredPartCalloutOverlay: React.FC<HoveredPartCalloutOverlayProps>
   const maxCardTop = Math.max(56, viewportHeight - 92);
   const cardTop = Math.max(56, Math.min(maxCardTop, endY - 20));
 
-  const formatMm = (v: number) => `${v >= 0 ? '+' : ''}${Math.round(v)}`;
+  const formatModelPosition = (v: number) => `${v >= 0 ? '+' : ''}${(v / 1000).toFixed(3)}`;
 
   return (
     <div
@@ -105,7 +105,7 @@ export const HoveredPartCalloutOverlay: React.FC<HoveredPartCalloutOverlayProps>
           </div>
         )}
         <div className="text-[10px] font-mono tabular-nums text-slate-400 mt-0.5 truncate border-t border-white/[0.06] pt-0.5">
-          POS [{formatMm(callout.worldMm[0])}, {formatMm(callout.worldMm[1])}, {formatMm(callout.worldMm[2])}] mm
+          场景坐标 [{formatModelPosition(callout.worldMm[0])}, {formatModelPosition(callout.worldMm[1])}, {formatModelPosition(callout.worldMm[2])}]
         </div>
       </div>
     </div>

@@ -336,8 +336,8 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
     createDefaultScientificVizConfig()
   );
   const [peakStressMpa, setPeakStressMpa] = useState<number>(0);
-  const [comStabilityStatus, setComStabilityStatus] = useState<'stable' | 'warning' | 'critical'>(
-    'stable'
+  const [comStabilityStatus, setComStabilityStatus] = useState<'stable' | 'warning' | 'critical' | 'unknown'>(
+    'unknown'
   );
   const [hoverThermalReadout, setHoverThermalReadout] = useState<{
     tempC: number;
@@ -1784,7 +1784,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
       })
       .catch((err) => {
         if (disposed) return;
-        console.warn('[Workstation] L1/L2/L3 真机 GLB 资产网络重试已耗尽:', err);
+        console.warn('[Workstation] L1/L2/L3 参考 GLB 资产网络重试已耗尽:', err);
         setGlbLoadError(err instanceof Error ? err.message : '网络传输中断');
         setIsLoadingGlb(false);
       });
@@ -2803,7 +2803,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
             });
             const badgeParts: string[] = [];
             if (s.thermalMode) {
-              badgeParts.push(`${hovFlir.tempC.toFixed(1)} °C · ${hovFlir.zoneLabel}`);
+              badgeParts.push(`温度示例 ${hovFlir.tempC.toFixed(1)} °C · ${hovFlir.zoneLabel}`);
             }
             if (s.scientificConfig.feaEnabled) {
               const hovFea = computeLinkVonMisesStress({
@@ -2814,7 +2814,7 @@ export const WorkstationTwinView: React.FC<WorkstationTwinViewProps> = ({
                 loadFactor,
                 pushSpike01: s.impactSpike01
               });
-              badgeParts.push(`σ_vm ${hovFea.stressMpa} MPa`);
+              badgeParts.push(`受力示意 ${Math.round(hovFea.sigma01 * 100)}%`);
             }
             _tmpVec3B.copy(_tmpVec3).project(camera);
             if (_tmpVec3B.z >= -1 && _tmpVec3B.z <= 1) {

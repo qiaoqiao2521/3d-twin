@@ -396,6 +396,8 @@ test('Workstream C: decoupled GPU PathTracer geometrySig vs cameraSig, order-ind
     [],
     [0.24, 0.1, 0.08] // exact local OBB
   );
+  assert.ok(obbMeta.dimensionsMm);
+  assert.equal(obbMeta.dimensionSource, 'reference-envelope');
   assert.equal(obbMeta.dimensionsMm[0], Math.round(0.24 * 700));
   assert.equal(obbMeta.dimensionsMm[1], Math.round(0.1 * 700));
 

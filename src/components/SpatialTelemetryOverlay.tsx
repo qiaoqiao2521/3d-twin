@@ -154,6 +154,7 @@ export const SpatialTelemetryOverlay: React.FC<SpatialTelemetryOverlayProps> = (
             <div className="text-[10px] font-mono tabular-nums text-slate-400 truncate">
               {item.probe.secondaryValue}
             </div>
+            <div className="mt-0.5 text-[9px] text-slate-500">演示数据 · 未连接设备</div>
           </div>
         );
       })}
