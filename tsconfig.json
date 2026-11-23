@@ -16,5 +16,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "src/**/*.json"]
+  "include": ["**/*.ts", "**/*.tsx", "src/**/*.json"],
+  "exclude": ["node_modules", "dist", "integrations/smart-warehouse/upstream"]
 }

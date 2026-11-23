@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/Xxcool/smart-warehouse",
+  "revision": "13f04d17304fedbc4cb4cf53002c4eb4abc4d188",
+  "license": "MIT",
+  "sourceDirectory": "upstream",
+  "entry": "integrations/smart-warehouse/index.html",
+  "stateSource": "local-simulation",
+  "deviceConnection": false
+}

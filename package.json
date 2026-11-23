@@ -9,7 +9,12 @@
     "lint": "tsc --noEmit",
     "test": "bun test",
     "remaster:assets": "node scripts/remaster_glb_assets.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "npm run install:warehouse",
+    "install:warehouse": "npm ci --prefix integrations/smart-warehouse/upstream --no-audit --no-fund",
+    "build:warehouse": "node scripts/build-smart-warehouse.mjs",
+    "predev": "npm run build:warehouse",
+    "prebuild": "npm run build:warehouse"
   },
   "dependencies": {
     "lucide-react": "^0.454.0",

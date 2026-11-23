@@ -1,10 +1,11 @@
 export type EngineeringMode = 'cad_hub' | 'sandbox' | 'mars_combat';
-export type WorkspaceRoute = { workspace: 'iron' } | { workspace: 'engineering'; mode: EngineeringMode };
+export type WorkspaceRoute = { workspace: 'iron' } | { workspace: 'warehouse' } | { workspace: 'engineering'; mode: EngineeringMode };
 
 /** Existing shared links stay valid; an unqualified visit opens engineering. */
 export function resolveWorkspaceLocation(search: string): WorkspaceRoute {
   const params = new URLSearchParams(search);
   const mode = params.get('mode');
+  if (mode === 'warehouse' || params.get('workspace') === 'warehouse') return { workspace: 'warehouse' };
   if (mode === 'iron' || params.get('workspace') === 'iron') return { workspace: 'iron' };
   if (params.get('sandbox') === '1' || mode === 'sandbox') return { workspace: 'engineering', mode: 'sandbox' };
   if (mode === 'mars_combat') return { workspace: 'engineering', mode: 'mars_combat' };
@@ -16,6 +17,6 @@ export function workspaceSearch(route: WorkspaceRoute, currentSearch = ''): stri
   params.delete('workspace');
   params.delete('sandbox');
   params.delete('autostart');
-  params.set('mode', route.workspace === 'iron' ? 'iron' : route.mode === 'cad_hub' ? 'hangar' : route.mode);
+  params.set('mode', route.workspace !== 'engineering' ? route.workspace : route.mode === 'cad_hub' ? 'hangar' : route.mode);
   return `?${params.toString()}`;
 }

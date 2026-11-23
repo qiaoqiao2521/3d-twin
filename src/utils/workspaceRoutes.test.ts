@@ -18,3 +18,16 @@ test('iron is explicit and switching workspaces cannot retain a stale sandbox or
   assert.equal(new URLSearchParams(next).get('actor'), 'sar');
   assert.equal(new URLSearchParams(next).has('autostart'), false);
 });
+
+test('warehouse opens directly and remains distinct from iron and engineering on return', () => {
+  assert.deepEqual(resolveWorkspaceLocation('?mode=warehouse'), { workspace: 'warehouse' });
+  assert.deepEqual(resolveWorkspaceLocation('?workspace=warehouse'), { workspace: 'warehouse' });
+  const warehouse = workspaceSearch({ workspace: 'warehouse' }, '?workspace=iron&sandbox=1&autostart=1');
+  assert.deepEqual(resolveWorkspaceLocation(warehouse), { workspace: 'warehouse' });
+  assert.equal(new URLSearchParams(warehouse).has('sandbox'), false);
+  assert.equal(new URLSearchParams(warehouse).has('autostart'), false);
+  const iron = workspaceSearch({ workspace: 'iron' }, warehouse);
+  assert.deepEqual(resolveWorkspaceLocation(iron), { workspace: 'iron' });
+  const engineering = workspaceSearch({ workspace: 'engineering', mode: 'cad_hub' }, warehouse);
+  assert.deepEqual(resolveWorkspaceLocation(engineering), { workspace: 'engineering', mode: 'cad_hub' });
+});
