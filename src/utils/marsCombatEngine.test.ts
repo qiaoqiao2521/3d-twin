@@ -5,6 +5,8 @@ import path from 'node:path';
 import {
   PLAYABLE_MECH_SPECS,
   MARS_BATTLEFIELD_OBSTACLES,
+  getMarsBattlefieldObstacles,
+  sampleMarsCombatFloor,
   resolveCombatSoftCollisions,
   ENEMY_ARCHETYPE_SPECS,
   createInitialMarsCombatState,
@@ -16,6 +18,7 @@ import {
   CombatStepInput
 } from './marsCombatEngine';
 import { sampleLandChassisSupportHeight, sampleLandTerrainHeight } from './actionSandboxEngine';
+import { POLAR_RELAY, POLAR_HOLD, POLAR_HOLD_SECONDS, stepPolarMission } from './marsPolarMission';
 
 function idleInput(overrides: Partial<CombatStepInput> = {}): CombatStepInput {
   return {
@@ -66,18 +69,19 @@ test('autostart boots into playing state with initial Martian drop-pod enemy wav
 test('walking and boosting into cover stop at contact while a glancing boost keeps its sideways speed', () => {
   for (const mapId of ['jezero_crater', 'polar_ice_canyon'] as const) {
     for (const kind of ['boulder', 'tower'] as const) {
-      const wall = MARS_BATTLEFIELD_OBSTACLES.find((obstacle) => obstacle.kind === kind)!;
+      // Polar has a ridge, gate and its own cover; the Jezero constant is not its collision map.
+      const wall = getMarsBattlefieldObstacles(mapId).find((obstacle) => obstacle.kind === kind)!;
       const clearance = wall.radius + 0.96;
       const state = createInitialMarsCombatState('unitree_g1', 0, false, mapId);
       state.shellState = 'playing';
       state.spawnTimer = 999;
       state.x = wall.x - clearance - 0.15;
       state.z = wall.z;
-      state.y = sampleLandChassisSupportHeight(state.x, state.z, 0, state.mechId);
+      state.y = sampleMarsCombatFloor(state.x, state.z, mapId, state.polarMission?.gateOpen);
       for (let i = 0; i < 60; i++) {
         stepMarsCombatWorld(state, 1 / 60, idleInput({ moveForward: 1, sprintHeld: true, dashJustPressed: i === 0 }));
       }
-      assert.ok(Math.abs(state.x - (wall.x - clearance)) < 1e-6);
+      assert.ok(Math.abs(state.x - (wall.x - clearance)) < 1e-6, `${mapId}/${kind}: contact position`);
       assert.ok(Math.abs(state.vx) < 1e-6);
       assert.ok(Math.abs(state.gaitDist - 0.15) < 1e-6);
 
@@ -525,11 +529,25 @@ test('Xenomorph Swarm, Alien Queen Boss, Deathless Tower-Shield Directional Coun
   assert.equal(BATTLEFIELD_MAP_SPECS.length, 2);
   assert.equal(COMBAT_WEAPONS.length, 4);
 
-  // 2. Polar Ice Canyon map spawns Xenomorph Queen Boss on vanguard escalation & executes 3 bio-attacks
+  // 2. Queen combat starts only after the existing relay + continuous hold mission.
   const polar = createInitialMarsCombatState('nasa_valkyrie', 0, false, 'polar_ice_canyon');
   polar.shellState = 'playing';
   polar.spawnTimer = 999;
   assert.equal(polar.mapId, 'polar_ice_canyon');
+
+  assert.equal(summonXenoQueenBoss(polar), null, 'The combat fixture must respect the relay gate');
+  const mission = polar.polarMission!;
+  mission.interactBuffered = true;
+  stepPolarMission(mission, 0, POLAR_RELAY.x, POLAR_RELAY.z, true);
+  assert.equal(mission.gateOpen, true);
+  for (let i = 0; i < POLAR_HOLD_SECONDS * 25; i++) stepPolarMission(mission, .04, POLAR_HOLD.x, POLAR_HOLD.z, true);
+  assert.equal(mission.phase, 'boss');
+  // This test isolates attacks; full driving, interruption and reinforcement behavior
+  // remain covered by marsPolarMission.test.ts with the actual world update loop.
+  polar.x = POLAR_HOLD.x;
+  polar.z = POLAR_HOLD.z;
+  polar.y = sampleMarsCombatFloor(polar.x, polar.z, polar.mapId, mission.gateOpen);
+  polar.isGrounded = true;
 
   const queen = summonXenoQueenBoss(polar)!;
   assert.ok(queen);

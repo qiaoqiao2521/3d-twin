@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- LOCAL_GENERATED_DEMONSTRATION_NOT_UPSTREAM: 历史本地生成的示意链，非原厂/上游原件；不可用于真实结构或控制验证。真实来源请从档案目录选择 PRIMARY 文件。 -->
 <!-- =================================================================================== -->
-<!-- 现实基准原件: stretch4_urdf (stretch4_urdf/SE4_tools/eoa_wrist_dw4_tool_sg4/eoa_wrist_dw4_tool_sg4.urdf)                                          -->
+<!-- 历史生成示意（非上游原件）: stretch4_urdf (stretch4_urdf/SE4_tools/eoa_wrist_dw4_tool_sg4/eoa_wrist_dw4_tool_sg4.urdf)                                          -->
 <!-- 机型描述: Hello Robot Stretch 4 新一代移动操作机器人 URDF 基准                                                                   -->
-<!-- 运动学拓扑统计: 8 连杆 / 7 关节                                                    -->
+<!-- 历史目录机型统计（并非本示意链）: 8 连杆 / 7 关节                                                    -->
 <!-- =================================================================================== -->
 <robot name="stretch4_urdf">
   <link name="base_link">

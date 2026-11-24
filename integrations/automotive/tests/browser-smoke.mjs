@@ -1,12 +1,18 @@
 import { createRequire } from 'node:module';
 import { writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
-const require = createRequire(process.env.PLAYWRIGHT_PACKAGE || '/home/muqiao/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/package.json');
+import { join, resolve } from 'node:path';
+// Resolve the user's existing installation from this project, or explicitly
+// anchor resolution at an installed playwright/package.json supplied by them.
+const require = createRequire(process.env.PLAYWRIGHT_PACKAGE
+  ? resolve(process.env.PLAYWRIGHT_PACKAGE) : import.meta.url);
 const { chromium } = require('playwright');
 const base = process.env.AUTOMOTIVE_BASE_URL || 'http://127.0.0.1:3105';
 const artifacts = process.env.ARTIFACT_DIR || '/tmp/automotive-hub-qa';
 await mkdir(artifacts, { recursive: true });
-const browser = await chromium.launch({ executablePath: '/usr/bin/google-chrome', headless: true,
+const browser = await chromium.launch({
+  ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+    ? { executablePath: resolve(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH) } : {}),
+  headless: true,
   args: ['--use-gl=angle', '--use-angle=swiftshader-webgl', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 page.setDefaultTimeout(45000); page.setDefaultNavigationTimeout(45000);

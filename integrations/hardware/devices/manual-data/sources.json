@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "documentId": "1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc",
+      "sheet": "Workbook",
+      "file": "1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc-Workbook.json",
+      "source": "https://docs.google.com/spreadsheets/d/1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc/edit",
+      "retrievedAt": "2026-11-24T15:11:09.865634+00:00",
+      "sha256": "52dadf08645748da2319fc25197cc3af14ea307371b458d2bf6d68f9e236b036",
+      "size": 67724,
+      "rows": 584,
+      "licenseContext": "Original OLSK assembly-manual description text, covered by the author README media/manual declaration CC-BY-SA-4.0. Application code separately follows the .reuse/dep5 AGPL mapping. This external snapshot is not covered by the Git commit hash.",
+      "licenseSource": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/README.md#license"
+    },
+    {
+      "documentId": "1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY",
+      "sheet": "Blad1",
+      "file": "1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY-Blad1.json",
+      "source": "https://docs.google.com/spreadsheets/d/1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY/edit",
+      "retrievedAt": "2026-11-24T15:11:14.543995+00:00",
+      "sha256": "968880b19303ad55fe1f82a01939cc6c12b6c013faccf22f94dcf9e74e55266e",
+      "size": 10634,
+      "rows": 43,
+      "licenseContext": "Original OLSK assembly-manual description text, covered by the author README media/manual declaration CC-BY-SA-4.0. Application code separately follows the .reuse/dep5 AGPL mapping. This external snapshot is not covered by the Git commit hash.",
+      "licenseSource": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/README.md#license"
+    },
+    {
+      "documentId": "1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA",
+      "sheet": "Workbook",
+      "file": "1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA-Workbook.json",
+      "source": "https://docs.google.com/spreadsheets/d/1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA/edit",
+      "retrievedAt": "2026-11-24T15:11:18.077070+00:00",
+      "sha256": "2f365c8a00c0f0cebe203b2e574434a5b14bc1f3fce1b4c4cb0c574b6c3baa0c",
+      "size": 35710,
+      "rows": 314,
+      "licenseContext": "Original OLSK assembly-manual description text, covered by the author README media/manual declaration CC-BY-SA-4.0. Application code separately follows the .reuse/dep5 AGPL mapping. This external snapshot is not covered by the Git commit hash.",
+      "licenseSource": "https://github.com/Open-Lab-Starter-Kit/OLSK-Small-CNC/blob/cae066fa5b78b596743e1f2e432b93539cba8c24/README.md#license"
+    }
+  ]
+}

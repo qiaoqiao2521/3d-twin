@@ -1,0 +1,1043 @@
+{
+  "schemaVersion": 1,
+  "id": "olsk-large-cnc",
+  "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+  "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+  "tree": "ba4aa2a13f2095a222103058782a078646014f05",
+  "archiveSha256": "d0a5453913c6e6d6a4036d692c80fe0345d225c54b467a4a01f589165b85cdaa",
+  "archiveSize": 386081002,
+  "files": [
+    {
+      "path": ".gitignore",
+      "size": 50,
+      "sha256": "b3a973fdc273fb5cefeb81648f4174f07864622c656a4a05203f9d4a57a50709",
+      "gitBlob": "2fd284bd20884cecda44efd35862f44653505218",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".reuse/dep5",
+      "size": 1354,
+      "sha256": "30ede4cd91fde1d84ff9456647ce0fb3025facb8731654a7be09b0eccbe4b5e3",
+      "gitBlob": "7d9a354f90c642e5971f030e2f41ce8f7db256c4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/package-lock.json",
+      "size": 710590,
+      "sha256": "5322977945ed8bde0ab30e889411213251810b1295671f174f1a2f9794b843b7",
+      "gitBlob": "21be07b695076f3423916fc1fc10aa8efbed065f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/package.json",
+      "size": 1072,
+      "sha256": "def4390d1bd83e25451eb76fe3700044b8e40470572af2a99f3f946f04062abe",
+      "gitBlob": "0acdc129dc9b7473fb678771632bab9959408471",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/61_Front_window_wiring.svg",
+      "size": 38605,
+      "sha256": "0eb0bfadb4ac7677cd537d5b967ddaee76b8bd997fdebcf0182fdee8c39435c4",
+      "gitBlob": "e0bc6cb518fb325753c311ac453a0eeff12a5adf",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/67_Prepare_power_switch.svg",
+      "size": 11575,
+      "sha256": "5fdb1d809afcdf1c7316d7c00131dd4b9af2fb9f265836f60e437ffc72b09b6c",
+      "gitBlob": "638fed722a11a9a77fe1dce948400dfb076cc60d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/691_Wiring_AC_1.svg",
+      "size": 108766,
+      "sha256": "b15d87a97502b7c0598ce97a2b40affa7192b86717e208d437237f2dcca9da62",
+      "gitBlob": "c34594198db1dcabc716f05d3824af6e3378f909",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/692_Wiring_AC_2.svg",
+      "size": 81208,
+      "sha256": "c8ab399a06f062d66c85b23edb4907afdd20def674f4e401d1b9dd94e3661eb9",
+      "gitBlob": "f24808763020a5d7123d6f21aa22c98799bbb21d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/693_Wiring_AC_3.svg",
+      "size": 109692,
+      "sha256": "846127fc01f0abf8fdfd477c8535be135f76f38a1a07dcf8627422bc3aef6409",
+      "gitBlob": "d3dd9613642ec6e9ca2818e6b15002d230fdb871",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/694_Wiring_AC_4.svg",
+      "size": 139370,
+      "sha256": "7284c2d70bf76975d52e8a8e371d201962dbdeec805d37f0b930783f45921f98",
+      "gitBlob": "ff2aad72481bfb9d2056dea2e85c78d98075ea48",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/701_Wiring_DC_1.svg",
+      "size": 187111,
+      "sha256": "c9b8c5d761cdf84ecef857d53773ac0b57dd5fd8476232e2d358740c4e726729",
+      "gitBlob": "0af12b8363ba6478075dc5320e543dc7e107d38b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/702_Wiring_DC_2.svg",
+      "size": 160452,
+      "sha256": "b1628cd48d93e06b16b7a734aa52587b7b0a6d64b8df44b176921f106acab7b2",
+      "gitBlob": "9fee1ab01d7816cfda98d6f9556b04d8a4818f3e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/703_Wiring_DC_3.svg",
+      "size": 165525,
+      "sha256": "ff66c418f7707d9feb6650140617177ecac4a1c12f58e13c5dbb343a8fab7532",
+      "gitBlob": "98e01e235d1601a7f3bd3b01a2047089095c97b5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/704_Wiring_DC_4.svg",
+      "size": 164441,
+      "sha256": "2449f171404e6607a81fd518ffe89ec66f0773050bb9eb66ef1913041551c944",
+      "gitBlob": "a88766f27700aba1cc1bbc28710adad4d313ade9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/716_Install_pneumatics_-_tubes.svg",
+      "size": 380297,
+      "sha256": "c14955e510897a4224c31c857251eb7c1f51144a2fb151c1eb4d757a604373c9",
+      "gitBlob": "1b41554dee4098e735394d56e02558aeab8803f1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H1.svg",
+      "size": 43885,
+      "sha256": "e9e535a492f7ded4dd4d7b50648f3572e8a575fbfb6ee0c49f54f57e1679ae3a",
+      "gitBlob": "2368fabdf22f54c9f155b1fcd17e9f187386e288",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H10_Use_Automatic_Fasteners.glb",
+      "size": 886068,
+      "sha256": "2586aed9ac5460c628ede6b9559c24cb268a0895508731b8be73d8ebbaae4a8c",
+      "gitBlob": "90d526df2bc58ec853266ca6059070ff858bd612",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H1_Insert_T-nut.glb",
+      "size": 558028,
+      "sha256": "bba6b189d1442be4b00ce371fa00e12cf7c2374f794f3e12dae9a1ab76d69364",
+      "gitBlob": "92b0362a92e842f307d8e22d16f695664b881b19",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H2.svg",
+      "size": 138519,
+      "sha256": "309edb84be3cebb7b4b3eff52a5c0ec1c3d3a2f6a6646f6da52d5ab3c5845787",
+      "gitBlob": "136a02f55c9fab462243627aa7d9280eaaceb8ad",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H2_Lock_Nut.glb",
+      "size": 1772156,
+      "sha256": "86f626c5b1e36121da64e1878a1a1dead4819c15515dc3a4e98a9034ba89b246",
+      "gitBlob": "4292991d989cf3649c5c723abe16ff2f3712fdc1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H4_Set Screw.glb",
+      "size": 1313032,
+      "sha256": "7b206f2fda7aa0e47b60e09bb7889a6a619e4ec44519f131a62f17eae6c11cca",
+      "gitBlob": "79096b4d51c794f88543967b61c86ee67d507761",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H8_Use_Teflon_Tape.glb",
+      "size": 1180824,
+      "sha256": "bfe9a195753079bf5350a1a093a1fc0a9881c39f5bbf710001836192790a5b6f",
+      "gitBlob": "79b57487584682aa54f29871e0275c23c775a981",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H9-1_Insert_The_Mirrors.glb",
+      "size": 5421244,
+      "sha256": "ae35e8f59d654d82adfee2a00bfb0b59f26feb8818ea882e3b1074156118e340",
+      "gitBlob": "2c754de9adcf36fbd69680d996aa50262304c88d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H9-2_Calibrate_The_Mirrors.glb",
+      "size": 2074716,
+      "sha256": "6b125471240072dad70addcb144d45415d535d5534a9ac458d4541f733d19bd6",
+      "gitBlob": "73b381f5a5b889c7f3e609bf672c1cbe7adfcf75",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H9-3_Calibrate_The_Laser_Tube.glb",
+      "size": 353172,
+      "sha256": "b12b35443604913f9ed9c134624e3c6fec29b6ea0c75566cdafc9e422834c47f",
+      "gitBlob": "7eac10c6f3d44175f4d7dc320b14ef00dba3de5e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/H9-5_Insert_The_Lens.glb",
+      "size": 1496324,
+      "sha256": "7ff157f0e3ff85a76571ee4fab2a6b894d3dde01d2febe9c87338fee2d4cdd52",
+      "gitBlob": "dde87e81b7b0d95ea34c804e32309e483a1628f8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/InMachines_Logo_positive_RGB.svg",
+      "size": 2033,
+      "sha256": "05d87a4e2dee85ba3afeb94eefdb704bbab62b6214014313690f6e576ab91dae",
+      "gitBlob": "a6e8d4a3330cb974ab02894eb657df1494107095",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/OLSK_Large_CNC_V2_IN.glb",
+      "size": 47875744,
+      "sha256": "2b05f2d737d40cd71e9188d473325a4a329337efe67c1f390853237c54e8232e",
+      "gitBlob": "5812ac8aa5158dac153736d0656638f3ed4658de",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/OLSK_Large_CNC_V2_OUT.glb",
+      "size": 53177880,
+      "sha256": "e9b043f6b6cffa7e7f3b78e4847e7b910bafff3875d5272fa72942a16e19612e",
+      "gitBlob": "066111d502447360bd06489cd87c75f68e7f0c2e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/fonts/LICENSE",
+      "size": 2007,
+      "sha256": "18296c8acc17d5de9db2ff87327288a6a391d0e77db3ce8f01e0013058241283",
+      "gitBlob": "65c6407257f1ecd3179ad9005643a24e10db13a5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/fonts/helvetiker_regular.typeface.json",
+      "size": 63182,
+      "sha256": "d5c5467690f74061179a292af83bd85c4c551e0f106b2af99714f11184c96981",
+      "gitBlob": "d19293b47e8dacf779740ed961f130e8049d1b16",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/fonts/helvetiker_regular.typeface.json.license",
+      "size": 91,
+      "sha256": "1a27c49259d0c2922c258c0cbdeae03b42ff35b29d72680aaded159c52155ae4",
+      "gitBlob": "5f19ae8a114b5e719d1900907d86850e5b5c31ba",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/public/helvetiker_regular.typeface.json",
+      "size": 63182,
+      "sha256": "d5c5467690f74061179a292af83bd85c4c551e0f106b2af99714f11184c96981",
+      "gitBlob": "d19293b47e8dacf779740ed961f130e8049d1b16",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/App.jsx",
+      "size": 6542,
+      "sha256": "2c87bde11ccb0a031e7a8b7137ca6194bd6087d789339b656babd424c0c4a8ca",
+      "gitBlob": "7041f0ae2a5b32d0c8fd0c99f0968a30303b6e87",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/ColoredShadowMaterial.js",
+      "size": 4899,
+      "sha256": "52debec77e3a293a9935b3bf2a0713931c3ca7adc75106e202cb440e9b08308b",
+      "gitBlob": "ffdb14d1852a7d05a078282ecf5babfebbb74dd5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/ButtonNext.jsx",
+      "size": 769,
+      "sha256": "018c419bdcd2ca50d2fb03b83e49dfcd88bac0a27f06220d3f22391ba29c150a",
+      "gitBlob": "68557335c8751f7e6092bf28429b6360be6cd05f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/ButtonPartsOut.jsx",
+      "size": 981,
+      "sha256": "a378a4fced23edb083d857d25bcde95dd5541a9edded8244b666641a991e6937",
+      "gitBlob": "500922f9b1764960057101ffa9fe679e8ab89188",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/CameraPositions.jsx",
+      "size": 2092,
+      "sha256": "d1031c5142d922798b5d8d638fe26aad5346d1ae077bf543edcceb01efacbd61",
+      "gitBlob": "16ccd2e8a711b37a218b7b1d75673a0ac1b7819f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/CenterModel.jsx",
+      "size": 1300,
+      "sha256": "c3fb95b46dba661d88b3283b7548fe91ad34cadeaf3f78cfbfea25d7618fd7db",
+      "gitBlob": "75a7e337b458574d5086b1af73fddd994cf1cca0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/Highlight.jsx",
+      "size": 145,
+      "sha256": "fc7ad5a7efe7e5d91f2902953b40d6e0a9fa613b02934e07610f737a7f1d0da7",
+      "gitBlob": "647a5e0ee79eca5bb3714e2545e0b77cc516c1eb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/HowToBox.jsx",
+      "size": 1296,
+      "sha256": "0bf1cd384024fe48a4638287eb63cce417054b59b20e6fb9d9924624a67b0b5e",
+      "gitBlob": "3f3821e564fedb44da879fe99b4470afd42612ab",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/Model.jsx",
+      "size": 41077,
+      "sha256": "69d33db8f57827decf4eaee77ab3f5f1a0c8cae43c6ffc0eacc13ce2e3d2a408",
+      "gitBlob": "78b3093f7d9b908825e19ab3d9eecad8bef43315",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/ModelAux.jsx",
+      "size": 2162,
+      "sha256": "d9fe5bdd2528407c9ae2b7a69e7c759ea9bc86b4b498f920077a6340ea424170",
+      "gitBlob": "206ebc8d9055497b4631518339caa8d5cdfab5f4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/ModelContext.jsx",
+      "size": 3081,
+      "sha256": "c349540df3cf45717d18f5cbe62f02ac984c32b1fe7217dfcd6f8e07b2b06072",
+      "gitBlob": "f039f0efd4934a63fa22c9ba7b59021613223cc3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/MouseEvent.jsx",
+      "size": 241,
+      "sha256": "99af053c114417566893e6a3d59ce515b86bbcb2b7332d0d61fa5c5159d6e852",
+      "gitBlob": "d11bd6683bd1700a7289f4b3be93d5e47526bc12",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/Placeholder.jsx",
+      "size": 205,
+      "sha256": "90cc09ef765c64bb1db0e3476a5a71f5b8861370c128e6616af5f68bf8572e59",
+      "gitBlob": "8d686d020e3526902616a62c3b81ba7bf765f243",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/RemarksBox.jsx",
+      "size": 984,
+      "sha256": "6380ec4a7ccf147c0376affcc658442d7d40ceb96354e712be35c475fd16ab5b",
+      "gitBlob": "8b21d595bc74d3a0194be1151b32fa400828b5fd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Components/StepHowTo.jsx",
+      "size": 4580,
+      "sha256": "09d54d2abe7347235b252ef0f92bd786848c8eff103e830332dcc86c83e7e0db",
+      "gitBlob": "66cab1274b815fb93c7261c5ae92f91dd36ecfe9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/ConditionalEdgesGeometry.js",
+      "size": 4315,
+      "sha256": "54d4ab3ddb4677f81e9d685e6738203c843f1c7deeed2de3b6c2ec4bab5f43bc",
+      "gitBlob": "e46929bdad5932d4f413aeb892a886c8a6e9ecd8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/ConditionalEdgesShader.js",
+      "size": 2663,
+      "sha256": "3504314a51a0e4577f1aae0f96bd0590fa71b95091d42aacd0959c936d27d927",
+      "gitBlob": "d87610986c65d115bd575241f5dc5e5f6a1d0655",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Containers/Header.jsx",
+      "size": 2677,
+      "sha256": "4474211eb56b63f9001828e1a788fea14ab0d10818ae506dac403030ca6ba60f",
+      "gitBlob": "c7a932d68d379b20de16a54c651dfa0e0227540a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Containers/HowToMenu.jsx",
+      "size": 3035,
+      "sha256": "a0c699a961e02291aa16a8a2785dee3579ad2bf76d9be3ccb7aef5f05f591368",
+      "gitBlob": "355a1f285b296e789e37a7e3c7bca726d64b70bf",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Containers/HowToText.jsx",
+      "size": 2476,
+      "sha256": "6bcf4eac2b86d5979ba2bb400631c7c52af82f065e913bd21f674a6462aecac2",
+      "gitBlob": "fb5da413f98b10a4970860a5b5e14c0ae8b0a755",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Containers/PartsList.jsx",
+      "size": 5438,
+      "sha256": "7ee17f18834b5b57c5aac34e78a78e0e70e3644b53c4d3fb64262ae24e752dfc",
+      "gitBlob": "5d14676461b957f3da4d13512aff7e70a94e05a6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Containers/StepNavigationMenu.jsx",
+      "size": 2202,
+      "sha256": "7bbd7824d928c360e7079dea7fc91b18b653b47d1ca370ac0a55814c8f28822f",
+      "gitBlob": "4c0758dca8ff13cbc4d5cd3bd0465bfecd2a4b5e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Containers/StepRemarks.jsx",
+      "size": 1854,
+      "sha256": "52de1a1117f81b5f0c47e80d463a74cd481e6be6542befb3962133d22d02e752",
+      "gitBlob": "e2c1b003dcd26755f45f4194e1685bd245fb6cd5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Containers/StepTitle.jsx",
+      "size": 313,
+      "sha256": "12d68b39d5266f5ad1c76e5cd24eb6c79d92881024e7000aa8b388606fa8b34b",
+      "gitBlob": "02251d77925b305b20de2513081fe7b6969e8139",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Containers/svgContainer.jsx",
+      "size": 1462,
+      "sha256": "88121d6071c5776530731c17f95f5b70605a1b7ac4e5908e138c9a7c38c0cbf2",
+      "gitBlob": "364512e2f018aa4d02279bb9a3feb3679635a684",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/CutomEffectComposer.jsx",
+      "size": 891,
+      "sha256": "7342c7b4b873add1dec9dd8b94feb0984e5d756d51a48e5b7d883d57d554a5df",
+      "gitBlob": "9b45c668b53de6f8462ab7f01b8ac605d39901cc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/EdgesGeometryCuston.jsx",
+      "size": 3861,
+      "sha256": "00301ec37ff7e0d7d5b45052d1262c3adfd467d273efdc58f50e5474dd40ff9b",
+      "gitBlob": "bc288db31ab9c9a08b91022dc61758892ddce320",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/HighlightEffect.jsx",
+      "size": 401,
+      "sha256": "0016da985eb9c2b765f2eb3f4eb4b477e8526bfe0cd0ecce858863ab7934a5cc",
+      "gitBlob": "62ea2d70909eac45273f228bd4c08f22c4c8038a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/HowToSection.jsx",
+      "size": 2657,
+      "sha256": "52ddd3974b3b37a5bc55188cee665679a2dea7d3b5ca8a2fb3c403a6fe380de2",
+      "gitBlob": "92a5cfd9da5fd27867871d5783555ee68d0c41e7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Lines2/ConditionalLineMaterial.js",
+      "size": 9352,
+      "sha256": "aa6e81468e977681ef6c3ce0881af3e4ec62cf52369e7ba4eddb0c875b8115fc",
+      "gitBlob": "b89005b71a340ec781c6f3f21786ba87d9ce8ef9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/Lines2/ConditionalLineSegmentsGeometry.js",
+      "size": 1200,
+      "sha256": "403b92b954d933aef5b8aa13429112c8b622d564cfced69513966a5993b8266a",
+      "gitBlob": "dd13769a70744e9b5fb6a6ca728e66a884155770",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/OutlineDrawing.jsx",
+      "size": 518,
+      "sha256": "95b34b573182f325a74f60398885b9c3218f4e51b8e728668836808e6db7ab8a",
+      "gitBlob": "95f06857aafa920cff8e7d838e212379c03c474d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/OutlineEF.jsx",
+      "size": 413,
+      "sha256": "2ee12f3a804e61428e4897e1435f506e5caa64b038a7db0b697028b503224db7",
+      "gitBlob": "d2b7d7d8f7acc8b17e9d6bb87318532285a75d3d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/OutsideEdgesGeometry.js",
+      "size": 1510,
+      "sha256": "d917e2641fe2042a8da308b2f33af5d4d0c84ba3e913db8e7c2c73cf7c5a0b9e",
+      "gitBlob": "05dbc92d34433db11637d0ef13eda24899e798da",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/index.html",
+      "size": 2935,
+      "sha256": "f66f2f24779b6f795f9cef62b600835db910bd9b95f7d454fc9173fe738633f7",
+      "gitBlob": "cf2b2a2bfb2e854c932a1abd47827427ee681aef",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/index.jsx",
+      "size": 2234,
+      "sha256": "76334d47f101c31b2d3326109f992458868a1b7bfe4be17fa79a1b6832fe83a8",
+      "gitBlob": "1e2dfa5d6ba674803045bca2b01b32894480637b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H1.jsx",
+      "size": 2308,
+      "sha256": "e84cf81513fa91c6fd0214abe6f8af04a787c432060d91530c4372ebbd653371",
+      "gitBlob": "7192b1929a42e2491d0ac189dc0b8b64dc181ed5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H10.jsx",
+      "size": 2560,
+      "sha256": "802a52e5bdf2d75d58b8b0c24bfece2e67eb97dcdc3cafe096b634b81b6fc321",
+      "gitBlob": "5f811c02107930d8a17281d05a18af9e913c8c26",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H11.jsx",
+      "size": 2547,
+      "sha256": "a689b6c5880d4f97a777f36f136f9b6d2992b548dcf842ef6f0dbc77acdf1e36",
+      "gitBlob": "2ac5a42231d57f0db33b661a793e5be747aa0e68",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H2.jsx",
+      "size": 2540,
+      "sha256": "7802566f6a27c350011b8890e0c90d9523b96fddf5712d5e8aef3918e0dd0ab0",
+      "gitBlob": "1ed1ebd7439e9b3007de90c35f1771dade868dfc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H3.jsx",
+      "size": 2545,
+      "sha256": "d2362d98468a96f7403deef62fc1da621c99ad47beff9a8010f76316b5c629da",
+      "gitBlob": "faacc0c3dbc7eed9f29df4ecf5de06b1ed43834f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H4.jsx",
+      "size": 2543,
+      "sha256": "198a235f1bf46024073dfce2fe36df7ab67d2796131c45b2289de2beb4728c27",
+      "gitBlob": "9b6244fbb1ddfca9464b156919f38e3f1e5b1158",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H5.jsx",
+      "size": 2545,
+      "sha256": "0159032b3bdf556a142cdc86b6cfd84513567edf0f3dd1d6f64d70d0a769a009",
+      "gitBlob": "70a6342f3a056649d3133138ad965fee385f4ac5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H6.jsx",
+      "size": 2545,
+      "sha256": "2c0a6007ef00b2a0d426dbe72ea5f8bb60f82242af2f63634dd7517768570ea9",
+      "gitBlob": "f67f064181073abd407679f91893527b5a4a0c9e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H7.jsx",
+      "size": 2545,
+      "sha256": "151f6923ce0334999079666f30ee81a108b0a5f91bf2b3f5c68ee78fe61a5935",
+      "gitBlob": "a8eb7be0af95d7209b725f2cac9bd761558c229d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H8.jsx",
+      "size": 2550,
+      "sha256": "ad5496bbdd9be6a58f1ad1a2cc1be5aea1623111147adfe6e855de91914f06c1",
+      "gitBlob": "0500257d23d7d7ac0b5b46d023bfd1b1f4b830c0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H9-1.jsx",
+      "size": 2554,
+      "sha256": "58fb5204e2d3f4e3b20dabc5fcdb61c744080407855a526a666593b5f5c96ab2",
+      "gitBlob": "0b5bc7bd803454e20a42e100711abe59cd570c7e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/pages/H9.jsx",
+      "size": 2545,
+      "sha256": "7a9c7d6a8d986680f97ecd03c80e1b02684d367d74729291e1898a57b62e40d5",
+      "gitBlob": "af44f47e6bdf049515903434da50068dc33a1ba6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/stores/useInterface.jsx",
+      "size": 1276,
+      "sha256": "916c6682db5dd82940039f1d2454356cb587550084b55e1c5e7b84bd0eeba607",
+      "gitBlob": "30678f0c4c942e94253e3fb2417a6f982a4fe6cf",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/src/style.css",
+      "size": 8745,
+      "sha256": "2c04ae5945a20bf526467656099382e195da7553514fd90983f05d201d6951e1",
+      "gitBlob": "0c30ba0a319fd57a77043ea2e9493f7fa2cc29e9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "Assembly_Manual/vite.config.js",
+      "size": 532,
+      "sha256": "16fecd44d4e320756d828114638f3c91a131d135e7fbe9d66b9c9eb92e66a314",
+      "gitBlob": "23cdf44810b7397c127e9297a6dd3ec2f9c2e690",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "LICENSES/AGPL-3.0-or-later.txt",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "gitBlob": "0c97efd25b5974b974ed9a8a18207bc4f55bb338",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "LICENSES/CC-BY-SA-4.0.txt",
+      "size": 18375,
+      "sha256": "cde7883b9050a1104f4ac19a1572aafd6e5d7323b68351aaf51fbf4beba54966",
+      "gitBlob": "835a6836b385fa068fdd625685548845cda60c2f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "LICENSES/CC0-1.0.txt",
+      "size": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "gitBlob": "0e259d42c996742e9e3cba14c677129b2c1b6311",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "LICENSES/CERN-OHL-W-2.0.txt",
+      "size": 14529,
+      "sha256": "c1432111d0aeefc9d1ced8105d2d4ed07d5dcb1fd43abb5d4616c4f9ef96e08f",
+      "gitBlob": "0f882860afce5f8dea62795cfcd8ee0d422d873b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "LICENSES/LicenseRef-Magenta.txt",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "LICENSE_CC_BY_SA_4.0.txt",
+      "size": 20138,
+      "sha256": "3b2890eacd851373001c4a14623458e3adaf1b1967939aa9c38a318e28d61c00",
+      "gitBlob": "a73481c4be14b761eddf04cb18317cbc63416dc6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "LICENSE_CERN_OHL_W_V2.txt",
+      "size": 14540,
+      "sha256": "9682f98d4fe43f33e618a14da9b324f7b4c170fdc811ea261041898e4e0744ce",
+      "gitBlob": "7c981754e29e51563b50b0553bb819415aa2c2c8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_PneumaticsSchematic_V3.pdf",
+      "size": 854229,
+      "sha256": "9aa61870d470c92ca1bf375816ca57d7ab789f795823cf4cd33215c524f2e8fc",
+      "gitBlob": "2bdd32013bfe1b202594c61e1f4bcc036111fb4a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/BOM/BOM_ OLSK Large Format CNC V1.ods",
+      "size": 11343,
+      "sha256": "d446b3efd71e7b0238b24352969cdcc3d1aa9a3c403b3e65dc2c28ff7c1a1349",
+      "gitBlob": "30737daaef233debc5398db327a529e18f3a78b4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/BOM/BOM_ OLSK Large Format CNC V1.xlsx",
+      "size": 51674,
+      "sha256": "99001d0d7e7ed3a598e9402a5ca947421534935c5d723331de822f9b5e2e8f7c",
+      "gitBlob": "0984790aeed546bc2be6235696662316b1a5f7cc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/LICENSE_CC_BY_SA_4.0.txt",
+      "size": 20138,
+      "sha256": "3b2890eacd851373001c4a14623458e3adaf1b1967939aa9c38a318e28d61c00",
+      "gitBlob": "a73481c4be14b761eddf04cb18317cbc63416dc6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/LICENSE_CERN_OHL_W_V2.txt",
+      "size": 14540,
+      "sha256": "9682f98d4fe43f33e618a14da9b324f7b4c170fdc811ea261041898e4e0744ce",
+      "gitBlob": "7c981754e29e51563b50b0553bb819415aa2c2c8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/OLSK_Large_CNC_V1_Wiring_Schematic.pdf",
+      "size": 247221,
+      "sha256": "3f14023fac39a61a7f7fb7e2fe36813fe3c93637d06ecf55d0e290696a7738ca",
+      "gitBlob": "a45326c38354e910270dc91512d483e74e19cccd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/OLSK_Large_CNC_V1_Workbook.pdf",
+      "size": 114438,
+      "sha256": "e2f3f8ec95348f0ac0dbf6118f16e98d92264e3eacecc9e5a200670774d75638",
+      "gitBlob": "c0fff355862a1a64ca2919c82a4a7726c0e8b8c7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/README.md",
+      "size": 3726,
+      "sha256": "8c12995f2ec778c7e0be945ab590a756a798eabaf098e1980e1bf3652a101f9b",
+      "gitBlob": "f84a27afc24e29944b1485f1bc726e00dd8fa575",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/cad/OLSK-Large-CNC-V1.f3d",
+      "size": 14270709,
+      "sha256": "f8cff6cb4ba80e5b75c7f594a667c25db46be821093db96cc31e62c8f4ea6ca5",
+      "gitBlob": "b5151b2b3929d49676b3499d836d17e32851f217",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/cad/OLSK-Large-CNC-V1.step",
+      "size": 74957307,
+      "sha256": "7e7919f9129df77d9bc10630a233937c38ebbf531e8081cfd416cb01c15f72e5",
+      "gitBlob": "e80e0d15eeafeb3c06e3a7f6010b105f3f61eab7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/converterPCB/PCB_PCB_Teensy CNC copy_2023-01-18.json",
+      "size": 592026,
+      "sha256": "ca186d8e2e4bbee6352a794e4fc238439e26700dad872aeaab922ab4d49f7824",
+      "gitBlob": "16de40279c7efb41c012f2f75cc0235a4edc112f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/converterPCB/Photo View_2023-01-18 (1).svg",
+      "size": 1031142,
+      "sha256": "e5f68ee7ba4bbd183bc4d830d5b91fa6ded0a9d5cd6096de8201912fa52f8c55",
+      "gitBlob": "76c3d94934f970c5137619d9c1aa7ac6a68f8f8f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/converterPCB/Photo View_2023-01-18.svg",
+      "size": 1031084,
+      "sha256": "dc7156ec5f5313f7837734ed597b4c6a4254650b293d0330163ade08af04d994",
+      "gitBlob": "da8facf49b1c68bb360eff56bbe07b8e6d2731e7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/converterPCB/SCH_Teensy CNC v2_2023-01-18.json",
+      "size": 1446785,
+      "sha256": "2887b1982a087a87e1cc563fbbb4b28593a5f89eaf4d46fbb6054751e9b077af",
+      "gitBlob": "10d774741ac9dbbbdd3da51c1553139a509f7fee",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/converterPCB/Schematic_Teensy CNC v2_2023-01-18 (2).pdf",
+      "size": 103050,
+      "sha256": "1c8d2f65674057adeaf85a338f0149ef489baaef294a0fd544ea25fda30ae0f5",
+      "gitBlob": "8a298325b16d7979732ec0fe9ed2b1c86668a3f2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/media/Highlights.jpg",
+      "size": 32246997,
+      "sha256": "3a0baca334b42d5c442769369bd9cfa78be2933a42e5fcc527f5854191c9c064",
+      "gitBlob": "2ea7cb29104a43d9d9ef60e6bb2cae5267cb4ecd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/media/OLSK_Large_CNC1_low-res.jpg",
+      "size": 456414,
+      "sha256": "9369f3cb7da77a2f18d4e8fc508060577b695c487559df892f4d7a78a342761e",
+      "gitBlob": "eddb6bd4cd1dd79755ac77521664144e6bc6f89d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/media/OLSK_Large_CNC2_low-res.jpg",
+      "size": 299659,
+      "sha256": "ef8bbe11fbaa996197e27a23af94b6f78ce50a902bcc696feb53fafe3a68051b",
+      "gitBlob": "ad62b6266ec0efff7c5e5bf777fed0b72aa1af3c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V1/media/OLSK_Large_CNC3_low-res2.jpg",
+      "size": 1160009,
+      "sha256": "bb13b91f72365c404f6120c4cf66982eb07114fd447ad9a62528a0b89357b16d",
+      "gitBlob": "b8ca01c4bbb637c1c9b5f315ed0e57119e1d0e7c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_V3-BOM.xlsx",
+      "size": 21950,
+      "sha256": "6b3075e8dbf1d9add9cebb06f7854020a9e3ca0d07d9991a915ea61438178b02",
+      "gitBlob": "880e5a17be32c8dc98f70dd90c873195d1cfd5a5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "OLSK_Large_CNC_WiringSchematic_V3.pdf",
+      "size": 151437,
+      "sha256": "dffaa257d94cc7d924175ad9aec160b1afbcf96368a4cb1b84e4cd025d119865",
+      "gitBlob": "96b8fddd0d08471c820667867779cc2ede03dcb4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "size": 3926,
+      "sha256": "12c15d369a31c50002f84ed076350920705d524cdbfab4669919339f17107e41",
+      "gitBlob": "26ea0f59ec8070f15fbd9db16512c448d35d3b9f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "cad/Fusion 360/Large CNC V3.f3d.zip.001",
+      "size": 24900000,
+      "sha256": "da802324abad3877ac8df86dad209de8fe92941e969bfbd8ea579d4775631bf3",
+      "gitBlob": "317d7de4eee6d52846f4accd5cd3ed9877721b31",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "cad/Fusion 360/Large CNC V3.f3d.zip.002",
+      "size": 24900000,
+      "sha256": "5ea5d56f960c89c3bf6009134dbe8f864e65cd51f82d3892fee83fffc6c79c4f",
+      "gitBlob": "75de6f3f25210caa62aa29a3af241db02100da68",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "cad/Fusion 360/Large CNC V3.f3d.zip.003",
+      "size": 24900000,
+      "sha256": "d53efd0c6dfafab4210ef1cf9c3e9b35ec0f163029ae404a4fcc27cdf36e92d2",
+      "gitBlob": "f98639b39f40186ce497e4b97e6ed5dfe9ebb658",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "cad/Fusion 360/Large CNC V3.f3d.zip.004",
+      "size": 24900000,
+      "sha256": "6819e7aaafefb6f7bcb5a2991e649878100bef3ac7994df532330d48c54bbf00",
+      "gitBlob": "d84ff316e01911fb588f74a63e11fc6ded9dd66e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "cad/Fusion 360/Large CNC V3.f3d.zip.005",
+      "size": 24900000,
+      "sha256": "323f58e8b0fcb73c32f57752164d491aa5932d9b0b4f34979cb66f8a5bd925ba",
+      "gitBlob": "adbb6374aeb15b8da989090a8de69c7da9282fe8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "cad/Fusion 360/Large CNC V3.f3d.zip.006",
+      "size": 24900000,
+      "sha256": "cf81dfced25ee2d7fd65f8d2f2e773393e81e0d85ab97112a6cf8e129eeb3c7d",
+      "gitBlob": "33d5b0dbde159e2c55c56e8a22b5e9a095b3340e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "cad/Fusion 360/Large CNC V3.f3d.zip.007",
+      "size": 3633696,
+      "sha256": "b9e9fc3547ea67678d61179de371a994970be12fddd7551451cfb6b149d087f0",
+      "gitBlob": "1605aa3d67904c47dabbb2df5b6f7981c5aad386",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "cad/Step/Large CNC V3.step.zip",
+      "size": 85976864,
+      "sha256": "24e43c2e94f54c763749d4308da480a8314fa93e1b6291d8a2290c6775871f93",
+      "gitBlob": "17362873172c0d5a1e6458836cbec4a5956acf31",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "firmware/LARGE_CNC_V3_Firmware_CURRENT.zip",
+      "size": 10463969,
+      "sha256": "0a2abb0f339e20efe37ba6985a9d0719f1e2aeb1e53214ce7ff234290400f503",
+      "gitBlob": "24a03094da8cbbb9d10d299a3f91740f995e5036",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "firmware/Large_CNC_V3_TCS_CURRENT.zip",
+      "size": 18595,
+      "sha256": "63b3e05ce264e4a16945cc12b38745a333b2fb1ae05d2820b2996530326de51c",
+      "gitBlob": "9e254e1cb643bd41a436295fee3cafef0345e218",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "media/Highlights.jpg",
+      "size": 48031969,
+      "sha256": "517ca557b42d6c18f42d04e8dbecf67b4c501f91559cee3502670c48e9dd4971",
+      "gitBlob": "7fc21b36c4d51192245882f114bb1e4578e4f997",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "media/OLSK_Large_CNC1_low-res.jpg",
+      "size": 456414,
+      "sha256": "9369f3cb7da77a2f18d4e8fc508060577b695c487559df892f4d7a78a342761e",
+      "gitBlob": "eddb6bd4cd1dd79755ac77521664144e6bc6f89d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "media/OLSK_Large_CNC_V2_1.jpg",
+      "size": 2458187,
+      "sha256": "7535f97e677fe37f186de51b6dc7644bc4df49a005afc573528f28c0dc4dd010",
+      "gitBlob": "b8931ad331f2d3f108fc0fb0c3db27df7fa63bb9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "media/OLSK_Large_CNC_V2_3.jpg",
+      "size": 2564030,
+      "sha256": "9ed7b119c69af80f414116ec2e1fdfc6035433ff8eccef7e40d82473017331d4",
+      "gitBlob": "bec0df0e5705732ee2c8087d7abc9442e33ea3e5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "settings/OLSK Large CNC Tools Positions.xlsx",
+      "size": 17024,
+      "sha256": "079f7202e82afcc0c1deb8dc33bca5fb79f5f6ab9322a953ef867f47af7c7af1",
+      "gitBlob": "3ec481bff462edf26fa0ff8769c59a86b20dc8de",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "settings/OLSK Large CNC V3 Settings.docx",
+      "size": 6729,
+      "sha256": "051337f4f1a5fb615c54df9a13045bf913590498f617fc611b6989419f5d3600",
+      "gitBlob": "20bf3ce392bfd6bb4693b166e0b0999347d95a2c",
+      "mode": "100644",
+      "type": "file"
+    }
+  ]
+}

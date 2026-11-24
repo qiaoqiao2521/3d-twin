@@ -1,0 +1,382 @@
+{
+  "range": "Blad1!A1:AA1031",
+  "majorDimension": "ROWS",
+  "values": [
+    [
+      "",
+      "Title",
+      "Parts",
+      "Tools",
+      "Remarks in HowTo",
+      "Applies to...",
+      "Explanation/Remarks",
+      "Rhino",
+      "Blender",
+      "objects that need to be Red"
+    ],
+    [
+      "H1",
+      "How To Insert T-nuts",
+      "T-nut",
+      "Allen Key",
+      "Use the allen key to insert a T-nut in one of the profile's slot",
+      "all machines",
+      "",
+      "TRUE",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "Alu Profile",
+      "",
+      "It's better though to insert a T-nut from the side in an earlier step"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Due to different standards, T-nuts might have difference in the fitting."
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Pay attention to the orientation of the T-nut"
+    ],
+    [
+      "H2",
+      "How To Use Lock Nuts",
+      "screw & lock nut",
+      "allen key, wrench and pliers",
+      "Lock Nuts have a nylon cylinder inserted in them which prevents them from getting loose. The nylon cylinder is always coloured so it´s easy to recognise which side it is in.\r",
+      "all machines",
+      "",
+      "TRUE",
+      "TRUE",
+      "The nylon ring"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "The Lock Nut can be attached onto screws in only one direction i.e. the nylon needs to point away from the screw head."
+    ],
+    [
+      "H3",
+      "How to use cable ties",
+      "cable tie & pliers",
+      "",
+      "Please look at the orientation of the Cable Ties: the flat side of the head should be facing inwards.",
+      "all machines,life in common and speciallly for castaways",
+      "the cable tie should bend until it´s possible to stick the end through the head. Show combination pliers to tighten them. Have a bundle of cables (cylinders in rhino) as example. Show combination pliers cutting the excess.",
+      "FALSE",
+      "FALSE"
+    ],
+    [
+      "",
+      "",
+      "bundle of wires",
+      "",
+      "To tighten it, use the pliers to have a better grip.\r",
+      "",
+      "we'll use an image"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "After tightened, cut the excess of the Cable Tie."
+    ],
+    [
+      "H4",
+      "How to use set screws",
+      "set screw, pulley, motor",
+      "Allen Key",
+      "Set screws are small screws, which can be used to fix parts such as Pulleys on motor shafts.\r\n",
+      "all machines",
+      "Locktite should be mentioned or shown",
+      "TRUE",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "They have to be tightened against the flat side of the motor shaft as illustrated here.\r"
+    ],
+    [
+      "H5",
+      "How to attach belts",
+      "two pulleys, belt, X-motor holder. Belt fixers with screws. ",
+      "Pliers, allen key, cutting pliers",
+      "There has to be some tension on the belts in order for the X and Y-axis to move smothly. \r",
+      "all machines?",
+      "\"some tension\" is very unclear. I suggest we use a guitar tuning app",
+      "TRUE",
+      "FALSE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Make sure the tension is similar in both Y-belts, if the machines uses two."
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "The parts from the illustration may look different in real, depending on type and model"
+    ],
+    [
+      "H6",
+      "How to tighten belts",
+      "",
+      "",
+      "",
+      "",
+      "it can be different for each machine. I don't know if it is neccessary. Maybe only for the small laser?",
+      "FALSE",
+      "FALSE"
+    ],
+    [
+      "H7",
+      "How to insert connectors in tubes easily",
+      "tube & ?",
+      "",
+      "If the inside of the tube is moist, it becomes easier to slide the connectors in the tube.",
+      "laser cutters?",
+      "i don´t know if we´ll have to show this...it´s too obvious and dumb easy. And making and animating a face with lips blowing into a tube is a bit silly...how do i animate air?! Can you just show a PNG? - Yes in this case we can just use an image"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "we'll use an image"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "For that purpose, blow the end of the tube using your breath."
+    ],
+    [
+      "H8",
+      "How to use Teflon tape",
+      "teflon tape on a roll, water connector",
+      "",
+      "Wrap the teflon tape around the thread clockwise. \r\n",
+      "Everything with water, cooling and/or pneumatic system",
+      "",
+      "TRUE",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Remove any teflon tape sticking out of the thread, otherwise particles will block the air/water flow."
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Once the object is tighten, don´t loosen it again. If you do, you´ll have to renew the teflon tape wrapping!"
+    ],
+    [
+      "H9-1",
+      "How To Insert The Mirrors",
+      "mirror holder, mirror",
+      "needle nose pliers",
+      "To insert the mirror, first remove the mirror ring by unscrewing it with the Needle Nose Pliers. The ring has two indents for this purpose.\n",
+      "Laser cutters",
+      "",
+      "TRUE",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "There are different types and sizes of mirrors. If the mirror has one opaque side and one mirrored side, the mirrored side is used to redirect the laser beam. If the mirror has two mirrored sides. Use the yellow side to redirect the laser beam.\r"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "The mirrored surface has to stay clean in order to reflect the laser beam properly. For this reason, it is very important to not touch it. The mirror has to be held carefully on the sides. Any dirt, scratch marks or grease will influence negatively the results of the cut and engraving.\r"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Remember to hold the mirror on the sides. DO NOT TOUCH THE MIRRORED SURFACE. Insert the mirror in the correct position as illustrated.\r"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Once the mirror is in, put the ring back and tighten it loosely with the Needle Nose Pliers. If you tighten too hard it might crack the mirror.\r\n"
+    ],
+    [
+      "H9-2",
+      "How To Calibrate The Mirrors",
+      "mirror holder, mirror & laser beam",
+      "",
+      "For the machine to cut and engrave well, it is important that the laser beam is directed correctly to the Laser Lens. The mirrors are responsible to redirect the beam. For that, they need to be positioned in the correct angle.\r",
+      "Laser cutters",
+      "",
+      "TRUE",
+      "TRUE",
+      "The circular arrow & the laser spot"
+    ],
+    [
+      "",
+      "",
+      "",
+      "circulair and straight arrows to show directions (cw & ccw)",
+      "Each Mirror Holder contains 3 knobs. By rotating each knob, the angle of the mirror can be calibrated in different directions as shown in the image. Also, the entire Mirror Holder can be moved back and forth if necessary.\r\n"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "The knobs push the corners of the holder, tilting the mirror. To facilitate the calibration, reset the holder by unscrewing the knobs until they are not touching the holder.\r"
+    ],
+    [
+      "H9-3",
+      "How to move the Laser Tube for Calibration",
+      "",
+      "",
+      "The Laser Tube can be moved to have an extra possibility to calibrate the laser beam. ",
+      "laser cutters",
+      "",
+      "TRUE",
+      "TRUE",
+      "The arrows"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Make sure the Laser Tube is properly fixed by tightening the laser Tube Holders but the Laser Tube Holders can slide stiff over the horizontal Laser Panel"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Make sure the Laser Tube is parallel to the Middle Panel."
+    ],
+    [
+      "H9-4",
+      "How to fixate the calibrated mirrors",
+      "",
+      "",
+      "After the calibration, tighten the Fix Nuts very carefully to lock the calibration screws. Fixate them with a hot-glue gun.",
+      "laser cutters",
+      "Just a drawing will do"
+    ],
+    [
+      "H9.5",
+      "How to insert the lens",
+      "Lens, 2 rubber rings",
+      "",
+      "To insert the lens, first remove the ring by unscrewing it with the Needle Nose Pliers. The ring has two indents for this purpose.\n",
+      "Laser cutters",
+      "The laserhead has to be seperate to be able to show the interior with ring. Exagerate the flat & convex side of the lens object for better understanding",
+      "TRUE",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "needle nose pliers",
+      "Insert the lens with two rubber rings from both sides. Make sure the flat side of the lens is facing down"
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Once the lens is in, put the ring back and tighten it loosely with the Needle Nose Pliers."
+    ],
+    [
+      "",
+      "",
+      "split Laserhead"
+    ],
+    [
+      "H10",
+      "How to use automated fasteners",
+      "2 profiles, Fastener set",
+      "Ball End Hex Key(Allen Key) 5 & 6, Hex socket drive bit 5 & 6 for cordless drill or screwdriver",
+      "",
+      "Large 3D Printer",
+      "The FS Fastener & the FS Screw need to be inserted together by screwing the FS Fastener(with FS Screw) in Counterclockwise",
+      "TRUE",
+      "TRUE"
+    ],
+    [
+      "H11",
+      "How To Align The Y Shaft",
+      "Shaft 12-450, Silicon Pipe,Floor PLate, Y Bearing Holder with fasteners M4",
+      "Wrench 7, Allen Key 2.5 & 4.   2 Shims 0.5 mm",
+      "",
+      "Vinyl Cutter",
+      "",
+      "TRUE",
+      "TRUE"
+    ],
+    [
+      "H12",
+      "How To Align Linear Guides",
+      "X Beam, X Linear Guide, C-screw M3-6",
+      "Linear Guides Template",
+      "",
+      "Vinyl Cutter and other machines which need linear guide alignment",
+      "",
+      "TRUE",
+      "TRUE"
+    ],
+    [
+      "H13",
+      "How To Fix The Springs",
+      "Springs, Shaft 4-20, Pinch Roller",
+      "Strong wire",
+      "",
+      "Vinyl Cutter"
+    ],
+    [
+      "H14",
+      "How To Assemble An Oldham Coupler",
+      "Motor with axis shaft and screw nut. 3-Part Oldham Coupler, screws, nuts",
+      "allen key",
+      "Carefully move the motor nut to the top of the screw. Do not remove it! Shove the middle part of the Oldham Coupler on the Bottom part.",
+      "Small Printer, large laser",
+      "",
+      "TRUE",
+      "TRUE"
+    ]
+  ]
+}

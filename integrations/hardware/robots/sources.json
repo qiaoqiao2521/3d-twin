@@ -1,0 +1,58 @@
+[
+  {
+    "id": "odri",
+    "repository": "https://github.com/open-dynamic-robot-initiative/open_robot_actuator_hardware.git",
+    "revision": "66af1522b4fba0ec4a1d7790e66f5e4652208d30",
+    "tree": "011a5d664b1a84cb6725af4847acc9733a88d0f4",
+    "licensePath": "LICENSE",
+    "licenseBlob": "5bacee38e91d6f7333e72f6cdad4f0d415689e46"
+  },
+  {
+    "id": "so101",
+    "repository": "https://github.com/TheRobotStudio/SO-ARM100.git",
+    "revision": "141aea7bcac2744d92998e30268c413202a56f96",
+    "tree": "4599b0da47bde1bfe8be7b049997872faaf3b830",
+    "licensePath": "LICENSE",
+    "licenseBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+  },
+  {
+    "id": "thor",
+    "repository": "https://github.com/AngelLM/Thor.git",
+    "revision": "286b081fe6f056d87c379b884781ef77ff6a0159",
+    "tree": "daef3c0dee4bd011226328991cc6a83e308c680a",
+    "licensePath": "LICENSE",
+    "licenseBlob": "3b7b82d0da2db857eda1a798dbd908ea136f07b5"
+  },
+  {
+    "id": "thor-ros",
+    "repository": "https://github.com/AngelLM/Thor-ROS.git",
+    "revision": "e11a56b5aa0d89f0b68a3ea7bd084eab4a050952",
+    "tree": "be6c98642212e4665b360f2d8303668a8bc1b1df",
+    "licensePath": "LICENSE",
+    "licenseBlob": "3b7b82d0da2db857eda1a798dbd908ea136f07b5"
+  },
+  {
+    "id": "parol6-hardware",
+    "repository": "https://github.com/Source-Robotics/PAROL6-Desktop-robot-arm.git",
+    "revision": "4bfc33519947e84e561ee64fc46d05c1a4935020",
+    "tree": "645d887436ae7f7911a948b599622085232117ab",
+    "licensePath": "LICENSE",
+    "licenseBlob": "1f0b04d500400a60fd7fd0647bd648db31afb243"
+  },
+  {
+    "id": "parol6-models",
+    "repository": "https://github.com/Source-Robotics/robot_descriptions.git",
+    "revision": "a626564c30119b8493a8e0d5e48d7294382cbae2",
+    "tree": "f4accff91bfc1c2f267baffcf0404bb35dd82c0c",
+    "licensePath": "LICENSE",
+    "licenseBlob": "4ea99c213c5c0c005ae4e80df8e52169d06896ec"
+  },
+  {
+    "id": "odri-web",
+    "repository": "https://github.com/open-dynamic-robot-initiative/open-dynamic-robot-initiative.github.io.git",
+    "revision": "44b1db7c1028ed5c2519f29b43965442dbf16961",
+    "tree": "3202cc31d72cd7cf9f288a9255056da826616821",
+    "licensePath": "license.txt",
+    "licenseBlob": "fca612b5087fb6d1b6efe5bb7fce4adeed4b4184"
+  }
+]

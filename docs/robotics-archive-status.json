@@ -1,0 +1,1247 @@
+{
+  "schema": 1,
+  "sourceManifest": "public/baselines/MANIFEST_全量机器人基准清单.json",
+  "summary": {
+    "repositories": 39,
+    "indexedKinematic": 1175,
+    "indexedDocuments": 1538,
+    "availableKinematic": 1175,
+    "availableDocuments": 1478,
+    "missing": 60,
+    "synthetic": 31,
+    "adapted": 3,
+    "localDocuments": 63
+  },
+  "selectedSources": [
+    {
+      "id": "sar",
+      "path": "01-履带越障搜救机器人/Search-and-Rescue-Robot/urdf/sar_urdf.urdf",
+      "bytes": 34489,
+      "sha256": "6112c9124bed5d9548b2b374456d5f9184b41ad163aa20a2b9e90be52df3a028",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    },
+    {
+      "id": "rexrov2",
+      "path": "02-水下机器人ROV与深海作业系统/rexrov2/rexrov2_description/robots/rexrov2_oberon7.xacro",
+      "bytes": 6351,
+      "sha256": "cc191452017a3873ea0a6bab3661e49e88e268bfff4ecdc182f744fadcccc19c",
+      "note": "本仓按原推进器与 Oberon7 描述展开的适配文件；原件另见档案，不是原仓逐字节文件。"
+    },
+    {
+      "id": "bluerov2",
+      "path": "02-水下机器人ROV与深海作业系统/bluerov2/bluerov2_description/urdf/thrusters.xacro",
+      "bytes": 2911,
+      "sha256": "34f17cc75f424312facbed43f83d24c9e606cd6191e308bfaa4322f02c241b99",
+      "note": "本仓展开的推进器与 Ping360 关节适配文件；原件另见档案。"
+    },
+    {
+      "id": "unitree_g1",
+      "path": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/g1_description/g1_29dof_with_hand_rev_1_0.urdf",
+      "bytes": 49271,
+      "sha256": "97da67732d067c3147fc5fb7b7bafc8982718f4e7f8c92ff82266a4d9c07200d",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    },
+    {
+      "id": "unitree_go2",
+      "path": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/go2_description/urdf/go2_description.urdf",
+      "bytes": 27441,
+      "sha256": "7d19fe48e2e689ee1a032ab99f2a4a8b671d87e73de48d3e65811682a5b48b9e",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    },
+    {
+      "id": "unitree_z1",
+      "path": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/z1_description/xacro/z1.urdf",
+      "bytes": 11161,
+      "sha256": "fe3ad65cfa72e826bc7299d8914aba1b788474c33ac70f79a1c807943e6bfec5",
+      "note": "本仓在原 Z1 描述上补入原夹爪节点的适配文件；未接入减速器或内部传动求解。"
+    },
+    {
+      "id": "unitree_h1",
+      "path": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/h1_description/urdf/h1_with_hand.urdf",
+      "bytes": 62624,
+      "sha256": "b0d9dd3adfe2e8f490388807fdf1adf5ad9cf3f66d96e8cf7b0934df322ef1ee",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    },
+    {
+      "id": "unitree_b2",
+      "path": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/b2_description/urdf/b2_description.urdf",
+      "bytes": 28848,
+      "sha256": "cea3e1f29e3c6413e7c96f91d4b2e7260eae13b4dee8049693bfe6554dd6428a",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    },
+    {
+      "id": "fourier_gr1",
+      "path": "06-双足人形具身智能机器人/Wiki-GRx-Models-FourierN1/GRX/GR1/gr1t2/basic_urdf/gr1t2.urdf",
+      "bytes": 39014,
+      "sha256": "286cf6bdce1485f94710b3fc7af588b094dd80a565721af5dbcbd570aa8e43c0",
+      "note": "GR1T2 描述与现有 GR1T2 GLB 对齐；GR1T1 灵巧手版本作为独立档案保留。"
+    },
+    {
+      "id": "talos_humanoid",
+      "path": "06-双足人形具身智能机器人/talos-data/urdf/talos_full_v2.urdf",
+      "bytes": 106603,
+      "sha256": "52e234927bb78bab2b2ec19a5a2b3ec359c250289d3cd793d120d671d40ec442",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    },
+    {
+      "id": "cassie_biped",
+      "path": "06-双足人形具身智能机器人/cassie_description/_首选基准原件_PRIMARY/cassie_v4.urdf",
+      "bytes": 18369,
+      "sha256": "8ccb022d70cfe39019472b2a6eaf94b288c465945c3d4d3b4902af83de8f59bb",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    },
+    {
+      "id": "anymal_c",
+      "path": "07-四足越野与移动操作复合机器人/anymal_c_simple_description/_首选基准原件_PRIMARY/anymal.urdf",
+      "bytes": 63712,
+      "sha256": "3902c3957ac82176e15e87e20086a86d0dff4f23b8cb55bcbd4d3158cd36947b",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    },
+    {
+      "id": "baxter_dual_arm",
+      "path": "08-工业与协作机械臂及灵巧夹爪/baxter_common/_首选基准原件_PRIMARY/baxter.urdf",
+      "bytes": 52314,
+      "sha256": "ab936bfb412f9d94e54563107078d6862349975ee8235e5590f235b3664e6d51",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    },
+    {
+      "id": "hello_stretch",
+      "path": "07-四足越野与移动操作复合机器人/stretch_description/_首选基准原件_PRIMARY/stretch.urdf",
+      "bytes": 37647,
+      "sha256": "1a78d1668a08db540f7a92797153e174eee09ef715909398b775c09938b654f0",
+      "note": "既有归档来源；机型与 GLB 结构由专属验证器检查，未伪称完整上游提交已核验。"
+    }
+  ],
+  "findings": [
+    {
+      "repository": "GingerURDF",
+      "category": "06-双足人形具身智能机器人",
+      "path": "urdf/gingerurdf.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/gingerurdf.urdf"
+    },
+    {
+      "repository": "GingerURDF",
+      "category": "06-双足人形具身智能机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "Search-and-Rescue-Robot",
+      "category": "01-履带越障搜救机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "Universal_Robots_ROS2_Description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "launch/view_ur.launch.xml",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/view_ur.launch.xml"
+    },
+    {
+      "repository": "Universal_Robots_ROS2_Description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "Universal_Robots_ROS2_Description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "Wiki-GRx-Models-FourierN1",
+      "category": "06-双足人形具身智能机器人",
+      "path": "GRX/GR1/gr1t1/urdf/gr1t1_fourier_hand_6dof.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/gr1t1_fourier_hand_6dof.urdf"
+    },
+    {
+      "repository": "Wiki-GRx-Models-FourierN1",
+      "category": "06-双足人形具身智能机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "Wiki-GRx-Models-FourierN1",
+      "category": "06-双足人形具身智能机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "anymal_c_simple_description",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "urdf/anymal.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/anymal.urdf"
+    },
+    {
+      "repository": "anymal_c_simple_description",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "anymal_c_simple_description",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "awesome-robot-descriptions",
+      "category": "09-无人机与全局索引工具",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "baxter_common",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "baxter_description/urdf/baxter.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/baxter.urdf"
+    },
+    {
+      "repository": "baxter_common",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "bluerov2",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "bluerov2_description/urdf/thrusters.xacro",
+      "status": "adapted",
+      "reason": "本仓展开或补充的关节适配文件，来源见 compile_real_cad_glbs.mjs；不是原仓逐字节文件。"
+    },
+    {
+      "repository": "bluerov2",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "bluerov_ros_playground",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "cassie_description",
+      "category": "06-双足人形具身智能机器人",
+      "path": "urdf/cassie_v4.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/cassie_v4.urdf"
+    },
+    {
+      "repository": "cassie_description",
+      "category": "06-双足人形具身智能机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "cassie_description",
+      "category": "06-双足人形具身智能机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "cassie_mj_description",
+      "category": "06-双足人形具身智能机器人",
+      "path": "xml/cassie.xml",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/cassie.xml"
+    },
+    {
+      "repository": "cassie_mj_description",
+      "category": "06-双足人形具身智能机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "desistek_saga",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "desistek_saga_description/urdf/desistek_saga_base.urdf.xacro",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/desistek_saga_base.urdf.xacro"
+    },
+    {
+      "repository": "desistek_saga",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "desistek_saga",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "images/desistek_saga.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "desistek_saga",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "eca_a9",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "eca_a9_description/robots/eca_a9_default.urdf.xacro",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/eca_a9_default.urdf.xacro"
+    },
+    {
+      "repository": "eca_a9",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "eca_a9",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "epfl-lasa",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "iiwa_moveit/launch/trajectory_execution.launch.xml",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/trajectory_execution.launch.xml"
+    },
+    {
+      "repository": "epfl-lasa",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "epfl-lasa",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "ergocub-software",
+      "category": "06-双足人形具身智能机器人",
+      "path": "urdf/ergoCub/robots/ergoCubSN001/model.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/model.urdf"
+    },
+    {
+      "repository": "ergocub-software",
+      "category": "06-双足人形具身智能机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "ergocub-software",
+      "category": "06-双足人形具身智能机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "franka_description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "robots/fr3_duo/fr3_duo.urdf.xacro",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/fr3_duo.urdf.xacro"
+    },
+    {
+      "repository": "franka_description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "husky",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "husky_description/urdf/empty.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/empty.urdf"
+    },
+    {
+      "repository": "husky",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "husky",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "kinova-ros",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "kinova_moveit/robot_configs/j2s7s300_moveit_config/launch/trajectory_execution.launch.xml",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/trajectory_execution.launch.xml"
+    },
+    {
+      "repository": "kinova-ros",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "kinova-ros",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "kinova_mj_description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "xml/kinova_camera_gripper.xml",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/kinova_camera_gripper.xml"
+    },
+    {
+      "repository": "kinova_mj_description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "mini_cheetah_urdf",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "urdf/laikago_toes_limits.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/laikago_toes_limits.urdf"
+    },
+    {
+      "repository": "mini_cheetah_urdf",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "mini_cheetah_urdf",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "google_barkour_vb/barkour_vb_rev_1_0_head_straight.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/barkour_vb_rev_1_0_head_straight.urdf"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "agilex_piper/piper.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "agility_cassie/cassie.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "aloha/aloha.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "aloha/aloha_wrist.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "anybotics_anymal_b/anymal_b.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "anybotics_anymal_c/anymal_c.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "anybotics_anymal_c/assets/face.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "anybotics_anymal_c/assets/lidar_cage.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "arx_l5/arx_l5.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "berkeley_humanoid/berkeley_humanoid.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "booster_t1/t1.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "boston_dynamics_spot/spot.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "flexiv_rizon4/flexiv_rizon4.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "flybody/flybody.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "flybody/flybody_collision.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "fourier_n1/n1.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "franka_emika_panda/panda.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "franka_fr3/fr3.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "google_barkour_v0/barkour_v0.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "google_barkour_vb/barkour_vb.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "google_robot/assets/robot_texture.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "google_robot/robot.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "hello_robot_stretch/assets/wood.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "hello_robot_stretch/stretch.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "hello_robot_stretch_3/assets/wood.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "i2rt_yam/yam.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "kinova_gen3/gen3.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "kuka_iiwa_14/iiwa_14.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "pal_talos/talos.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "pndbotics_adam_lite/adam_lite.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "rethink_robotics_sawyer/sawyer.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "robotiq_2f85/2f85.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "robotiq_2f85_v4/2f85.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "robotis_op3/op3.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "shadow_dexee/shadow_dexee.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "shadow_hand/shadow_hand.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "skydio_x2/x2.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "stanford_tidybot/tidybot.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "stanford_tidybot/tidybot_base.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "trossen_vx300s/vx300s.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "trossen_wx250s/wx250s.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "ufactory_lite6/lite6.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "ufactory_xarm7/xarm7.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "unitree_a1/a1.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "unitree_g1/g1.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "unitree_g1/g1_with_hands.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "unitree_go1/go1.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "unitree_go2/go2.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "unitree_h1/h1.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "unitree_z1/z1.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "universal_robots_ur10e/ur10e.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "universal_robots_ur5e/ur5e.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "mujoco_menagerie",
+      "category": "05-DeepMind_MuJoCo_Menagerie_50款名机基准库_XML",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "nasa-urdf-robots",
+      "category": "06-双足人形具身智能机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "nasa-urdf-robots",
+      "category": "06-双足人形具身智能机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "pal_urdf_utils",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "urdf/camera/orbbec_astra.urdf.xacro",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/orbbec_astra.urdf.xacro"
+    },
+    {
+      "repository": "pal_urdf_utils",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "pepper_description",
+      "category": "06-双足人形具身智能机器人",
+      "path": "urdf/pepper.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/pepper.urdf"
+    },
+    {
+      "repository": "pepper_description",
+      "category": "06-双足人形具身智能机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "pepper_description",
+      "category": "06-双足人形具身智能机器人",
+      "path": "convex/RealSense_screw_frame-ch.txt",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "pepper_description",
+      "category": "06-双足人形具身智能机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "pmb2_robot",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "pmb2_description/urdf/base/base_sensors.urdf.xacro",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/base_sensors.urdf.xacro"
+    },
+    {
+      "repository": "pmb2_robot",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "pmb2_robot",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "rexrov2",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "rexrov2_description/robots/rexrov2_oberon7.xacro",
+      "status": "adapted",
+      "reason": "本仓展开或补充的关节适配文件，来源见 compile_real_cad_glbs.mjs；不是原仓逐字节文件。"
+    },
+    {
+      "repository": "rexrov2",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "robot_descriptions.py",
+      "category": "09-无人机与全局索引工具",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "robotiq_2f_85",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_macro.xacro",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/robotiq_arg2f_85_macro.xacro"
+    },
+    {
+      "repository": "robotiq_2f_85",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "robotiq_2f_85",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "robotiq_arg85_description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "robots/robotiq_arg85_description.URDF",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/robotiq_arg85_description.URDF"
+    },
+    {
+      "repository": "robotiq_arg85_description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "robotiq_arg85_description",
+      "category": "08-工业与协作机械臂及灵巧夹爪",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "sigmaban_urdf",
+      "category": "06-双足人形具身智能机器人",
+      "path": "robot.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/robot.urdf"
+    },
+    {
+      "repository": "sigmaban_urdf",
+      "category": "06-双足人形具身智能机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "skydio_x2_description",
+      "category": "09-无人机与全局索引工具",
+      "path": "urdf/skydio_x2.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/skydio_x2.urdf"
+    },
+    {
+      "repository": "skydio_x2_description",
+      "category": "09-无人机与全局索引工具",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "skydio_x2_description",
+      "category": "09-无人机与全局索引工具",
+      "path": "assets/x2.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "skydio_x2_description",
+      "category": "09-无人机与全局索引工具",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "stretch4_urdf",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "stretch4_urdf/SE4_tools/eoa_wrist_dw4_tool_sg4/eoa_wrist_dw4_tool_sg4.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/eoa_wrist_dw4_tool_sg4.urdf"
+    },
+    {
+      "repository": "stretch4_urdf",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "stretch4_urdf",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "stretch_description",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "urdf/stretch.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/stretch.urdf"
+    },
+    {
+      "repository": "stretch_description",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "stretch_description",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "stretch_urdf",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "stretch_urdf/SE3/stretch_description_SE3_eoa_wrist_dw3_tool_sg3_pro.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/stretch_description_SE3_eoa_wrist_dw3_tool_sg3_pro.urdf"
+    },
+    {
+      "repository": "stretch_urdf",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "stretch_urdf",
+      "category": "07-四足越野与移动操作复合机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "talos-data",
+      "category": "06-双足人形具身智能机器人",
+      "path": "urdf/talos_full_v2_with_lidar.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/talos_full_v2_with_lidar.urdf"
+    },
+    {
+      "repository": "talos-data",
+      "category": "06-双足人形具身智能机器人",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "talos-data",
+      "category": "06-双足人形具身智能机器人",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "unitree_mujoco",
+      "category": "04-宇树Unitree物理仿真全系_MJCF_XML",
+      "path": "unitree_robots/a2/qrc_map_sloped.xml",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/qrc_map_sloped.xml"
+    },
+    {
+      "repository": "unitree_mujoco",
+      "category": "04-宇树Unitree物理仿真全系_MJCF_XML",
+      "path": "doc/terrain.png",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "unitree_mujoco",
+      "category": "04-宇树Unitree物理仿真全系_MJCF_XML",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "unitree_ros",
+      "category": "03-宇树Unitree四足与人形全系_URDF",
+      "path": "robots/h2_plus/H2_Plus.urdf",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/H2_Plus.urdf"
+    },
+    {
+      "repository": "unitree_ros",
+      "category": "03-宇树Unitree四足与人形全系_URDF",
+      "path": "robots/z1_description/xacro/z1.urdf",
+      "status": "adapted",
+      "reason": "本仓展开或补充的关节适配文件，来源见 compile_real_cad_glbs.mjs；不是原仓逐字节文件。"
+    },
+    {
+      "repository": "unitree_ros",
+      "category": "03-宇树Unitree四足与人形全系_URDF",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "unitree_ros",
+      "category": "03-宇树Unitree四足与人形全系_URDF",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "uuv_manipulators",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "uuv_simulator",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "uuv_descriptions/urdf/common.urdf.xacro",
+      "status": "synthetic",
+      "reason": "历史 generate_all 生成的示意链；不是上游原件，不能用于真实机器人控制。",
+      "preferredPath": "_首选基准原件_PRIMARY/common.urdf.xacro"
+    },
+    {
+      "repository": "uuv_simulator",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "README.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    },
+    {
+      "repository": "uuv_simulator",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "uuv_gazebo_worlds/Media/materials/textures/soil_sand_0045_01.jpg",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "uuv_simulator",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "uuv_gazebo_worlds/Media/materials/textures/water_water_0046_01.jpg",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "uuv_simulator",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "uuv_gazebo_worlds/Media/materials/textures/water_water_0051_01.jpg",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "uuv_simulator",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "uuv_gazebo_worlds/Media/materials/textures/water_water_0076_03_s.jpg",
+      "status": "missing",
+      "reason": "历史清单包含此文件，当前归档缺失；上游固定版本与该资源许可未核实，未生成替代文件。"
+    },
+    {
+      "repository": "uuv_simulator",
+      "category": "02-水下机器人ROV与深海作业系统",
+      "path": "00_来源与结构说明.md",
+      "status": "local-document",
+      "reason": "历史本地导览，原版与零修改等旧声明需以当前档案状态核对。"
+    }
+  ]
+}

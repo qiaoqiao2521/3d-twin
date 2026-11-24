@@ -1,0 +1,592 @@
+{
+  "schemaVersion": 1,
+  "checkedAtUtc": "2026-11-24T18:34:22.601550+00:00",
+  "scope": "Anonymous public-access and original-license evidence only; no publication or source changes performed.",
+  "records": [
+    {
+      "documentId": "1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc",
+      "sheet": "Workbook",
+      "anonymousUrl": "https://docs.google.com/spreadsheets/d/1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc/gviz/tq?tqx=out%3Acsv&sheet=Workbook&headers=1",
+      "requestHeaders": {
+        "User-agent": "OLSK-public-source-audit/1.0"
+      },
+      "requestPolicy": {
+        "freshUrllibRequest": true,
+        "authorizationHeader": false,
+        "cookies": false,
+        "apiKey": false,
+        "signedInBrowser": false
+      },
+      "snapshotFile": "manual-data/1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc-Workbook.json",
+      "snapshotSha256": "52dadf08645748da2319fc25197cc3af14ea307371b458d2bf6d68f9e236b036",
+      "licenseSource": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/README.md#license",
+      "status": 200,
+      "finalUrl": "https://docs.google.com/spreadsheets/d/1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc/gviz/tq?tqx=out%3Acsv&sheet=Workbook&headers=1",
+      "contentType": "text/csv; charset=utf-8",
+      "bytes": 75316,
+      "sha256": "9a525ddd784ea7511cf6356d1aed67ad6c02db282f169df9a8aab8f44fa1bbf2",
+      "cellComparison": {
+        "normalization": "Explicit headers=1 avoids gviz merging the first two source rows; normalize CRLF/CR to LF, trim trailing empty cells and wholly empty trailing rows, preserve every nonempty cell and original order.",
+        "anonymousCsvRows": 584,
+        "snapshotRows": 584,
+        "normalizedCsvRows": 584,
+        "normalizedSnapshotRows": 584,
+        "normalizedCellMatricesEqual": false,
+        "differentCellCount": 2,
+        "differentCellCoordinates": [
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            6
+          ]
+        ],
+        "comparedSnapshotNonemptyCells": 2091
+      },
+      "defaultHeaderInferenceExport": {
+        "anonymousUrl": "https://docs.google.com/spreadsheets/d/1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc/gviz/tq?tqx=out%3Acsv&sheet=Workbook",
+        "status": 200,
+        "contentType": "text/csv; charset=utf-8",
+        "bytes": 75242,
+        "sha256": "a9fb5b3656f8df05c735a8a69cbad7410bf4e034d41d9e73803ebd66b3013970",
+        "cellComparison": {
+          "normalization": "Normalize CRLF/CR to LF; trim trailing empty cells per row and wholly empty trailing rows; preserve all nonempty cells and their order.",
+          "anonymousCsvRows": 583,
+          "snapshotRows": 584,
+          "normalizedCsvRows": 583,
+          "normalizedSnapshotRows": 584,
+          "normalizedCellMatricesEqual": false,
+          "differentCellCount": 1582,
+          "differentCellCoordinates": [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              1,
+              6
+            ],
+            [
+              1,
+              7
+            ],
+            [
+              1,
+              8
+            ],
+            [
+              1,
+              9
+            ],
+            [
+              1,
+              10
+            ],
+            [
+              1,
+              11
+            ],
+            [
+              1,
+              12
+            ],
+            [
+              1,
+              13
+            ],
+            [
+              1,
+              14
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              2,
+              8
+            ],
+            [
+              2,
+              9
+            ],
+            [
+              2,
+              10
+            ],
+            [
+              2,
+              13
+            ],
+            [
+              2,
+              14
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              3,
+              2
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              3,
+              10
+            ]
+          ],
+          "comparedSnapshotNonemptyCells": 2091
+        }
+      }
+    },
+    {
+      "documentId": "1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY",
+      "sheet": "Blad1",
+      "anonymousUrl": "https://docs.google.com/spreadsheets/d/1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY/gviz/tq?tqx=out%3Acsv&sheet=Blad1",
+      "requestHeaders": {
+        "User-agent": "OLSK-public-source-audit/1.0"
+      },
+      "requestPolicy": {
+        "freshUrllibRequest": true,
+        "authorizationHeader": false,
+        "cookies": false,
+        "apiKey": false,
+        "signedInBrowser": false
+      },
+      "snapshotFile": "manual-data/1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY-Blad1.json",
+      "snapshotSha256": "968880b19303ad55fe1f82a01939cc6c12b6c013faccf22f94dcf9e74e55266e",
+      "licenseSource": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/README.md#license",
+      "status": 200,
+      "finalUrl": "https://docs.google.com/spreadsheets/d/1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY/gviz/tq?tqx=out%3Acsv&sheet=Blad1",
+      "contentType": "text/csv; charset=utf-8",
+      "bytes": 10602,
+      "sha256": "3b4fb2b9148ec91d24a4fff40027e0628a1169ab6d416ecb26f7329d31fa5f8e",
+      "cellComparison": {
+        "normalization": "Normalize CRLF/CR to LF; trim trailing empty cells per row and wholly empty trailing rows; preserve all nonempty cells and their order.",
+        "anonymousCsvRows": 43,
+        "snapshotRows": 43,
+        "normalizedCsvRows": 43,
+        "normalizedSnapshotRows": 43,
+        "normalizedCellMatricesEqual": true,
+        "differentCellCount": 0,
+        "differentCellCoordinates": [],
+        "comparedSnapshotNonemptyCells": 170
+      }
+    },
+    {
+      "documentId": "1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA",
+      "sheet": "Workbook",
+      "anonymousUrl": "https://docs.google.com/spreadsheets/d/1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA/gviz/tq?tqx=out%3Acsv&sheet=Workbook&headers=1",
+      "requestHeaders": {
+        "User-agent": "OLSK-public-source-audit/1.0"
+      },
+      "requestPolicy": {
+        "freshUrllibRequest": true,
+        "authorizationHeader": false,
+        "cookies": false,
+        "apiKey": false,
+        "signedInBrowser": false
+      },
+      "snapshotFile": "manual-data/1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA-Workbook.json",
+      "snapshotSha256": "2f365c8a00c0f0cebe203b2e574434a5b14bc1f3fce1b4c4cb0c574b6c3baa0c",
+      "licenseSource": "https://github.com/Open-Lab-Starter-Kit/OLSK-Small-CNC/blob/cae066fa5b78b596743e1f2e432b93539cba8c24/README.md#license",
+      "status": 200,
+      "finalUrl": "https://docs.google.com/spreadsheets/d/1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA/gviz/tq?tqx=out%3Acsv&sheet=Workbook&headers=1",
+      "contentType": "text/csv; charset=utf-8",
+      "bytes": 39932,
+      "sha256": "32ba3780fd0c44aec5c712ab5541d037a7751f86ba1f0b857e0b7c1f305cb879",
+      "cellComparison": {
+        "normalization": "Explicit headers=1 avoids gviz merging the first two source rows; normalize CRLF/CR to LF, trim trailing empty cells and wholly empty trailing rows, preserve every nonempty cell and original order.",
+        "anonymousCsvRows": 314,
+        "snapshotRows": 314,
+        "normalizedCsvRows": 314,
+        "normalizedSnapshotRows": 314,
+        "normalizedCellMatricesEqual": false,
+        "differentCellCount": 3,
+        "differentCellCoordinates": [
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            87,
+            4
+          ]
+        ],
+        "comparedSnapshotNonemptyCells": 1138
+      },
+      "defaultHeaderInferenceExport": {
+        "anonymousUrl": "https://docs.google.com/spreadsheets/d/1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA/gviz/tq?tqx=out%3Acsv&sheet=Workbook",
+        "status": 200,
+        "contentType": "text/csv; charset=utf-8",
+        "bytes": 39858,
+        "sha256": "e1ea037c20850fcb5fbd922d00a5bb054abdd2c840275259ec3b4fea9170e859",
+        "cellComparison": {
+          "normalization": "Normalize CRLF/CR to LF; trim trailing empty cells per row and wholly empty trailing rows; preserve all nonempty cells and their order.",
+          "anonymousCsvRows": 313,
+          "snapshotRows": 314,
+          "normalizedCsvRows": 313,
+          "normalizedSnapshotRows": 314,
+          "normalizedCellMatricesEqual": false,
+          "differentCellCount": 893,
+          "differentCellCoordinates": [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              1,
+              6
+            ],
+            [
+              1,
+              7
+            ],
+            [
+              1,
+              8
+            ],
+            [
+              1,
+              9
+            ],
+            [
+              1,
+              10
+            ],
+            [
+              1,
+              11
+            ],
+            [
+              1,
+              12
+            ],
+            [
+              1,
+              13
+            ],
+            [
+              1,
+              14
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              2,
+              8
+            ],
+            [
+              2,
+              9
+            ],
+            [
+              2,
+              10
+            ],
+            [
+              2,
+              11
+            ],
+            [
+              2,
+              13
+            ],
+            [
+              2,
+              14
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              3,
+              2
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              3,
+              11
+            ]
+          ],
+          "comparedSnapshotNonemptyCells": 1138
+        }
+      }
+    }
+  ],
+  "uniqueExternalLinks": [
+    {
+      "url": "https://drive.google.com/file/d/1-p-GjavLE_d9K5to-ShQ_AwWf7hh87Z3/view?usp=sharing",
+      "publicManualOccurrences": [
+        {
+          "documentId": "1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc",
+          "sheet": "Workbook",
+          "row": 15,
+          "column": 14
+        },
+        {
+          "documentId": "1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA",
+          "sheet": "Workbook",
+          "row": 22,
+          "column": 14
+        }
+      ],
+      "publishedMaterial": "Only the original public manual cell URL string is retained. No target Drive file content has been downloaded, archived or redistributed by this integration.",
+      "targetContentLicense": "Not independently verified; the manual license does not itself establish ownership or licensing of every externally linked target.",
+      "anonymousViewerHeadRequest": {
+        "error": "HTTP Error 429: Too Many Requests",
+        "targetFileBodyDownloaded": false
+      },
+      "targetAccessAssessment": "A viewer HEAD response is not proof of anonymous PDF download or of target-content redistribution rights. Only the original URL string is included."
+    }
+  ],
+  "sourceReferences": [
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "path": "Assembly_Manual/src/Components/StepHowTo.jsx",
+      "line": 12,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Small-CNC/blob/cae066fa5b78b596743e1f2e432b93539cba8c24/Assembly_Manual/src/Components/StepHowTo.jsx#L12",
+      "sourceFileSha256": "f39442964e233b3d9515c05af05416a80c5ebcc2c3dea48ec658b5fe427f2b72",
+      "documentId": "1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA",
+      "sheet": "Workbook",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA/values/Workbook"
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "path": "Assembly_Manual/src/Components/StepHowTo.jsx",
+      "line": 45,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Small-CNC/blob/cae066fa5b78b596743e1f2e432b93539cba8c24/Assembly_Manual/src/Components/StepHowTo.jsx#L45",
+      "sourceFileSha256": "f39442964e233b3d9515c05af05416a80c5ebcc2c3dea48ec658b5fe427f2b72",
+      "documentId": "1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY",
+      "sheet": "Blad1",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY/values/Blad1"
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "path": "Assembly_Manual/src/Containers/HowToMenu.jsx",
+      "line": 23,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Small-CNC/blob/cae066fa5b78b596743e1f2e432b93539cba8c24/Assembly_Manual/src/Containers/HowToMenu.jsx#L23",
+      "sourceFileSha256": "4d6981c414bbf0e37aeaaf6a28674fa697e55505e0ca6c494f9b2ee0ed704996",
+      "documentId": "1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY",
+      "sheet": "Blad1",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY/values/Blad1"
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "path": "Assembly_Manual/src/Containers/HowToText.jsx",
+      "line": 19,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Small-CNC/blob/cae066fa5b78b596743e1f2e432b93539cba8c24/Assembly_Manual/src/Containers/HowToText.jsx#L19",
+      "sourceFileSha256": "6bcf4eac2b86d5979ba2bb400631c7c52af82f065e913bd21f674a6462aecac2",
+      "documentId": "1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY",
+      "sheet": "Blad1",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY/values/Blad1"
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "path": "Assembly_Manual/src/Containers/StepRemarks.jsx",
+      "line": 15,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Small-CNC/blob/cae066fa5b78b596743e1f2e432b93539cba8c24/Assembly_Manual/src/Containers/StepRemarks.jsx#L15",
+      "sourceFileSha256": "2f87cd267a92923c8ddd193042c5698174c949a9ed3e4523e098c85b4ce47720",
+      "documentId": "1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA",
+      "sheet": "Workbook",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1lhb7-A0hI_tJ6aedruDEQmPhXl1srPcLZE5VFaaI6rA/values/Workbook"
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "path": "Assembly_Manual/src/Components/StepHowTo.jsx",
+      "line": 12,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/Assembly_Manual/src/Components/StepHowTo.jsx#L12",
+      "sourceFileSha256": "09d54d2abe7347235b252ef0f92bd786848c8eff103e830332dcc86c83e7e0db",
+      "documentId": "1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc",
+      "sheet": "Workbook",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc/values/Workbook"
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "path": "Assembly_Manual/src/Components/StepHowTo.jsx",
+      "line": 45,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/Assembly_Manual/src/Components/StepHowTo.jsx#L45",
+      "sourceFileSha256": "09d54d2abe7347235b252ef0f92bd786848c8eff103e830332dcc86c83e7e0db",
+      "documentId": "1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY",
+      "sheet": "Blad1",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY/values/Blad1"
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "path": "Assembly_Manual/src/Containers/HowToMenu.jsx",
+      "line": 23,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/Assembly_Manual/src/Containers/HowToMenu.jsx#L23",
+      "sourceFileSha256": "a0c699a961e02291aa16a8a2785dee3579ad2bf76d9be3ccb7aef5f05f591368",
+      "documentId": "1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc",
+      "sheet": "Workbook",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc/values/Workbook"
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "path": "Assembly_Manual/src/Containers/HowToText.jsx",
+      "line": 19,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/Assembly_Manual/src/Containers/HowToText.jsx#L19",
+      "sourceFileSha256": "6bcf4eac2b86d5979ba2bb400631c7c52af82f065e913bd21f674a6462aecac2",
+      "documentId": "1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY",
+      "sheet": "Blad1",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1grTucZ2sqLgZ4AtJq8EkyO__kLg-pazRVl3sbLNMaIY/values/Blad1"
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "path": "Assembly_Manual/src/Containers/StepRemarks.jsx",
+      "line": 15,
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/Assembly_Manual/src/Containers/StepRemarks.jsx#L15",
+      "sourceFileSha256": "52de1a1117f81b5f0c47e80d463a74cd481e6be6542befb3962133d22d02e752",
+      "documentId": "1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc",
+      "sheet": "Workbook",
+      "endpointWithoutPublicApiKey": "https://sheets.googleapis.com/v4/spreadsheets/1GS88O0KVbPsdDfFYZyhw8QDcmzQE2Av4TtVoGLWwKnc/values/Workbook"
+    }
+  ],
+  "licenseEvidence": [
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Small-CNC/blob/cae066fa5b78b596743e1f2e432b93539cba8c24/README.md#license",
+      "readmeSha256": "7c099a15abbaf944084684661405be1b424db8a6fade02adcbc527d6e209a4ba",
+      "manualAndDescriptionDeclarationLine": 88,
+      "licenseLine": 90,
+      "declaredLicense": "CC-BY-SA-4.0",
+      "declaredScope": "Assembly manual, pictures, videos, presentations, description text and other media.",
+      "verification": "The pinned original README was inspected from the frozen original archive and independently read through the GitHub connector."
+    },
+    {
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "url": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC/blob/e7081c49c582b732ea6ab3c160bf557609754cfc/README.md#license",
+      "readmeSha256": "12c15d369a31c50002f84ed076350920705d524cdbfab4669919339f17107e41",
+      "manualAndDescriptionDeclarationLine": 91,
+      "licenseLine": 93,
+      "declaredLicense": "CC-BY-SA-4.0",
+      "declaredScope": "Assembly manual, pictures, videos, presentations, description text and other media.",
+      "verification": "The pinned original README was inspected from the frozen original archive and independently read through the GitHub connector."
+    }
+  ],
+  "assessment": {
+    "publicAccess": "All three named worksheets returned HTTP 200 text/csv to fresh urllib requests with only User-Agent; no account, OAuth token, API key, cookies or signed-in browser were used.",
+    "contentComparison": "HowTo Blad1 is exactly equal cell-by-cell after whitespace transport/trailing-empty normalization. Explicit headers=1 makes both Workbook row counts equal to their snapshots, but Large still differs in D2/F2 and Small in D2/F2/D87. These differences remain disclosed; no snapshot has been changed to force a match.",
+    "authorizationEvidence": "The fixed original application directly names these exact spreadsheet IDs and tabs, while each original project README explicitly licenses its assembly manual, descriptive text and media under CC BY-SA 4.0. This is evidence linking the public worksheets to the author-licensed manual, not a claim that the external sheet contents are covered by a Git commit hash.",
+    "remainingUnverified": [
+      "The exact origin of the few remaining gviz CSV cell differences has not been independently established; full equality is not claimed for the two Workbook exports.",
+      "The sole linked Drive target returned HTTP 429 to an anonymous HEAD attempt; its PDF content, anonymous file download and separate redistribution license have not been verified. Only the URL string already present in the public manual is retained, with no target file content archived or redistributed.",
+      "There is no separately captured license declaration inside each Google Sheet; the license evidence is the original projects explicit manual/media grant and their exact source-code references."
+    ],
+    "approvalBoundary": "This record supplies new read-only evidence for the existing automatic approval review. It does not bypass the rejection, authorize a different publication channel, or itself publish any rejected content.",
+    "mutations": "Only this independent verification report was created/updated. Frozen original snapshots, application code, build recipes and blocked GitHub contents were not changed."
+  },
+  "auditConclusion": {
+    "threeSheetsAnonymouslyReadable": true,
+    "originalApplicationReferencesVerified": true,
+    "authorManualLicenseDeclarationsVerified": true,
+    "frozenSnapshotsModified": false,
+    "csvComparisonBoundary": "CSV and frozen Sheets Values JSON have the recorded differences in 2 cells for Large and 3 cells for Small; HowTo is cell-identical. The original frozen snapshot is retained, and exact cross-format equivalence is not claimed.",
+    "externalTargetBoundary": "Only the URL already present in both public manuals is preserved. No target Drive file content is included; its accessibility and independent license are not asserted.",
+    "publicationScope": "Original public assembly-manual snapshots and their original URL strings within the user-authorized open-source integration; no signed-in personal storage was accessed."
+  }
+}

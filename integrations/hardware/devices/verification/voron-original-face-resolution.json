@@ -1,0 +1,1582 @@
+{
+  "verificationKind": "CPU isolated original-face resolution; not final whole-machine export or WebGL acceptance",
+  "sourceRepository": "VoronDesign/Voron-2",
+  "sourceRevision": "7b32e405f0719881cca782500c822e01e3b16bf2",
+  "sourceStepSha256": "06b372e40217caa1a7d1f516cb74887247f809e41e1e389f740f290e98441b55",
+  "sourceStepBytes": 241522213,
+  "diagnosticOriginalFaceOccurrences": 107855,
+  "diagnosticRemainingFaces": 27,
+  "strictSegmentedConeResolved": 16,
+  "existingNativeRefinementResolved": 10,
+  "unresolvedAmongExportedFaces": 0,
+  "newAdditionalSurfaceHelperNeeded": false,
+  "baseDeflectionMillimetres": 0.25,
+  "baseAngleRadians": 0.45,
+  "limitation": "The 26 ordinary closed original faces pass the exact-surface or adaptive-original-area checks. Original micro-face 8935 is retained with unchanged native OCCT nodes/triangles under its pinned source edge/vertex precision; it has a sampled fidelity audit, no unsigned-area certification and no proved whole-domain surface-error bound. The original geometry is neither reprojected nor given invented closing edges.",
+  "faces": [
+    {
+      "file": "face-107578.brep",
+      "sha256": "80692f1a99a586396e4d8e4eb174acd36bb94022cebde4fc080b7eaaba291fac",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.7865272488376149,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.7865272488375012,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 5.4846974861338993e-14,
+        "factor": 50,
+        "linearDeflectionMillimetres": 0.005,
+        "angularDeflectionRadians": 0.06363961030678927,
+        "kernelStatusFlags": 0,
+        "triangles": 117,
+        "meshAreaSquareMillimetres": 0.7890228371282186,
+        "relativeAreaError": 0.0031729203208228367,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 117,
+            "meshAreaSquareMillimetres": 0.7890228371282186,
+            "relativeAreaError": 0.0031729203208228367,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-107580.brep",
+      "sha256": "391a09b5f092a162e52561f99098a1d4879bdb127eb80db06fb36143a54c878f",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.7865272488376718,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.7865272488375439,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 5.676181828473643e-14,
+        "factor": 50,
+        "linearDeflectionMillimetres": 0.005,
+        "angularDeflectionRadians": 0.06363961030678927,
+        "kernelStatusFlags": 0,
+        "triangles": 117,
+        "meshAreaSquareMillimetres": 0.7890228371281441,
+        "relativeAreaError": 0.0031729203206737463,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 117,
+            "meshAreaSquareMillimetres": 0.7890228371281441,
+            "relativeAreaError": 0.0031729203206737463,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-107581.brep",
+      "sha256": "6753d303dd8a9091b92d79ad9b36d6305474863cd73d62f8ef93c09aa2635f43",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.7865272488363644,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.7865272488364781,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 2.2704727313925466e-13,
+        "factor": 50,
+        "linearDeflectionMillimetres": 0.005,
+        "angularDeflectionRadians": 0.06363961030678927,
+        "kernelStatusFlags": 0,
+        "triangles": 117,
+        "meshAreaSquareMillimetres": 0.7890228371278888,
+        "relativeAreaError": 0.0031729203217084776,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 117,
+            "meshAreaSquareMillimetres": 0.7890228371278888,
+            "relativeAreaError": 0.0031729203217084776,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-38016.brep",
+      "sha256": "a78849906484d9402a3dd562f235494994686ad8b7fe2e9e554d7aa9649c847f",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 21.623897968547674,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 21.623897968547674,
+        "meshAreaSquareMillimetres": 21.603476763435168,
+        "analyticAreaSquareMillimetres": 21.623897968547944,
+        "relativeAreaError": 0.0009443813110017646,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.028183797367269094,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.031174960772002956,
+        "maxOriginalBoundaryDeviationMillimetres": 5.684341886080802e-14,
+        "maxOriginalArcEndpointDeviationMillimetres": 3.0664673470028113e-14,
+        "uvBounds": [
+          -3.1415926535898233,
+          3.1415926535898073,
+          0.2334866591477731,
+          1.8858537854245228
+        ],
+        "uSegments": 66,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          -3.1415926535898233,
+          -1.5707963267948934,
+          3.1415926535898073
+        ],
+        "partitionSegments": [
+          17,
+          49
+        ],
+        "nodes": 134,
+        "triangles": 132,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-38509.brep",
+      "sha256": "c7ec5af5841305dbbf7cbc83dcd816d79c13b310901bb2f19299490e586928bc",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.08801934301993,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.08801934301993,
+        "meshAreaSquareMillimetres": 34.05485859765058,
+        "analyticAreaSquareMillimetres": 34.088019343020775,
+        "relativeAreaError": 0.0009727976576069668,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.03767783950763794,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.041400982611347996,
+        "maxOriginalBoundaryDeviationMillimetres": 1.7053025658242404e-13,
+        "maxOriginalArcEndpointDeviationMillimetres": 7.785632405731891e-14,
+        "uvBounds": [
+          -3.1415926535898127,
+          3.1415926535898393,
+          -1.9728279195105167,
+          0.21920310216783712
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          -3.1415926535898127,
+          -0.6200902136449167,
+          3.1415926535898393
+        ],
+        "partitionSegments": [
+          26,
+          39
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-38510.brep",
+      "sha256": "8911b30b92d74dd905bca60be5a1e0633d3410b6fc7c4a8498696f6ae0b01469",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.08801934302069,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.08801934302069,
+        "meshAreaSquareMillimetres": 34.05485441943249,
+        "analyticAreaSquareMillimetres": 34.08801934302067,
+        "relativeAreaError": 0.0009729202290831505,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.03766741422883831,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04138853467913413,
+        "maxOriginalBoundaryDeviationMillimetres": 8.526512829121202e-14,
+        "maxOriginalArcEndpointDeviationMillimetres": 3.552713678800501e-14,
+        "uvBounds": [
+          3.141592653589747,
+          9.424777960769378,
+          -1.9728279195104965,
+          0.21920310216784342
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          3.141592653589747,
+          4.092298766739773,
+          9.424777960769378
+        ],
+        "partitionSegments": [
+          10,
+          55
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-38512.brep",
+      "sha256": "9362fea260fe0b88df0f1710a98a44e328769900169e9882a88cef900333c118",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.08801934302011,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.08801934302011,
+        "meshAreaSquareMillimetres": 34.05484778299954,
+        "analyticAreaSquareMillimetres": 34.08801934302068,
+        "relativeAreaError": 0.0009731149142686108,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.037855463207130007,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04161314869029056,
+        "maxOriginalBoundaryDeviationMillimetres": 1.9328852131274408e-13,
+        "maxOriginalArcEndpointDeviationMillimetres": 1.0448844399386375e-13,
+        "uvBounds": [
+          3.141592653589743,
+          9.424777960769408,
+          -1.9728279195105147,
+          0.2192031021678283
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          3.141592653589743,
+          7.233891420329518,
+          9.424777960769408
+        ],
+        "partitionSegments": [
+          42,
+          23
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-41782.brep",
+      "sha256": "252cbd3286929283d855d4be5a4b3f3cf0b26276af8023ef51bc7ce1d8dadcac",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 21.62389796854767,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 21.62389796854767,
+        "meshAreaSquareMillimetres": 21.603476763435157,
+        "analyticAreaSquareMillimetres": 21.623897968547944,
+        "relativeAreaError": 0.0009443813110020934,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.02818379736726999,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.031174960772002956,
+        "maxOriginalBoundaryDeviationMillimetres": 1.464821375527116e-14,
+        "maxOriginalArcEndpointDeviationMillimetres": 3.040633126371917e-14,
+        "uvBounds": [
+          3.14159265358978,
+          9.42477796076941,
+          0.2334866591477731,
+          1.8858537854245228
+        ],
+        "uSegments": 66,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          3.14159265358978,
+          7.853981633974479,
+          9.42477796076941
+        ],
+        "partitionSegments": [
+          49,
+          17
+        ],
+        "nodes": 134,
+        "triangles": 132,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-42275.brep",
+      "sha256": "3c1832627f0118b7e2bf31e7753f9a3088079bcfeec26cf035ed18ba30bdb996",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.088019343019916,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.088019343019916,
+        "meshAreaSquareMillimetres": 34.05485859765058,
+        "analyticAreaSquareMillimetres": 34.088019343020775,
+        "relativeAreaError": 0.0009727976576065503,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.037677839507637416,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04140098261134924,
+        "maxOriginalBoundaryDeviationMillimetres": 1.718573603063735e-13,
+        "maxOriginalArcEndpointDeviationMillimetres": 7.496562604817282e-14,
+        "uvBounds": [
+          3.1415926535897474,
+          9.424777960769399,
+          -1.9728279195105167,
+          0.21920310216783712
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          3.1415926535897474,
+          6.903275520824462,
+          9.424777960769399
+        ],
+        "partitionSegments": [
+          39,
+          26
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-42276.brep",
+      "sha256": "71277315184ad4ad4fb7e2d3d078998bbb56d7e04076e2b43dc67c435bb35a20",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.08801934302068,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.08801934302068,
+        "meshAreaSquareMillimetres": 34.0548544194325,
+        "analyticAreaSquareMillimetres": 34.08801934302067,
+        "relativeAreaError": 0.0009729202290825254,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.037667414228835565,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04138853467913371,
+        "maxOriginalBoundaryDeviationMillimetres": 8.673279421411239e-14,
+        "maxOriginalArcEndpointDeviationMillimetres": 3.449061096984636e-14,
+        "uvBounds": [
+          -3.1415926535897913,
+          3.1415926535898393,
+          -1.9728279195104965,
+          0.21920310216784342
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          -3.1415926535897913,
+          2.190886540439813,
+          3.1415926535898393
+        ],
+        "partitionSegments": [
+          55,
+          10
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-42278.brep",
+      "sha256": "7a84ee78c86ce3671ed75826707b5bf4198856c64755f5e4d68ee04ef06fbed5",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.08801934302007,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.08801934302007,
+        "meshAreaSquareMillimetres": 34.05484778299954,
+        "analyticAreaSquareMillimetres": 34.08801934302068,
+        "relativeAreaError": 0.0009731149142675695,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.037855463207131,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04161314869029098,
+        "maxOriginalBoundaryDeviationMillimetres": 1.8087465124037088e-13,
+        "maxOriginalArcEndpointDeviationMillimetres": 1.1234667099445443e-13,
+        "uvBounds": [
+          -3.1415926535898224,
+          3.1415926535898433,
+          -1.9728279195105147,
+          0.2192031021678283
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          -3.1415926535898224,
+          -0.9507061131499821,
+          3.1415926535898433
+        ],
+        "partitionSegments": [
+          23,
+          42
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-45722.brep",
+      "sha256": "10209aa3dc36339963f7f08944abc734d6c55c5559f6201bd79b32c320e28d47",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 21.62389796854767,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 21.62389796854767,
+        "meshAreaSquareMillimetres": 21.603476763435168,
+        "analyticAreaSquareMillimetres": 21.623897968547944,
+        "relativeAreaError": 0.0009443813110016006,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.028183797367269094,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.031174960772002956,
+        "maxOriginalBoundaryDeviationMillimetres": 1.5888218580782548e-14,
+        "maxOriginalArcEndpointDeviationMillimetres": 3.0664673470028113e-14,
+        "uvBounds": [
+          -3.1415926535898233,
+          3.1415926535898073,
+          0.2334866591477731,
+          1.8858537854245228
+        ],
+        "uSegments": 66,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          -3.1415926535898233,
+          -1.5707963267948934,
+          3.1415926535898073
+        ],
+        "partitionSegments": [
+          17,
+          49
+        ],
+        "nodes": 134,
+        "triangles": 132,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-46215.brep",
+      "sha256": "d989ca2aaaf18ee3b748781685d84162dcafa0600939f28fbf64e2c7269add18",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.08801934301992,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.08801934301992,
+        "meshAreaSquareMillimetres": 34.05485859765058,
+        "analyticAreaSquareMillimetres": 34.088019343020775,
+        "relativeAreaError": 0.0009727976576067586,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.03767783950763794,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.041400982611347996,
+        "maxOriginalBoundaryDeviationMillimetres": 1.7346558842822478e-13,
+        "maxOriginalArcEndpointDeviationMillimetres": 7.785632405731891e-14,
+        "uvBounds": [
+          -3.1415926535898127,
+          3.1415926535898393,
+          -1.9728279195105167,
+          0.21920310216783712
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          -3.1415926535898127,
+          -0.6200902136449167,
+          3.1415926535898393
+        ],
+        "partitionSegments": [
+          26,
+          39
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-46216.brep",
+      "sha256": "42afeaca286b056b3efa19c11bb12b576065fab22b4b72d0ce905cee162cb53a",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.08801934302069,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.08801934302069,
+        "meshAreaSquareMillimetres": 34.05485441943249,
+        "analyticAreaSquareMillimetres": 34.08801934302067,
+        "relativeAreaError": 0.0009729202290831505,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.03766741422883831,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04138853467913413,
+        "maxOriginalBoundaryDeviationMillimetres": 8.673279421411239e-14,
+        "maxOriginalArcEndpointDeviationMillimetres": 3.552713678800501e-14,
+        "uvBounds": [
+          3.141592653589747,
+          9.424777960769378,
+          -1.9728279195104965,
+          0.21920310216784342
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          3.141592653589747,
+          4.092298766739773,
+          9.424777960769378
+        ],
+        "partitionSegments": [
+          10,
+          55
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-46218.brep",
+      "sha256": "2b3a073e3cbb26feb380d2e59170cd375c329223b8e20d0301ebc511dbf48246",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.0880193430201,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.0880193430201,
+        "meshAreaSquareMillimetres": 34.05484778299954,
+        "analyticAreaSquareMillimetres": 34.08801934302068,
+        "relativeAreaError": 0.0009731149142684025,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.037855463207130007,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04161314869029056,
+        "maxOriginalBoundaryDeviationMillimetres": 1.8762230420337137e-13,
+        "maxOriginalArcEndpointDeviationMillimetres": 1.0448844399386375e-13,
+        "uvBounds": [
+          3.141592653589743,
+          9.424777960769408,
+          -1.9728279195105147,
+          0.2192031021678283
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          3.141592653589743,
+          7.233891420329518,
+          9.424777960769408
+        ],
+        "partitionSegments": [
+          42,
+          23
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-49314.brep",
+      "sha256": "3f3ecc8698591b4b64fe32624509cd0d993dbdd279b6e885685c0bc21df24014",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 21.62389796854767,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 21.62389796854767,
+        "meshAreaSquareMillimetres": 21.603476763435157,
+        "analyticAreaSquareMillimetres": 21.623897968547944,
+        "relativeAreaError": 0.0009443813110020934,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.02818379736726999,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.031174960772002956,
+        "maxOriginalBoundaryDeviationMillimetres": 1.5888218580782548e-14,
+        "maxOriginalArcEndpointDeviationMillimetres": 3.040633126371917e-14,
+        "uvBounds": [
+          3.14159265358978,
+          9.42477796076941,
+          0.2334866591477731,
+          1.8858537854245228
+        ],
+        "uSegments": 66,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          3.14159265358978,
+          7.853981633974479,
+          9.42477796076941
+        ],
+        "partitionSegments": [
+          49,
+          17
+        ],
+        "nodes": 134,
+        "triangles": 132,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-49807.brep",
+      "sha256": "df59012c111f9039bdd074e890e32c00a60829addab2e72a6febb87752499133",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.088019343019916,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.088019343019916,
+        "meshAreaSquareMillimetres": 34.05485859765058,
+        "analyticAreaSquareMillimetres": 34.088019343020775,
+        "relativeAreaError": 0.0009727976576065503,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.037677839507637416,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04140098261134924,
+        "maxOriginalBoundaryDeviationMillimetres": 1.8198773652309366e-13,
+        "maxOriginalArcEndpointDeviationMillimetres": 7.496562604817282e-14,
+        "uvBounds": [
+          3.1415926535897474,
+          9.424777960769399,
+          -1.9728279195105167,
+          0.21920310216783712
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          3.1415926535897474,
+          6.903275520824462,
+          9.424777960769399
+        ],
+        "partitionSegments": [
+          39,
+          26
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-49808.brep",
+      "sha256": "c158e620fe640deceabc95206b572389f5a6c4421432c0b3ac811d07f8fe88d3",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.08801934302069,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.08801934302069,
+        "meshAreaSquareMillimetres": 34.0548544194325,
+        "analyticAreaSquareMillimetres": 34.08801934302067,
+        "relativeAreaError": 0.0009729202290827336,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.037667414228835565,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04138853467913371,
+        "maxOriginalBoundaryDeviationMillimetres": 9.099386826154683e-14,
+        "maxOriginalArcEndpointDeviationMillimetres": 3.449061096984636e-14,
+        "uvBounds": [
+          -3.1415926535897913,
+          3.1415926535898393,
+          -1.9728279195104965,
+          0.21920310216784342
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          -3.1415926535897913,
+          2.190886540439813,
+          3.1415926535898393
+        ],
+        "partitionSegments": [
+          55,
+          10
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-49810.brep",
+      "sha256": "a269c91f19338b2220446d3f6ef0f56b90f348ed407840fdbc9d4cc5fc3c283f",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Cone",
+      "area": 34.08801934302007,
+      "valid": true,
+      "resolution": "strict-original-segmented-cone-tessellation",
+      "audit": {
+        "method": "original-segmented-periodic-cone-triangulation",
+        "areaSquareMillimetres": 34.08801934302007,
+        "meshAreaSquareMillimetres": 34.05484778299954,
+        "analyticAreaSquareMillimetres": 34.08801934302068,
+        "relativeAreaError": 0.0009731149142675695,
+        "linearDeflectionMillimetres": 0.25,
+        "angularDeflectionRadians": 0.45,
+        "maxSampledDeviationMillimetres": 0.037855463207131,
+        "analyticMaxLinearDeviationBoundMillimetres": 0.04161314869029098,
+        "maxOriginalBoundaryDeviationMillimetres": 1.944603721910313e-13,
+        "maxOriginalArcEndpointDeviationMillimetres": 1.1234667099445443e-13,
+        "uvBounds": [
+          -3.1415926535898224,
+          3.1415926535898433,
+          -1.9728279195105147,
+          0.2192031021678283
+        ],
+        "uSegments": 65,
+        "originalEdgeOccurrences": 5,
+        "originalRingArcCounts": [
+          2,
+          1
+        ],
+        "originalUPartitions": [
+          -3.1415926535898224,
+          -0.9507061131499821,
+          3.1415926535898433
+        ],
+        "partitionSegments": [
+          23,
+          42
+        ],
+        "nodes": 132,
+        "triangles": 130,
+        "validation": {
+          "singleOriginalWire": true,
+          "twoOriginalSeamEdges": true,
+          "twoGapFreeCompleteOriginalRings": true,
+          "noApexOrCrossedNappe": true,
+          "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+          "original3dEdgesMatchPcurves": true,
+          "boundaryOnOriginalFace": true,
+          "everyTriangleClassifiedOnOriginalFace": true,
+          "triangleWindingMatchesOriginalSurfaceNormals": true,
+          "faceOrientationRetainedForStandardExporter": true,
+          "relativeAreaErrorBelowHalfPercent": true,
+          "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+        }
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-82560.brep",
+      "sha256": "cd0b33e2e7091ff120dfe6de66c4bcbfe140452aecf3c2f051034f6b2c3b6183",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.7865272488376149,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.7865272488375012,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 5.4846974861338993e-14,
+        "factor": 50,
+        "linearDeflectionMillimetres": 0.005,
+        "angularDeflectionRadians": 0.06363961030678927,
+        "kernelStatusFlags": 0,
+        "triangles": 117,
+        "meshAreaSquareMillimetres": 0.7890228371282824,
+        "relativeAreaError": 0.00317292032090386,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 117,
+            "meshAreaSquareMillimetres": 0.7890228371282824,
+            "relativeAreaError": 0.00317292032090386,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-82562.brep",
+      "sha256": "774de3282d995153547f8e74e0f160ba9a67b7cd3b2d7d0e6e3896da69dc2aab",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.7865272488376718,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.7865272488375439,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 5.676181828473643e-14,
+        "factor": 50,
+        "linearDeflectionMillimetres": 0.005,
+        "angularDeflectionRadians": 0.06363961030678927,
+        "kernelStatusFlags": 0,
+        "triangles": 117,
+        "meshAreaSquareMillimetres": 0.7890228371282075,
+        "relativeAreaError": 0.003172920320754346,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 117,
+            "meshAreaSquareMillimetres": 0.7890228371282075,
+            "relativeAreaError": 0.003172920320754346,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-82563.brep",
+      "sha256": "2407b6f77bd91fcb2400d4cbf1eb707d3d905019e5b09e829499ff95c2806476",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.7865272488363644,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.7865272488364781,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 2.2704727313925466e-13,
+        "factor": 50,
+        "linearDeflectionMillimetres": 0.005,
+        "angularDeflectionRadians": 0.06363961030678927,
+        "kernelStatusFlags": 0,
+        "triangles": 117,
+        "meshAreaSquareMillimetres": 0.7890228371282453,
+        "relativeAreaError": 0.0031729203221617266,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 117,
+            "meshAreaSquareMillimetres": 0.7890228371282453,
+            "relativeAreaError": 0.0031729203221617266,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-83597.brep",
+      "sha256": "b41ee2bf4e99b7ca373d28041f72049158b769bba613609d955b51d23bb5781c",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.7865272488376149,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.7865272488375012,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 5.4846974861338993e-14,
+        "factor": 50,
+        "linearDeflectionMillimetres": 0.005,
+        "angularDeflectionRadians": 0.06363961030678927,
+        "kernelStatusFlags": 0,
+        "triangles": 117,
+        "meshAreaSquareMillimetres": 0.7890228371282383,
+        "relativeAreaError": 0.003172920320847821,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 117,
+            "meshAreaSquareMillimetres": 0.7890228371282383,
+            "relativeAreaError": 0.003172920320847821,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-83599.brep",
+      "sha256": "981e71bea15e064a22d6fbecb5520b2858db4be6d97a9b21561f6b451b007bb6",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.7865272488376718,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.7865272488375439,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 5.676181828473643e-14,
+        "factor": 50,
+        "linearDeflectionMillimetres": 0.005,
+        "angularDeflectionRadians": 0.06363961030678927,
+        "kernelStatusFlags": 0,
+        "triangles": 117,
+        "meshAreaSquareMillimetres": 0.7890228371282048,
+        "relativeAreaError": 0.003172920320750817,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 117,
+            "meshAreaSquareMillimetres": 0.7890228371282048,
+            "relativeAreaError": 0.003172920320750817,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-83600.brep",
+      "sha256": "8bd78efe669a4947acdc3da927c7d58997f8d5294df544878737893d36cec949",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.7865272488363644,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.7865272488364781,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 2.2704727313925466e-13,
+        "factor": 50,
+        "linearDeflectionMillimetres": 0.005,
+        "angularDeflectionRadians": 0.06363961030678927,
+        "kernelStatusFlags": 0,
+        "triangles": 117,
+        "meshAreaSquareMillimetres": 0.7890228371281488,
+        "relativeAreaError": 0.003172920322039063,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 117,
+            "meshAreaSquareMillimetres": 0.7890228371281488,
+            "relativeAreaError": 0.003172920322039063,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-8935.brep",
+      "sha256": "be5f86c02fc5a518ae29d3e6d8ad8b7166fe86b6894c46a4ac1d0855a5f393ac",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_BSplineSurface",
+      "area": -2.3502753576012887e-08,
+      "valid": true,
+      "resolution": "pinned-original-authored-precision-native-mesh",
+      "audit": {
+        "method": "pinned-original-occt-authored-tolerance-micro-face",
+        "sourceSha256": "06b372e40217caa1a7d1f516cb74887247f809e41e1e389f740f290e98441b55",
+        "sourceFaceIndex": 8935,
+        "fixedSourceAudit": "voron-2.4-face-8935.json",
+        "fixedSourceAuditSha256": "9d74caaddc095414cf2b44e0addeaacba5b93f538dd52433027f23c9ef292911",
+        "linearDeflectionMillimetres": 0.001,
+        "angularDeflectionRadians": 0.028460498941515415,
+        "nodes": 6,
+        "triangles": 4,
+        "kernelStatusFlags": 0,
+        "nativeMeshAreaSquareMillimetres": 3.616393490575669e-06,
+        "signedOriginalIntegralNotAnUnsignedAreaReference": -2.350275357601294e-08,
+        "estimatedSignedIntegralRelativeError": 1.955790504429075e-15,
+        "areaCertification": false,
+        "wholeDomainSurfaceErrorBoundClaimed": false,
+        "sampledAuditInterpretation": "At each native boundary chord or triangle sample, interpolate only its actual endpoint/node original entity tolerances with the same linear/barycentric weights. Compare the original kernel point to its original 3D curve or exact original surface. This is a recorded sample audit, not a proved whole-domain bound or face-only tolerance certification.",
+        "originalEdgeChecks": [
+          {
+            "originalEdge": 0,
+            "declaredToleranceMillimetres": 4.05717822155084e-05,
+            "samples": 65,
+            "maxOriginalCurveToSurfaceDeviationMillimetres": 4.0571376501622246e-05
+          },
+          {
+            "originalEdge": 1,
+            "declaredToleranceMillimetres": 0.00033159155100821,
+            "samples": 65,
+            "maxOriginalCurveToSurfaceDeviationMillimetres": 0.0003315882351215944
+          }
+        ],
+        "nodeEntities": {
+          "1": {
+            "kind": "originalVertex",
+            "index": 0,
+            "originalToleranceMillimetres": 0.000636696236452917,
+            "edgeParameters": {
+              "0": 1.47440536365558,
+              "1": -0.122648983008964
+            },
+            "distanceToOriginalEntityMillimetres": 3.1776437161565096e-14,
+            "distanceToOriginalSurfaceAtMeshUVMillimetres": 1.1741437030382257e-06
+          },
+          "2": {
+            "kind": "originalEdge",
+            "index": 0,
+            "originalToleranceMillimetres": 4.05717822155084e-05,
+            "edgeParameters": {
+              "0": 1.4835935321537357
+            },
+            "distanceToOriginalEntityMillimetres": 3.1776437161565096e-14,
+            "distanceToOriginalSurfaceAtMeshUVMillimetres": 1.915143328390575e-05
+          },
+          "3": {
+            "kind": "originalEdge",
+            "index": 0,
+            "originalToleranceMillimetres": 4.05717822155084e-05,
+            "edgeParameters": {
+              "0": 1.4893361374650829
+            },
+            "distanceToOriginalEntityMillimetres": 2.0097183471152322e-14,
+            "distanceToOriginalSurfaceAtMeshUVMillimetres": 3.0196673677437925e-05
+          },
+          "4": {
+            "kind": "originalVertex",
+            "index": 1,
+            "originalToleranceMillimetres": 0.00033159155100821,
+            "edgeParameters": {
+              "0": 1.49507874277643,
+              "1": -0.119095943498723
+            },
+            "distanceToOriginalEntityMillimetres": 3.4809342861069267e-14,
+            "distanceToOriginalSurfaceAtMeshUVMillimetres": 0.00012353628489156115
+          },
+          "5": {
+            "kind": "originalEdge",
+            "index": 1,
+            "originalToleranceMillimetres": 0.00033159155100821,
+            "edgeParameters": {
+              "1": -0.1210698543377458
+            },
+            "distanceToOriginalEntityMillimetres": 2.4613922385709617e-14,
+            "distanceToOriginalSurfaceAtMeshUVMillimetres": 0.00019543181592361023
+          },
+          "6": {
+            "kind": "originalEdge",
+            "index": 1,
+            "originalToleranceMillimetres": 0.00033159155100821,
+            "edgeParameters": {
+              "1": -0.12008289891823438
+            },
+            "distanceToOriginalEntityMillimetres": 3.1776437161565096e-14,
+            "distanceToOriginalSurfaceAtMeshUVMillimetres": 0.0001008957950515089
+          }
+        },
+        "triangleSampleAudits": [
+          {
+            "triangle": 1,
+            "nodes": [
+              6,
+              2,
+              5
+            ],
+            "samples": 861,
+            "maxSampledSurfaceDeviationMillimetres": 0.00019543181592756678,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.5893751373741366
+          },
+          {
+            "triangle": 2,
+            "nodes": [
+              4,
+              3,
+              6
+            ],
+            "samples": 861,
+            "maxSampledSurfaceDeviationMillimetres": 0.00012353628488137721,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.7442777228313616
+          },
+          {
+            "triangle": 3,
+            "nodes": [
+              2,
+              1,
+              5
+            ],
+            "samples": 861,
+            "maxSampledSurfaceDeviationMillimetres": 0.00019543181592756678,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.5893751373741366
+          },
+          {
+            "triangle": 4,
+            "nodes": [
+              3,
+              2,
+              6
+            ],
+            "samples": 861,
+            "maxSampledSurfaceDeviationMillimetres": 0.00010089579505171378,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.7906284779783227
+          }
+        ],
+        "originalBoundarySegmentAudits": [
+          {
+            "nodes": [
+              5,
+              6
+            ],
+            "originalEdge": 1,
+            "samples": 65,
+            "maxSampledChordToOriginalCurveDeviationMillimetres": 6.200426300115706e-06,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.018698987598638143
+          },
+          {
+            "nodes": [
+              3,
+              4
+            ],
+            "originalEdge": 0,
+            "samples": 65,
+            "maxSampledChordToOriginalCurveDeviationMillimetres": 0.00012244328500874305,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.3692593633234987
+          },
+          {
+            "nodes": [
+              4,
+              6
+            ],
+            "originalEdge": 1,
+            "samples": 65,
+            "maxSampledChordToOriginalCurveDeviationMillimetres": 0.00016585165593913903,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.5001685218904527
+          },
+          {
+            "nodes": [
+              1,
+              2
+            ],
+            "originalEdge": 0,
+            "samples": 65,
+            "maxSampledChordToOriginalCurveDeviationMillimetres": 1.563107733019292e-05,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.06259235829941663
+          },
+          {
+            "nodes": [
+              1,
+              5
+            ],
+            "originalEdge": 1,
+            "samples": 65,
+            "maxSampledChordToOriginalCurveDeviationMillimetres": 0.0003329997836881179,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.5230120183264862
+          },
+          {
+            "nodes": [
+              2,
+              3
+            ],
+            "originalEdge": 0,
+            "samples": 65,
+            "maxSampledChordToOriginalCurveDeviationMillimetres": 6.104637563699424e-06,
+            "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.1504651072825179
+          }
+        ],
+        "originalKernelNodesAndTrianglesUnchanged": true,
+        "noProjectionOrAddedClosingEdges": true,
+        "originalGeometryTopologyAndPlacementUnchanged": true,
+        "limitation": "One original microscopic face is retained with the unchanged original OCCT mesh under its authored edge/vertex precision. It is not certified to the normal 0.5% area criterion and is not silently deleted, enlarged, reprojected or given reconstructed closing edges."
+      },
+      "sourceExtractUnchanged": true
+    },
+    {
+      "file": "face-9019.brep",
+      "sha256": "5e2aadd2c825c40aefb4d2803f90bc1215ab2c75b6ea4af037d0a6fb8647e8c5",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "area": 0.0005528233351034251,
+      "valid": true,
+      "resolution": "original-native-refinement-with-adaptive-area-acceptance",
+      "audit": {
+        "method": "original-occt-native-local-refinement",
+        "areaSquareMillimetres": 0.0005334845439710955,
+        "originalAreaIntegration": "adaptive BRepGProp SurfaceProperties, relative target 1e-10",
+        "estimatedAreaIntegrationRelativeError": 1.8631654842181864e-13,
+        "factor": 31250,
+        "linearDeflectionMillimetres": 8e-06,
+        "angularDeflectionRadians": 0.02,
+        "kernelStatusFlags": 0,
+        "triangles": 319,
+        "meshAreaSquareMillimetres": 0.0005332725437588626,
+        "relativeAreaError": 0.00039738773058880557,
+        "accepted": true,
+        "attempts": [
+          {
+            "factor": 50,
+            "linearDeflectionMillimetres": 0.005,
+            "angularDeflectionRadians": 0.06363961030678927,
+            "kernelStatusFlags": 0,
+            "triangles": 1,
+            "meshAreaSquareMillimetres": 3.133999009376589e-05,
+            "relativeAreaError": 0.9412541741875395,
+            "accepted": false
+          },
+          {
+            "factor": 250,
+            "linearDeflectionMillimetres": 0.001,
+            "angularDeflectionRadians": 0.028460498941515415,
+            "kernelStatusFlags": 0,
+            "triangles": 114,
+            "meshAreaSquareMillimetres": 0.0005372320276632297,
+            "relativeAreaError": 0.007024540325459279,
+            "accepted": false
+          },
+          {
+            "factor": 1250,
+            "linearDeflectionMillimetres": 0.0002,
+            "angularDeflectionRadians": 0.02,
+            "kernelStatusFlags": 0,
+            "triangles": 137,
+            "meshAreaSquareMillimetres": 0.0005366703268528593,
+            "relativeAreaError": 0.005971649821473409,
+            "accepted": false
+          },
+          {
+            "factor": 6250,
+            "linearDeflectionMillimetres": 4e-05,
+            "angularDeflectionRadians": 0.02,
+            "kernelStatusFlags": 0,
+            "triangles": 161,
+            "meshAreaSquareMillimetres": 0.0005367955125288672,
+            "relativeAreaError": 0.006206306434158105,
+            "accepted": false
+          },
+          {
+            "factor": 31250,
+            "linearDeflectionMillimetres": 8e-06,
+            "angularDeflectionRadians": 0.02,
+            "kernelStatusFlags": 0,
+            "triangles": 319,
+            "meshAreaSquareMillimetres": 0.0005332725437588626,
+            "relativeAreaError": 0.00039738773058880557,
+            "accepted": true
+          }
+        ],
+        "originalGeometryAndBoundaryUnchanged": true
+      },
+      "sourceExtractUnchanged": true
+    }
+  ],
+  "areaCertifiedAmongExportedFaces": 26,
+  "nativeAuthoredPrecisionLimitedFaces": 1,
+  "existingNativeRefinementAreaCertified": 10
+}

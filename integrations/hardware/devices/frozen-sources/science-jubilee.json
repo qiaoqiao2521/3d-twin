@@ -1,0 +1,4179 @@
+{
+  "schemaVersion": 1,
+  "id": "science-jubilee",
+  "repository": "machineagency/science-jubilee",
+  "revision": "bb918fa78f300f57cc379a80731cfca7bdb55c66",
+  "tree": "1828a2949acc239d8def80a51f4e05f77c19a731",
+  "archiveSha256": "e69efe2669e9fe8f97f39f5da9e8504fc63c53ba80fc801499e4fce2d53ff9ae",
+  "archiveSize": 215637523,
+  "files": [
+    {
+      "path": ".coveragerc",
+      "size": 598,
+      "sha256": "ddd5ca592102be74ac60a6d420495b8c19644a882990656ed43c08caf251b61b",
+      "gitBlob": "c4616fe36f13de8bb751a8e786f004687cb94933",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug-report.yml",
+      "size": 783,
+      "sha256": "86d0326ddb4d17628af994da8c391e1caaad5ed8c927eb26b448f2648300c729",
+      "gitBlob": "b10f3778bb5ae452a83a858fbe56088c13232bed",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "size": 205,
+      "sha256": "3067cc521f8009c5e69ea8e0e90bbad4741b2ae7ee11c4488f9cd9df01bd6532",
+      "gitBlob": "f04b88a94e304e9934c0275667638528dd3c7b77",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/discussion.yml",
+      "size": 252,
+      "sha256": "a7caba6ed8642ef9341abfbe361058603db157ba3c4e2f2fb83e48e1c60ed48d",
+      "gitBlob": "c2bfe958d926515ae06c151a9be99d6d4c92c16c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/existing-feature-enhancement.yml",
+      "size": 267,
+      "sha256": "02d56ce097347b5a1af6da3b70182e114912afe4c2d769ac6ef6aadf05662136",
+      "gitBlob": "4fe0dd736fccc4afdc087226b3fffc89110106d3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature-request.yml",
+      "size": 242,
+      "sha256": "c509644cbea256a544197a3ad6e951590b370fa9946e8b8e67d3e3df29711837",
+      "gitBlob": "a916ba480e30073a54db9532b2b83123bd17fefe",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "size": 722,
+      "sha256": "2c2da3e69d6bbb4bdedd863a2cffdff931dfa26c861ad0785365ecab73ba7e2c",
+      "gitBlob": "a8798361470045ac281bc34a867e1faeae81c50b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "size": 4458,
+      "sha256": "3857b76c97a8aef58a774aab390e1461d74e2133f639c6f3f6825061e5077bcd",
+      "gitBlob": "453535714f568bf4ba09146dfa3b920fbd5dcea1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".gitignore",
+      "size": 631,
+      "sha256": "cde3ac18e5e4d8c2948b1e87ef05908cd0104082f1303a0b8cc322f09bf0966b",
+      "gitBlob": "a5b6de989eb335f7502220a3d0bb4f80515f35d1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".isort.cfg",
+      "size": 63,
+      "sha256": "eb4a554354204582d76e8df97e43a41b30078c5349987a973311837f8314626e",
+      "gitBlob": "f8cd5f89ae64f527dc1edeaa2ac61436ce61f2dd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".pre-commit-config.yaml",
+      "size": 1785,
+      "sha256": "69544c0f929d187ec19a9168f5c6e95681418458bac2260852dea154efdd7594",
+      "gitBlob": "234ce6e386dc6daddff19a4ad6df775a5ad9b5ef",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": ".readthedocs.yaml",
+      "size": 530,
+      "sha256": "a83c5504f343ce354225066164cb29f13822f92dd96f3f8cb9db8f556ec0597b",
+      "gitBlob": "a2bcab30fa471f09e840c85512103d864c438979",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "AFL_jubilee_interface_testing.ipynb",
+      "size": 87058,
+      "sha256": "b58b5c2ce406d3a6f3c75ad0383fe720b264bd22ca62f07b3a3bc062fe102c06",
+      "gitBlob": "5ca4d0ad7beba29c2d09b2ed35bb09b9fe779a65",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "AUTHORS.md",
+      "size": 269,
+      "sha256": "a22abe4b20b1e6c13351bfb1bb83c680dbb3d51598fc2a7d083dc4b3e5d328dd",
+      "gitBlob": "e995de61635d9c8132d228b119e4763da9346232",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "size": 115,
+      "sha256": "7374946a305c8f0b9f8a659304e6627ac3a94caa83e6564f7b82ca6a70b0022c",
+      "gitBlob": "205cc5ef9f289359847b56cf34f958fc6287ba2b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "size": 13490,
+      "sha256": "4f437b55de7375529db312051c6f5649b96a8282dab34de0e5ff586aa31ed005",
+      "gitBlob": "a33ae5ec29ea988b5b765a544d503693fa3eaddb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "LICENSE.txt",
+      "size": 1081,
+      "sha256": "b1c8d936576bb06445708b88991a18024d77afb7223f89ce63d772f1fef1bd9a",
+      "gitBlob": "0b9d4912ae0603440105410263ea609b2b097aa2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "MANIFEST.in",
+      "size": 47,
+      "sha256": "45bf32fb535a6a42e6b19b54858c01820798838d4293bd46a7556b92bda2a238",
+      "gitBlob": "b487eddf819b1c21a08312bfcb74517110e68b56",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "size": 5226,
+      "sha256": "babe749cfaef51a59d7798b4ed50742aac36ba846bcab47635493f740c33a738",
+      "gitBlob": "d8cb577ba6576459d31145a905bb451b488eb08b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/Makefile",
+      "size": 1154,
+      "sha256": "01494e90643c38391000c8e65dbeaa655e0de864a7da79840a4da1e77b67ac3c",
+      "gitBlob": "31655dd9a07b91ed2ed3fae77c164bc3e37b11ac",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/_static/.gitignore",
+      "size": 18,
+      "sha256": "5bc47eea0732cda09a8fa5c6628c903d80c4ad50f262c618ddc0762bf82781c1",
+      "gitBlob": "3c963632027b176c1146e6cca3b2d1aab781d766",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/_static/jubilee.png",
+      "size": 139544,
+      "sha256": "5e6761824e422b89d0a3fe27a1f09fe681886d8e5d08d291f2c29749c8b4d38e",
+      "gitBlob": "8c9a5a1460ea50f16f547b2157bfb83492fd3bbd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/_static/lm-loop-400x400.gif",
+      "size": 848296,
+      "sha256": "66d122562c9f006e246684bf8fef1d5b1ceb9d92359d66fbdeb3b5f498e41665",
+      "gitBlob": "38450f116869e894659b3bbbb8f0b25a69556e44",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/_static/lm-loop.gif",
+      "size": 5324808,
+      "sha256": "3acea2bb83db2bc2d355201e3e5ae651393d5c7479f87e88bfbffe2628bc9bda",
+      "gitBlob": "ae33237580b1c53310a30bf0c52c404d5a0fcafb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/_static/logo.ico",
+      "size": 4286,
+      "sha256": "0160608cb0b3201c0ce1e08e14be685ecd278213d167e75bbe1cc90331fa52d8",
+      "gitBlob": "bf16576800df4acf798689ba45170c7224bdb47c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/_static/pipetting-compress.gif",
+      "size": 11815555,
+      "sha256": "42ede41dd30681071688a73141a2900ad113ac3a90fa89d4aeb79ae17f85cb3c",
+      "gitBlob": "04fab06e39fa9a40f82e71aa9b35fe839db46115",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/_static/pipetting.gif",
+      "size": 10328851,
+      "sha256": "c8d232148dbf39fe7eb5dc7cbe0f070ed433f2239a649f303f66247c6fcb949d",
+      "gitBlob": "2a5a08e59750d830af35e148201f3e52bcf3e7f6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/_static/pipetting2.gif",
+      "size": 11503716,
+      "sha256": "2fcd34366cf3bcec23ac10aef3df53b80932dc23177cd77c6bec97db373789f0",
+      "gitBlob": "685d7e600f8bcda276948acadc503d2a7cca6d9a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/authors.md",
+      "size": 71,
+      "sha256": "ea79dcf34b7a76321788f35a8b932e9a1f113a2ab4135f573a58421a029cf14c",
+      "gitBlob": "ced47d0ef4854f6d53d5679ba4d7349f54ca77d1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/REL.md",
+      "size": 1388,
+      "sha256": "59ff087df5fbfa969d51a10bf4ad5e67f04432152f177a04b0b38177956aa26f",
+      "gitBlob": "a7cf453366512cb8855b239e6149c6a3b550616d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/450px-Parking_post_dimetric.png",
+      "size": 50112,
+      "sha256": "df496eed614a8f962aefe02d448be40547a098452887f02064bda209c7b841cd",
+      "gitBlob": "0a3eabcc0c7333e8e14758acd77e8c6ed403f64c",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/600px-Parking_post_dimetric.png",
+      "size": 75145,
+      "sha256": "0a8207d529c97afa286105e5688b0de27117e3ce8ff70ce7b8918f6c3e003bdd",
+      "gitBlob": "b6a7b60294fb72b58c01b9e055fdf23b03a5a794",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/AFL_systemoverview.png",
+      "size": 4792050,
+      "sha256": "eccf911036242573c90c35b3bd2029c6d64f6dead9a4e12e942f6136fe804e28",
+      "gitBlob": "fc2823959f8aeab6777a35238a1940a6b98f8740",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/AFL_systemoverview.png:Zone.Identifier",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL0.png",
+      "size": 152580,
+      "sha256": "efab30f8a0c0248c7d25e6449f36047345eb28b451cee6ac0abc33e9e3b2296b",
+      "gitBlob": "c29b077291214f5ceb51f680ff50621d83aa8665",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL1.png",
+      "size": 397327,
+      "sha256": "b7b13ca8a0eb52fba87f19417dfe29f5adba9396a9aa64dbb3b8ea26ae06b9de",
+      "gitBlob": "52adeafb517ea07a1af05f7d412922607993ff36",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL10.png",
+      "size": 70464,
+      "sha256": "bb020a4fd29547b4c1e2a622cd8940f873adf303a635f514ad8c28047dc2d44d",
+      "gitBlob": "6764761a249607cf69f27637e91d0bb138c52a6a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL11.png",
+      "size": 638905,
+      "sha256": "b49eeba71c9948a55036549b1fae235da1172c3dc10415b8e2dfd3860d35b01f",
+      "gitBlob": "d8eaa3dfd6beb545a0cd46be145821c82b9713ae",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL12.png",
+      "size": 356073,
+      "sha256": "72862bc30d1a41b84d2d09aab525ad84efcd95ce626cfb38ea98aaef9512f123",
+      "gitBlob": "2504733dc00fb6c88820d0ee3c674d1499c7c171",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL13.png",
+      "size": 187232,
+      "sha256": "601949609bd19bf6cfc560cd1ca18f73ec8c24acda3b9fdeabf740336ce52435",
+      "gitBlob": "d99a53ace9c941e28d73ccc20be888207ae3a480",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL14.png",
+      "size": 247702,
+      "sha256": "5499f02d40b2bd089c02f670ebc1abc01afd553737379e91560306b4a6c5d977",
+      "gitBlob": "15f70ca946f8028047a86d884e135910d1405a69",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL15.png",
+      "size": 618868,
+      "sha256": "581b8a305d2b6e6ae550d3302254e8a1938dc11306c9f84a588dcea4bb323ae8",
+      "gitBlob": "567651e4b486514a749a92116add2614ac283774",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL16.png",
+      "size": 979160,
+      "sha256": "d42bc2f659f0cea2bd57b02d0639cf39fccf9d546b6d965b02e8f322a6bdbb05",
+      "gitBlob": "f94527061fb888a39e5bfae72697cf7300e3ec66",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL2.png",
+      "size": 339407,
+      "sha256": "aa081a90b85cc2a07943ef3e59dbd83af0b4849facd1b7812e2fadb3e375c8d9",
+      "gitBlob": "ca6b8ce2bebb95650c291cc846583da31e2b00e6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL3.png",
+      "size": 73879,
+      "sha256": "1fd0e9f1a1f158d31dcd2a4fd88026b2695fbb306e4e1240dbaa3e8c8630b4d3",
+      "gitBlob": "15095973b331b49ee7c46da712ac35eabbae9ef0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL4.png",
+      "size": 249665,
+      "sha256": "21deb85d81ce47cc86b5be3e39b1dea5174837e2e4444265870b7effae3718d6",
+      "gitBlob": "0656d104e8af847435222d2397b180349272b10c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL5.png",
+      "size": 282479,
+      "sha256": "7fa443cbe580a1a4818e322fb982956c1982d84f2e428eee0eaa67be700ea647",
+      "gitBlob": "45357bed1f3c41b61ac8ae276cdddd941f184669",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL6.png",
+      "size": 341009,
+      "sha256": "b953a4f28db785952ecc6c5dba2c3842d76f54a294e3c660bd8a6ec3e5d938f7",
+      "gitBlob": "f5ec01e79af7962d5640e6c65c2bde5c63a71000",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL7.png",
+      "size": 196702,
+      "sha256": "79aaf14075bcc63dfda559234df669844e3db64edbd1293e25be24da4dd12004",
+      "gitBlob": "3ba3420ff13f4e0fc483cfe4eece43be0cd9a218",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL8.png",
+      "size": 222162,
+      "sha256": "b45beb6e7946d6623d14594174a79de271c0bc86fdf553fef40ac7b7665f0b59",
+      "gitBlob": "450438d071ef70ad1e964399abc1afc5870e17ed",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/REL9.png",
+      "size": 225973,
+      "sha256": "74945d6e1f8f9329007503f2c228182dc3a77ddc528486b4ca466613eda86cc0",
+      "gitBlob": "0c098946380f25ae1ed7654730f0a1e124cc127c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/adjust_z.png",
+      "size": 299688,
+      "sha256": "226873c05a9b4ea0dfd28fdb432eccee0b26fb036b5e1fe38bc19d49a361974f",
+      "gitBlob": "9a8621a926a070c18b3645ef5bc0cd69e08247c3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate0.png",
+      "size": 176575,
+      "sha256": "62afb804d9f453731a8b5a50643e92dd4596c79c97a16d71150bd0cda4bdd4a5",
+      "gitBlob": "4860e414c919c8d63fbac35cd35eae61eb4c8016",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate1.png",
+      "size": 273014,
+      "sha256": "cec9695f08ac8b4ed3eb406865be1f56b18f004f22f0b58228fc5cfb958c60aa",
+      "gitBlob": "62bdfec1eea0e5a1b18d3ce847130d5c40d518b8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate10.png",
+      "size": 2145773,
+      "sha256": "20dd7686502b380e8d0e230a23e7e698e3104d9e9026886482f0a152145bb641",
+      "gitBlob": "809ebc597b6c0e2b0041f64c725907c8a77a5461",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate11.png",
+      "size": 1722919,
+      "sha256": "f76ce06d44677f1643e6d7d6eedbef7981716823c34ef56ab072701aa7fd7dfe",
+      "gitBlob": "f19d6c38f58a877c3796f2587efdebd7d2f103f0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate12.png",
+      "size": 418220,
+      "sha256": "c2863fea5ec2455d21728d88355c3be7b4d57352335d4211d34708bbe39ed6b9",
+      "gitBlob": "146e507e1e8aa01c798ca643ea4a6574e02bdfa6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate2.png",
+      "size": 1194599,
+      "sha256": "029180f68d2c7a249de8cbb368e13d94b8f54e9c43cf2dd166b4267e6d60a17a",
+      "gitBlob": "b822c281d3e29df52b417217c39faa9143b73ed6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate3.png",
+      "size": 165485,
+      "sha256": "dc85f5fa574b183ec1c33057944b221b28fc3a8d977418eeb004fe1f676b5d21",
+      "gitBlob": "fd517fc80e78f553df60e908116be60e73337029",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate4.png",
+      "size": 207613,
+      "sha256": "278380cfd549d352a0f8fd3320407bb3a7169974a0fe95074a96266ff5dc131e",
+      "gitBlob": "d079740e3813a424c52d680f006c733aecf80436",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate5.png",
+      "size": 136088,
+      "sha256": "333cc236ff0d046bf21383bfecfecce5c2550b53a4142a909de0a456ae103100",
+      "gitBlob": "8028a62f7d836319e995f36967693fc1e2eb569f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate6.png",
+      "size": 987720,
+      "sha256": "9cbaf9b49d63ba9b792ba522df4731d4e7cbaf606dcac28f8b20fec85e68f836",
+      "gitBlob": "4dd68eb2d389f1082aceaaab6acde3389a01acec",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate7.png",
+      "size": 805954,
+      "sha256": "d329c3db9d87672db955761bb26e7c806a52611c75efc232ca6f3c9592bfb344",
+      "gitBlob": "e22bb0aaa141b0778a791d70b45a2aebcf99590b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate8.png",
+      "size": 546263,
+      "sha256": "fe33aa9619286ef8d76d5c12fec88f7ec157cc35c2a9f9bfc785a6046d749497",
+      "gitBlob": "29f1ceaf64f4a050862d3ddd0434eb5f6178a405",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/build_plate9.png",
+      "size": 1732722,
+      "sha256": "a46310f63d71d5502796b53c6c65c3caa03decab1bcead59bb04d9bb5ccaf6a9",
+      "gitBlob": "801b2eb69f1a9063d8c0d7d9213ffb79e4c65a4e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/camera-card.png",
+      "size": 2331795,
+      "sha256": "b32891e5c3b385fbf0192a5deef2f9a84ec85ccbf3bd9981a88472c0016f1eec",
+      "gitBlob": "59b8ed9036873292a6142665f3a4716d48050268",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/carriage_reference_point.png",
+      "size": 414821,
+      "sha256": "571c08f722b00ae871b2cd596a744319ddc3bc90ddc96721e5d18c6dc9f35f97",
+      "gitBlob": "174d77f3ad95dc4cf068c8660b42c61a5b9a14c5",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/center_carriage.jpg",
+      "size": 238707,
+      "sha256": "4a2c6df59a9f63ed20ee1243bd7b6a244030162b94ff5d77ba329c1311f749c9",
+      "gitBlob": "3c9776c66d413f1a7506ddd316c7b67e55992e5d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/center_carriage.jpg:Zone.Identifier",
+      "size": 211,
+      "sha256": "e07f5b3015c9f3eb90d6b3f66fa8cefef514faf1615a2241efa461a18b796a79",
+      "gitBlob": "d6b76ee11328ffa1313713e41afef6d84e735bd1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy0.png",
+      "size": 830945,
+      "sha256": "18a77ddd4099b134b5239d143c4015544ab33153905f262c91e7ddc287f925ba",
+      "gitBlob": "97073e3dfc9a615349bff5bd5562881c85878717",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy1.png",
+      "size": 429254,
+      "sha256": "d47ec191e783f16aaedf9d385c8d12b131a3d8b7fb5be2862ae19d37ccc2e0ca",
+      "gitBlob": "1f0ea02cf5522873d2756af63f0c61febf7db329",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy10.png",
+      "size": 419813,
+      "sha256": "c9247df972892c944f7a8fca1d6d3bbf275e9672409c4721048592697c514211",
+      "gitBlob": "e0235573cf9973d3728869fc9a5ca5c93825f676",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy11.png",
+      "size": 406311,
+      "sha256": "6c7673a7da1f51e1ce47f1d8f85ca38222bdfa72440749843c1b8523ae369019",
+      "gitBlob": "75dab441154ce6c0f2496f8ecaf27b7c887e6552",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy12.png",
+      "size": 505414,
+      "sha256": "cba448707d9c3fec1fa1849f3b5e06bdad731c544cea36c584e191d5aeccb712",
+      "gitBlob": "d9428d43fd8032b44d18821b9a8fb75687dc3b80",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy13.png",
+      "size": 457683,
+      "sha256": "8a9b7e3b8f0239233bf242501df5520ee5246f16641ab9aef580dbe9c1e3fa4b",
+      "gitBlob": "31cee6a4d5c0f309501170c365d0a0a43713eee8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy14.png",
+      "size": 546379,
+      "sha256": "16cdeb7e04b8bcd13ad8523ee07a84e6252a8226932d5c8b9fe55e5df3e50592",
+      "gitBlob": "431dbe322a3270a833526bf33872fdc19dd6c1b3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy15.png",
+      "size": 328229,
+      "sha256": "71505fffec893e847c31e30355115b084f02a6668315d35f72cc4823d1718503",
+      "gitBlob": "aa1bc1b95e2dba1b3895e18c3e93d55121476b2a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy16.png",
+      "size": 890761,
+      "sha256": "96bb8ff292c367a55c4966124a89d09235b199e8d2258e6b4686af915218fe3e",
+      "gitBlob": "5703e08e74f6342fd06c125d02892a9275040bba",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy17.png",
+      "size": 497527,
+      "sha256": "450574f5c7f3271462fa96ab93fbbb99d120ff319c2c6e93f58aaafb1d00c2ed",
+      "gitBlob": "e12de614f4d96351fc7ed461fd23be83867ca8b7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy2.png",
+      "size": 195529,
+      "sha256": "1e9787d9460a5d6798ad202406efba049ee25fa54f44d029d5374a7c9231ba84",
+      "gitBlob": "4a2643b6777686c55677a4753e8a08db8607794e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy3.png",
+      "size": 206092,
+      "sha256": "942e60f81d18ff3442a3a33f6c738c908fbbfbf1e322a49872196ae27407be6d",
+      "gitBlob": "c7ca83b1fbd8c0df5a534736be9094dd8e9dab4d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy4.png",
+      "size": 178097,
+      "sha256": "53672c722f2de6e8e7f5683894fff9ad2d26916b6dbcb230ac2b2a6cdc85db9f",
+      "gitBlob": "184100634ec7366cebf0e9361415346fd8edc616",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy5.png",
+      "size": 458639,
+      "sha256": "9229d25023fbb828214421f7f9864e1378b6393f471aaa7037772da8dd6d2ce2",
+      "gitBlob": "a6c3c7cbabe1c853c1a8d9e920ceb39a0c9ec117",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy6.png",
+      "size": 311308,
+      "sha256": "e5d92780d921b38ead967089161e9470a6f47d71f2cd617b806fefdedcc302db",
+      "gitBlob": "ff26bb00907b2ce5873122159c677155a1aff561",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy7.png",
+      "size": 163705,
+      "sha256": "5845c9d0d490fcd12e1a44b0368e5132b77a13753e3692089d9d779854d68a39",
+      "gitBlob": "a474de132fe69eb0ecc7f0627f071f4feb5b4223",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy8.png",
+      "size": 708782,
+      "sha256": "0abd4a2903fed40ca7ee095fa56bcf45efb31dde567c60c148c3ea8dc94a131c",
+      "gitBlob": "bb3056dc918b64de14e9aec7923cefbac0041a1a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corexy9.png",
+      "size": 291733,
+      "sha256": "cbe4df2d79321c86edb9af79a4d2cb334a61a4cc13db62b343f8c4fc48638e72",
+      "gitBlob": "db9e272d911a74431d3d2368d01be4886baf1ec3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corner_brackets_0.png",
+      "size": 102325,
+      "sha256": "b7191ab5152d837a295b8d1eb97f5b8a9fd5e2c22eb3a008817bad0eb5886f86",
+      "gitBlob": "44cd90917a0ca57b31434062d45244701ad51f84",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corner_plate0.png",
+      "size": 159778,
+      "sha256": "9466723604b3dc38c7270e1cf9185a2d93fc6c7cd296b987d43e7d41d007da09",
+      "gitBlob": "e2122b90688b04fc8d927cf3c2dc48a1634a8ae0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corner_plate1.png",
+      "size": 223947,
+      "sha256": "e6b69df2b9749e8f0581a4e84eaeb5835875a0fe52d3ba7b68273f1c8704e958",
+      "gitBlob": "56a179fc68731210e0a955cf25b872592a809405",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corner_plate2.png",
+      "size": 200481,
+      "sha256": "8427a772a4af9ec8eacfcdcfa0cdc30cd646083f62c986c7768d052fd665193e",
+      "gitBlob": "8593dd4845f79c6718960280933065673d99c60b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corner_plate3.png",
+      "size": 233426,
+      "sha256": "4177ac54fec8e6ae2a135c7f75a1601aecd2787ce2dc55f69bc44c833ce04bb3",
+      "gitBlob": "99cc90d3ccd21d2f054dbb96c553a32ee557d529",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corner_plate4.png",
+      "size": 229331,
+      "sha256": "1df1e9330d184b3c4fcff9c1344ddaaae18274ee00f765b81a0161b850b816be",
+      "gitBlob": "d3691f912ca15f2e2daca60849b69d886f8cb74a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corner_plate5.png",
+      "size": 208691,
+      "sha256": "ba0b5c97d74705169cff14566f98271dd04e69c1dc9bff99dab5c26952bd2b1a",
+      "gitBlob": "0b9ef54a2dee5d201845dce569b7096a0171c185",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/corner_plate6.png",
+      "size": 236714,
+      "sha256": "e8f871e69990340db561106c4c978d204708b6dc3dc3637d86e5dffc2856b738",
+      "gitBlob": "87650a5eba75c908b3b6380aca2cc59c01c8a703",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/crossbar0.png",
+      "size": 162434,
+      "sha256": "a480dda97925ca8c1b496135ab6c72e95949f6257bcedb81b98208ef491ec0c7",
+      "gitBlob": "aad9ad64c1bc0af2c40c077fc02be294f771bd6d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/crossbar1.png",
+      "size": 224217,
+      "sha256": "f82d8d86906c7e37430927ea9f883ab555f9dcc307af64a8bbb455be0dc5e6df",
+      "gitBlob": "c1273f35229511b2dd6a9d6c2c89c5cc1918c243",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/crossbar2.png",
+      "size": 214681,
+      "sha256": "d78aa7b005fd6656cb1585f393e722662ed4e323feb61f0e995e563eb5d873f5",
+      "gitBlob": "1fd8e631701e19ebb8e55f004b20ba9d2e1fef2b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/crossbar3.png",
+      "size": 226645,
+      "sha256": "2b213c987131f4e5c65756a45d6c469a6b11faac7f76b389c88feea74c5dd7eb",
+      "gitBlob": "9b524628d1db6bbae38ee415e151d0af9b26067e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/crossbar4.png",
+      "size": 246138,
+      "sha256": "ed0503190d732e8ec8cdf5971df35320f26e54a716ae9cff4447bbe3fadc61f5",
+      "gitBlob": "6f254940c26a9c6d5f564997c40612c6c239df4b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/crossbar5.png",
+      "size": 239395,
+      "sha256": "541437ef5addbeb5b54bc500a1bdcdf2a125a7e20bd16403b8207e926f391a2d",
+      "gitBlob": "9ca955501a47960e9f8b0b30c85b92f27f69724c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/crossbar6.png",
+      "size": 247795,
+      "sha256": "30147c128878a77e08a578f59642a0718401c7177a8250ad9588164843e03b98",
+      "gitBlob": "af77207a2174147ea9965bed6f27f7b86efe78f2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/crossbar7.png",
+      "size": 404805,
+      "sha256": "ce904d61fe241e8d5c0c05b136628c58501647ec5b93af4bcb7065dd4f1989f3",
+      "gitBlob": "f5ef59187a0b080020f98d05015ec1dc8658955f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/deck-card.png",
+      "size": 1501918,
+      "sha256": "6b6a52099673f0e24d6b579ae3b96f3e0515ee90f4c31a923aa01d89ba888165",
+      "gitBlob": "0e2e93b444c2803734cb28cb267bc3c2158bb852",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/deck.png",
+      "size": 951142,
+      "sha256": "c9d35c694eb6e8e86966c5db7f747c5d92bc5532397422f1e5ace5df89546f64",
+      "gitBlob": "7a10bc94693fa130edb26aef5dee9a95379fedbf",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/duckweed.gif",
+      "size": 18621780,
+      "sha256": "3da8d2847b50e92a38539a64f06a0374522ddb4932279db347df043a901a05d0",
+      "gitBlob": "4fe8bbf26ec3151c4e5e388b449feb4d2b364327",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/dwc_macro.png",
+      "size": 123707,
+      "sha256": "495b062c09a702da0a96d8ea43d0bc1a4479ede6bcc7e50e6a26b81a2d9e6f7c",
+      "gitBlob": "d43a8e7b66ac2dab9efab736d280421bb6c7d952",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/inoculation_loop_tool_assembly.pdf",
+      "size": 432346,
+      "sha256": "acbd7b67960795bfbf284d253f80c95d414487ed1828e5ac880111b14bc94091",
+      "gitBlob": "37037d29822ed1f190e058d14d4942b356bf906d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/inserts_0.png",
+      "size": 476372,
+      "sha256": "e61f75cb03752988f6bd70742935f7d837c08a275ce3baf2611d9ad8ce30bc91",
+      "gitBlob": "4a899729b2bb0af7b3a77f1cb2d0e8e13b6ca343",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/inserts_1.png",
+      "size": 472240,
+      "sha256": "ca9f92ae845fd102da343cfbb31ac7ca1cdc399397a526f71b178643897cf4fb",
+      "gitBlob": "26c18179f7b30c36f0655f3c0ee9fcfde6068ac7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/inserts_2.png",
+      "size": 72405,
+      "sha256": "c8b434893b738a221d80dfa35306812e9699367017edecbe4231b6c0362d2706",
+      "gitBlob": "3f30b42c576a229b8b65916ecb7275984d40d5c7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/inserts_3.png",
+      "size": 264639,
+      "sha256": "cd18e71bf079cdaa84b8a7f2c8450bbdaa53b7ee22d78df9d25284a7083e20a2",
+      "gitBlob": "8dbee88fd9ec6e659fba7ddbcff29b2d884100ad",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/inserts_4.png",
+      "size": 429896,
+      "sha256": "de6f782ba252ebd632f3485abab9ef574184391b6dc20ff03f96590066c2eca2",
+      "gitBlob": "e5e6776fa706bebb7f17808393225f3c2b1acd92",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/limit_switch_order.png",
+      "size": 77417,
+      "sha256": "bea2c5aa928456e474c18795c27a59bef98bab0a5474306df647339d4df92d2c",
+      "gitBlob": "0830185e45ebae204ca9c45a437239bb3bf16e37",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/loop-card.png",
+      "size": 3371707,
+      "sha256": "5a76b74f89cd68a8350977e72df480a1a86b4da2435f4fee1aebe4e5da328d91",
+      "gitBlob": "09a94fcb9a5097d19dc3f1634dc41e3414387ea8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/loop-dip.png",
+      "size": 2372712,
+      "sha256": "c569c8d61e2f06670960dcb50c982acd62aa8198023c649bb2879ba723d03ced",
+      "gitBlob": "88051ebd860c88a1a597e62a412ca1c436d8ce8f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame0.png",
+      "size": 385119,
+      "sha256": "884d14fcbe5e7c775bf12820a062116d690f2c228070f6f97b66ca2ac18e5bf8",
+      "gitBlob": "5d23dd644589bcb7df14e25919b09cc417ed3a43",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame1.png",
+      "size": 388537,
+      "sha256": "4afcb4c8c32886ab09a3a33722d9fbb5bf466f40565a6ed7fdc53fa2d0b069f4",
+      "gitBlob": "d6c17c575a255de6ec2eaf903b7c02c32c69079c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame2.png",
+      "size": 165049,
+      "sha256": "7dd887465aff903a1fd7249b60cb888c4ff3a5020ee5862b7cedc41967667f92",
+      "gitBlob": "98a6ac8fdaf56ee07f9bd6b840569768d61b7024",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame3.png",
+      "size": 223593,
+      "sha256": "6a62ad8bdf99348c852bc8e32da72ae0aaacd2d4c3a6b586b1dfe3ac763a464a",
+      "gitBlob": "78d2db8ecc67ec21504d6c39b3dc316ee7340ed3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame4.png",
+      "size": 280381,
+      "sha256": "8af7aad4807a2b9b1b65fca595dafa48ad8731b91267b691ad295279f312351b",
+      "gitBlob": "d1545908f45129e23897e36137c42ddd836fb0f1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame5.png",
+      "size": 273673,
+      "sha256": "8af0815938a7eb5bb591cd5a614dfb4646521f089229eb2c9211d5b6d5795efb",
+      "gitBlob": "3084cf6a7fc7fdcaad9f9cd2a1eed5c724e88c54",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame6.png",
+      "size": 151126,
+      "sha256": "60778306e4a0ddb6c811c63d19dbb16e3e6bbead08b8e70cf4b9c6fb909b6824",
+      "gitBlob": "03889c35ffff42702d310e33d279c79300f73062",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame7.png",
+      "size": 167007,
+      "sha256": "368fb39e96d90bb17c7fbe01a6eb26021f17efaffe0c0d371bde88c587e3ccc6",
+      "gitBlob": "7f4519460cdffcddce99c19200e43e1c2497f4b7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame8.png",
+      "size": 397523,
+      "sha256": "4097ff2f5e613a8058a1e40c2780333b3fb378f59c018a3717e0320b18d2ecc7",
+      "gitBlob": "59712c2ad11b693881b1e70b33f45f162e0604eb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/lower_frame9.png",
+      "size": 405021,
+      "sha256": "e80d73789173c2b51f83caba04d7d16fc839eb89f0ce881f2a9748764d1f0413",
+      "gitBlob": "487a30415b2b397cd298b2695f16fffb4cd82bbb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/manual_tool_load.jpg",
+      "size": 116666,
+      "sha256": "37104882b67f13c672c2b322e2bd455da83f3f187dbfffc2290f34cad669015b",
+      "gitBlob": "03096538e84f770f48c77bd9b0de968757f9f0a0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/manual_tool_load.jpg:Zone.Identifier",
+      "size": 210,
+      "sha256": "b95337e204ca60f50fd364fd58dfe18304c1b79467f7953bd34e3bcfe49234ac",
+      "gitBlob": "9471aa58663e8889c246f6e9ec4269f9af71cbbc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/mark_x.jpg",
+      "size": 134703,
+      "sha256": "26dbf5f43eeceab5b194d21afead40d56c1b768301e5188fcd831c75312cac5c",
+      "gitBlob": "25166796f548392eaf377eafa0587dae3c042216",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate0.png",
+      "size": 278368,
+      "sha256": "da431075d330b7e28ab1007ae83f38ca41f171f1cfd5641d608e86d5c23ae864",
+      "gitBlob": "6e8c6f87b6e4e5569fb161e7950402784837b8d2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate1.png",
+      "size": 319593,
+      "sha256": "4ad2de33bf0fb8222fce786c6ad2cc4384324e23b015cd40dd31816dd06bad31",
+      "gitBlob": "8c138e76a79f0027b6c88d21d766b140e089516a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate10.png",
+      "size": 358345,
+      "sha256": "3f0cec5d9c43b3368f6b8026181c226c4b63f23fec78f6ca42377a20a1ff85de",
+      "gitBlob": "39e65cc8220b9de4be570a71514c290cc689a0b2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate2.png",
+      "size": 91800,
+      "sha256": "99056bc4046c8299f06554401e75fd45dfe489d4757b0ecfbb2a03c29ca65122",
+      "gitBlob": "8f0f30306521595bfaf6f0b2c42789159bfcbf13",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate3.png",
+      "size": 142163,
+      "sha256": "f21752e33437a5c1434553bb528800a1baa98f708c8e4fcd0018eeef75d96701",
+      "gitBlob": "50ffe2769c7a72cf946219ca52afee9d15bbef61",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate4.png",
+      "size": 226526,
+      "sha256": "8c41823840def50fdaeee33d8a18bf14ee97686aa4f81446f12d685433409903",
+      "gitBlob": "2efcfa4b791c0bab8c92462adbfc2646e69d3227",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate5.png",
+      "size": 302093,
+      "sha256": "4b4db671f3658eb5fed665ad0901e9fe0836500e09057d5ca7ca907b9e2ee7b4",
+      "gitBlob": "ba29cde48f5ca6f3d42c0d36486967ea51c6279e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate6.png",
+      "size": 315963,
+      "sha256": "5871237172a13ea2d0ea5365cc141da774885856895394122b45782efef4ebb0",
+      "gitBlob": "1caece6cb300bb1bc59de87e7ca429a947864b93",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate7.png",
+      "size": 148181,
+      "sha256": "73821cb3eadfe43508d003e4900e7e6b0008dc68f354dab38dddcd771ef1dd6f",
+      "gitBlob": "b5a778b56f73d05e406e2757d4eaa02d70b39f36",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate8.png",
+      "size": 318425,
+      "sha256": "605a9c3f18af2cb4abec5738b2866a359af7afc3ee7d47e57a008f3f513b4d02",
+      "gitBlob": "7774ec14c70ee52fe7e4aa277af12872d3b36132",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/motor_plate9.png",
+      "size": 352374,
+      "sha256": "a0d68bc7ce47459540207b5dfae5c838f13893fce443b74b2beeb8c6250f8d01",
+      "gitBlob": "673304f6adfe448a0064e6f6f1319409b36c259d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame0.png",
+      "size": 289722,
+      "sha256": "1c90fade7292dc1f3c5817f0d93d94ca1767c0e9984fffa22109a4af28472fff",
+      "gitBlob": "e8a3a383d9599d12dbee3f16b387e61f58587abc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame1.png",
+      "size": 126662,
+      "sha256": "bbac61f20db77acb122f8daea01b99da738eb63ab99b09b06920745fb3fedbd2",
+      "gitBlob": "53b0494635ea50851bbc563ccf251566ad8b240f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame10.png",
+      "size": 128279,
+      "sha256": "9fb966a8b34f91d2ab22a36289640ab668a6e389670802e94bfe7960f6bcc7a5",
+      "gitBlob": "0e5ee8a9a7d9d0f538b803c8545adebb3858d003",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame11.png",
+      "size": 179296,
+      "sha256": "d127f40d6484ab839ac2866061ba35ee8c9bc78a0059d4063c5e8133c42a4c84",
+      "gitBlob": "9ee97137d0773ef8358f0699d9691e028fc5a231",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame12.png",
+      "size": 280555,
+      "sha256": "af7e27e0f8e590f6aab2d22e398edc3a602a575daff2d659bff5642be1625a6d",
+      "gitBlob": "70fd48ba215cc374548436b29f5f6dee0586cad0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame13.png",
+      "size": 294471,
+      "sha256": "82b7ff992d7b7702a73837608487c9c4fc1704bf98e902580d42313fb85fa36b",
+      "gitBlob": "418dde86440a1dca19bf9e3a8292a33e1d68b7ba",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame14.png",
+      "size": 250771,
+      "sha256": "b4160515d4d3fd8f0c7cb7cdcafee3be000dacd7f6791cca90ff099c9ce3eb64",
+      "gitBlob": "5cbb1c9fe54cdbe0d4e6ea1d5143646401eb97ee",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame15.png",
+      "size": 365319,
+      "sha256": "bf4db0f03ace8e6add183df60af4611039034a011e94354e967aa67d9e36e587",
+      "gitBlob": "ebd1a3c9665c969550625fd0bd4c28ae07fd7d46",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame16.png",
+      "size": 316308,
+      "sha256": "a08e737b663c4e85c4a686cf76add190a9a2a3b8edfd93abff2118a27ab7020d",
+      "gitBlob": "ec1c773b89e7ca82a3ab6e9138d38fd8be44dae9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame17.png",
+      "size": 395110,
+      "sha256": "597ff48359fd0ea448a3030d25c5b600f193638d7cebdffae6272b5caa518e8d",
+      "gitBlob": "6697bf23aa0b7e8cca83922364dd41a09e33f8e8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame18.png",
+      "size": 146804,
+      "sha256": "465fc56d7b2c6388a7a555d936369367cfe5b171c4a90ab88bcb39082734790b",
+      "gitBlob": "f620619db7e76b44e01801650c96b4cc21dfbda2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame19.png",
+      "size": 301393,
+      "sha256": "0262304a8775c18555e7e3d8e4a644e5ae78d435c2877aad7bc0082c971284ef",
+      "gitBlob": "1d42dd4e83a06fbefcf0d369b83ec07e7a3e77e4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame2.png",
+      "size": 347521,
+      "sha256": "3a375060d15c456144080f33fe7626d259ccb20f11c73b71652d3a22792555f5",
+      "gitBlob": "a8292bdbe1cc319cabf2ea0b9ac39ce415040457",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame20.png",
+      "size": 369708,
+      "sha256": "78268a9b665d4cccb6845ecb181ffe5763d55461680d459f3f3a5eb18fea9e82",
+      "gitBlob": "124edf03a380cb176ea386bd5800ad52465dad70",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame21.png",
+      "size": 391826,
+      "sha256": "f461990180ad3218ac9bb52c59928295adfbd0b8aa23402b36d316053a77b060",
+      "gitBlob": "00555e47b971dbad735f27c78287d4805c9172a7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame22.png",
+      "size": 210647,
+      "sha256": "40aa033ab334db57055f0739c60f61d72311fa2e652296b5bd6e28079854f3b8",
+      "gitBlob": "122181b151cca1fe1792fbac356fc79fba030876",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame23.png",
+      "size": 195644,
+      "sha256": "5042e93c8bcb66e518babf62a75e9ef4e6832b534c93cc32e233f1828d6d7c28",
+      "gitBlob": "099ac2820b4ceca0985d3a0468246940639467d2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame24.png",
+      "size": 196742,
+      "sha256": "f4eb8d9d1a1c314f6dd28fca1afa928031f0c8fdea08de672746737ac678d5dd",
+      "gitBlob": "34278d2daa8f21259b467e6b7bba8003bf9c5f47",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame25.png",
+      "size": 233345,
+      "sha256": "964c16fdb73b3e7d8d6ebd146e1c8499adf72d91ef757bc1aa569ebddfe6e90c",
+      "gitBlob": "54595b4c8d93bc6cfe670961d0df6e4bb3b87bc9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame26.png",
+      "size": 110115,
+      "sha256": "6ac5b983b261976804ee7a4a355ff32a536c692a4c85556799012ca256055364",
+      "gitBlob": "11046da1b4e7f61830f7e5831ed340cae7b989c1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame27.png",
+      "size": 92804,
+      "sha256": "d51e6c60eb864b4427838a163c6520a6f0fd2ec1dadb42820658ff91a5fe4835",
+      "gitBlob": "5c8b0686847a52d2ce44bc344c72cdbfa0f71deb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame3.png",
+      "size": 361588,
+      "sha256": "64d26220ff9ee3ab523f587c5a0a2139bae6cd3c803c2643b86667ba1312ebe6",
+      "gitBlob": "a86da81a05483387ba180aac450e144450e5d43e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame4.png",
+      "size": 146715,
+      "sha256": "0d86a69034dfd4a45937a56a57e843e69c478817ef35bf5a69248e8370412860",
+      "gitBlob": "2214ee178f6179d4316cd0fa2f36371706b6ded5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame5.png",
+      "size": 108232,
+      "sha256": "538b1d562d6b6e312447a5088f949141850e476846c00dff910ce7db603332bc",
+      "gitBlob": "1686d6a2b5f780c09b1fcca895f587600c0a77ed",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame6.png",
+      "size": 190814,
+      "sha256": "fa9a21b5de3563d3373d6a9ad9b3e364128422e71834e2d257c361d6207cfbd5",
+      "gitBlob": "f3f7608df9794a06b2a1697aa70fbe27502099bf",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame7.png",
+      "size": 376227,
+      "sha256": "6371bc88b9600d13ef35d78fa788382a03f82242408755a4585ec245c42eec8a",
+      "gitBlob": "21f1bc0d60b97b73ed46855e9d8156b6c38d63bb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame8.png",
+      "size": 371264,
+      "sha256": "bd986e04b4ab5465a6a192f662993f1cb7f363a3f463cb22c9cd0c994e195814",
+      "gitBlob": "e858511bf16e97ce7582e0512b5d98100a26dd21",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/outer_frame9.png",
+      "size": 650319,
+      "sha256": "5813a1846f25bd4719e0b9b3cf3bbf190b0657af21183ebfe880ebdea29adb2d",
+      "gitBlob": "e1775a88092ec98a19c9c6ec66141e2faf478a31",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/panel0.png",
+      "size": 156228,
+      "sha256": "ea471b825ebd511fa0b6b73a5986c7c347ad261d06154e2f4a1fe633716cd1f8",
+      "gitBlob": "08b678cf513dd768e6671fbf15204a8000fbb72d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/panel1.png",
+      "size": 137725,
+      "sha256": "aa279dacd34b6bb4037d68a57f305ba493720f719b3a18a42963f1f56f55ba28",
+      "gitBlob": "d70bd194b6d065f652b7ebcffc81c8608ff13bca",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/panel2.png",
+      "size": 207077,
+      "sha256": "06fcb279d62b08099fdfb8ee2dd726064217fbf4ab5e8c679a13687ac76873c5",
+      "gitBlob": "63a180014b020c86f02b7bab2ca39c00a882fb76",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/panel3.png",
+      "size": 225061,
+      "sha256": "789e192d5324c27035ac8a9bcdb490692f3675338d91a9a5f7aad9e9489b96d5",
+      "gitBlob": "98e22d8afaba5cccf784aba819b2b610207ac0cd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/panel4.png",
+      "size": 190242,
+      "sha256": "19df5010fe69f356c40f89ec3ec54af704dec9b62a7002d4476a0a7a0a086880",
+      "gitBlob": "f6f6e704b90bdbc6a0e22072376b379ce24ed16f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/panel5.png",
+      "size": 263381,
+      "sha256": "aac0229077403b1eb95b85508fee4d6b067d5ee78a502c04a20c091877b14ee2",
+      "gitBlob": "9ba45eefb7ab9796243670cd619c08bf9f14801e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/parking-post.png",
+      "size": 75145,
+      "sha256": "0a8207d529c97afa286105e5688b0de27117e3ce8ff70ce7b8918f6c3e003bdd",
+      "gitBlob": "b6a7b60294fb72b58c01b9e055fdf23b03a5a794",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/parking_post_installed.jpg",
+      "size": 95600,
+      "sha256": "51ead4c21211bf406a1f69fcf99e139b2a297961b6f78a3a6279affe9073c312",
+      "gitBlob": "54f86bef1e36bddece7d6c30cdf8fe73dd25aee1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/pickup.gif",
+      "size": 9820678,
+      "sha256": "d6a6143a84a3a5ce41e8f30b955569591959c1127d3ed6bf0b2d1446157aec76",
+      "gitBlob": "7ac2c37e7cfd661f8e0af301a230dcf1e8bf124d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/pin_alignment.jpg",
+      "size": 95697,
+      "sha256": "a43f32b02d895b7048e99438055982d72f0abe2f0399352d4d5d4348e58b8c2c",
+      "gitBlob": "91e8894c891f731f1ce91c1b9031ce6b7dc3d6aa",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/pin_alignment.jpg:Zone.Identifier",
+      "size": 210,
+      "sha256": "9cff9a20df260c5a245e2838a881f1ad9d16b9405c5f97d37562bfdba884caac",
+      "gitBlob": "963017c2fa160eea21ce903a2c0834dd3ce53c24",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/pipette-flexure.jpg",
+      "size": 314085,
+      "sha256": "0005abcc82bdc0169736c6e22613e866ebccc1fc223d31ab3de7d9fdde1f6dfe",
+      "gitBlob": "5b5931fcea53d60061a4dcc0853f9f5a1bf15932",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/pipette.jpg",
+      "size": 631821,
+      "sha256": "7385570476819b0c16f6dfd9df95c7156d8c91e9166ec02e69031189c2538950",
+      "gitBlob": "bfde1155aa2c1326fbf5a7c999f34fe885d191a3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/post_wings_alignment.jpg",
+      "size": 99798,
+      "sha256": "9d020ebeb64f0955c13887ce3c71e585758ee96a4dea4eb310f610f648f8ad06",
+      "gitBlob": "ba8a7c914b3066e40002ba9c276f0ffc70c71275",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/post_wings_alignment.jpg:Zone.Identifier",
+      "size": 211,
+      "sha256": "6a5450a942315e5d0366491fdd571df68da6b4c82ee2a75342876911d1cae47a",
+      "gitBlob": "a61448e8ec62c713b3ee61eee509fdeee9727e71",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/record_position.png",
+      "size": 76455,
+      "sha256": "b0d0785a80d07152cb8997dd13e600e3128585775e11372524d254c2eda67d94",
+      "gitBlob": "fb64f45bae9dd5752b3a2786caa7252f1ee80989",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/ribbon_cable_attachment.png",
+      "size": 131175,
+      "sha256": "b3d7dd9ff407967ddc9262e593c92db0323104ff3174dd06099981ce189cb745",
+      "gitBlob": "213f24161cf699dbb322376881ac7da780084335",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/ribbon_to_hookup_wiring.png",
+      "size": 37392,
+      "sha256": "8725d93bdef5610f5cf0441244b170da1e2bad51cb78994e2187679edc3a3aac",
+      "gitBlob": "1424b7a5f1ccb1918177f2c50fdcaed245a6dcd9",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/side-camera-card.png",
+      "size": 2737931,
+      "sha256": "3df7be9f105bb4a15e5c379a7b4c708fd9d6b55dbdc8878263ef33c92910c4e7",
+      "gitBlob": "a6566f60b68a70b33b28cda456706ff71c5b1ecd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/side-camera.png",
+      "size": 1928880,
+      "sha256": "99e3735b9bb379044d70b4f9d2910ec560a8650f3dc1190fa5a36c644945c08a",
+      "gitBlob": "3f229df173aa361f79eee9027247edd06ba40f3b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/solder_lugs_wired.jpg",
+      "size": 848329,
+      "sha256": "609a8922b390238756c82b43975d51edbba071200d629425727f8acaefe52e8d",
+      "gitBlob": "c9dea70df6685653dbcda8ca0c57e06d7de2ba11",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/stepper_housing_order.png",
+      "size": 142883,
+      "sha256": "cb05193ad9372a59f7d6d9e43c88ebe452808a3e110731105016bee29245f675",
+      "gitBlob": "7fd54cf4c937d479658b66ce77140d22ee71e112",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/syringe-card.png",
+      "size": 968788,
+      "sha256": "acedbbd7871c2a498b16322def45e616cee8a3efd82296728e3d39d7a1eaa4ea",
+      "gitBlob": "a9363901c3f8bfd73905b4fe39a3018c36d6a083",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/syringe.png",
+      "size": 2328282,
+      "sha256": "6d6de56b94088cd02776a21e6a894e97261204cda9b48721d5faed743fa8dea8",
+      "gitBlob": "10811db08c4f2b9252b484491c1e1334b99e61b5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/syringe_assembly.png",
+      "size": 1342300,
+      "sha256": "88e0266ee395498b62228b5b9206c45665b28ae65112e49b652d7a3bbe961717",
+      "gitBlob": "0d3498e5a998c6c1eb184af57f7ea6ea411b0680",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/syringe_on_jubilee.JPEG",
+      "size": 718093,
+      "sha256": "a4014a27df78c50b800f20f8b6545d4d11b72b47c8cbf80393c7062666731f17",
+      "gitBlob": "90ded8df40eb1f83f29aea44f07ea12536b14a65",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tc_carriage0.png",
+      "size": 298693,
+      "sha256": "1f52cfd92ecf48a6d49127f87c3b9cad9c42fc4a2d4ad43af5f0ccff15396a98",
+      "gitBlob": "898fbb93fee87b4e424e4be880328f289da88ffc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tool-interference-diagram.png",
+      "size": 230157,
+      "sha256": "0b77a6f13b1698966f35745d92b031380ad682ffcfef2251d987c7baa8806a9a",
+      "gitBlob": "1f9326beb46ed8e5377ae437be3a3068ffa6891a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tool-template-reference-dims.png",
+      "size": 282093,
+      "sha256": "87aec02fd102a332fd5892089be018c4b5bb9d0b04cdfcca5ad767002ae07fba",
+      "gitBlob": "f67077241ffdb3662a0a15adc26ec2b7f7234aef",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tool-template.png",
+      "size": 135347,
+      "sha256": "2a1ab5f74ee9e994d8f183ace0cec45a3ea0b33dae129d6e1b3d11fbca1c6441",
+      "gitBlob": "1051d4bcccc59b6338ad26a5dfc0d112225f0abe",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tool-wing.png",
+      "size": 253162,
+      "sha256": "d2d29e44f119c24028623f3354d738c033fe4dae51a3d922da58678636581ce7",
+      "gitBlob": "d230246ef9970fb82329e40d51657488e8d32527",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tool_alignment.jpg",
+      "size": 113746,
+      "sha256": "92c94f34301a2a2dd72c661a77865d89edde96b10130f8952779699e39bd4eeb",
+      "gitBlob": "69c3fdd1bcff9fcec7a29bbadfdd5300f9c0a5a3",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tool_lock_unlock_duet.png",
+      "size": 124537,
+      "sha256": "ccb81bc6037d32d055c980c1bd5d11db545dbdeb7a73eb19202756eeb68d3244",
+      "gitBlob": "f162ff31b4eae22b5bc9ab354cba1bdc973827c9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tool_plate_wired_installed.jpg",
+      "size": 992584,
+      "sha256": "0a9b14a871ad2120efcf090a0b2bfd13107626d67ffe2791479db6a5fada426e",
+      "gitBlob": "032aed0158884acc40f9f80f22d5d6f3014f8462",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tool_plate_wiring.png",
+      "size": 355040,
+      "sha256": "b6a04bb2ca92a195a9ae156562460422b2530e290dbcdca1d3a2d1e05aa84747",
+      "gitBlob": "4a9aefb6220030123c5f660cfe194c133f8d5669",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tool_post_parts.png",
+      "size": 272850,
+      "sha256": "b7ca7ea374248df2e1bb7dbbc255f735639a0f84aa039393d6f5bf90eadd9e8f",
+      "gitBlob": "b11024c5efc1680cf7bbf6d140ea43bbc8292935",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/toolchanger_carriage1.png",
+      "size": 320675,
+      "sha256": "a0a3467aa0e52f6f9c611f0f70fb00f30f21664b3c987e1f1f9b6c2514919578",
+      "gitBlob": "4a366b4eb2df27159b1402ca218d3b6e5e656862",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/toolchanger_carriage2.png",
+      "size": 210960,
+      "sha256": "b703b78163643355a627e2db88d6b976613ff0f8507f2d49d0ea12e6e47ba9d6",
+      "gitBlob": "fcac3224b95683be8a820cec7679e0cd61af5e58",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/toolchanger_carriage3.png",
+      "size": 136156,
+      "sha256": "f4603bc563b12f0e35476dfde9bcda222acc7a09ab7763ec1d7809e4035b54be",
+      "gitBlob": "603abb4c7df853dd300ed654f600066f8554c4ae",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/toolchanger_carriage4.png",
+      "size": 548323,
+      "sha256": "b81ee3ab132585a94363a5b9c07dbdd47e2db5f2309ae7d484018bf9f0371c74",
+      "gitBlob": "6646e8a01efb710fab6d91c97dafa4fd49e2fa30",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/toolchanger_carriage5.png",
+      "size": 461509,
+      "sha256": "6b323fde6ce581d548848ca5fc9aefb198b2679e8f0265596a7713d84693175d",
+      "gitBlob": "15593f3d9213d872963702bcf407df95b99b1e41",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/toolchanger_carriage6.png",
+      "size": 510214,
+      "sha256": "d5e767db683542d29f8612d9e755da3b00c1e8cf584251aa9a478cd393a4e64b",
+      "gitBlob": "886ee6336fa15f498bf4efeaf15246f1a1704bc1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/tools.png",
+      "size": 9671848,
+      "sha256": "506e75dec44951d06d495c16ed1455b19a2918e1c5a9f12e87bf16b162a81cfc",
+      "gitBlob": "0c34eba614f23aeb4c066d35c4cdc6cb1c17c67b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis0.png",
+      "size": 770216,
+      "sha256": "2d729c3114fe4f2e8286dd444a9cd53115b1034f114e34b709c790bb040c73f3",
+      "gitBlob": "781a95de3b6b697b6feb7c793fe5323e70bc9839",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis1.png",
+      "size": 241802,
+      "sha256": "277f63929330f1597b04cf8cb1f55bbcdcca90c4402db56d74f74e1a0cdca59a",
+      "gitBlob": "de2a2898cbbc03d9c0699a20a8d5f1ecbb295a32",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis10.png",
+      "size": 169232,
+      "sha256": "1f89b47bc16c818549273cd4c3f9fbc2a15a9238cba3abb66bb37e92e9565d6f",
+      "gitBlob": "845298c60537723ca1028d0cfcfeb2b6531559e5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis11.png",
+      "size": 160991,
+      "sha256": "97708786e6cf47ecb86c5fd0dbc21b1ccf392833c45548893041bee9335ea430",
+      "gitBlob": "ff718bae545c8db0f22490309c533e605c294c63",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis12.png",
+      "size": 140248,
+      "sha256": "1fc519a9d6073f6bdcc70bdaa99202ed6c7a7b700acd56d4dbb05b64d74651dc",
+      "gitBlob": "39e120e04bb6d70eed9dfea329ddfc343fbb9a2c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis13.png",
+      "size": 158644,
+      "sha256": "a69ed3fc594ef2b403bc105c8e9d1a093acc98a020f66525f2bd5995fc08c04c",
+      "gitBlob": "ed4762530cc5b655c6a3ce859c566413be7e3e1b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis14.png",
+      "size": 200817,
+      "sha256": "bda4d0ff66448c1f2409af3f214859b10053e1fa89ccc887d46393edb313e278",
+      "gitBlob": "81c3d49b5b59d905f1c400c34609ef5da36d07e6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis15.png",
+      "size": 507198,
+      "sha256": "dc8c26fbc795bb94012defc2ee19c1912d58c1bc7c0bab7c1e9b0f0085569df6",
+      "gitBlob": "0581e76ee959e2b185b50e0b01bb87fedb8e19a5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis16.png",
+      "size": 360855,
+      "sha256": "52f35ed29fb35aa82c2175a109364730ed7b3ba29cdf5c0775352c1d1146e3d4",
+      "gitBlob": "8927f3ec5c0feb85b3f4480f9bbed7170c696816",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis17.png",
+      "size": 450302,
+      "sha256": "9fc2c8723ae2abed692ad45dd6481a0904d802f72af6ae87e49118bc6afc0a25",
+      "gitBlob": "7cea7343ddb7389f3fe3e63414d672bf2c97e1dd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis18.png",
+      "size": 394813,
+      "sha256": "ffc7a5c89f59ad4f5b0ffe8f49e81db19b47bb39eb9b17a2de8442c15792e949",
+      "gitBlob": "9db2e49a2f84e41d8d48e5025da1840762f75f8b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis19.png",
+      "size": 458767,
+      "sha256": "3ab71e06ed4ac9a9c18835e0695e4cc731bd596a53bdb93d1b4efe83493271dd",
+      "gitBlob": "c7e47d75315548f5065cea17f01b844a12d8d6a8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis2.png",
+      "size": 237427,
+      "sha256": "8504ab28564044f13a61bd1b235f92e125d5b393a315baf7e733b80e71a1ae18",
+      "gitBlob": "39abd0403a7efacede05a9374120b75fc89b702e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis20.png",
+      "size": 553371,
+      "sha256": "019ffe3432d8980550b25ff7c63a55af0fdc11f2794a51e36cd439ca461cc723",
+      "gitBlob": "d4755e3c9985471cbca0be0db2d9d5a910ab9861",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis21.png",
+      "size": 658436,
+      "sha256": "89445bb0989fce3a1339bce36d6eab26c21f699b75d557122cba04f39db96b45",
+      "gitBlob": "2e0cf52a592cb38d2fd69e040f105fa81197db9f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis22.png",
+      "size": 940742,
+      "sha256": "db14f4b2e525266a25bbc593861f9ac26a74a2d53b25e4f3a2c5acf094438255",
+      "gitBlob": "4e5ed7c4bbedb05175a3325e129e93b4927a38e7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis3.png",
+      "size": 133048,
+      "sha256": "8ed9667a8856637f86ef71df381ae686c9a3368d7845d3024e56d6233ced2fac",
+      "gitBlob": "86fdd658ae3b4db648c63e02521ede100415f90c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis4.png",
+      "size": 167123,
+      "sha256": "ca3a7e2ce46d6b868fb8f60410257abe3e36b007f6eec64786bd2195d675842d",
+      "gitBlob": "3a8a8fe6b4541b21b907a8bb2ed1d1d7cebb9741",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis5.png",
+      "size": 350479,
+      "sha256": "15a5163dd2f2a8f8eed40536e9c6546f87fea4938d79f5ff4452faf3a878c2c5",
+      "gitBlob": "38d3ab974402396284906f11d3fcde0f5d9ab465",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis6.png",
+      "size": 390089,
+      "sha256": "6db71ef922345731debb1610c3ffaacfb80bc346baa57cf833fd23d9a9288caa",
+      "gitBlob": "3f758b7b3eaf939cf0ad889bd89bbb460e312028",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis7.png",
+      "size": 233857,
+      "sha256": "dd5d8c0440895da21a97a9be243be3ea868b2f52b19c7369c1f90a442bcf2670",
+      "gitBlob": "64a9be42c6e9d4e78f55fb57277e2078b01402ed",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis8.png",
+      "size": 310906,
+      "sha256": "582736afc09fbe083e2700ea7efb8e2a009c9e17ea191f43a889ab16dcb6bb5f",
+      "gitBlob": "d1970425a70564ad616377925ced14b3f91138a6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/_static/z_axis9.png",
+      "size": 187991,
+      "sha256": "4001cd45515b5b4944cdff78206773bf46adaf60617052772662ecede4eed0f2",
+      "gitBlob": "2c28d7a9765b70d59b665a32728590e0f3f81fb8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/build_plate.md",
+      "size": 1362,
+      "sha256": "58ebb61a6cf6b53ad30f518d8c0207124efc9186d15a4b1a200e3863d4286b8c",
+      "gitBlob": "6c2d7236e61df9fcee7dfa85e556a28c26ad6058",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/building_a_jubilee.md",
+      "size": 10825,
+      "sha256": "902c778a23168d539dbba55a958930de0428831afeaf2c0cc6df3c20e1c0c9ba",
+      "gitBlob": "980023f48f746ed45b8dadc24b62eafb1198c654",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/building_tools.md",
+      "size": 6955,
+      "sha256": "c814acebcf28741d83a66f14736d1fe05e14367760cb545540e3b3917c7ed5de",
+      "gitBlob": "deec47093242091ece036a93cd391d8e0d9ca6d2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/corexy.md",
+      "size": 1580,
+      "sha256": "b76824cacf6dbdb6cbf49444a235d4638815919a513b45a4e1b239dc07eb7b45",
+      "gitBlob": "8f7fe05309f69c69cbf9cc2ff93cc3aa10a32015",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/corner_brackets.md",
+      "size": 217,
+      "sha256": "e32b526fdc829bb22e444f6bf1e8f8c0fff0cf94636e42317eaa110ac6b4e3a0",
+      "gitBlob": "3d65900d5add62b23ce77760154c45603dcfb3cb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/corner_plate.md",
+      "size": 863,
+      "sha256": "928b3fab79ee1da05dcddf1e93e77c8eb0ed4a9e93b46ce20a10176638ff8d56",
+      "gitBlob": "1ac8047932368b3cf5413417cf89682e8b267e28",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/crossbar.md",
+      "size": 879,
+      "sha256": "4a9e35c134988095adc0bd9cfce7b37a7de482d0e3b970b56b3295d6bd8b81c4",
+      "gitBlob": "914dabedce255c7c5e3b931532c5112e7c14ce2a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/designing_custom_tools.md",
+      "size": 1393,
+      "sha256": "e2ba504a61353c474ac66d5dd848d49b5c7bc05268054009297e9fefc0f0222a",
+      "gitBlob": "11fe99a4628647010e2421739716c14a274c7460",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/heatset_inserts.md",
+      "size": 610,
+      "sha256": "992d84bbba3418ff8076efacd32c9a237bb8e1295b7fc4be67348192303ac45b",
+      "gitBlob": "18a5ba5460d0eaa100f8089fd301d4a208a8e26b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/http_syringe.md",
+      "size": 27121,
+      "sha256": "51c39e2fdb099aac5371941f369fef1e7389f8bcf467724cab1303b0111ae930",
+      "gitBlob": "5f9511df438f1b0622c7ae89431362af1b06bc18",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/index.md",
+      "size": 1692,
+      "sha256": "feca331d3e62f446fe795df01d0442b495a7fdac40d3a6b0a0cb58a0a1a5e4d6",
+      "gitBlob": "be8da5c27a2ac1b7a96facc41ec09224f5ae5ac3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/inoculation_tool.md",
+      "size": 892,
+      "sha256": "30189e3e2c5ef75022f79cfef897c164cacf98d25022c80cf788c4965fb3612b",
+      "gitBlob": "e1a658dcc25f3bf4e80e22b571ef3be337be430b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/jubilee_travel.md",
+      "size": 11329,
+      "sha256": "3e7739391d0487b0fbf23643d757258124a82ed79892863d9d56c80c8084c5a1",
+      "gitBlob": "df7b8f91d5f4f6c2ceffe176d4a59588d638ee8a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/lab_automation_deck.md",
+      "size": 1235,
+      "sha256": "9d0e8170ccf3f95fcf19457ae8498a273a9b4ef431164d961d1c98315e7246c9",
+      "gitBlob": "ce5617749bde779d6b11f363df43dd42b0919937",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/lower_frame.md",
+      "size": 1049,
+      "sha256": "fb5ec622e97877246efc1e6e3bcb508b27279f5762dcc31c88efe9aa8891bee6",
+      "gitBlob": "018a8ed4610f56a0d7db58a252729bcc594f0208",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/motor_plate.md",
+      "size": 1185,
+      "sha256": "05b4d1b38b7089a2cf9a8d899f71879d80e46799d9237ce261f2fd7cd1d154b1",
+      "gitBlob": "ad443be386e32fcd7a00bbf7f7a80bbe2eaedfdb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/outer_frame.md",
+      "size": 2813,
+      "sha256": "09e1e5dea68733bbbfc7c6f1ad758ff1bdc36d6b20a65f8793e6e59539cb1884",
+      "gitBlob": "c68c690f2703b8facf73836ed8b7962fa608f936",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/panel.md",
+      "size": 614,
+      "sha256": "be5f78d3b61a17c30b57bf6f23df9328a7cd74b50880ca85a941ce89b6e8bef9",
+      "gitBlob": "2a747aecef83ac307b8dda0e451ebd8f98df62ab",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/parking_posts.md",
+      "size": 11615,
+      "sha256": "751840d9df618d909f7641e463412dde66dc5ce3ce8a8d4dea0edb0303551e2c",
+      "gitBlob": "835916d6b1983daf87c35ba02b5df66662328c66",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/pipette_tool.md",
+      "size": 19832,
+      "sha256": "77bed66365e0b5d3de460d72c5a781f1be594f84ef21ff6479b7e594f6e49a71",
+      "gitBlob": "6d4737909e1bd7720bca617c0fc92742edeca40a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/pneumatic_sample_loader.md",
+      "size": 930,
+      "sha256": "b1b88068d0361f538e2b011969b774ee46c98fdc752b36ad908771f8ef17e05c",
+      "gitBlob": "6440270b80c874eb69a953d87c00a7eca084a1fc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/prerequisite_knowledge.md",
+      "size": 741,
+      "sha256": "7180768ac48d306aa07f506b8a7a6fe988a648ece5e8c829d1afe1c45152c6c8",
+      "gitBlob": "c5ec6a19334378b56e379bcbbf698ef3e3f7ab38",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/side_camera_tool.md",
+      "size": 900,
+      "sha256": "2a877488320bf9a0513924f7466adb29b212cfc5df2938b9687050c8a96d08b3",
+      "gitBlob": "c2ec1cdf7e56526a875f0430dfcd48240ea5f620",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/syringe_tool.md",
+      "size": 921,
+      "sha256": "2bc19de6697d4200403a1343590e7aa8886ba77e74c13d8f8ea600c738904958",
+      "gitBlob": "9dbb53ca92fbf748f4bd24fc385a6bec2c177e57",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/tool_crash_detection.md",
+      "size": 9688,
+      "sha256": "eaafd7b7e13a9558fed594ba8bf48a56d07574e03c8e4bbf92bb24698d00b342",
+      "gitBlob": "516b6c2237d1f22577876338bb1cfd2a397eda45",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/tool_offsets.md",
+      "size": 6121,
+      "sha256": "dd0c1559549ca5380ab3aeb95a089410b7e7048ebc8a9b047bf5716300fea7f9",
+      "gitBlob": "0b5f2c27433547e5f407948caaa88869800905fa",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/tool_postreqs.md",
+      "size": 1030,
+      "sha256": "1cdd13f9de30efa2ceb9b75cdcb91841edcea504f16d6bf2adffa6ec73d98cb7",
+      "gitBlob": "5d52c8202795f3f09b593cb07dcfb1ba737f1327",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/toolchanger_carriage.md",
+      "size": 882,
+      "sha256": "92d874fda061c8b4a219d8657a571836ce97331db944c28b2f6c8aec084bd73a",
+      "gitBlob": "4e1c76da585eb7f8cc7f208397e54c5e379cdc10",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/top_down_camera_tool.md",
+      "size": 397,
+      "sha256": "0fad244f1c1c7c464cfb0bf1e189eb7ed40a0b5793e7d3e80e282850af9741fd",
+      "gitBlob": "133d8260762d4662dee684dd692657590d1a2d6d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/wiring.md",
+      "size": 338,
+      "sha256": "6ba59e116d6c55c7c328e165b2445df754af8123aa78866bb9a09673688cec77",
+      "gitBlob": "5401376a9d7840ea39387322fda8210dc7a7e165",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/building/z_axis.md",
+      "size": 1979,
+      "sha256": "06df6bcd15eeb12844c038975076d8f61cbfe512463065f2f043f526e53ea7d7",
+      "gitBlob": "4651b131ed6bdf3fc10f5fb0660d6718b3434a46",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/changelog.md",
+      "size": 73,
+      "sha256": "93af9d9350ae46a4067d60b2d585a11c2789745c04479ad862d94858d0b610ff",
+      "gitBlob": "6e2f0fb10773a03b141494905f9ce1bb82ab328c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/conf.py",
+      "size": 11789,
+      "sha256": "55332845f058abe4331c878b3ff7e5a49078b7565f7a003ef4fbeff89d7836a6",
+      "gitBlob": "5292c9db4402aaf69845dfd980a15c421680da4d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/contributing.md",
+      "size": 76,
+      "sha256": "4f8510324b2cec2f75993e6e6489b92f556a253b86e159e32950d56b37632884",
+      "gitBlob": "fc1b21381d69f2c608b00bde5ce510e9d2ef7032",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/development/contributing_code.md",
+      "size": 4523,
+      "sha256": "59b510071a0850911cee398c099cb9077135db54e5a804b4cbb6d2641a91d427",
+      "gitBlob": "94b390fb39872b5dd88073bcd4d6c0a8c3c2f2eb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/development/contributing_docs.md",
+      "size": 3218,
+      "sha256": "849b8fbee00f87dfbc02fa2ded80818ed15dbeeb52935455cc2ea41e0fe9dc07",
+      "gitBlob": "a824a788a44999c6252daca9c10eb71631fc63df",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/development/contributing_tools.md",
+      "size": 1017,
+      "sha256": "04940ece57f98f598f3e66857662c09639f1cb6f73f1eafd57e7e4a5417f86ba",
+      "gitBlob": "c167d0488c4124185808af39720d2cfbac74f4ec",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/development/index.md",
+      "size": 3196,
+      "sha256": "2e07cbae79abe8a170caf24c1befe4f0825db9f84fe7ff7cb47651257069e023",
+      "gitBlob": "bdf2c7304f2c381f013d74282a2b8bbd6eab2277",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/gcode/color_mixing_demo_config.g",
+      "size": 7678,
+      "sha256": "4f1e2630856d03a4ac1503951b5f91e806eb3d33cb855432502389f949f3f0e6",
+      "gitBlob": "ffdc07a89d79f9dacd3bc810a1f1615caa0f2459",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/_static/deck_layout.png",
+      "size": 127866,
+      "sha256": "27f817f2219ca34a56ec323f686ff1d5977bd7dae7826f1ea94542538c881c5f",
+      "gitBlob": "3abc6eb16c4bddf4c3b24a09fde8ccaaaca88569",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/_static/duet_web_control.png",
+      "size": 82458,
+      "sha256": "8fb98fa778efe2e8b592701f5224bf215be65a5ca036089b434b0be9cb701a86",
+      "gitBlob": "35517da6248ca59e417bac53be99feccd702c619",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/_static/jubilee-coordinates.jpg",
+      "size": 138048,
+      "sha256": "2c7a9d1ce64ae0e24b6e40dec1a89135ea7817ce90810a07267fbda19b092585",
+      "gitBlob": "a9c4d5e159931b8373e839f4f892efcbceb16310",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/_static/plate.png",
+      "size": 951142,
+      "sha256": "c9d35c694eb6e8e86966c5db7f747c5d92bc5532397422f1e5ace5df89546f64",
+      "gitBlob": "7a10bc94693fa130edb26aef5dee9a95379fedbf",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/color_mixing_setup.md",
+      "size": 2274,
+      "sha256": "b92080e0c7a23e7ea7966107a19bfd11b90d5abc63d64f942942a6a56bd86118",
+      "gitBlob": "96078de5518f057e410e77e666267069cacbdf8d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/deck_guide.md",
+      "size": 6913,
+      "sha256": "8341c017a4886a29cdf8042916445604d2361dd956c65e2964a513f65ecbcd18",
+      "gitBlob": "8c5d3d5062856b45c7ab77b4c107a18d1e0731a3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/index.md",
+      "size": 4386,
+      "sha256": "04872d2c69e1c6bf878c41e7588b7ff0acb0636370832dc63b2db6f8ce319d9e",
+      "gitBlob": "f0531934e2c18adfcc36358700ce247d0124d049",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/installation.md",
+      "size": 1768,
+      "sha256": "3fe25b78baa32da969803663b987bdfb9a22f06e87d85a78f30ed15aaff43a50",
+      "gitBlob": "0fc1c1d8ee6d53455bdb70ef67535738d173b9fb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/machine_intro.md",
+      "size": 3060,
+      "sha256": "36ca474695a9c3b1d84ebb4e9ca2b3ece04dedd312c3e373b9d58dda755e9230",
+      "gitBlob": "0ff53a40f3fe147dd67aa1b4540a27832a0b092e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/new_user_guide.md",
+      "size": 15706,
+      "sha256": "38d8c2aa655eca2993941517e2281014bff0329ba3b2bb17c7ad2336eb35cf50",
+      "gitBlob": "47199c461a408a9c582ab37d90721b024d4ac4b4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/pipette_guide.md",
+      "size": 136,
+      "sha256": "9321ad88b7438892ea4c4d477fa992e5d994e735832555405dcf86332a695f97",
+      "gitBlob": "23b3c117aacb31bacb3310a707541584fc339f7d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/getting_started/primer.md",
+      "size": 5619,
+      "sha256": "23d92c74972217ce0991ee9b9450571ebe516727f99c0dddfe5ed8899ed42bac",
+      "gitBlob": "9cffe6339969c21bdacfdf0afae1954fda85a8e6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/images/Automation_Deck_Orientation_Schematics.png",
+      "size": 127866,
+      "sha256": "27f817f2219ca34a56ec323f686ff1d5977bd7dae7826f1ea94542538c881c5f",
+      "gitBlob": "3abc6eb16c4bddf4c3b24a09fde8ccaaaca88569",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/index.md",
+      "size": 4785,
+      "sha256": "52dc17c8f26dc174cbd2ffec48cea7a1762303bebba5dc6d8eac669dd0af2f7c",
+      "gitBlob": "9d54a99e18d6b484ccfb856f61a179b8d8d189be",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/license.md",
+      "size": 66,
+      "sha256": "6f6accafd8e883d3a9c16f54de17fb23098c544dc1af30a3ec54c94e7389114c",
+      "gitBlob": "b231201e81d1bf8a902a103fe0144b2355c24356",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/make.bat",
+      "size": 804,
+      "sha256": "2f82394fbb835088f01b231127ecbd1684fad6cc48c82b9a62e2722edf1cfa70",
+      "gitBlob": "747ffb7b3033659bdd2d1e6eae41ecb00358a45e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/AutomationDeckIntro.ipynb",
+      "size": 4269,
+      "sha256": "12f3910e44cfb5b4a685df7617c77c7db5d0257c8403c3ba351698a4177fab5f",
+      "gitBlob": "cf2664171129740c08c1b5988818d25dc3d8b9c8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/GelPrinting.ipynb",
+      "size": 9559,
+      "sha256": "a7ff37b5a90cb8f57f13092984a8bcc088e592669b56c3603290dbf34a014f3c",
+      "gitBlob": "0292c2843cd1f252bb4578746ec525025231fd25",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/LabwareIntro.ipynb",
+      "size": 7459,
+      "sha256": "f53ba195342ade99ecea93d5baf6a4906f4cb8ebe09e7df1ca64b539ccb5d483",
+      "gitBlob": "21ea43255e2b4a8d26f59a1c74785b85c7be2aa6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/MachineJogging.ipynb",
+      "size": 4972,
+      "sha256": "85197f5d1d23c74c85c285aa1f690b6e53d65be5b8fa1a9634d11f8a56833019",
+      "gitBlob": "7fc0bf928ad734c68cdae73dbf8cf0b219957274",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/PipetteIntro.ipynb",
+      "size": 13123,
+      "sha256": "55863da83822c58d3a96bc14089a235dd2732029329406f0bbb8e2f5d5fb5299",
+      "gitBlob": "44d5282c7e6406c5af0f66a86fc683c7eb07ba3f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/SerialDilution.ipynb",
+      "size": 10225,
+      "sha256": "17b922a1d74d25ffd857f5d97e8853d95f91d75e1e107c975301aadd6d7a36dc",
+      "gitBlob": "dbde22c6ea0f8ea3078a694f51c06ed980c0c1d5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/SetZOffset.ipynb",
+      "size": 7246,
+      "sha256": "5bc5138fed9f4a82924bbd3c34c794131a1bf7e07c78ec9eef920c4716b56e03",
+      "gitBlob": "abd5292bef218f685b4c40c9f4c3d9fb5d9c2fc1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/SyringeExtruderIntro.ipynb",
+      "size": 13757,
+      "sha256": "077bd18735cb29a3434cb89ae344ce84424823822771e94fb4a342245d7969a1",
+      "gitBlob": "58d601086d9dae3d375bb7b30936c6385d8a0bbd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/TakingPictures.ipynb",
+      "size": 4588,
+      "sha256": "9906e411b8e4fbf21ff2def8e86c1665dc1bde8e4495b67e6c5a305dc0faa94e",
+      "gitBlob": "1b0ff7aa1a5e1c96caa2d4bd64b541540f958088",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/images/deck_layout.png",
+      "size": 42728,
+      "sha256": "71c94fa5e35e9e07cb765eeb456cd2beb843d983a1130cb8335570f55ab04673",
+      "gitBlob": "150fac41ac2a3937d18353b7887d69230922d5fc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/images/gel-example.png",
+      "size": 262134,
+      "sha256": "125c03c268e6ec2a814a3918bf4e8a77984ca5d182353936324e6017fdaa4789",
+      "gitBlob": "dbb199099757fd02fe84c3d5617e201a45f454dd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/notebooks/images/plate.png",
+      "size": 951142,
+      "sha256": "c9d35c694eb6e8e86966c5db7f747c5d92bc5532397422f1e5ace5df89546f64",
+      "gitBlob": "7a10bc94693fa130edb26aef5dee9a95379fedbf",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/pdfs/inoculation_loop_tool_assembly.pdf",
+      "size": 432346,
+      "sha256": "acbd7b67960795bfbf284d253f80c95d414487ed1828e5ac880111b14bc94091",
+      "gitBlob": "37037d29822ed1f190e058d14d4942b356bf906d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/pdfs/jubilee_wiring_colormix.pdf",
+      "size": 432014,
+      "sha256": "039395ee1d610c3b329f3e2cb00ec836ae0007e1a6a90020719c350d754b63d0",
+      "gitBlob": "167ef1fb9bbf5873c177f12ae0e74c5104d5e1e9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/readme.md",
+      "size": 70,
+      "sha256": "b6fed3448c21a2efe863e4f4e59d4a788911e424760c2408172e518fba05df13",
+      "gitBlob": "2cb706b37aa7005bdb6399a71071ea5d2d595a3e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "docs/requirements.txt",
+      "size": 504,
+      "sha256": "f7cb96902aa38d1826cc082e7e40f39e9fc8363bdcc2e677e6d267e633181b37",
+      "gitBlob": "d9a03f86bab1b0e84c5c068901c5c28eae720a6b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "environment.yml",
+      "size": 528,
+      "sha256": "36291dbb9d2f948db7b9475c03fa0f234685688da7d47b7b4f26ff0a8c5fdbe4",
+      "gitBlob": "8dac74e00a6362426e2e21c56b8760dd73ca45cc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "pyproject.toml",
+      "size": 346,
+      "sha256": "a2259261795e61106b469b190529701013a0a76eecf8c5c6c247b56c3c27bd48",
+      "gitBlob": "89a5bedf5e75bd304144bfb2356fa016c25afdaf",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "setup.cfg",
+      "size": 3736,
+      "sha256": "238ac74cdeb85993c8dfa942fae88f977dde1a22089041b1c72bf2c69c5edb70",
+      "gitBlob": "f4dbccf6286fce0a32d428b4a600b5a475b8d33d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "setup.py",
+      "size": 711,
+      "sha256": "2935b66401db5d688be2d7b9e4f59bce1ae4ac0a791ebfa071bf5f28e22428ba",
+      "gitBlob": "15072dfe14967636b9f237f61e19b6d83834262a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/Machine.py",
+      "size": 43318,
+      "sha256": "41c27a7e22df65c2792c9a14d1d5705447572b05d4768586f7100fb65595e570",
+      "gitBlob": "6e329a3c3f64365ae29d7ef1f280a8e2ef9138a4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/__init__.py",
+      "size": 577,
+      "sha256": "a47e62e058f5b5b5cba8bb53548768a238a9959b2c427d279ee77cf875e87511",
+      "gitBlob": "e451f103c4b557af9c3e33c60ada99aa3eb655c3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/.ipynb_checkpoints/CalibrationControlPanel-checkpoint.py",
+      "size": 2211,
+      "sha256": "0f1e22264ddaf2c586c7f292aa7712c4da532723b38aeb80f2db9a6141ed95cb",
+      "gitBlob": "6d714fa75aa158e2c2fc07e00e9cd694674cbee8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/BasicGelPrinting.ipynb",
+      "size": 13295,
+      "sha256": "76fc1abf86794c8e17f196e649e2bb643ba5bdeec7f3be4ffa5f0cc055ba183e",
+      "gitBlob": "1de0cdf22c9d3b14a2ee9055d4a826077374fee6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/CalibrationControlPanel.py",
+      "size": 2211,
+      "sha256": "0f1e22264ddaf2c586c7f292aa7712c4da532723b38aeb80f2db9a6141ed95cb",
+      "gitBlob": "6d714fa75aa158e2c2fc07e00e9cd694674cbee8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/GelPrintingTests.ipynb",
+      "size": 12281,
+      "sha256": "d608d5a3948c0752534004d22025b8a4d17ef1a8849e699e4f6e2badce73b7dd",
+      "gitBlob": "a3c45a88f02548ed91ae9bbfc50a7cd20ac8b43a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/IntegrationTests.ipynb",
+      "size": 4477,
+      "sha256": "0780506734c7cda26c897439ceed3998b93d00b4db46792f6113ac2e5fc215a4",
+      "gitBlob": "029d271c946c2e1349b114003b9b654a5fd76044",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/LabAutomationDeckCalibration.ipynb",
+      "size": 10217,
+      "sha256": "ee74d0bff22b9128974fbec85d1fbcf521f31d02f9de0309259c7b443a1d9929",
+      "gitBlob": "6918b8fd14211b2096550c6f17d81e0c5940e50b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/SetToolParkingPositions.ipynb",
+      "size": 17806,
+      "sha256": "7c72115f761c41c239b57027e2361fe7353f4a2309f040f4c91724cddea69649",
+      "gitBlob": "15eb1315b0894e1253cb86e37635f1acda22b8c2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/SyringeExtruder-Test.ipynb",
+      "size": 12837,
+      "sha256": "fc548f90139b5062b8f1dd5bc41d98c02f803c2ea2aec2c5d69204baee139d26",
+      "gitBlob": "9b78f7f82c71e58dd2227e8205f12e2843bec06a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/ToolAlignmentXY.ipynb",
+      "size": 6172,
+      "sha256": "4ee7dd401a5ef0ba1b99f6ff49ff31e07277ed6d19a3d832958064fe1bb339d1",
+      "gitBlob": "acf7cdea57040c76a15e5a46afc3e6649e7c66f7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/templates/lab_automation_deck_template.json",
+      "size": 619,
+      "sha256": "4cfb48219cc07120763499de25c4ebcd40ef2ab6d36546a0087e70d8430c9f44",
+      "gitBlob": "b1237da8101fe19790cd80e829a367359b40bd60",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/templates/tfree.g",
+      "size": 973,
+      "sha256": "6b58108e0eee84ff84e3f4e6059ce000267257dd6d84757e509fc8f65ea96aa7",
+      "gitBlob": "da3a8a97cd843432e9ce07d06339fe4dcaa794be",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/templates/tpost.g",
+      "size": 1259,
+      "sha256": "d3f831a55ee3c96dbdb077a29c9451796a81157de24f4e38f5b3695d452d28b9",
+      "gitBlob": "9b95ab44226769d36c6e9b0ebc001192312d30d9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/calibration/templates/tpre.g",
+      "size": 470,
+      "sha256": "74697ff269cc9271dd2c6ca37a54927e7905e20bcf66d14b1127b582020347da",
+      "gitBlob": "284caa45086c13236b401ec0d8fc6788abebe0e2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/decks/Deck.py",
+      "size": 7717,
+      "sha256": "c6299282348c1076de41024d08b2a723af16ff5c774ee8fda443565c56985f3f",
+      "gitBlob": "cc8d341b05695475fb399959ff124b7a9cf5d448",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/decks/LabAutomation_Wellplate_Reference_Coordinate_System.md",
+      "size": 249,
+      "sha256": "acdc94232088855f9f075d56e06d872742f54adb9bd4e5c30e648dc8218c4a1c",
+      "gitBlob": "ac24d478b525164bfdb4777764869e53226052c0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/decks/Plate.py",
+      "size": 494,
+      "sha256": "e0b4e1c656d408e87969efc449937c2a82379808081066609f6d571c08d9132e",
+      "gitBlob": "e905d7b8bf287eeb1c31eefc1dca3b61a1ef0c20",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/decks/__init__.py",
+      "size": 1483,
+      "sha256": "dc379c07d6898b0a316e3f08677517c3f91a912b5978ae7046cc21b3a6f41027",
+      "gitBlob": "45d5cf45894cc6dd34bd4159e1b0fe02bd6e4587",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/decks/deck_definition/.ipynb_checkpoints/Untitled-checkpoint.ipynb",
+      "size": 72,
+      "sha256": "4a62b68a633d79c53a6fd8893e8ea42dcf2b9a8a3e907b1b9861661f04f21517",
+      "gitBlob": "363fcab7ed6e9634e198cf5555ceb88932c9a245",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/decks/deck_definition/.ipynb_checkpoints/lab_automation_deck-checkpoint.json",
+      "size": 1311,
+      "sha256": "dbcc7fd6f2746e13e16c4e67569fccae5957757a42224e32dbf75d652cdee6dd",
+      "gitBlob": "f32fb8a8753f093384d9787cce7237c99b32f10c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/decks/deck_definition/.ipynb_checkpoints/lab_automation_deck_AFL_bolton-checkpoint.json",
+      "size": 1294,
+      "sha256": "30b06403252a32fba3e4af45f580663da0eaf3a05ad4de9dd629715f2efe013a",
+      "gitBlob": "3bccdc84a29fa3e389c9ff449434531e095079b4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/decks/deck_definition/.ipynb_checkpoints/lab_automation_deck_MA-checkpoint.json",
+      "size": 1294,
+      "sha256": "30b06403252a32fba3e4af45f580663da0eaf3a05ad4de9dd629715f2efe013a",
+      "gitBlob": "3bccdc84a29fa3e389c9ff449434531e095079b4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/decks/deck_definition/lab_automation_deck_AFL_bolton.json",
+      "size": 1294,
+      "sha256": "30b06403252a32fba3e4af45f580663da0eaf3a05ad4de9dd629715f2efe013a",
+      "gitBlob": "3bccdc84a29fa3e389c9ff449434531e095079b4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/.ipynb_checkpoints/Labware-checkpoint.py",
+      "size": 31839,
+      "sha256": "62193cd987bb9b8eac0d412a964aea0a7160716f77b31708a9c244598492ae83",
+      "gitBlob": "55cbfb64c16030527eee2f0449d938f0cc302ce5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/.ipynb_checkpoints/__init__-checkpoint.py",
+      "size": 1483,
+      "sha256": "dc379c07d6898b0a316e3f08677517c3f91a912b5978ae7046cc21b3a6f41027",
+      "gitBlob": "45d5cf45894cc6dd34bd4159e1b0fe02bd6e4587",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/Labware.py",
+      "size": 32447,
+      "sha256": "75640df9eab6dbf9a2e90cdbfa8502e3d808aa41eeaa7473275c0f3db8f0d7cb",
+      "gitBlob": "efd5d7d992772a7dad48b0e53252ba6909cb3d3c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/__init__.py",
+      "size": 1483,
+      "sha256": "dc379c07d6898b0a316e3f08677517c3f91a912b5978ae7046cc21b3a6f41027",
+      "gitBlob": "45d5cf45894cc6dd34bd4159e1b0fe02bd6e4587",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/20ccscintillation_screwdown_vialplate.json",
+      "size": 4151,
+      "sha256": "252bc4a3500a3b6e01bcdb46d8481580117e6435f316a3ac6576f6c2ed983bbd",
+      "gitBlob": "391520ff631ffea3bc074f3dbfd7bd7af2af7f09",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/20mlscintillation_12_wellplate_18000ul.json",
+      "size": 4224,
+      "sha256": "ce5775254615d2c4c399bde6bc59532badca55955c953f27631db0f916cf179f",
+      "gitBlob": "5eb795f07a6a8332eaab8d4095f8cb2c408366f4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/AFL_sampleloader.json",
+      "size": 1206,
+      "sha256": "20ab16c1e46cfd5e755d4cef440a01207f3f792ebc39bc964ec3a27a4b796b78",
+      "gitBlob": "58861c8649d577c0be73fb8fd1848c3163fb4f79",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/agilent_1_reservoir_290ml.json",
+      "size": 1102,
+      "sha256": "dbd6ba27ba27eac1d6a8689fb84ebbffcf02ef9b67f35765b016b16758540544",
+      "gitBlob": "4287e538b7e1ad4ae67eeb2cb5ef6f8a076b5672",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/corning_96_wellplate_360ul_flat.json",
+      "size": 20421,
+      "sha256": "c13f112e52893e781c59ced9e6418ff10a5e2cc4b4877fd9559045f2f475558d",
+      "gitBlob": "3724caadcf7dfcd9e7d13a52c059f02ca7c15173",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/falcon_48_wellplate_1500ul.json",
+      "size": 13980,
+      "sha256": "b8583727920845f41fef4cf309dc936a386f8ba25e16b90e4148efc4c287567b",
+      "gitBlob": "7fb6aaf97880ff728bdb4c4e70a7ed7e74053b5f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/falcon_96_wellplate_360ul_flat.json",
+      "size": 20421,
+      "sha256": "c13f112e52893e781c59ced9e6418ff10a5e2cc4b4877fd9559045f2f475558d",
+      "gitBlob": "3724caadcf7dfcd9e7d13a52c059f02ca7c15173",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/fisherbrand_96_wellplate_360ul.json",
+      "size": 13890,
+      "sha256": "416248876dcc391a25af83a9f4bca2400183dfed80381be33a5c55d9037cb6e1",
+      "gitBlob": "45a46c0de102303de4504b0080795e80e3cee5c0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/geb_96_tiprack_1000ul.json",
+      "size": 19536,
+      "sha256": "798d4488e29a6059c17a9a6d82ba8ae944f91b56c0770294bfcb2be5d0fdbebf",
+      "gitBlob": "8d25376a0a4bea47c18517a9a86772654fadd9c3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/generic_petri_dish_100ml.json",
+      "size": 1277,
+      "sha256": "3c8fcf2c604b4d3ce5cf52b210e79333ebf109844b75535ddba09b6488846d30",
+      "gitBlob": "8d1612a022a0fc530a9447ed1cbcdbd70a953898",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/greiner_24_wellplate_3300ul.json",
+      "size": 7440,
+      "sha256": "3f13d23d2797ba489f6d16297fdd3cbe91c0ea11aec2887e5feff96fdcce46a9",
+      "gitBlob": "f8a8ee529806c550f1c33fa83571c6c1594276f5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/opentrons_96_tiprack_1000ul.json",
+      "size": 19677,
+      "sha256": "cbced4b9fe2b7e3024a02214268b782ecfac8fec367db7797479e63b30689ee0",
+      "gitBlob": "8326d85856575dbd253b061c0c7d5b1f61a86948",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/opentrons_96_tiprack_300ul.json",
+      "size": 13874,
+      "sha256": "7c68d090e64c0d0f0ec69645f466e32b4169fcbd6e6114fe005b49dd59f12db5",
+      "gitBlob": "7d6d92d2a1c50a0f19e1fa4529fcdf8d9f21d99d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/scienfocus_6_wellplate_15900ul.json",
+      "size": 2566,
+      "sha256": "f0edce7ae539b0292bf2281f4c2e95dfe14a9c2d32259b8260f7c76bcf4e41e4",
+      "gitBlob": "d36e23cf2d00feb60b0eaa76bb27053680df5bed",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/labware/labware_definition/septavialrev1_44_holder_2000ul.json",
+      "size": 13676,
+      "sha256": "77f83aaae9c5fd302fe6a8d41795a558bb1fc2e1f8129e8e847acf8b87d4cbb3",
+      "gitBlob": "53ff7fc25f052a16a3e3603898849594a04de098",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/.ipynb_checkpoints/Pipette-checkpoint.py",
+      "size": 30594,
+      "sha256": "fc362f5d41f95588202584f1b9ee304aa839746c1a9e26897c24a39b00f6dacf",
+      "gitBlob": "d0afcbcbd4f98828d0373637440319e66ffb1730",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/AS7341.py",
+      "size": 9824,
+      "sha256": "bcc0c15e1ec831e1aef29b45b8b3960ff6c952fbb28fb81a2390320f9a9d0da7",
+      "gitBlob": "ef44ec756bfca874b22e82d992fad516f37bb21d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/Camera.py",
+      "size": 8717,
+      "sha256": "05d87569bc8af977f9c5eead6bc597cacde505e77aec1dabf2dcca9759c0f2ce",
+      "gitBlob": "21b7753a45138ccbe2271a4f05ef64f510bb2ff4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/HTTPSyringe.py",
+      "size": 8478,
+      "sha256": "e9cee4fecf3f6bb304d4601cea73d12c90c3be87997589d05bd9a094807b5fcb",
+      "gitBlob": "9dbf682c5038d4612e93dfe28af055078f104441",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/Loop.py",
+      "size": 6355,
+      "sha256": "fa943c43cc2c5f9b0167bd7026bf9b1af69724bbef181d4351acd103f9c01c9d",
+      "gitBlob": "8bc9f385a4d7e6c7c86e192741bd95890fe9e6a4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/PeristalticPumps.py",
+      "size": 3441,
+      "sha256": "c60668264847395120608d91e46e5f2ac5e53691334b625edd26476050f155cb",
+      "gitBlob": "6f131ef09ec27bb4c1e9c78b608bb318bb446995",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/Pipette.py",
+      "size": 30811,
+      "sha256": "4ab98012c546f6895f03d1f2527fc2bc44b466cef5d5d159e4282c76238e5fc6",
+      "gitBlob": "7738bd782194d903f1201418c5b557d3399f5e2f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/PneumaticSampleLoader.py",
+      "size": 8082,
+      "sha256": "87a63f74b2db8091f1e8ef35f56a3bcd89c5cc0e299f2591171d15125396995c",
+      "gitBlob": "2b2e00a26f5bc0e0a615dd86774162ef3b88c1e3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/PumpDispenser.py",
+      "size": 8266,
+      "sha256": "9e01555935277a4a218f7dfa4f947d567adce5d3265affeb2fb91504d9ac181f",
+      "gitBlob": "de1dcae0b731f6d4dc502e03d714ac282115994f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/Sonicator.py",
+      "size": 12743,
+      "sha256": "0b684c6c9674001a17576cbc75feaaed6fa5788891b650aa98dd7cb8b335ecea",
+      "gitBlob": "cc8770a5d53c8f60af2433b40576607282387f5b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/Spectrometer.py",
+      "size": 13563,
+      "sha256": "0d4a6d31ed65c81bb0aeeb27b6f039d7ab06a554b190151b028a6f3659b4a49c",
+      "gitBlob": "75085e1b357b90d3682d835cf1f8c85f088c6f92",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/Syringe.py",
+      "size": 10753,
+      "sha256": "9d9015c62f2c12a84c0800b58a69a4091cb8d8789a47a716d2f08ec723d5d985",
+      "gitBlob": "23cbc1c60412f8bb027febf8c15666d6e63528b8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/SyringeExtruder.py",
+      "size": 7582,
+      "sha256": "21e9ad1738f3700b13ed78c826124b413fedb58ec26ece87b4b070f4683d91f5",
+      "gitBlob": "aa55f5e46d59f54fba00f9f7902aa0642bb6e000",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/Tool.py",
+      "size": 1574,
+      "sha256": "3b5a5eb418599ee316b0d0d903257c439a8d0bd1cce1189bf9218bc8419da6e9",
+      "gitBlob": "99d80a53b69657bb11c6d51c72d35bf542b0dad4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/WebCamera.py",
+      "size": 8608,
+      "sha256": "e69485495f54ebf81ce9d0450d3dc30035f89daa33a5b3fbd404d5aac8b6f715",
+      "gitBlob": "48f187d0eb34a7c406cdc64ba63787cefc37f00d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/__init__.py",
+      "size": 813,
+      "sha256": "6877a7a080db428b8bf32e944f32561592653dfd03f91586b04861a1f39d1866",
+      "gitBlob": "60f7ac719fdc17012a999b7051b877a1d2025cf1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/.ipynb_checkpoints/P300_config-checkpoint.json",
+      "size": 212,
+      "sha256": "4b8064e0dc6ab4d70af3d6144a62094759dead1e2aa14b2c8fd23454ffcc8712",
+      "gitBlob": "e26a2a5800ffe8a100f3749a7868c838f1f08831",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/10cc_glass_syringe.json",
+      "size": 69,
+      "sha256": "3222c9b26107fb2f806c9b3d91934f4806dc01f33987be21bdc159373081849a",
+      "gitBlob": "3b296c6a4da3243f30a20365796a8a51b5ccf1e6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/1cc_2_Hamiltonsyringe.json",
+      "size": 71,
+      "sha256": "e90099b654bdca3d668484753ab9e4549365e9313ddcecfe1fdae726eea405be",
+      "gitBlob": "70b5fa9bbab80687ac863ece3588db3c25877300",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/1cc_3_Hamiltonsyringe.json",
+      "size": 71,
+      "sha256": "e9d09072ae435c0fa38b0d020bcfa34855fc0069ffa4d094f34be969c5b6fade",
+      "gitBlob": "de78c8dfd5b69cbd66194603166d1697d1c5c797",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/1cc_4_syringe.json",
+      "size": 62,
+      "sha256": "1696aaff7352ecf8806dbf7c98bb9dee0810e6ccab7b8cbf3af97a3b63c9d1c2",
+      "gitBlob": "bdaef2cade615dc7306086a4905358ce0eca4310",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/AS7341.json",
+      "size": 316,
+      "sha256": "5c889bcc1496a6b0b70c1e8179fe59a92f8660b6744d9c0d87fea9399d344432",
+      "gitBlob": "00d42e1849b5bdf8dca591907b3f24f8dcf31286",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/HTTP_syringe_exampleconfig.json",
+      "size": 62,
+      "sha256": "4b95acc8c98eef14563b9e7179aabc2daea6c05e45f368b33bbe53a42bd2755c",
+      "gitBlob": "bf99f66548d4a2a52fab6d1774d33ca746d5cc14",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/P1000_config.json",
+      "size": 214,
+      "sha256": "d4a986632321863200b591ae1407725e7e9a17d1aa123f93eda5d0e42ceeb56e",
+      "gitBlob": "0a6ed452a9e71825ec49ae87fc29a5aa78f8007a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/P20_config.json",
+      "size": 211,
+      "sha256": "459acaabb04bc353e794d8aed2b843c9a60ecf08fa943827d496a71fe96bba42",
+      "gitBlob": "f73a59ddc63ac03dadd2d236a9dd925551efa25b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/P300.json",
+      "size": 213,
+      "sha256": "a13c8dbf0dc826b80ae90747ed3f198c995b21aadf17444efe7e62e64bd9a9ed",
+      "gitBlob": "e7b6dbb40a6c65e728e342ec2c25c8a3de9c6066",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/P300_config.json",
+      "size": 212,
+      "sha256": "4b8064e0dc6ab4d70af3d6144a62094759dead1e2aa14b2c8fd23454ffcc8712",
+      "gitBlob": "e26a2a5800ffe8a100f3749a7868c838f1f08831",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/PeristalticPumps_config.json",
+      "size": 116,
+      "sha256": "dcbf00d3fd9e461d59fe7fb04a4dc6602d5e97b753b892accd756df25ea9ba9a",
+      "gitBlob": "7b5fbe85a5d9495817cc3dbb5488ce5e017b1dad",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/PneumaticSampleLoader.json",
+      "size": 91,
+      "sha256": "dad62dfdc23a15a34d2bd6f7b5f70bac788cff066356c840ebb6a7a1a157f34b",
+      "gitBlob": "706716e263bd42b03d33540b4a77c2854117a333",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/PumpDispenser_config.json",
+      "size": 118,
+      "sha256": "da604c0a3e25e6f80575c84b21905547b4409c807ff4d4f5cd5836d4e8dc4b3a",
+      "gitBlob": "b0a419ecf9ea853b00ac6fb890e88ca2cc61d9b2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/WebCamera_config.json",
+      "size": 231,
+      "sha256": "c442331b80563053221da075461c5acbfa9adcacbae8a0aae75d6c36bdc02fc8",
+      "gitBlob": "f4afb1d34dd3321e751ab6c3d6bb3d3687d49642",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/configs/calibration_checkerboard.yml",
+      "size": 352,
+      "sha256": "c5d7cab0f444f755a386116597ec45de3a1303958379f4631d7fe9b339c248c9",
+      "gitBlob": "7eb0eae85e6bcd51c241383c56abe29688bbb07a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/piserver/__init__.py",
+      "size": 561,
+      "sha256": "83d11007fef18407d1730884384c4bb656f51872d7d0e2f0540f0ae4740ae2d9",
+      "gitBlob": "35e03e8a58a3618c0390d3d2797b5cecd183520b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/piserver/pi_configs/.bashrc",
+      "size": 4038,
+      "sha256": "95b4a50b709e1c931dc71d7e004cfd8a691a713cb67a57c254c0b423a95f4121",
+      "gitBlob": "827c7f60983ec42376e1609afec1c6fc896f5295",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/piserver/pi_configs/dhcpcd.conf",
+      "size": 1853,
+      "sha256": "1208bcf5219ed6ad3f42f554d4b0aa6b95c5714ee79a35a0b040c19419020d5e",
+      "gitBlob": "4fb75f97a466e2b98b40ab3e7c9a74f2c117464e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/tools/piserver/readme.md",
+      "size": 143,
+      "sha256": "032b634259fde4975c28ddfb714ecc98ae8f1ecdd718ffee7b8185c70145f7ce",
+      "gitBlob": "e304ae7b99f96f1909e3960705aa50f1468eea0a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "src/science_jubilee/utils/Handlers.py",
+      "size": 1464,
+      "sha256": "e91230e7fee30e839cbf28267fcf8aec2c5e80b1cbaf9ab39c23d2e2d5dbff3c",
+      "gitBlob": "e3145adc1e96979302a04a529a265773becf21f3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tests/conftest.py",
+      "size": 283,
+      "sha256": "db157bab4d33edb435f357f462512caf236a5536a95ee5accf878fa573c354f1",
+      "gitBlob": "8a192fd389c9197711901b0055596fb390513aae",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tests/test_import.py",
+      "size": 93,
+      "sha256": "06a7647a6d54b8c42c8d57ff0f8a02528e202b72331fd56dfe9e2837c76f819b",
+      "gitBlob": "9436179065ec108f779c827221282c634b552b6c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/Syringe_calibration_validation_example.ipynb",
+      "size": 28786,
+      "sha256": "2d48273ae9037a25797b763fcc81f9066fdf4f66c4787a9c8a6b77c564bfba77",
+      "gitBlob": "f08100e6f60279170cd4ec84e115d7a31446859b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/control_box/cads/module_lid v3.f3d",
+      "size": 72922,
+      "sha256": "fd247e00848e3738c84c99f2165dfb68813fc5f841bc1ebecbf91567feda759b",
+      "gitBlob": "298cb9cdfce6b4cb723afecbffd76ff753faaaac",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/control_box/cads/module_lid v3.step",
+      "size": 42437,
+      "sha256": "c9ff8021818d383c2f6eb29dcdab6fe84e8b2c704a3280e3c7ba65512e966603",
+      "gitBlob": "7175601a333571ed147f705dbfcf6b8b52c46e71",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/control_box/cads/module_main v2.f3d",
+      "size": 230628,
+      "sha256": "5390defe0c929ec34ef46366e53cdf556265b8914ccf110733d187afea6c077f",
+      "gitBlob": "0ce0af80614858fefbb4a31d745e37159bf997c6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/control_box/cads/module_main v2.step",
+      "size": 113227,
+      "sha256": "173e153d32b0dea439475c74e783e242bb4af55dec029c6a64dd1eb27077af0a",
+      "gitBlob": "598310ac31f9608450c76b718dfa82053bfda4b1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/control_box/stl/module_lid v3.stl",
+      "size": 34284,
+      "sha256": "f0afe8a95e7fd6b5872948f2ab1f5306bf76e90a095d4015bbed33d260b4c268",
+      "gitBlob": "644dabee939dbd0fe91da13ddf15c50273563151",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/control_box/stl/module_main v2.stl",
+      "size": 187884,
+      "sha256": "9f5eee8a7ee7b971e30939ed2be232674d81171840bfc221e02e86040eccf97b",
+      "gitBlob": "a550a4e01a59ce80bcb6c1cdbc9c72e58c321530",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/cads/cover_10cc v4.f3d",
+      "size": 122784,
+      "sha256": "da02eee61a88ad60e4c11977abc09b96e6bd38a7d3dbe9a5bf40006cb258f885",
+      "gitBlob": "1afbfadc3912ed1c6e484874134146d91b58f889",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/cads/cover_10cc v4.step",
+      "size": 32201,
+      "sha256": "a52d65ef5e0e6fc6d0c33366c2cdc4a5145518b7d0b34c226d0f5432a75a245e",
+      "gitBlob": "2eb1359f561cf6f8b637586f41045e31d8e90a07",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/cads/holder_10cc v2.f3d",
+      "size": 216306,
+      "sha256": "d97d3cbe4de04cd20b6c64e33b4735cf25bedd4d0572433368d712b2cc310d3d",
+      "gitBlob": "b990609ae1cf3fd4891beb458fe985ca65890870",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/cads/holder_10cc v2.step",
+      "size": 54809,
+      "sha256": "666c2f8276384bfb16767e382a7417f205b39d610ca2bcfbfba8308cb0d66330",
+      "gitBlob": "033ee89e1be0db71c3cac597728c6f93e2071ff4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/cads/holder_clamp v2.f3d",
+      "size": 216767,
+      "sha256": "a603b15c276a50e2d2e670a55caaab45170b111c50a1bff5bef5d9e813479855",
+      "gitBlob": "98c3be3727f8834158469dcac610dbc68a58d931",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/cads/holder_clamp v2.step",
+      "size": 34434,
+      "sha256": "bbed1c64cf7752911776300e3a5ab69a7054da6d448ce18f8fc57d8447e9f601",
+      "gitBlob": "54dc4416ce87f9e6153f4842d1248a623deedbc4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/cads/platform_bottom_10cc v2.f3d",
+      "size": 142660,
+      "sha256": "569c9cd5eb2071b8df90b3e1ae87c42ad5492d30a232f28a8eb08125ec1c5037",
+      "gitBlob": "5875804dce243e598824d32d77e134b0a3545e7a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/cads/platform_bottom_10cc v2.step",
+      "size": 49924,
+      "sha256": "6361e7d91454fe7c6b68b2b781bde181337fc708c9cbfe5f6cee21370cb507c8",
+      "gitBlob": "fa87c349b8192142405ce12ab74c5dbc83a34e20",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/stl/cover_10cc v4.stl",
+      "size": 68484,
+      "sha256": "84badb3a9f4bb5355da9b0dc182a9f723379037e71edb71d0679f5b557197eb5",
+      "gitBlob": "72f3b7d17b18f7615890a714d7e01f20d87f05d8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/stl/holder_10cc v2.stl",
+      "size": 61684,
+      "sha256": "39505558e417759980ba05a8dfc443e408a2fbf74e1269a2b4bdc100c668a525",
+      "gitBlob": "1be40b61b0ac6fbf003bfe4445cf976d3fe0644f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/stl/holder_clamp v2.stl",
+      "size": 42484,
+      "sha256": "97ff82531918fb17433375e2609cba53380de4d09d49d52bb5bf91297a97bc56",
+      "gitBlob": "d216c2790be13edf76bb1e4a9339b53b294ce45f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/10cc_tool/stl/platform_bottom_10cc v2.stl",
+      "size": 91284,
+      "sha256": "557a13cc2a972fea13ef480117f3ae39a178fe2048e7e5833d4be6b261ed0878",
+      "gitBlob": "a404fce6492c96235cc2f72d587384e69a80e15f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/cads/cover_1cc_hamilton v2.f3d",
+      "size": 101002,
+      "sha256": "e0ae458e4652731ac60ada048226bdcb372cac2f2b1b06e5e46d6d9c3becba70",
+      "gitBlob": "b17b4f152e01704b12c721edf715bb7b2c19e920",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/cads/cover_1cc_hamilton v2.step",
+      "size": 32460,
+      "sha256": "40523e0eacd4206a75e2899eb1385fdf9b3e86e54f41a04f87173b0b5e3aa709",
+      "gitBlob": "cd3ebe08b4b9b03d84cd30b1157d8c53a1c12e34",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/cads/holder_1cc_hamilton v3.f3d",
+      "size": 192370,
+      "sha256": "7584381ca45d111a239957468bbade538d5a63c4809650e88817010b7cb2eace",
+      "gitBlob": "25df19a29bc1342e5a47663810d13100cf9e33f3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/cads/holder_1cc_hamilton v3.step",
+      "size": 49299,
+      "sha256": "d0c3a8f3613b60d5292ae7b87ae16c818c46c3c8fcc99faf9e849b9a10c628d3",
+      "gitBlob": "b7cfc83a31775d7d162c1123c4e51cbcff1fcee2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/cads/holder_clamp_1cc_hamilton v4.f3d",
+      "size": 212926,
+      "sha256": "15ebbfb6bc7335fe0b9821efaadc1504356a32a0da95c74795dcb18b65b856c1",
+      "gitBlob": "b5d8c3bc10036ef95d59d9dbdd0d28632d920838",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/cads/holder_clamp_1cc_hamilton v4.step",
+      "size": 28898,
+      "sha256": "510f524272a22c0b904cf496c4b931bf88531747ddd8f237c158a1b31d818a16",
+      "gitBlob": "d67d64eb5c48e392bccdafc6f9b9ebfd02c8d87a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/cads/platform_bottom_Hamilton1cc v8.f3d",
+      "size": 168172,
+      "sha256": "14f20fd0448fce560819064d52e5d12937263cdd2d184a1e3e70006678aed033",
+      "gitBlob": "1c4ad15a71a96d8c3fff013429b91da183bc7ccd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/cads/platform_bottom_Hamilton1cc v8.step",
+      "size": 55820,
+      "sha256": "f7af6887f2ca29b3d1e612c957b9d93a643f1cb26a108515c6f35c2e36a327f4",
+      "gitBlob": "982ab390be4f0eddab34983d862f651f3c90d531",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/stl/cover_1cc_hamilton v2.stl",
+      "size": 64984,
+      "sha256": "09b1fc5b2a46275851ae8af6d50d0cf09929423937bb3993d830f1ec78d4ef72",
+      "gitBlob": "db4dca18cafff68adf7d22ed489daa200e58f265",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/stl/holder_1cc_hamilton v3.stl",
+      "size": 94484,
+      "sha256": "d151c70d5b81c9e4cecc2ae2ac7ab03c336a96301fe7840ca060934cd5a22980",
+      "gitBlob": "18a26835750880c4588fbc7b9dc0278b0275654c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/stl/holder_clamp_1cc_hamilton v4.stl",
+      "size": 75884,
+      "sha256": "e824f144513df8ff19a70d0a10fcef7a32b4bb760dada362f8a510c1fff83ff9",
+      "gitBlob": "08dc9e92d7f0a0e5f15b0bbc18dcc81e7b3123f7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_HamiltonGlass/stl/platform_bottom_Hamilton1cc v8.stl",
+      "size": 116484,
+      "sha256": "570866ad6b85b825233bb98f68237a213b4e72ea9ee4e24ebc29eed50c658883",
+      "gitBlob": "c0637c309f2c0041e4d22b399cfd2326ed0a10f2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/cads/cover_1cc v3.f3d",
+      "size": 106347,
+      "sha256": "97f20427b570b74eac8ce91ad607436fef6f84c52df51015886d25e3a06e8299",
+      "gitBlob": "b6dcf9205e2556baa8f5fee033e7275d4ff8db7c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/cads/cover_1cc v3.step",
+      "size": 32197,
+      "sha256": "c1bc46be2d5fec53786b88fea1b716c9a17a9909408e1462ba4cf90f3b86b5c0",
+      "gitBlob": "7714fd04302e1eac57d45f49831dc1e6b0b35be4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/cads/holder_1cc v7.f3d",
+      "size": 216903,
+      "sha256": "9b7dd1551ac2fdae88b39b7dac1a6266cb79c7870f117f9ca88f6a2453631f7c",
+      "gitBlob": "6bcd8f434c0fb4cd991b3180742c19d33f9cae7d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/cads/holder_1cc v7.step",
+      "size": 54855,
+      "sha256": "514fef1158607f5e73189e34a087381de6b6e8a7acfedcad695be7f8bb36591b",
+      "gitBlob": "db295929f78109db85d00a40e8a4724ed6aeac0a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/cads/holder_clamp v2.f3d",
+      "size": 215317,
+      "sha256": "13c75e10b80ead0bc8770063ec9ab92b0fb09d2e7e3ab9c70ac755190ec12374",
+      "gitBlob": "205ffcef92c2b6acd3ccdac96778f435e36a39e5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/cads/holder_clamp v2.step",
+      "size": 34479,
+      "sha256": "2fc06e02a71c03ef8b9647aeda9807b71d39441f850b746e7dfbaf406f102bcd",
+      "gitBlob": "90f51ef39167f7d1332c8d6d83754537984cd3b5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/cads/platform_bottom_1cc v2.f3d",
+      "size": 141722,
+      "sha256": "35b992433b25da8e086971845441528baf835bc0516d14dd69c7a1d118c8cd82",
+      "gitBlob": "d6302121a2a7c71688a8dba26e69f495b910aa90",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/cads/platform_bottom_1cc v2.step",
+      "size": 49819,
+      "sha256": "0cb1b7011f3409f2452774e217ba08bfb7ad73bfcaf0d760d3a79d68e34d6ab4",
+      "gitBlob": "2c85b290f2fc98e3d9afa9230980cb66cbdc13d8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/stl/cover_1cc v3.stl",
+      "size": 58384,
+      "sha256": "fccb77bb495ab7534eda43a26c4f77f209d646d5e872d8f29dfd6da192126158",
+      "gitBlob": "02a5851683210ea307062255f4dbd066c0d2ff44",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/stl/holder_1cc v7.stl",
+      "size": 59384,
+      "sha256": "bb3dc2dcc52913f28a57797fd1e3032e81d89fb8b66edb0ead942d86a0bb29e1",
+      "gitBlob": "41c029324e0639c659219387d718e615ee107286",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/stl/holder_clamp v2.stl",
+      "size": 34084,
+      "sha256": "b7cbf39319cb7f814d0ad185a11c7c65357b44931f11b844ed7b57b1c825c404",
+      "gitBlob": "98a9a04423fd0abd9594d360a850d7e2b9dcb2e2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/1cc_tool/stl/platform_bottom_1cc v2.stl",
+      "size": 88484,
+      "sha256": "12412b27fd41b05b5892d5fd6746b7498d17d2dfcbe684e7d029d21a9f5a6e8d",
+      "gitBlob": "9cff3af7b8ae4d6f4069a7436154c2c1c0b82619",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/shared/platform_upper v5.f3d",
+      "size": 251776,
+      "sha256": "033e8119f40d38eee690983db7bec14e9cd0228b393590408eda85aa79cf08e9",
+      "gitBlob": "36efc70458c38b57c80e9a1110d6e712da2d57a2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/shared/platform_upper v5.step",
+      "size": 41941,
+      "sha256": "726e53a88657e3325b71a77d2ccf742a90d38dce37c3559be614ad283c8584df",
+      "gitBlob": "89b9a77771ed2e3e8ed57a8682a1eb6c9a0c37fd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/shared/platform_upper v5.stl",
+      "size": 35084,
+      "sha256": "af0fbfe3d9bbf37dcd012c469e7a20eec0f5b6aecfdc94a4fb93c9277fcde468",
+      "gitBlob": "11b8680e74f51f5a6cfa0d546c052d087dcc03e2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/shared/tool_template_assembly v1.f3d",
+      "size": 56356,
+      "sha256": "88b8b13781c54153573b8dfe8c754a606cc6e272adbf354e9a8e4c0b40d1705f",
+      "gitBlob": "923c293e81fd3f5818b73b0cff9613d6363c1f82",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/shared/tool_template_assembly v1.step",
+      "size": 74512,
+      "sha256": "a0220fba116a0cf3f90cad80174f4ff279271b82982e3492867b83b2af8bf728",
+      "gitBlob": "2a6d5a73758fab8f4aee5b210f9db74bdbe98e13",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/HTTPsyringe/designs/syringe_tool/shared/tool_template_assembly v1.stl",
+      "size": 227084,
+      "sha256": "73eacf62bcfd5c08f26e7315b3fcc730d234fbd15b027268c02fc5d82f999057",
+      "gitBlob": "d4307046617a92e7809050b42b6e317ccc30d0d7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/README.md",
+      "size": 985,
+      "sha256": "8ab5f9afe6caa688f12602c0c693657832c355088d09201c6a9506cb53b04847",
+      "gitBlob": "7f256b760a30fa59fda3bdbc1fdcc46be2b51cf2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/assembly_docs/OT2_Pipette_3D_only_assembly_instructions.pdf",
+      "size": 313999,
+      "sha256": "021ae1d1dc59c565e572238588f680dcbae7f85c4141fa7fd452f724aaeae0f7",
+      "gitBlob": "3cbe79aab191d4b1379ca4cebec1ba9be0d1f257",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/assembly_docs/OT2_Wiring_Diagram.pdf",
+      "size": 394221,
+      "sha256": "43bfe17ede6bf7262fcd213f1e80ded49fa387c2c83d2193cfffa1395dec08cb",
+      "gitBlob": "1c972484ab8f0092dac807a08305df7b15ef0acc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/assembly_docs/OT_laser_cut_assembly_instructions.pdf",
+      "size": 1090430,
+      "sha256": "278364e32d319cbe09e65aeebf0d8c934d97672be382f9df1ed84861bd28845b",
+      "gitBlob": "e1f41b9ecc981645993cc2f699f5d2ac4fa1ede7",
+      "mode": "100755",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/3D_LaserCut/L&R_guide_rail.STL",
+      "size": 50484,
+      "sha256": "2922d3fdda0d526ce6480cd5cf4ff1dff31f276c52bbc321da7507e7353e7a0f",
+      "gitBlob": "6ae0656182ae0556e9a2bb68fcd44d0e167564c9",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/3D_LaserCut/OT_tool_plate.STL",
+      "size": 285784,
+      "sha256": "1a884330ee1b6abd7bda96fcfb87c43f48a3e4fb3dca9e3b86bdca99124e656a",
+      "gitBlob": "91bc10e7f59d03127d4c619b23c1bcb76c9a4196",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/3D_LaserCut/endstop_attachment.STL",
+      "size": 40684,
+      "sha256": "3535f6ce7b5256f23f0e3ff953f7b18e2dce3dab73a127a9450b97a0a3a0e0d5",
+      "gitBlob": "90005beac8f940cdc58f99590a0286e54f85989e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/3D_LaserCut/nested_flexure.dxf",
+      "size": 135612,
+      "sha256": "07956b3f96b8e8cf3afa70c4f098267771a0045118916e5b53dfc9f0e2dc19ae",
+      "gitBlob": "2a2d73e2748bc43bc3c98fd4cb1cde4c4042439f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/3D_only/OT2_Pipette_Wings.stl",
+      "size": 778084,
+      "sha256": "272f2237449ca1f0287803bc823e7dc0065a32267fb75c48c8a864eeb94e4fa7",
+      "gitBlob": "b76fdb64e03d2949af7ba05dfe27f202cb34175c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/3D_only/PipetteTool_Holder_Dust-Proof_Limit_Switch.stl",
+      "size": 189384,
+      "sha256": "5717231863d962d6b9ab8b57db7ba329a652e80de881fea5b25ee840b1b17e77",
+      "gitBlob": "0506d5bda365a9fb9ed40413b5bc17e115a59f3e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/3D_only/PipetteTool_Holder_Mechanical_Limit_Switch.stl",
+      "size": 205784,
+      "sha256": "b7a1477233bfeaf6a0ccb519dc08216df780632af9ca5d05a16d76d0a1e38081",
+      "gitBlob": "323f25eb566765d15accc19dba0550bea7c6443e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/Tool_post/OT_post_base.STL",
+      "size": 100184,
+      "sha256": "11e57e00a8cc368c589ea9af11d57a1a07c97b3f1753a777593a3c65439362f0",
+      "gitBlob": "9cd8001e4f9d983c896928a28270ffe32d2f94b4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/Tool_post/OT_tool_holder.STL",
+      "size": 247984,
+      "sha256": "e3643a74fa22bc7daf239ba1c814d4b3ac4fd735c98cccb98ea0add50dd1db2e",
+      "gitBlob": "35d5dd8d5ec7595d9bc32d6133d022f3e4330c74",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/designs/readme.md",
+      "size": 236,
+      "sha256": "f2b4f17ba85f07da9704545a9a2077137180081c4047596098bd3505c6188710",
+      "gitBlob": "f94503edb3af43394cb1b94598039bcbc5f1b6e1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/OT2_pipette/duet_configs/OT2_Pipette_Configuration.md",
+      "size": 6631,
+      "sha256": "51d367e4d0fa9c585060e2f701fb67ab44580dae4abae5e3bc7090af429a819e",
+      "gitBlob": "602c93755cc227cd8f22c1fe7a49c3d6f2a035fa",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/duet_config/bed.g",
+      "size": 596,
+      "sha256": "ecb52d076081bdb134fd1bf75dd6f902058b783bf208a5e243605a087783f56f",
+      "gitBlob": "c4d04c7358618c78c0b4f6cf1b160755b801bea5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/duet_config/homez.g",
+      "size": 1387,
+      "sha256": "886ff31122e5539c2527651281f69089c130a38413f73705af887a25eabeeadf",
+      "gitBlob": "590ccf6b91ac4f53c868621ecb8e2c3947eb49cd",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/fabrication_files/1-layer_deck_bottom.AI",
+      "size": 47477,
+      "sha256": "0abdcf1b8424437d72a11fd23ae84835833e2d48f5a8e5c7031c51baeec49dea",
+      "gitBlob": "3abdbe086308981be0cd9ef9e69ee4e954adb5d5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/fabrication_files/1-layer_deck_top.AI",
+      "size": 46423,
+      "sha256": "2764302e5f7c4daee3b0364fcc48e6fe69adb89599a49ff246dfb5eaa7d5d2a9",
+      "gitBlob": "5e46405c19213288b48b85481092bdb22b075e59",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/fabrication_files/AFL_deck_plate.svg",
+      "size": 12652,
+      "sha256": "76ace7d92383eb91456428b1b193065fd86317c846423bcbbbf1a27b4841f13b",
+      "gitBlob": "55385c839bd5c3f3945ae5f5a4d89a69151060a6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/fabrication_files/deck_bottom.ipt",
+      "size": 936960,
+      "sha256": "ac90db5e31768baad517ce37132698ac6ec17deb29f72bba2c1f7c604ad89801",
+      "gitBlob": "ccb4c4d80da1c87cb9ddd0b1b9cd483a57949072",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/fabrication_files/deck_bottom.stl",
+      "size": 107484,
+      "sha256": "eb57a4fe8ce1431d5f1dbd906ce92e364f84e3c6d593b29e0e4d718d7f731ce0",
+      "gitBlob": "c84cddcc0161bd19eb60ea10a058f71811ec19b0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/fabrication_files/deck_top.ipt",
+      "size": 804864,
+      "sha256": "464e9dc731c8ca28de2ad3d71b3082c63f665f523067b828e8b1951ca035c363",
+      "gitBlob": "8a72bc3c0644d5dc4f69b86b828bb5b058da07f6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/fabrication_files/deck_top.stl",
+      "size": 88284,
+      "sha256": "515e15def7fd3755498fec09c7653e4e883452a445fb947fe9fc031238ab6351",
+      "gitBlob": "a6f51ebcc89c5514266de80b78bdfec6ff771d04",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/bed_plate/fabrication_files/readme",
+      "size": 30,
+      "sha256": "0b2eecb828bebec8545599515c1463427827b7bcdff401c2c8a1337f19ca5859",
+      "gitBlob": "be1356c590fedb9831e3e07fbe1f65386eb8ef66",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_side/CADs/Readme",
+      "size": 44,
+      "sha256": "d64e896da627d062e2965555f08114da5aeab9c62674112b0ba074b4d10fe00d",
+      "gitBlob": "c94eafcdc11d7e6d984ada61a34037a94d5bca79",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_side/CADs/side_camera_base_plate.SLDPRT",
+      "size": 223366,
+      "sha256": "c1a27523b386a35de49ff92931ce392c5d3f2f78aa2c4136b4218eaa4c0e4535",
+      "gitBlob": "770954e3da67b9ebd38bc9e066f31fcd1e76da72",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_side/CADs/side_camera_connector.SLDPRT",
+      "size": 147860,
+      "sha256": "66b14bb60b1c06f3291b637aef5ad271ff4bac7418cfda384d6803b166aceb10",
+      "gitBlob": "f41e9738cf92a23fd821020aba8cf7a09ac74331",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_side/CADs/side_camera_tool_wings.SLDPRT",
+      "size": 443610,
+      "sha256": "be868857ac1bec3c8900229e9aedbcf47079aa1af20176c395cb948152526147",
+      "gitBlob": "15a114d5abeb18b84fc3749e02a9aaf896e8c844",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_side/STLs/Readme",
+      "size": 26,
+      "sha256": "c7d2f3ba6b26d80b42789a6422b6e8a62c8a72654b5d6fc2c3c4675cc0667da0",
+      "gitBlob": "0ab7baeea1534c614bb722f798152dae8fe2e13a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_side/STLs/side_camera_base_plate.STL",
+      "size": 248884,
+      "sha256": "7fb17d9685fb1a4a7c7ae0c904404c446da0f29d2a4a13dd328564094773f583",
+      "gitBlob": "e910bbdfd24efd25d83bdc77405976cec541be26",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_side/STLs/side_camera_connector.STL",
+      "size": 86084,
+      "sha256": "d7386e6acb1622d23a7de9beab0b93cdf3b0290092aa42265235f23a4ba82e92",
+      "gitBlob": "03ea8a7f4cbb3c7671365b30c3a563b579407f85",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_side/STLs/side_camera_left_tool_wing.STL",
+      "size": 406384,
+      "sha256": "9da7c0c6aa229379ab35f6da15c1fc90a0b270639aa223b55554213a57e21dca",
+      "gitBlob": "6aaac670185fd705e0651091dcfaa6d44654e623",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_side/STLs/side_camera_right_tool_wing.STL",
+      "size": 406384,
+      "sha256": "a7c491d4aa41b0c5bdd05ac2018db7e3f6b505da91b48d0933ed970380258a62",
+      "gitBlob": "5f22c4d7c064c2373df3e21ab00a15085070a7d3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_top/camera_base_tool_plate.STL",
+      "size": 393884,
+      "sha256": "eb825c77bb16514480059ebdc3cfc84918a86c6f870bd6d0283d34902620e3cd",
+      "gitBlob": "60408678a6cdcb9160a155e824c77f73b6e95c51",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_top/parking_post_base_47mm.STL",
+      "size": 203284,
+      "sha256": "a573c39c62d520c3123c03c8ecda3de4ddf6721a147e5df072f0fa684802a958",
+      "gitBlob": "1d2a5ce3b87fc11d8f4f4ec8b99b61a25cbc02c2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_top/readme",
+      "size": 39,
+      "sha256": "76c20ba7801a8eb88843d5c48a2a31169a5d4e00162df2854a88eef3b1d3a720",
+      "gitBlob": "49ce3820a753a0012b7cd2c54a1345b23b550a5b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_top/tool_holder_47mm.STL",
+      "size": 351884,
+      "sha256": "1d3fb5e3946b0dbf5da2271ae241c1e076885870861a8dbf4d3ca56a719863a2",
+      "gitBlob": "f8185fd487ba3c482920c05183da9a8f2251df5d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/camera_top/topdown_camera_connector.STL",
+      "size": 88884,
+      "sha256": "786606de59798b52e00e72fa0a5fc164c0855fcabc994ecc1c29ee079fcf903b",
+      "gitBlob": "5b51918c3a50d56929ce24679925b9d4101867f1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/inoculation_loop/inoculation_loop_tool_assembly.pdf",
+      "size": 432346,
+      "sha256": "acbd7b67960795bfbf284d253f80c95d414487ed1828e5ac880111b14bc94091",
+      "gitBlob": "37037d29822ed1f190e058d14d4942b356bf906d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/README.md",
+      "size": 3120,
+      "sha256": "6a86496c163b0dc8d64bdc086b73cc1490964d4942a6512e9e8884b24420ba74",
+      "gitBlob": "0302bbc265fe4d18e2ab96c33c3b373c9b000657",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/designs/sonicator_tool_assembly.STEP",
+      "size": 3374127,
+      "sha256": "9b0f710c946aab29d02357e7155fb467d9de8f06b7be3a12af318165b7642a52",
+      "gitBlob": "d6966beebc000122cf696d6cadee2ab51f3962af",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/pcb_hat/README.md",
+      "size": 1203,
+      "sha256": "a42dcad11f4285b21070c9595f7982c88c6a6f3bbcd55fe0b5fdcfc4e570eb84",
+      "gitBlob": "5dc906e7de548821c8852629621be9b59644672c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/pcb_hat/sonicator_pi_hat.kicad_pcb",
+      "size": 2233599,
+      "sha256": "4a99c54004324f59f1286acb518ccefcb4dfdb97b8cc09ff1ea10758c36af170",
+      "gitBlob": "707028f77650cdea7737c90db7189783fae1cf66",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/pcb_hat/sonicator_pi_hat.kicad_pro",
+      "size": 9138,
+      "sha256": "2ae2defe05ccbe16ecb34467a25e09618ddc49dd59b816e50993ab35b15fe25c",
+      "gitBlob": "fac066f588fd28f54348390700f1330f67290341",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/pcb_hat/sonicator_pi_hat.kicad_sch",
+      "size": 70080,
+      "sha256": "bb28ec50e2e8fc37b5f4f43a98e96e6234bf3ccbd190053b5319b1129e513ed0",
+      "gitBlob": "1ad52eb58d2a7d936494bab81fae1bf26f520433",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/rp2040/CMakeLists.txt",
+      "size": 506,
+      "sha256": "1a4098c8f2449c53ea24800020e10550cd064e9bbf676fb780501568f953d5bb",
+      "gitBlob": "147f11f982bf5d8ef87f9b4d82cba80351440a78",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/rp2040/README.md",
+      "size": 1559,
+      "sha256": "c6bf671d73909ae9a7870404a89d2e0fe9fa14a7efe45e140b3da3773b9109ed",
+      "gitBlob": "334392564e0a4a00a2b98c4429b2a8b406aeacea",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/rp2040/main.c",
+      "size": 4352,
+      "sha256": "4c477d4c0ad8d8e66acdf8f7f12b1cd39a8bda038da313e03061a7e19d250a74",
+      "gitBlob": "e23a29929fb5db0aea2a1f7b04a40c2cd9d3b142",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/schematics/RaspberryPi_PCB_Hat_Schematics.pdf",
+      "size": 57492,
+      "sha256": "7b70a64f640d9d0738ed6edc09f44fedc6c05d1c2b2b88aa7df925594a1d45e2",
+      "gitBlob": "f381b7e97aa041a425fdd9dc15df144246a3361f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/sonicator/schematics/RaspberryPi_Pico_Microcontroller_Schematics.png",
+      "size": 190491,
+      "sha256": "81a11cb8408aed92b9e839aad6704ac0be9644a98989635439b9386a65305f1f",
+      "gitBlob": "0f7a2a334c9b69f810caa30b6e827c217d2e3b03",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_10cc/readme",
+      "size": 32,
+      "sha256": "4caea864cba8e45ca63d36612bbfe4a79ce23d07fc3b8663def5e6c2eabd4316",
+      "gitBlob": "7971ca9d06d7d1d8da6b5558ddbb0f15280659c7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/STLs/50mL_left_tool_wing.STL",
+      "size": 405984,
+      "sha256": "5a637bfbb892ba2f11937d64e427981aee82eb721acc59663e600b9b2f93a793",
+      "gitBlob": "83dd230757dcf489d89b3f7f3fe280875c223e9d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/STLs/50mL_right_tool_wing.STL",
+      "size": 405984,
+      "sha256": "7a2ef11748996ddc3656ba9cdf2e8f33aa2042634df20fe5a77ee37bfbeae9c9",
+      "gitBlob": "ff8564d567d5bb65da157e61f5dc1d97fa416c56",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/STLs/50ml_base_plate.STL",
+      "size": 438984,
+      "sha256": "7a92e8aae57150ef2c552c31e0ee592de79ff0cc04e6787faf7eac8feef60569",
+      "gitBlob": "0ecaa96f5091c69aa033ccb96fae40c38e82f27f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/STLs/50ml_plunger_actuator.STL",
+      "size": 213684,
+      "sha256": "cc3ff66172dc5586ae39c8216ea485e1fb2a8244e2d5789bfcc5cabae7c7a23f",
+      "gitBlob": "30f289785b63a3ca2bcfcfd3ee076b5065850a02",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/STLs/Readme",
+      "size": 26,
+      "sha256": "c7d2f3ba6b26d80b42789a6422b6e8a62c8a72654b5d6fc2c3c4675cc0667da0",
+      "gitBlob": "0ab7baeea1534c614bb722f798152dae8fe2e13a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/cads/50mL_tool_wings.SLDPRT",
+      "size": 441100,
+      "sha256": "4accb4520febfc4e2fa3e95b476a791069ea184d61aa1a15ce0fe2d3fe27e93b",
+      "gitBlob": "1ba129062dd3e05a55102c0786391eb335e3a441",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/cads/50ml_base_plate.SLDPRT",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/cads/50ml_plunger_actuator.SLDPRT",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/cads/50ml_syringe_outer.SLDPRT",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/cads/readme",
+      "size": 227,
+      "sha256": "3dbf25172506b37527b3f882cc6210765828f361cb66e28802d1fccc7677acd6",
+      "gitBlob": "c24c39a27339d5a9b534eb4e4e6c104cc1a91207",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/syringe_50cc/readme",
+      "size": 41,
+      "sha256": "d07ded9a0e212c8be9ecec9504632de12198f51547ea7b1cb6c1cfd1ab7a1fb8",
+      "gitBlob": "0a61dd8e185c876f69a45a52a587f50e0b4dc745",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/template/designs/readme.txt",
+      "size": 33,
+      "sha256": "672e50f19d0aa46bf08483e86c0a0530f3033400296907ae269255ef44f52ae9",
+      "gitBlob": "3c583c1f6ffafe0bf386e6729a63526f411e6ec0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/template/duet_config/readme.txt",
+      "size": 62,
+      "sha256": "bff5a096f14c495aabb7b95a6f54bdd2733464491593ad9bd44139fc11eed27f",
+      "gitBlob": "059cea55a1be609fd8cd18f70a9724e7fdc9130e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/webcamera/designs/PiCamera_tool_plate.stl",
+      "size": 250984,
+      "sha256": "2db1745e976a1f9bfa7a8ebf6c03bbe78c1c567c25fee63624ffe349e65ce641",
+      "gitBlob": "3aaf0328346cf3e6575066f3b99fc77d28ecdaa4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/webcamera/designs/camera_v2/RaspberryPi_Camera_V2_Tool.stl",
+      "size": 306184,
+      "sha256": "2c290e24ae8897d16342cfda4fa172acea93f47cd42a2f531566ea774de774b5",
+      "gitBlob": "fb78036bb29a0abf60450ee51d576b82fdd9fae3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/webcamera/designs/camera_v2/RaspberryPi_Camera_V2_Tool_Ring_Light.stl",
+      "size": 451784,
+      "sha256": "7807bbb7868f5bdc4ad34e47b9981250488a39a0cc6ed1d534409b8cc5e82389",
+      "gitBlob": "da45f91a6a9c3ca216f87bce57fc4999d5260564",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/webcamera/designs/camera_v3/RaspberryPi_Camera_V3_Tool.stl",
+      "size": 297584,
+      "sha256": "a7700a5f9b21efeea8650ae659a488115f598272c0675b10a7abfdaab36d6f9b",
+      "gitBlob": "76599d6855d0bf2ce76b3a089170c75e8e64ce1a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/webcamera/designs/camera_v3/RaspberryPi_Camera_V3_Tool_Ring_Light.stl",
+      "size": 443584,
+      "sha256": "c0b4ab4e9a87d8d82414fef5971c8d8e1a1c0dabb4d6ffd66f8bfeed9cf4d4c0",
+      "gitBlob": "3049a35b64a774965943830859d2a3c1f885fa65",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tool_library/webcamera/readme.md",
+      "size": 2675,
+      "sha256": "2f91b6b671fecefe998341753b06d45c3f699b289aad6fbc90dcee868a19e3f0",
+      "gitBlob": "9dbb0148b141b645b564d2ae8807b05992bb9805",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "tox.ini",
+      "size": 2851,
+      "sha256": "dadfaa407e2229997ef49c6edecd4e5b8cf2e8a5e164513ca13afbfbd70337bb",
+      "gitBlob": "69f8159420d356a30c59237c097d1b92b98d4966",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "wiki/images/1-layer_deck.jpg",
+      "size": 2595503,
+      "sha256": "eb16e06e93a79a8da0122d28684afd85e13ec8a6ab659ad1ae39dd3df2ea67f5",
+      "gitBlob": "06852c6cbfbf723b4a3d82bda176f6981817f914",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "wiki/images/1-layer_deck.png",
+      "size": 2849741,
+      "sha256": "fc7e5b7b40712cf5695b9d2be325e612afd883c3e32f48a888a3c348887e8f68",
+      "gitBlob": "e54340b2fe830e587fda9bafd76e4061af825000",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "wiki/images/3-layer_deck.jpg",
+      "size": 2172842,
+      "sha256": "5a78fe12f6a0c12a1ec82387d4b2480598a1c24786b18c5e8d6c5ff7709fa08e",
+      "gitBlob": "e80b6bf3e613b98fd224b08d0d99fb088890b401",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "wiki/images/3-layer_deck.png",
+      "size": 2649112,
+      "sha256": "fcafd50fc18a2e51b5a16c96472947c9e2057eb4da53986510a6eda131b39e7b",
+      "gitBlob": "4b0ce1d60caacacfb143eded6c536d2ba04a45ff",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "wiki/images/back_of_tools.png",
+      "size": 250399,
+      "sha256": "80113d761fb02476136507416df519526d5630bdc969335b471da6240c1f5d98",
+      "gitBlob": "2913e31cf027030b42b25e81c1f81f7b5fc9b696",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "wiki/images/cable_management.jpg",
+      "size": 530839,
+      "sha256": "dc7ad6b0c9e91ef1c420103f0191f18318e20721cc641bd09009200ccf227947",
+      "gitBlob": "b5a889bdf644902db0cc63af957e294fc579b41a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "wiki/images/cable_management.png",
+      "size": 672116,
+      "sha256": "d14b8c7e243e09b936ac7f09dfb9058cf4cc54567cfcbb7b0e9b8ff3a5826a65",
+      "gitBlob": "063cdf79f097f45edc1fd41046855483db2fde2a",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "wiki/images/lm-loop.gif",
+      "size": 5324808,
+      "sha256": "3acea2bb83db2bc2d355201e3e5ae651393d5c7479f87e88bfbffe2628bc9bda",
+      "gitBlob": "ae33237580b1c53310a30bf0c52c404d5a0fcafb",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "wiki/images/pipetting.gif",
+      "size": 21863049,
+      "sha256": "260ae98bb79eb82ab4f5836a32fe1dfed255b9559905e58b0c24637b0463e402",
+      "gitBlob": "9b8d7f63c2e75e0971e0ce6d7b3a3f8e58782ef9",
+      "mode": "100644",
+      "type": "file"
+    }
+  ]
+}

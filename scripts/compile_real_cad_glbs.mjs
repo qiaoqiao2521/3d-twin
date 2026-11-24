@@ -1,8 +1,10 @@
+import { roboticsSourceFile, requireRoboticsSourceRoot } from './robotics-source-paths.mjs';
 import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 import * as THREE from 'three';
 
+requireRoboticsSourceRoot(['Search-and-Rescue-Robot', 'bluerov2', 'bluerov_ros_playground', 'rexrov2', 'uuv_manipulators', 'unitree_ros', 'nasa3d']);
 const PUBLIC_DIR = path.resolve('public');
 const GLB_DIR = path.join(PUBLIC_DIR, 'robotics_glb');
 const TWINS_DIR = path.join(PUBLIC_DIR, 'twins', 'models');
@@ -36,48 +38,48 @@ const textOrConfigFilter = (f) => {
 
 console.log('Copying genuine upstream URDF/XACRO/SDF baselines...');
 copyRecursive(
-  '/tmp/repos/Search-and-Rescue-Robot',
+  roboticsSourceFile('Search-and-Rescue-Robot'),
   path.join(PUBLIC_DIR, 'baselines/01-履带越障搜救机器人/Search-and-Rescue-Robot'),
   textOrConfigFilter
 );
 fs.mkdirSync(path.join(PUBLIC_DIR, 'baselines/01-履带越障搜救机器人/Search-and-Rescue-Robot/_首选基准原件_PRIMARY'), { recursive: true });
 fs.copyFileSync(
-  '/tmp/repos/Search-and-Rescue-Robot/urdf/sar_urdf.urdf',
+  roboticsSourceFile('Search-and-Rescue-Robot/urdf/sar_urdf.urdf'),
   path.join(PUBLIC_DIR, 'baselines/01-履带越障搜救机器人/Search-and-Rescue-Robot/_首选基准原件_PRIMARY/sar_urdf.urdf')
 );
 
 copyRecursive(
-  '/tmp/repos/bluerov2',
+  roboticsSourceFile('bluerov2'),
   path.join(PUBLIC_DIR, 'baselines/02-水下机器人ROV与深海作业系统/bluerov2'),
   textOrConfigFilter
 );
 copyRecursive(
-  '/tmp/repos/bluerov_ros_playground',
+  roboticsSourceFile('bluerov_ros_playground'),
   path.join(PUBLIC_DIR, 'baselines/02-水下机器人ROV与深海作业系统/bluerov_ros_playground'),
   textOrConfigFilter
 );
 copyRecursive(
-  '/tmp/repos/rexrov2',
+  roboticsSourceFile('rexrov2'),
   path.join(PUBLIC_DIR, 'baselines/02-水下机器人ROV与深海作业系统/rexrov2'),
   textOrConfigFilter
 );
 copyRecursive(
-  '/tmp/repos/uuv_manipulators',
+  roboticsSourceFile('uuv_manipulators'),
   path.join(PUBLIC_DIR, 'baselines/02-水下机器人ROV与深海作业系统/uuv_manipulators'),
   textOrConfigFilter
 );
 copyRecursive(
-  '/tmp/repos/unitree_ros/robots/g1_description',
+  roboticsSourceFile('unitree_ros/robots/g1_description'),
   path.join(PUBLIC_DIR, 'baselines/03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/g1_description'),
   textOrConfigFilter
 );
 copyRecursive(
-  '/tmp/repos/unitree_ros/robots/go2_description',
+  roboticsSourceFile('unitree_ros/robots/go2_description'),
   path.join(PUBLIC_DIR, 'baselines/03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/go2_description'),
   textOrConfigFilter
 );
 copyRecursive(
-  '/tmp/repos/unitree_ros/robots/z1_description',
+  roboticsSourceFile('unitree_ros/robots/z1_description'),
   path.join(PUBLIC_DIR, 'baselines/03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/z1_description'),
   textOrConfigFilter
 );
@@ -85,12 +87,12 @@ copyRecursive(
 // Also copy G1 URDF into urdf/g1_29dof.urdf and Z1 URDF into urdf/z1.urdf for convenience
 fs.mkdirSync(path.join(PUBLIC_DIR, 'baselines/03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/g1_description/urdf'), { recursive: true });
 fs.copyFileSync(
-  '/tmp/repos/unitree_ros/robots/g1_description/g1_29dof_with_hand_rev_1_0.urdf',
+  roboticsSourceFile('unitree_ros/robots/g1_description/g1_29dof_with_hand_rev_1_0.urdf'),
   path.join(PUBLIC_DIR, 'baselines/03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/g1_description/urdf/g1_29dof.urdf')
 );
 
 // Upgrade z1.urdf to also include the gripperStator and gripperMover from robot.xacro
-let z1UrdfContent = fs.readFileSync('/tmp/repos/unitree_ros/robots/z1_description/xacro/z1.urdf', 'utf8');
+let z1UrdfContent = fs.readFileSync(roboticsSourceFile('unitree_ros/robots/z1_description/xacro/z1.urdf'), 'utf8');
 if (!z1UrdfContent.includes('gripperStator')) {
   const gripperSnippet = `
   <joint name="gripperStator_joint" type="fixed">
@@ -955,7 +957,7 @@ function compileUrdfToGlb(urdfXml, outputPath, resolveMeshFn, minTrisPerPart = 6
 
 // (1) Search-and-Rescue Tracked Robot (sar_urdf.urdf + 66 STL parts)
 console.log('1/6 Compiling search_and_rescue_tracked_robot.glb from real STL meshes...');
-const sarUrdf = fs.readFileSync('/tmp/repos/Search-and-Rescue-Robot/urdf/sar_urdf.urdf', 'utf8');
+const sarUrdf = fs.readFileSync(roboticsSourceFile('Search-and-Rescue-Robot/urdf/sar_urdf.urdf'), 'utf8');
 const sarRes = compileUrdfToGlb(
   sarUrdf,
   path.join(GLB_DIR, 'search_and_rescue_tracked_robot.glb'),
@@ -963,8 +965,8 @@ const sarRes = compileUrdfToGlb(
     const base = path.basename(filename);
     const isAr4 = filename.includes('/ar4/');
     const stlPath = isAr4
-      ? path.join('/tmp/repos/Search-and-Rescue-Robot/meshes/ar4', base)
-      : path.join('/tmp/repos/Search-and-Rescue-Robot/meshes', base);
+      ? path.join(roboticsSourceFile('Search-and-Rescue-Robot/meshes/ar4'), base)
+      : path.join(roboticsSourceFile('Search-and-Rescue-Robot/meshes'), base);
     if (!fs.existsSync(stlPath)) return null;
     const raw = parseBinaryStl(stlPath);
     const stem = path.basename(base, path.extname(base));
@@ -997,7 +999,7 @@ console.log('2/6 Compiling rexrov2_oberon7_subsea_rov.glb from real COLLADA DAE 
   nodesDef.push({ name: 'rexrov2_base_link', children: [] });
   nodesDef[0].children.push(baseIdx);
 
-  const rexGeoms = parseColladaDae('/tmp/repos/rexrov2/rexrov2_description/meshes/RexROV2_no_props.dae');
+  const rexGeoms = parseColladaDae(roboticsSourceFile('rexrov2/rexrov2_description/meshes/RexROV2_no_props.dae'));
   for (let i = 0; i < rexGeoms.length; i++) {
     const g = ensureMinTriangles(rexGeoms[i], 640);
     totalTris += g.numTris;
@@ -1016,7 +1018,7 @@ console.log('2/6 Compiling rexrov2_oberon7_subsea_rov.glb from real COLLADA DAE 
   }
 
   // 6 Thrusters from rexrov2_actuators.xacro
-  const propRaw = mergeGeometriesList(parseColladaDae('/tmp/repos/rexrov2/rexrov2_description/meshes/Propeller.dae'));
+  const propRaw = mergeGeometriesList(parseColladaDae(roboticsSourceFile('rexrov2/rexrov2_description/meshes/Propeller.dae')));
   const propGeom = ensureMinTriangles(propRaw, 1200);
   const d2r = Math.PI / 180;
   const rexThrusters = [
@@ -1044,7 +1046,7 @@ console.log('2/6 Compiling rexrov2_oberon7_subsea_rov.glb from real COLLADA DAE 
 
   // Oberon7 7-DOF manipulator kinematic chain mounted at xyz=[1.3, -0.5, -0.665]
   function loadOberonMesh(relPath) {
-    const full = path.join('/tmp/repos/uuv_manipulators/oberon7/oberon7_description/meshes', relPath);
+    const full = path.join(roboticsSourceFile('uuv_manipulators/oberon7/oberon7_description/meshes'), relPath);
     const parts = parseColladaDae(full);
     return ensureMinTriangles(mergeGeometriesList(parts), 1200);
   }
@@ -1124,7 +1126,7 @@ console.log('3/6 Compiling bluerov2_underwater_rov.glb from real COLLADA DAE mes
   nodesDef[0].children.push(baseIdx);
 
   let totalTris = 0;
-  const hullParts = parseColladaDae('/tmp/repos/bluerov2/bluerov2_description/meshes/bluerov2_noprop.dae');
+  const hullParts = parseColladaDae(roboticsSourceFile('bluerov2/bluerov2_description/meshes/bluerov2_noprop.dae'));
   // Group the 202 CAD geometries into ~22 named high-poly CAD assemblies so every single mesh has 2,000 - 45,000 tris
   const groupCount = 18;
   const buckets = Array.from({ length: groupCount }, () => []);
@@ -1168,11 +1170,11 @@ console.log('3/6 Compiling bluerov2_underwater_rov.glb from real COLLADA DAE mes
 
   // 6 T200 Thrusters from thrusters.xacro
   const propCcw = ensureMinTriangles(
-    mergeGeometriesList(parseColladaDae('/tmp/repos/bluerov2/bluerov2_description/meshes/bluerov2_propccw.dae')),
+    mergeGeometriesList(parseColladaDae(roboticsSourceFile('bluerov2/bluerov2_description/meshes/bluerov2_propccw.dae'))),
     1200
   );
   const propCw = ensureMinTriangles(
-    mergeGeometriesList(parseColladaDae('/tmp/repos/bluerov2/bluerov2_description/meshes/bluerov2_propcw.dae')),
+    mergeGeometriesList(parseColladaDae(roboticsSourceFile('bluerov2/bluerov2_description/meshes/bluerov2_propcw.dae'))),
     1200
   );
   const blueThrusters = [
@@ -1200,7 +1202,7 @@ console.log('3/6 Compiling bluerov2_underwater_rov.glb from real COLLADA DAE mes
 
   // Ping360 Sonar from sensors.xacro
   const sonarGeom = ensureMinTriangles(
-    mergeGeometriesList(parseColladaDae('/tmp/repos/bluerov2/bluerov2_description/meshes/ping360_sonar.dae', 0.01)),
+    mergeGeometriesList(parseColladaDae(roboticsSourceFile('bluerov2/bluerov2_description/meshes/ping360_sonar.dae'), 0.01)),
     1200
   );
   totalTris += sonarGeom.numTris;
@@ -1222,13 +1224,13 @@ console.log('3/6 Compiling bluerov2_underwater_rov.glb from real COLLADA DAE mes
 
 // (4) Unitree G1 29-DOF Biped Humanoid (g1_29dof_with_hand_rev_1_0.urdf + meshes/*.STL)
 console.log('4/6 Compiling unitree_g1_humanoid.glb from real STL meshes...');
-const g1Urdf = fs.readFileSync('/tmp/repos/unitree_ros/robots/g1_description/g1_29dof_with_hand_rev_1_0.urdf', 'utf8');
+const g1Urdf = fs.readFileSync(roboticsSourceFile('unitree_ros/robots/g1_description/g1_29dof_with_hand_rev_1_0.urdf'), 'utf8');
 const g1Res = compileUrdfToGlb(
   g1Urdf,
   path.join(GLB_DIR, 'unitree_g1_humanoid.glb'),
   (filename, linkName) => {
     const base = path.basename(filename);
-    const stlPath = path.join('/tmp/repos/unitree_ros/robots/g1_description/meshes', base);
+    const stlPath = path.join(roboticsSourceFile('unitree_ros/robots/g1_description/meshes'), base);
     if (!fs.existsSync(stlPath)) return null;
     const raw = parseBinaryStl(stlPath);
     const stem = path.basename(base, path.extname(base));
@@ -1248,14 +1250,14 @@ console.log('  -> unitree_g1_humanoid.glb:', g1Res);
 
 // (5) Unitree Go2 Quadruped (go2_description.urdf + dae/*.dae)
 console.log('5/6 Compiling unitree_go2_quadruped.glb from real COLLADA DAE meshes...');
-const go2Urdf = fs.readFileSync('/tmp/repos/unitree_ros/robots/go2_description/urdf/go2_description.urdf', 'utf8');
+const go2Urdf = fs.readFileSync(roboticsSourceFile('unitree_ros/robots/go2_description/urdf/go2_description.urdf'), 'utf8');
 const go2DaeCache = new Map();
 const go2Res = compileUrdfToGlb(
   go2Urdf,
   path.join(GLB_DIR, 'unitree_go2_quadruped.glb'),
   (filename, linkName) => {
     const base = path.basename(filename);
-    const daePath = path.join('/tmp/repos/unitree_ros/robots/go2_description/dae', base);
+    const daePath = path.join(roboticsSourceFile('unitree_ros/robots/go2_description/dae'), base);
     if (!fs.existsSync(daePath)) return null;
     if (!go2DaeCache.has(daePath)) {
       const parts = parseColladaDae(daePath);
@@ -1280,7 +1282,7 @@ const z1Res = compileUrdfToGlb(
   path.join(GLB_DIR, 'unitree_z1_manipulator.glb'),
   (filename, linkName) => {
     const base = path.basename(filename, path.extname(filename)) + '.STL';
-    const stlPath = path.join('/tmp/repos/unitree_ros/robots/z1_description/meshes/collision', base);
+    const stlPath = path.join(roboticsSourceFile('unitree_ros/robots/z1_description/meshes/collision'), base);
     if (!fs.existsSync(stlPath)) return null;
     const raw = parseBinaryStl(stlPath);
     return {
@@ -1300,7 +1302,7 @@ console.log('  -> unitree_z1_manipulator.glb:', z1Res);
 // ---------------------------------------------------------------------------
 console.log('Splitting NASA Mars 2020 Perseverance Rover.glb into L1 / L2 / L3 subsystem GLBs...');
 {
-  const srcGlb = fs.readFileSync('/tmp/repos/nasa3d/3D Models/Mars 2020 Perseverance Rover/Mars 2020 Perseverance Rover.glb');
+  const srcGlb = fs.readFileSync(roboticsSourceFile('nasa3d/3D Models/Mars 2020 Perseverance Rover/Mars 2020 Perseverance Rover.glb'));
   const jsonLen = srcGlb.readUInt32LE(12);
   const baseJsonStr = srcGlb.subarray(20, 20 + jsonLen).toString('utf8');
   const binChunkWithHeader = srcGlb.subarray(20 + jsonLen);

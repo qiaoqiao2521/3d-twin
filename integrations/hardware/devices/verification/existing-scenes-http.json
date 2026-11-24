@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "completedAtUtc": "2026-11-24T17:21:03.138364+00:00",
+  "purpose": "Existing-scene production HTTP regression after the hardware integration; no browser automation or source modification.",
+  "smartWarehouse": {
+    "command": "npm run verify:warehouse -- --dist --serve",
+    "exitCode": 0,
+    "originalFiles": 55,
+    "revision": "13f04d17304fedbc4cb4cf53002c4eb4abc4d188",
+    "hostRoutes": 2,
+    "originalVuePages": 1,
+    "localBundles": 4,
+    "originalModels": 1,
+    "licenseAndProvenanceFiles": 2,
+    "totalHttpChecks": 10,
+    "modelBytes": 4039312,
+    "nodes": 831,
+    "meshes": 825,
+    "materials": 42,
+    "checks": [
+      "All frozen source Git blob hashes",
+      "Original Vue mount point, rejection of host SPA fallback",
+      "Local bundle responses are not HTML",
+      "Complete original GLB content hash and embedded-resource structure",
+      "Byte-identical license and provenance"
+    ],
+    "previewClosed": true
+  },
+  "openDemos": {
+    "command": "npm run verify:open-demos -- --dist --serve",
+    "exitCode": 0,
+    "demos": [
+      {
+        "id": "warehouse-journey",
+        "revision": "48d9c57803239ff0ef0763ba4ce0b8be6445d399",
+        "resources": 47
+      },
+      {
+        "id": "waretwin",
+        "revision": "81f365f323e1a097e5819ca9045637544163f219",
+        "resources": 18
+      },
+      {
+        "id": "rftwin",
+        "revision": "006a20362eb4886b161ee38e634b99ac7876a785",
+        "resources": 22
+      }
+    ],
+    "resourcesWithExactFilesystemAndHttpSha256": 87,
+    "localAndLiveModeDeepLinkShellRoutes": 6,
+    "catalogAndExistingModeRoutes": 5,
+    "totalRouteChecks": 11,
+    "totalHttpChecks": 98,
+    "checks": [
+      "Fixed upstream tree and original license",
+      "Exact published resource byte counts and SHA-256 over real production preview HTTP",
+      "Original iframe document and lifecycle adapter marker",
+      "Local fonts and required original RFTwin replay files",
+      "Expected host HTML shell for local/live deep links"
+    ],
+    "previewClosed": true
+  },
+  "limitations": [
+    "These checks verify HTTP routing, source and resource delivery. They do not execute or visually inspect WebGL.",
+    "A local/live query route returning the host HTML does not certify a live backend, telemetry connection or physical equipment.",
+    "Real mobile gestures, cameras, GPU/audio resource release and physical acceptance require separate observation."
+  ]
+}

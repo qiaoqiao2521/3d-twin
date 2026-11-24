@@ -1,0 +1,5136 @@
+{
+  "range": "Workbook!A1:AE1223",
+  "majorDimension": "ROWS",
+  "values": [
+    [
+      "Step Nr",
+      "Step Title",
+      "Time",
+      "Parts list",
+      "",
+      "Rhino",
+      "",
+      "",
+      "Tools list",
+      "",
+      "Remarks",
+      "Details",
+      "How Tos",
+      "Image"
+    ],
+    [
+      "",
+      "",
+      "",
+      "QTY",
+      "Part name",
+      "Traced",
+      "Problems & questions",
+      "Notes",
+      "Quantity",
+      "Tool name"
+    ],
+    [
+      "01.1",
+      "Prepare base inner bottom beam",
+      "",
+      "2",
+      "Base Inner Bottom Beam",
+      "TRUE",
+      "",
+      "",
+      "",
+      "Allen Key 6",
+      "",
+      "",
+      "H2",
+      "mold_bodyv2.step"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Wheel",
+      "TRUE",
+      "",
+      "",
+      "",
+      "Wrench 14"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Wheel Spacer",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "B-screw M8-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "Washer M8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "Lock Nut M8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Front Sticker",
+      "TRUE"
+    ],
+    [
+      "01.2",
+      "Attach base inner vertical beam",
+      "",
+      "4",
+      "Base Inner Vertical Beam",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "CNCtestv1.step"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Frame Connector Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "64",
+      "HF-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Bracket 100x100",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "32",
+      "C-screw M12-30",
+      "TRUE"
+    ],
+    [
+      "02.1",
+      "Prepare Y linear guide beams 1",
+      "",
+      "2",
+      "Y Linear Guide",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Insert the Y reinforcement plate inside the Y linear guide profiles.",
+      "",
+      "H2",
+      "https://drive.google.com/file/d/1-p-GjavLE_d9K5to-ShQ_AwWf7hh87Z3/view?usp=sharing"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Linear Guide Right Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Linear Guide Left Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "98",
+      "C-screw M6-40",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "98",
+      "Lock Nut M6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Y Reinforcement Plate",
+      "TRUE"
+    ],
+    [
+      "02.2",
+      "Prepare Y linear guide beam 2",
+      "",
+      "2",
+      "L-shape profile 17x30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "20",
+      "B-screw M3-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Endstop Holder",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Endstop",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M4-10",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M3-20",
+      "TRUE"
+    ],
+    [
+      "03",
+      "Fix Y linear guide beams",
+      "",
+      "36",
+      "HF-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "32",
+      "C-screw M12-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Frame Central Connector Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Base Inner Top Short Beam",
+      "TRUE"
+    ],
+    [
+      "04",
+      "Fix base inner long beams",
+      "",
+      "2",
+      "Base Inner Long Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "32",
+      "HF-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "05.1",
+      "Prepare base front and back bottom beams",
+      "",
+      "1",
+      "Base Front Bottom Beam",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "H2"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Base Back Bottom Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Wheel Spacer",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Wheel Spacer Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Wheel",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "B-screw M8-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "Washer M8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "Lock Nut M8",
+      "TRUE"
+    ],
+    [
+      "05.2",
+      "Prepare base front and back top beams",
+      "",
+      "1",
+      "Base Front Top Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Base Back Top Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Base Front Vertical Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Base Back Vertical Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Base Front Vertical Connector Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Base Back Vertical Connector Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "44",
+      "HF-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Cable Grommet",
+      "TRUE"
+    ],
+    [
+      "05.3",
+      "Fix brackets",
+      "",
+      "12",
+      "Bracket 30x110",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Bracket 30x110 Hole",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "48",
+      "C-screw M12-30",
+      "TRUE"
+    ],
+    [
+      "06",
+      "Fix prepared base front and back",
+      "",
+      "56",
+      "HF-screw M12-20",
+      "TRUE",
+      "",
+      "maybe a HowTo on using the plastic carriages?",
+      "",
+      "",
+      "Carefully mount the carriages onto the Y linear guides, using the plastic linear bridges."
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Y Carriage",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Pay attention to the position of the Front Sticker."
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Base Front Horizontal Connector Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Base Back Horizontal Connector Plate",
+      "TRUE"
+    ],
+    [
+      "07",
+      "Prepare Y axis - ball screws",
+      "",
+      "2",
+      "Y Ball Screw With Nut",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Y Ball Screw Pulley",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Y Ball Screw Nut Attacher",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "C-screw M8-45",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Nut Spacer",
+      "TRUE"
+    ],
+    [
+      "08",
+      "Add shoulders' front plate and motor",
+      "",
+      "1",
+      "Left Shoulder Front Plate",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Insert the ball screw in the front plate bearing and place the belt around the Y Ball Screw Pulley and Y Motor Pulley."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Right Shoulder Front Plate",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Tighten the set screws of the pulleys to the motor shafts."
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Y Motor",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Tension the Y-motor belts and tighten the motor screws."
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Y Motor Pulley",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Y Motor Belt",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "B-screw M8-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Washer M8 Large",
+      "TRUE"
+    ],
+    [
+      "09",
+      "Insert shoulders' back plate",
+      "",
+      "1",
+      "Left Shoulder Back Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Right Shoulder Back Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Wire Guide Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Wire Guide Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "B-screw M4-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Cable Gland M18",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "None",
+      "TRUE"
+    ],
+    [
+      "10",
+      "Assemble shoulder",
+      "",
+      "2",
+      "Shoulder Flat Spacer",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Shoulder Attacher Block Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Shoulder Attacher Block Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Shoulder Pulley Spacer",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "22",
+      "B-screw M8-110",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "B-screw M10-30",
+      "TRUE"
+    ],
+    [
+      "11",
+      "Fix shoulder attacher plate",
+      "",
+      "1",
+      "Shoulder Attacher Plate Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Shoulder Attacher Plate Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "C-screw M10-100",
+      "TRUE"
+    ],
+    [
+      "12",
+      "Attach shoulders",
+      "",
+      "16",
+      "C-screw M6-30",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Attach the shoulders with ball screws by fixing the attacher plate to the carriages."
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "Washer M6",
+      "TRUE"
+    ],
+    [
+      "13",
+      "Fix front corner linear guides",
+      "",
+      "1",
+      "Front Right Corner Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Front Left Corner Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Door Linear Guide",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "72",
+      "C-screw M4-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Bracket 30x110",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M12-30",
+      "TRUE"
+    ],
+    [
+      "14",
+      "Attach corner beams",
+      "",
+      "1",
+      "Back Right Corner Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Back Left Corner Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Front Corner Connector Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Back Corner Connector Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "32",
+      "HF-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "20",
+      "C-screw M12-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Bracket 30x110",
+      "TRUE"
+    ],
+    [
+      "15",
+      "Attach corner brackets",
+      "",
+      "2",
+      "Bracket 60x60",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Bracket 60x60 Back Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Bracket 60x60 Back Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "C-screw M12-30",
+      "TRUE"
+    ],
+    [
+      "16",
+      "Fix Y ball screw holders",
+      "",
+      "4",
+      "Y Ball Screw Holder Part A",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Don´t tighten Part B to Part A yet"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Y Ball Screw Holder Part B",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "HF-screw M12-60",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "C-screw M8-50",
+      "TRUE"
+    ],
+    [
+      "17",
+      "Fix Y chain holder",
+      "",
+      "1",
+      "Y Chain Holder Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Chain Holder Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "B-screw M3-8",
+      "TRUE"
+    ],
+    [
+      "18",
+      "Prepare X main plate",
+      "",
+      "1",
+      "X Main Plate",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the linear guides leaving the end screws last. Before fixing the end screws (C-screw M5-40), slide the carriages on the linear guides. "
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "X Linear Guide",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "50",
+      "C-screw M5-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M5-40",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Washer M5 Large",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "X Carriage",
+      "TRUE"
+    ],
+    [
+      "19.1",
+      "Prepare X ball screw 1",
+      "",
+      "1",
+      "X Ball Screw",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "C-screw M5-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Ball Screw Nut",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Attachment Nut",
+      "TRUE"
+    ],
+    [
+      "19.2",
+      "Prepare X ball screw 2",
+      "",
+      "1",
+      "X Bearing Holder Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Bearing Holder Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Bearing Cover",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "C-screw M4-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Bearing Spacer",
+      "TRUE"
+    ],
+    [
+      "19.3",
+      "Prepare X ball screw 3",
+      "",
+      "1",
+      "X Endstop",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M3-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Pulley",
+      "TRUE"
+    ],
+    [
+      "20",
+      "Attach X ball screw on X main plate",
+      "",
+      "1",
+      "X Motor Belt",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Tighten the set screw of the pulleys"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M8-50",
+      "TRUE",
+      "",
+      "Right side",
+      "",
+      "",
+      "The holes of the ball screw ntut should be pointing outwards."
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M8-30",
+      "TRUE",
+      "",
+      "Right side",
+      "",
+      "",
+      "Pass the X motor belt around the X pulley"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M8-70",
+      "TRUE",
+      "",
+      "Left side"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M8-40",
+      "TRUE",
+      "",
+      "Left side"
+    ],
+    [
+      "21",
+      "Fix X front plate",
+      "",
+      "1",
+      "X Front Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "C-screw M6-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M6-20",
+      "TRUE"
+    ],
+    [
+      "22",
+      "Fix X beam",
+      "",
+      "48",
+      "B-screw M8-20",
+      "TRUE",
+      "I think in this step it should be more obvious to have a prperared part?",
+      "",
+      "",
+      "",
+      "Insert the prepared X main plate inside the X beam"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Beam",
+      "TRUE"
+    ],
+    [
+      "23",
+      "Attach X motor",
+      "",
+      "1",
+      "X Motor",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Tighten the set screws of the X motor pulley."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Motor Holder",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Tension the belt and tighten the motor screws."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Motor Pulley",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the X motor holder with the hole for passing the wires pointing down."
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Set Screw",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M8-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Hex Screw M8-120",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Wire Cover",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "B-screw M4-8",
+      "TRUE"
+    ],
+    [
+      "24",
+      "Fix X-axis to shoulders",
+      "",
+      "2",
+      "Shoulder Connector Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "C-screw M8-45",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "28",
+      "B-screw M8-20",
+      "TRUE"
+    ],
+    [
+      "25",
+      "Prepare Z ball screw",
+      "",
+      "1",
+      "Z Ball Screw",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Ball Screw Nut",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "C-screw M6-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Ball Screw Spacer",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Top Bearing Holder",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "C-screw M4-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Ball Screw Pulley",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Bearing Stopper",
+      "TRUE"
+    ],
+    [
+      "26",
+      "Prepare Z front plate",
+      "",
+      "1",
+      "Z Front Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Z Linear Guide",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "18",
+      "C-screw M6-30",
+      "TRUE"
+    ],
+    [
+      "27",
+      "Fix Z ball screw on Z front plate",
+      "",
+      "1",
+      "Z Bottom Bearing Holder",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "The holes of the Z ball screw nut need to point outwards."
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M4-45",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M4-70",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Endstop",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Wire Fixer",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "B-screw M3-20",
+      "TRUE"
+    ],
+    [
+      "28",
+      "Prepare Z middle plate",
+      "",
+      "1",
+      "Z Middle Plate",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Insert the carriages carefully in the linear guides of the front plate to tighten the screws. Reserve the plastic one for later."
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Z Carriage",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "After tightening the screws of the carriages, remove the middle plate with the carriages from the linear guides, carefully substituting them for the plastic ones."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Endstop Plate Holder",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Endstop Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M3-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "17",
+      "B-screw M6-25",
+      "TRUE"
+    ],
+    [
+      "29",
+      "Fix middle plate on X-axis",
+      "",
+      "1",
+      "X Top Spacer",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the wire of the Z-endstop with the ."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Bottom Spacer",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "C-screw M8-45",
+      "TRUE"
+    ],
+    [
+      "30",
+      "Fix Z front plate",
+      "",
+      "4",
+      "B-screw M5-25",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Slide the Z front plate linear guides into the carriages carefully."
+    ],
+    [
+      "31",
+      "Prepare Z motor holder",
+      "",
+      "1",
+      "Z Motor Holder",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Tighten the setscrews of the pulley."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Motor",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Pass the cables of the motor through the Z motor holder side hole."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Motor Pulley",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Do not tighten the motor screws yet"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M6-20",
+      "TRUE"
+    ],
+    [
+      "32",
+      "Fix Z motor holder",
+      "",
+      "1",
+      "Z Belt",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Tension the belt and tighten the motor screws."
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "C-screw M8-150",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "B-screw M8-80",
+      "TRUE"
+    ],
+    [
+      "33",
+      "Fix the head",
+      "",
+      "1",
+      "Spindle",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Z Front Cover",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "C-screw M8-35",
+      "TRUE"
+    ],
+    [
+      "34",
+      "Fix coolant system",
+      "",
+      "1",
+      "Coolant Spacer Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Coolant Spacer Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Coolant Unit",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "B-screw M5-50",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M8-60",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Brush Piston Support Back",
+      "TRUE"
+    ],
+    [
+      "35",
+      "Prepare head bottom attachment",
+      "",
+      "1",
+      "Head Bottom Attachment",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Exhaust End Holder",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Piston",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M5-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Brush",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Clamp",
+      "TRUE"
+    ],
+    [
+      "36",
+      "Fix head bottom attachment",
+      "",
+      "2",
+      "Brush Piston Support Front",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "C-screw M6-30",
+      "TRUE"
+    ],
+    [
+      "37",
+      "Fix head pipes",
+      "",
+      "2",
+      "Push Fit Connector Y 6",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Cut the tubes as necessary."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Push Fit Connector Y 8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Push Fit Connector Y 4",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Push Fit Connector Straight 6-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Tube 6",
+      "TRUE",
+      "",
+      "should it be remarked that the tubes need labeling ?"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Tube 8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Tube 4",
+      "TRUE"
+    ],
+    [
+      "38",
+      "Fix X chain",
+      "",
+      "1",
+      "X Chain",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "*Pass the tubes installed in the previous step with the spindle cable and Z-endstop cable through the motor holder hole."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "X Chain Channel",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Join the Z motor cables and pass all cables and tubes through the X chain before fixing it."
+    ],
+    [
+      "",
+      "",
+      "",
+      "5",
+      "B-screw M3-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M6-12",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Spindle Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Tubes Bundle*",
+      "TRUE"
+    ],
+    [
+      "39",
+      "Fix head covers",
+      "",
+      "1",
+      "Head Cover Front",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Connect the Head Cover Back to the Head Cover Front first"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Head Cover Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Exhaust Pipe Support",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "C-screw M5-40",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M6-12",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M5-20",
+      "TRUE"
+    ],
+    [
+      "40",
+      "Fix Y chain",
+      "",
+      "2",
+      "Y Wire Guide Cover",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Pass all cables and pipes from the X chain through the Y wire guide right.",
+      "",
+      "H2"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "Y Chain",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Pass the X motor cables through the shoulder cable gland. Join the X-endstop to them and pass them through the Y wire guide left."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Chain End Holder Right",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Pass the cables through the chains before fixing them."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Chain End Holder Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "5",
+      "C-screw M8-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "10",
+      "B-screw M5-12",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "9",
+      "B-screw M5-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "9",
+      "Lock Nut M5",
+      "TRUE"
+    ],
+    [
+      "41",
+      "Fix side bottom beams",
+      "",
+      "1",
+      "Side Bottom Beam Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Bottom Beam Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Bracket 30x60",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "24",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "42",
+      "Fix base side top beams",
+      "",
+      "1",
+      "Base Side Top Beam Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Base Side Top Beam Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "L-shape Profile 20x7",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "20",
+      "B-screw M3-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Bracket 30x110",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Bracket 30x60",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "43",
+      "Fix back middle vertical beam",
+      "",
+      "1",
+      "Back Middle Vertical Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Bracket 30x110",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "HF-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "44",
+      "Fix Y ball screw cover",
+      "",
+      "4",
+      "Y Ball Screw Cover",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Lay the cover on top of the L-shape profiles"
+    ],
+    [
+      "",
+      "",
+      "",
+      "24",
+      "B-screw M4-8",
+      "TRUE"
+    ],
+    [
+      "45",
+      "Fix side beam cover plates",
+      "",
+      "2",
+      "Side Beam Cover Plate Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Side Beam Cover Plate Front",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "22",
+      "Countersunk Screw M6-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Magnet",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Countersunk Screw M5-10",
+      "TRUE"
+    ],
+    [
+      "46.1",
+      "Prepare side middle vertical beam",
+      "",
+      "1",
+      "Right Side Middle Vertical Beam",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the bottom end of the linear guides with the C-screw M4-20 and washer."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Left Side Middle Vertical Beam",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Carefully insert the carriages in the open end of the linear guides"
+    ],
+    [
+      "",
+      "",
+      "",
+      "34",
+      "C-screw M4-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Door Linear Guide",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Bracket 30x110",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M4-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Washer M4",
+      "TRUE"
+    ],
+    [
+      "46.2",
+      "Insert front door carriages",
+      "",
+      "4",
+      "Door Carriage",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "C-screw M5-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Window Spacer",
+      "TRUE"
+    ],
+    [
+      "47",
+      "Fix top front and back beam",
+      "",
+      "1",
+      "Top Front Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Top Back Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Screen Wire Grommet",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "Bracket 30x110",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Back Wire Grommet",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "20",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M4-10",
+      "TRUE"
+    ],
+    [
+      "48.1",
+      "Prepare roof middle long beam 1",
+      "",
+      "1",
+      "Roof Middle Long Beam",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the front end of the linear guide with the C-screw M4-20 and washer."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Roof Linear Guide",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Carefully insert the prepared roof carriages in the linear guide and then fix the back exhaust pipe attacher."
+    ],
+    [
+      "",
+      "",
+      "",
+      "44",
+      "C-screw M4-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Back Exhaust Pipe Attacher",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M5-45",
+      "TRUE"
+    ],
+    [
+      "48.2",
+      "Prepare roof middle long beam 2",
+      "",
+      "5",
+      "Roof Carriage",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "20",
+      "C-screw M4-12",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "5",
+      "Exhaust Pipe Attacher",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "C-screw M4-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Washer M4",
+      "TRUE"
+    ],
+    [
+      "48.3",
+      "Prepare roof middle long beam 3",
+      "",
+      "2",
+      "Bracket 30x110",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "Bracket 30x60",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "10",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "49",
+      "Fix roof middle long beam",
+      "",
+      "8",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "50",
+      "Insert side door carriages",
+      "",
+      "8",
+      "Door Carriage",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Carefully insert the carriages onto the side door front linear guides."
+    ],
+    [
+      "",
+      "",
+      "",
+      "32",
+      "C-screw M5-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Window Spacer",
+      "TRUE"
+    ],
+    [
+      "51",
+      "Fix side top beam",
+      "",
+      "1",
+      "Side Top Beam Right",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the roof wire guide corner before fixing the beam."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Top Beam Left",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the roof wire guide side after fixing the beam"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M12-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Roof Wire Guide Corner",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M5-12",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Bracket 30x60",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "52",
+      "Fix roof middle short beam",
+      "",
+      "1",
+      "Roof Middle Short Beam",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M5-12",
+      "FALSE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Roof Wire Guide Side",
+      "TRUE"
+    ],
+    [
+      "53.1",
+      "Prepare Inner back panel - electronic panel",
+      "",
+      "1",
+      "Inner Back Panel",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Electronic Panel",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "11",
+      "Standoff FF 8mm",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "22",
+      "B-screw M5-6",
+      "TRUE"
+    ],
+    [
+      "53.2",
+      "Prepare Inner back panel - pneumatic panel",
+      "",
+      "1",
+      "Air and Coolant Panel",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the Valve 2 Ways 6-4 in the oil output."
+    ],
+    [
+      "",
+      "",
+      "",
+      "14",
+      "Standoff FF 8mm",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "28",
+      "B-screw M5-6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Valve 2 Way 6-6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Valve 2 Way 6-4",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "10",
+      "C-screw M4-6",
+      "TRUE"
+    ],
+    [
+      "54",
+      "Fix inner back panel",
+      "",
+      "21",
+      "B-screw M4-12",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Bracket 30x110",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Back Panel Box",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "B-screw M4-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Box Cover",
+      "TRUE"
+    ],
+    [
+      "55.1",
+      "Install electronics 1",
+      "",
+      "4",
+      "Motor Driver",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "B-screw M5-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "VFD Spindle Controller",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M5-14",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "DIN Rail Long",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "DIN Rail Short",
+      "TRUE"
+    ],
+    [
+      "55.2",
+      "Install electronics 2 - DIN rail long",
+      "",
+      "1",
+      "Terminal Cap",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "5",
+      "Terminal Grey",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Terminal Blue",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Terminal Green",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Bridge 3",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "PC/PCB Circuit Breaker",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Drivers Circuit Breaker",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Spindle Circuit Breaker",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "PC/PCB Differential",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Drivers Differential",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Spindle Differential",
+      "TRUE"
+    ],
+    [
+      "55.3",
+      "Install electronics 3 - DIN rail long",
+      "",
+      "1",
+      "Power Supply Relay",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Logic Relay",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Terminal Grey",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Terminal Cap",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Drivers Relay",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Spindle Relay",
+      "TRUE"
+    ],
+    [
+      "55.4",
+      "Install electronics 4 - DIN rail long",
+      "",
+      "4",
+      "Terminal Cap",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "9",
+      "Terminal Grey",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Terminal Blue",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Terminal Green",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "Bridge 2",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Power Supply 24V",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Power Supply 12V",
+      "TRUE"
+    ],
+    [
+      "55.5",
+      "Install electronics 5 - DIN rail short",
+      "",
+      "8",
+      "Relay",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "Terminal Cap",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "Terminal Grey",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Bridge 4",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "Bridge 2",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Transistor",
+      "TRUE"
+    ],
+    [
+      "55.6",
+      "Install electronics 6 - cable duct",
+      "",
+      "2",
+      "Cable Duct 95",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Cable Duct 70",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Cable Duct 66.5",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "Cable Duct 30.5",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "26",
+      "B-screw M5-8",
+      "TRUE"
+    ],
+    [
+      "56.1",
+      "Prepare tool holder supports",
+      "",
+      "14",
+      "Tool Holder Support",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "14",
+      "Tool Holder Base",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "28",
+      "C-screw M6-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M5-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Sensor Tool",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Sensor Tool Base",
+      "TRUE"
+    ],
+    [
+      "56.2",
+      "Prepare bed back plate",
+      "",
+      "60",
+      "C-screw M4-20",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Pass the Air Tube through the cable gland M8 and the tool sensor cable through the cable gland M16."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Cable Gland M16",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the air pipe in the tool sensor."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "None",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Cable Gland M8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "None",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Sensor Tool Air Pipe",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Bed Back Plate",
+      "TRUE"
+    ],
+    [
+      "57",
+      "Fix bed back and middle plates",
+      "",
+      "1",
+      "Bed Middle Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "43",
+      "Countersunk Screw M6-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "B-screw M6-12",
+      "TRUE"
+    ],
+    [
+      "58",
+      "Fix bed front plate",
+      "",
+      "1",
+      "Bed Front Plate",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Piston Bottom Support Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Piston Bottom Support Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Piston Support Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M8-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "C-screw M12-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "28",
+      "Countersunk Screw M6-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Countersunk Screw M5-10",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Magnet",
+      "TRUE"
+    ],
+    [
+      "59.1",
+      "Prepare front window frame",
+      "",
+      "1",
+      "Front Window Top Profile",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Before inserting the corner connector, double check the position and rotation of the profiles. They are different in the sides and not symmetric."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Front Window Bottom Profile",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Use a rubber hammer to inser the connector in the profiles."
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Front Window Vertical Profile",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Window Corner Connector",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Top Piston Support Small",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M8-30",
+      "TRUE"
+    ],
+    [
+      "59.2",
+      "Attach frame to window",
+      "",
+      "1",
+      "Front Window",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "20",
+      "Thermoplastic Screw M5-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "10",
+      "Thermoplastic Screw M5-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Display Frame Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Display Frame Left",
+      "TRUE"
+    ],
+    [
+      "59.3",
+      "Fix handle",
+      "",
+      "1",
+      "Window Handle",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "H2"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Window Handle Attacher",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M8-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "C-screw M6-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Lock Nut M6",
+      "TRUE"
+    ],
+    [
+      "59.4",
+      "Fix front window electronics",
+      "",
+      "1",
+      "Display",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Red Button",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "None",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Green Button",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "None",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Emergency Button",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Key Lock",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Front USB",
+      "TRUE"
+    ],
+    [
+      "60",
+      "Fix front window",
+      "",
+      "2",
+      "Countersunk Screw M5-10",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Glue the magnet on the window profile matching with the one on the machine frame"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Window Piston",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M8-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "B-screw M8-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Magnet",
+      "TRUE"
+    ],
+    [
+      "61",
+      "Front window wiring",
+      "",
+      "1",
+      "Front Multicore Cable",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Pass all cable throught the bottom hole of the display frame before connecting them"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Display HDMI Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Display USB Touch Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Front USB Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Front Jumper Cable",
+      "TRUE"
+    ],
+    [
+      "62",
+      "Attach front chain",
+      "",
+      "1",
+      "Front Chain",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Pass all front cables through the cable chain before fixing it."
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "Thermoplastic Screw M5-8",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Pass all the cables through the front top beam and through the right side top beam until the electronics panel on the back of the frame."
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "B-screw M5-12",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Display Back Panel",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "B-screw M5-8",
+      "TRUE"
+    ],
+    [
+      "63",
+      "Fix shoulders' cover",
+      "",
+      "2",
+      "Shoulder Cover",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Shoulder Flat Spacer",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "14",
+      "B-screw M10-110",
+      "TRUE"
+    ],
+    [
+      "64.1",
+      "Prepare right window",
+      "",
+      "1",
+      "Side Window Vertical Profile Front",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Before inserting the connectors, double check the position and rotation of the profiles. They are different in the sides and not symmetric."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Vertical Profile Middle",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Vertical Profile Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Horizontal Profile Top Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Horizontal Profile Top Front",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Horizontal Profile Bottom Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Horizontal Profile Bottom Front",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Window Corner Connector",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Window Middle Connector",
+      "TRUE"
+    ],
+    [
+      "64.2",
+      "Fix top piston supports",
+      "",
+      "1",
+      "Top Piston Support Small",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M8-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Top Piston Support Big",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M8-40",
+      "TRUE"
+    ],
+    [
+      "64.3",
+      "Attach right window frame",
+      "",
+      "1",
+      "Right Window",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the Handle Attachers first to the Handle",
+      "",
+      "H2"
+    ],
+    [
+      "",
+      "",
+      "",
+      "28",
+      "Thermoplastic Screw M5-5",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Window Handle",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Window Handle Attacher",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "C-screw M6-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Lock Nut M6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M8-20",
+      "TRUE"
+    ],
+    [
+      "64.4",
+      "Fix right window",
+      "",
+      "2",
+      "Magnet",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Glue the magnet on the window profile matching with the one on the machine frame."
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Window Piston",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M8-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "B-screw M8-16",
+      "TRUE"
+    ],
+    [
+      "65.1",
+      "Prepare left window",
+      "",
+      "1",
+      "Side Window Vertical Profile Front",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Before inserting the connectors, double check the position and rotation of the profiles. They are different in the sides and not symmetric."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Vertical Profile Middle",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Vertical Profile Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Horizontal Profile Top Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Horizontal Profile Top Front",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Horizontal Profile Bottom Back",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Side Window Horizontal Profile Bottom Front",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Window Corner Connector",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Window Middle Connector",
+      "TRUE"
+    ],
+    [
+      "65.2",
+      "Fix top piston supports",
+      "",
+      "1",
+      "Top Piston Support Small",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M8-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Top Piston Support Big",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M8-40",
+      "TRUE"
+    ],
+    [
+      "65.3",
+      "Attach left window frame",
+      "",
+      "1",
+      "Left Window",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "H2"
+    ],
+    [
+      "",
+      "",
+      "",
+      "28",
+      "Thermoplastic Screw M5-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Window Handle",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Window Handle Attacher",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "C-screw M6-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Lock Nut M6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M8-20",
+      "TRUE"
+    ],
+    [
+      "65.4",
+      "Fix left window",
+      "",
+      "2",
+      "Magnet",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Glue the magnet on the window profile matching with the one on the machine frame."
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Window Piston",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M8-30",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "B-screw M8-16",
+      "TRUE"
+    ],
+    [
+      "66",
+      "Cable management",
+      "",
+      "10",
+      "Wire Fixer B",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the Y-endstop cable along the top of the Side Bottom Beam Left with Wire Fixers and Cable Ties"
+    ],
+    [
+      "",
+      "",
+      "",
+      "10",
+      "B-screw M5-8",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Pass the Y chain cables through the back of the holes of the base top back beam, leading them to the electronic panel."
+    ],
+    [
+      "",
+      "",
+      "",
+      "7",
+      "Cable Tie",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Endstop Cable*",
+      "TRUE"
+    ],
+    [
+      "67",
+      "Prepare power switch",
+      "",
+      "1",
+      "Power Switch",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Open the switch to connect the power cable and the mains cable."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Power Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Mains Cable",
+      "TRUE"
+    ],
+    [
+      "68",
+      "Fix back lower panel",
+      "",
+      "1",
+      "Back Lower Panel",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "H2"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Cable Gland M25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "None",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M3-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Lock Nut M3",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "13",
+      "B-screw M5-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Air Connector",
+      "TRUE"
+    ],
+    [
+      "69.1",
+      "Wiring AC 1",
+      "",
+      "6",
+      "L-cable Length A",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "N-cable Length A",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "VFD GND Cable",
+      "TRUE"
+    ],
+    [
+      "69.2",
+      "Wiring AC 2",
+      "",
+      "4",
+      "L-cable Length B",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "N-cable Length B",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "L-cable Length C",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "N-cable Length C",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "3",
+      "Jumper Cable",
+      "TRUE"
+    ],
+    [
+      "69.3",
+      "Wiring AC 3",
+      "",
+      "1",
+      "VFD R Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "VFD T Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "L-cable Length C",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "N-cable Length C",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Jumper Cable",
+      "TRUE"
+    ],
+    [
+      "69.4",
+      "Wiring AC 4",
+      "",
+      "4",
+      "L1 Driver Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "L2 Driver Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "L-cable Length C",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "N-cable Length C",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "GND Cable Length C",
+      "TRUE"
+    ],
+    [
+      "70.1",
+      "Wiring DC 1",
+      "",
+      "6",
+      "V+ Cable Length A",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "V- Cable Length A",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "V- Cable Length B",
+      "TRUE"
+    ],
+    [
+      "70.2",
+      "Wiring DC 2",
+      "",
+      "1",
+      "V+ Cable Length B",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Relay Jumper",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "8",
+      "Relay-Transistor Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Transistor Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "SP CTL Cable",
+      "TRUE"
+    ],
+    [
+      "70.3",
+      "Wiring DC 3",
+      "",
+      "2",
+      "XZ Driver Logic Cable",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Y Driver Logic Cable",
+      "TRUE"
+    ],
+    [
+      "70.4",
+      "Wiring DC 4",
+      "",
+      "1",
+      "None",
+      "TRUE"
+    ],
+    [
+      "71.1",
+      "Install pneumatics - dust covers pistons",
+      "",
+      "1",
+      "Valve 5 Way",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the Safety Relief Valve in the T-fitting with Teflon tape.",
+      "",
+      "H8"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Flow Regulator",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Remove the left push fit connector from the pressure regulator and fix the T-fitting in between with teflon tape. "
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Pressure Regulator",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Cut the tube as necessary."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Safety Relief Valve",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "T-fitting",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Tube 6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M4-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M4-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M4-6",
+      "TRUE"
+    ],
+    [
+      "71.2",
+      "Install pneumatics - tool changer",
+      "",
+      "2",
+      "Flow Regulator",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Valve 5 Way",
+      "",
+      "H8"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Push Fit Connector 8",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the Safety Relief Valve in one T-fitting with Teflon tape."
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Push Fit Connector 6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "T-fitting",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Safety Relief Valve",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Valve 5 Way"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Valve 5 Way",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the Pressure Sensor in one T-fitting with Teflon tape."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Pressure Sensor",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the T-fitting with the Pressure Sensor to the Pressure Regulator with Filter with Teflon tape."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Pressure Regulator w/ Filter",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Cut the tube as necessary."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Pressure Regulator",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M4-25",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M3-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "C-screw M4-6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Tube 6",
+      "TRUE"
+    ],
+    [
+      "71.3",
+      "Install pneumatics - tool cleaning and main input",
+      "",
+      "1",
+      "Tube 6",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Cut the tube as necessary.",
+      "",
+      "H8"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Combo Pressure Regulator w/ Filter & De-Oiler",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the Safety Relief Valve in one T-fitting with Teflon tape."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Safety Relief Valve",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the T-fitting to the Combo Pressure Regulator w/ Filter & De-Oiler with Teflon tape."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "T-fitting",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "C-screw M4-6",
+      "TRUE"
+    ],
+    [
+      "71.4",
+      "Install pneumatics - coolant system and oil pump",
+      "",
+      "1",
+      "Coolant System",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "B-screw M6-12",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Oil Pump",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "C-screw M6-14",
+      "TRUE"
+    ],
+    [
+      "71.5",
+      "Install pneumatics - cable duct",
+      "",
+      "1",
+      "Pneumatics Cable Duct Long",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Pneumatics Cable Duct Short",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "10",
+      "B-screw M5-8",
+      "TRUE"
+    ],
+    [
+      "71.6",
+      "Install pneumatics - tubes",
+      "",
+      "1",
+      "Tube 6*",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "*Previously installed."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Tube 8*",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Cut the tube as necessary."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Tube 4*",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Tube 6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "5",
+      "Push Fit Connector L 6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Push Fit Connector T 6",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Push Fit Connector Straight 4mm",
+      "TRUE",
+      "why is it here?"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "Cable Tie",
+      "TRUE",
+      "where are the cable ties attached?"
+    ],
+    [
+      "72",
+      "Prepare back doors",
+      "",
+      "2",
+      "Back Door",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "Fix the handles to the door with glue.",
+      "",
+      "H2"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "Back Handle",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "Back Key Lock",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "None",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "6",
+      "Back Hinge",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "Countersunk Screw M8-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "Washer M8",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "Lock Nut M8",
+      "TRUE"
+    ],
+    [
+      "73",
+      "Fix back covers and doors",
+      "",
+      "1",
+      "Back Cover Right",
+      "TRUE",
+      "L-I removed the prepared part",
+      "",
+      "",
+      "",
+      "Pay attention to the position of the back covers. They are not symmetrical."
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Back Cover Middle",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Back Cover Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "12",
+      "Countersunk Screw M8-20",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "16",
+      "B-screw M5-8",
+      "TRUE"
+    ],
+    [
+      "74",
+      "Fix roof panels",
+      "",
+      "1",
+      "Roof Panel Back Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Roof Panel Back Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Roof Panel Front Left",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Roof Panel Front Right",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "4",
+      "B-screw M8-16",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "1",
+      "Exhaust Connector",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "52",
+      "B-screw M5-8",
+      "TRUE"
+    ],
+    [
+      "75",
+      "Fix exhaust tube",
+      "",
+      "2",
+      "Exhaust Tube",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "15",
+      "Cable Tie",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "5",
+      "Pipe Clamp",
+      "TRUE"
+    ],
+    [
+      "76",
+      "Fix front panel",
+      "",
+      "1",
+      "Front Panel",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "The front screw support are glued to the front panel."
+    ],
+    [
+      "",
+      "",
+      "",
+      "11",
+      "B-screw M5-100",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "11",
+      "Front Screw Support",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "2",
+      "POM Fillet",
+      "TRUE",
+      "",
+      "",
+      "",
+      "",
+      "The POM Fillets need to be glued too"
+    ],
+    [
+      "77",
+      "Fix side panels",
+      "",
+      "2",
+      "Side Panel",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "20",
+      "B-screw M5-8",
+      "TRUE"
+    ],
+    [
+      "78",
+      "Fix side back panel",
+      "",
+      "2",
+      "Side Back Panel",
+      "TRUE"
+    ],
+    [
+      "",
+      "",
+      "",
+      "24",
+      "B-screw M5-8",
+      "TRUE"
+    ],
+    [
+      "",
+      "END",
+      "",
+      "",
+      "",
+      "FALSE"
+    ]
+  ]
+}

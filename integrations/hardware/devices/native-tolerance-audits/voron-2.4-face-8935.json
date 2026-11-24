@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "id": "voron-2.4-original-face-8935",
+  "source": {
+    "repository": "VoronDesign/Voron-2",
+    "revision": "7b32e405f0719881cca782500c822e01e3b16bf2",
+    "stepArchive": "CAD/Voron_2.4r2_Assembly_STEP.zip",
+    "stepFile": "Voron_2.4r2_Assembly.step",
+    "stepSha256": "06b372e40217caa1a7d1f516cb74887247f809e41e1e389f740f290e98441b55",
+    "stepBytes": 241522213,
+    "faceIndex": 8935,
+    "diagnosticBrepSha256": "be5f86c02fc5a518ae29d3e6d8ad8b7166fe86b6894c46a4ac1d0855a5f393ac",
+    "fixture": "../fixtures/voron-native-refinement/face-8935.brep",
+    "license": "GPL-3.0",
+    "licenseFile": "../licenses/voron-2.4/LICENSE"
+  },
+  "expectedTopology": {
+    "surface": "Geom_BSplineSurface",
+    "uDegree": 3,
+    "vDegree": 3,
+    "uPoles": 9,
+    "vPoles": 14,
+    "uKnots": 5,
+    "vKnots": 11,
+    "wireCount": 1,
+    "edgeOccurrences": 2,
+    "uniqueVertices": 2,
+    "orientation": "TopAbs_Orientation.TopAbs_FORWARD",
+    "faceToleranceMillimetres": 1e-07,
+    "uvBounds": [
+      0.60751784938965,
+      0.6188584695325092,
+      -5.03555758850258e-08,
+      1.176861687150823e-08
+    ]
+  },
+  "originalEdges": [
+    {
+      "orientation": "TopAbs_Orientation.TopAbs_REVERSED",
+      "edgeToleranceMillimetres": 4.05717822155084e-05,
+      "degree": 1,
+      "rational": false,
+      "poles": [
+        [
+          0.6075178493896823,
+          5.379216422258184e-15
+        ],
+        [
+          0.6188584695325092,
+          1.176861687150823e-08
+        ]
+      ],
+      "knots": [
+        1.474405363655578,
+        1.4950787427764327
+      ],
+      "endpoints": [
+        {
+          "end": "first",
+          "uv": [
+            0.6075178493896835,
+            5.379217560287923e-15
+          ],
+          "vertexToleranceMillimetres": 0.000636696236452917,
+          "vertexPoint": [
+            108.47535470426567,
+            123.81227114630478,
+            70.50768077191452
+          ],
+          "surfacePoint": [
+            108.4753546708035,
+            123.81227114272285,
+            70.50767959825323
+          ],
+          "curvePoint": [
+            108.47535467080351,
+            123.81227114272288,
+            70.50767959825322
+          ],
+          "vertexToSurfaceDistanceMillimetres": 1.1741436745848404e-06,
+          "curveToSurfaceDistanceMillimetres": 3.4809342861069267e-14,
+          "curveToVertexDistanceMillimetres": 1.1741436882981535e-06
+        },
+        {
+          "end": "last",
+          "uv": [
+            0.6188584695325078,
+            1.1768616871506713e-08
+          ],
+          "vertexToleranceMillimetres": 0.00033159155100821,
+          "vertexPoint": [
+            108.44617270459051,
+            123.83268244009952,
+            70.50780052829563
+          ],
+          "surfacePoint": [
+            108.44618481863333,
+            123.83270003880288,
+            70.50767885352715
+          ],
+          "curvePoint": [
+            108.44616184891485,
+            123.83266660421117,
+            70.50767959965145
+          ],
+          "vertexToSurfaceDistanceMillimetres": 0.00012353628486419863,
+          "curveToSurfaceDistanceMillimetres": 4.0571376501622246e-05,
+          "curveToVertexDistanceMillimetres": 0.00012244328498009494
+        }
+      ]
+    },
+    {
+      "orientation": "TopAbs_Orientation.TopAbs_FORWARD",
+      "edgeToleranceMillimetres": 0.00033159155100821,
+      "degree": 1,
+      "rational": false,
+      "poles": [
+        [
+          0.5565696505230121,
+          6.07553232743604e-13
+        ],
+        [
+          0.6188219371009916,
+          -5.03555758850258e-08
+        ]
+      ],
+      "knots": [
+        -0.13866274441734,
+        -0.119095943498723
+      ],
+      "endpoints": [
+        {
+          "end": "first",
+          "uv": [
+            0.60751784938965,
+            -4.121164325724283e-08
+          ],
+          "vertexToleranceMillimetres": 0.000636696236452917,
+          "vertexPoint": [
+            108.47535470426567,
+            123.81227114630478,
+            70.50768077191452
+          ],
+          "surfacePoint": [
+            108.47535474493512,
+            123.81227115065816,
+            70.50768219836372
+          ],
+          "curvePoint": [
+            108.47532437704615,
+            123.81230052839925,
+            70.50801108359799
+          ],
+          "vertexToSurfaceDistanceMillimetres": 1.4270354875519471e-06,
+          "curveToSurfaceDistanceMillimetres": 0.0003315882351215944,
+          "curveToVertexDistanceMillimetres": 0.00033299978371756405
+        },
+        {
+          "end": "last",
+          "uv": [
+            0.6188219371009916,
+            -5.03555758850258e-08
+          ],
+          "vertexToleranceMillimetres": 0.00033159155100821,
+          "vertexPoint": [
+            108.44617270459051,
+            123.83268244009952,
+            70.50780052829563
+          ],
+          "surfacePoint": [
+            108.44627948692502,
+            123.83263508510491,
+            70.50768279211097
+          ],
+          "curvePoint": [
+            108.44627948692636,
+            123.83263508510687,
+            70.50768279211093
+          ],
+          "vertexToSurfaceDistanceMillimetres": 0.00016585165557537833,
+          "curveToSurfaceDistanceMillimetres": 2.3732127374387346e-12,
+          "curveToVertexDistanceMillimetres": 0.00016585165590575566
+        }
+      ]
+    }
+  ],
+  "nativeMeshing": {
+    "package": "cadquery-ocp",
+    "version": "7.8.1.1.post1",
+    "linearDeflectionMillimetres": 0.001,
+    "angularDeflectionRadians": 0.028460498941515415,
+    "expectedNodes": 6,
+    "expectedTriangles": 4,
+    "projectOrReplaceNodes": false
+  },
+  "referenceAreaEvidence": {
+    "signedAdaptiveIntegralSquareMillimetres": -2.350275357601294e-08,
+    "commonUInterval": [
+      0.6075178493896835,
+      0.6188219371009916
+    ],
+    "independentCommonDomainJacobianIntegralSquareMillimetres": 1.159944000884323e-07,
+    "integrationConvergenceUIntervals": [
+      16,
+      32,
+      64,
+      128,
+      256
+    ],
+    "explanation": "The two original linear B-spline pcurves have gaps at their shared topological vertices. Their 3D representations close only within the original edge and vertex tolerances. The negative signed GProp integral is not a reliable unsigned area reference; the overlapping original pcurve domain alone has a larger positive Jacobian integral. No missing UV cap is invented or added."
+  },
+  "sampledAuditPolicy": {
+    "originalEdgeIntervals": 64,
+    "nativeBoundarySegmentIntervals": 64,
+    "triangleBarycentricOrder": 40,
+    "entityAttribution": "A native node must match an original shared 3D vertex or a point on its original 3D edge at the mesh pcurve parameter. A vertex keeps its own declared tolerance; other boundary nodes use their original edge tolerance.",
+    "sampleAllowance": "At each native boundary chord or triangle sample, interpolate only its actual endpoint/node original entity tolerances with the same linear/barycentric weights. Compare the original kernel point to its original 3D curve or exact original surface. This is a recorded sample audit, not a proved whole-domain bound or face-only tolerance certification.",
+    "noGlobalMaximumTolerance": true,
+    "noAreaCertification": true,
+    "noBoundaryReconstruction": true
+  },
+  "limitation": "One original microscopic face is retained with the unchanged original OCCT mesh under its authored edge/vertex precision. It is not certified to the normal 0.5% area criterion and is not silently deleted, enlarged, reprojected or given reconstructed closing edges."
+}

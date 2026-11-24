@@ -1,0 +1,212 @@
+{
+  "verificationKind": "CPU original-surface tessellation; not WebGL visual acceptance",
+  "source": {
+    "kind": "derived-diagnostic-extract-of-original-CAD-face",
+    "repository": "VoronDesign/Voron-2",
+    "revision": "7b32e405f0719881cca782500c822e01e3b16bf2",
+    "sourceArchive": "CAD/Voron_2.4r2_Assembly_STEP.zip",
+    "sourceFile": "Voron_2.4r2_Assembly.step",
+    "license": "GPL-3.0",
+    "licenseFile": "../../licenses/voron-2.4/LICENSE",
+    "extraction": "OCP STEPCAFControl_Reader followed by BRepTools.Write_s for unmeshed original TopoDS_Face occurrences. Original analytic surface, wire, edges, placement and orientation retained; no reconstructed geometry. Ordinals identify the fixed converter traversal, not an upstream part identifier.",
+    "sourceManifest": "../../frozen-sources/voron-2.4.json",
+    "files": [
+      {
+        "path": "face-38016.brep",
+        "sourceFaceOrdinal": 38016,
+        "sha256": "a78849906484d9402a3dd562f235494994686ad8b7fe2e9e554d7aa9649c847f",
+        "originalAreaSquareMillimetres": 21.623897968547674
+      },
+      {
+        "path": "face-38509.brep",
+        "sourceFaceOrdinal": 38509,
+        "sha256": "c7ec5af5841305dbbf7cbc83dcd816d79c13b310901bb2f19299490e586928bc",
+        "originalAreaSquareMillimetres": 34.08801934301993
+      },
+      {
+        "path": "face-38510.brep",
+        "sourceFaceOrdinal": 38510,
+        "sha256": "8911b30b92d74dd905bca60be5a1e0633d3410b6fc7c4a8498696f6ae0b01469",
+        "originalAreaSquareMillimetres": 34.08801934302069
+      }
+    ],
+    "sourceArchiveBytes": 41533391,
+    "sourceArchiveSha256": "36c6c58e096aa89aa05a0ef22f3b49cbceedc950424332772461ab0c779cc1c6",
+    "sourceFileBytes": 241522213,
+    "sourceFileSha256": "06b372e40217caa1a7d1f516cb74887247f809e41e1e389f740f290e98441b55",
+    "sourceUrl": "https://github.com/VoronDesign/Voron-2/blob/7b32e405f0719881cca782500c822e01e3b16bf2/CAD/Voron_2.4r2_Assembly_STEP.zip",
+    "licenseStatement": "These diagnostic BRep files are extracts derived from the original GPL-3.0 Voron CAD. Their original geometry and upstream copyright/license remain applicable. The separate tessellation helper is newly written adapter code, not upstream Voron software.",
+    "extractor": "cadquery-ocp 7.8.1.1.post1; STEPCAFControl_Reader with original assembly locations, TopExp face traversal, BRepTools.Write_s"
+  },
+  "helperSha256": "8d6fe1a5e052239057ef7a521cfec3708edcd11414bbe978e65bddf575a3facc",
+  "runtime": "cadquery-ocp 7.8.1.1.post1",
+  "tests": {
+    "command": "python -m unittest discover -s integrations/hardware/devices -p 'test_*cone_tessellation.py' -v",
+    "passed": 24,
+    "failed": 0,
+    "newSegmentedConeTests": 8,
+    "unchangedApexConeTests": 9,
+    "unchangedFourEdgeConeTests": 7
+  },
+  "faces": [
+    {
+      "sourceFaceOrdinal": 38016,
+      "fixtureSha256Before": "a78849906484d9402a3dd562f235494994686ad8b7fe2e9e554d7aa9649c847f",
+      "fixtureSha256After": "a78849906484d9402a3dd562f235494994686ad8b7fe2e9e554d7aa9649c847f",
+      "method": "original-segmented-periodic-cone-triangulation",
+      "areaSquareMillimetres": 21.623897968547674,
+      "meshAreaSquareMillimetres": 21.603476763435168,
+      "analyticAreaSquareMillimetres": 21.623897968547944,
+      "relativeAreaError": 0.0009443813110017646,
+      "linearDeflectionMillimetres": 0.05,
+      "angularDeflectionRadians": 0.2,
+      "maxSampledDeviationMillimetres": 0.028183797367269094,
+      "analyticMaxLinearDeviationBoundMillimetres": 0.031174960772002956,
+      "maxOriginalBoundaryDeviationMillimetres": 5.684341886080802e-14,
+      "maxOriginalArcEndpointDeviationMillimetres": 3.0664673470028113e-14,
+      "uvBounds": [
+        -3.1415926535898233,
+        3.1415926535898073,
+        0.2334866591477731,
+        1.8858537854245228
+      ],
+      "uSegments": 66,
+      "originalEdgeOccurrences": 5,
+      "originalRingArcCounts": [
+        2,
+        1
+      ],
+      "originalUPartitions": [
+        -3.1415926535898233,
+        -1.5707963267948934,
+        3.1415926535898073
+      ],
+      "partitionSegments": [
+        17,
+        49
+      ],
+      "nodes": 134,
+      "triangles": 132,
+      "validation": {
+        "singleOriginalWire": true,
+        "twoOriginalSeamEdges": true,
+        "twoGapFreeCompleteOriginalRings": true,
+        "noApexOrCrossedNappe": true,
+        "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+        "original3dEdgesMatchPcurves": true,
+        "boundaryOnOriginalFace": true,
+        "everyTriangleClassifiedOnOriginalFace": true,
+        "triangleWindingMatchesOriginalSurfaceNormals": true,
+        "faceOrientationRetainedForStandardExporter": true,
+        "relativeAreaErrorBelowHalfPercent": true,
+        "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+      }
+    },
+    {
+      "sourceFaceOrdinal": 38509,
+      "fixtureSha256Before": "c7ec5af5841305dbbf7cbc83dcd816d79c13b310901bb2f19299490e586928bc",
+      "fixtureSha256After": "c7ec5af5841305dbbf7cbc83dcd816d79c13b310901bb2f19299490e586928bc",
+      "method": "original-segmented-periodic-cone-triangulation",
+      "areaSquareMillimetres": 34.08801934301993,
+      "meshAreaSquareMillimetres": 34.05485859765058,
+      "analyticAreaSquareMillimetres": 34.088019343020775,
+      "relativeAreaError": 0.0009727976576069668,
+      "linearDeflectionMillimetres": 0.05,
+      "angularDeflectionRadians": 0.2,
+      "maxSampledDeviationMillimetres": 0.03767783950763794,
+      "analyticMaxLinearDeviationBoundMillimetres": 0.041400982611347996,
+      "maxOriginalBoundaryDeviationMillimetres": 1.7053025658242404e-13,
+      "maxOriginalArcEndpointDeviationMillimetres": 7.785632405731891e-14,
+      "uvBounds": [
+        -3.1415926535898127,
+        3.1415926535898393,
+        -1.9728279195105167,
+        0.21920310216783712
+      ],
+      "uSegments": 65,
+      "originalEdgeOccurrences": 5,
+      "originalRingArcCounts": [
+        2,
+        1
+      ],
+      "originalUPartitions": [
+        -3.1415926535898127,
+        -0.6200902136449167,
+        3.1415926535898393
+      ],
+      "partitionSegments": [
+        26,
+        39
+      ],
+      "nodes": 132,
+      "triangles": 130,
+      "validation": {
+        "singleOriginalWire": true,
+        "twoOriginalSeamEdges": true,
+        "twoGapFreeCompleteOriginalRings": true,
+        "noApexOrCrossedNappe": true,
+        "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+        "original3dEdgesMatchPcurves": true,
+        "boundaryOnOriginalFace": true,
+        "everyTriangleClassifiedOnOriginalFace": true,
+        "triangleWindingMatchesOriginalSurfaceNormals": true,
+        "faceOrientationRetainedForStandardExporter": true,
+        "relativeAreaErrorBelowHalfPercent": true,
+        "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+      }
+    },
+    {
+      "sourceFaceOrdinal": 38510,
+      "fixtureSha256Before": "8911b30b92d74dd905bca60be5a1e0633d3410b6fc7c4a8498696f6ae0b01469",
+      "fixtureSha256After": "8911b30b92d74dd905bca60be5a1e0633d3410b6fc7c4a8498696f6ae0b01469",
+      "method": "original-segmented-periodic-cone-triangulation",
+      "areaSquareMillimetres": 34.08801934302069,
+      "meshAreaSquareMillimetres": 34.05485441943249,
+      "analyticAreaSquareMillimetres": 34.08801934302067,
+      "relativeAreaError": 0.0009729202290831505,
+      "linearDeflectionMillimetres": 0.05,
+      "angularDeflectionRadians": 0.2,
+      "maxSampledDeviationMillimetres": 0.03766741422883831,
+      "analyticMaxLinearDeviationBoundMillimetres": 0.04138853467913413,
+      "maxOriginalBoundaryDeviationMillimetres": 8.526512829121202e-14,
+      "maxOriginalArcEndpointDeviationMillimetres": 3.552713678800501e-14,
+      "uvBounds": [
+        3.141592653589747,
+        9.424777960769378,
+        -1.9728279195104965,
+        0.21920310216784342
+      ],
+      "uSegments": 65,
+      "originalEdgeOccurrences": 5,
+      "originalRingArcCounts": [
+        2,
+        1
+      ],
+      "originalUPartitions": [
+        3.141592653589747,
+        4.092298766739773,
+        9.424777960769378
+      ],
+      "partitionSegments": [
+        10,
+        55
+      ],
+      "nodes": 132,
+      "triangles": 130,
+      "validation": {
+        "singleOriginalWire": true,
+        "twoOriginalSeamEdges": true,
+        "twoGapFreeCompleteOriginalRings": true,
+        "noApexOrCrossedNappe": true,
+        "allOriginalArcEndpointsRetainedWithinCadTolerance": true,
+        "original3dEdgesMatchPcurves": true,
+        "boundaryOnOriginalFace": true,
+        "everyTriangleClassifiedOnOriginalFace": true,
+        "triangleWindingMatchesOriginalSurfaceNormals": true,
+        "faceOrientationRetainedForStandardExporter": true,
+        "relativeAreaErrorBelowHalfPercent": true,
+        "originalAnalyticSurfaceTopologyAndPlacementRetained": true
+      }
+    }
+  ]
+}

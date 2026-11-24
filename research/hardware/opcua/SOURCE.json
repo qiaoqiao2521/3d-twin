@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/roshbeng/opcua_fusion_test_servers_and_hardware",
+  "revision": "d9ab21ced0a26e09a213a218249ac1938340bae6",
+  "license": "MIT",
+  "files": [
+    {
+      "path": "opcuaprojectconveyor/opcua_conveyor_server.py",
+      "bytes": 3604,
+      "sha256": "232cd5c00d8a5810732e68fc92efe106984edfad118707e0f7329f107b0749ab"
+    },
+    {
+      "path": "opcuaprojectcobot/opcua_cobot_server.py",
+      "bytes": 6755,
+      "sha256": "6faba4d53963e6d4968f8c03c608501ddc5a075d08a8d3b94a839b092c1de3b9"
+    }
+  ],
+  "scope": "Two byte-identical operation sources used by the isolated result-semantics study. Full source archive remains in hardware/opcua-conveyor originals."
+}

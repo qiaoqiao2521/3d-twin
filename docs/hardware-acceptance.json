@@ -1,0 +1,393 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-11-24T17:27:06.456192+00:00",
+  "repository": "qiaoqiao2521/3d-twin",
+  "testedBaseCommit": "34108d40e7af2ffc54531a792f3cf857e2cc2a95",
+  "testedTree": "Base commit plus the integration working tree recorded with this report; this file does not certify a public deployment.",
+  "runtime": {
+    "node": "24.22.3",
+    "npm": "11.19.1",
+    "bun": "1.3.3"
+  },
+  "defaultDevelopmentAndPreviewPort": 5197,
+  "summary": {
+    "assets": 9,
+    "originalFiles": 15743,
+    "completeSourceArchives": 13,
+    "localViews": 25,
+    "viewFormats": {
+      "gltf": 9,
+      "urdf": 11,
+      "html": 5
+    }
+  },
+  "commands": [
+    {
+      "command": "npm ci --no-audit --no-fund",
+      "status": "passed",
+      "exitCode": 0,
+      "executionLogSha256": "7d8a818ae6b602abfd4b43f293940974d381e045a97f68d7aec2d7be7b855338"
+    },
+    {
+      "command": "npm run lint",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "command": "npm exec --yes --package=bun@1.3.3 -- bun test",
+      "status": "passed",
+      "exitCode": 0,
+      "passed": 191,
+      "failed": 0,
+      "executionLogSha256": "18bcfc7580b42614d5080565ffa24057a9063261c00f121a168bbcfafcb5fb8f"
+    },
+    {
+      "command": "npm run test:hardware",
+      "status": "passed",
+      "exitCode": 0,
+      "passed": 28,
+      "failed": 0,
+      "executionLogSha256": "8a591f082bfad9353c4b9ef341bb53f21d73d8e81102f12dc54b8698d9ff8528"
+    },
+    {
+      "command": "npm run test:hardware:cad",
+      "status": "passed",
+      "exitCode": 0,
+      "passed": 39,
+      "failed": 0,
+      "executionLogSha256": "d771c1c945d43a9c3f30777c6f2dd9aa3eb5bbe5ab6c7095b12dda5d6baa9e67"
+    },
+    {
+      "command": "npm run test:hardware:opcua",
+      "status": "passed",
+      "exitCode": 0,
+      "passed": 8,
+      "failed": 0,
+      "executionLogSha256": "ec3a298ed1e359df1e5fd4d1b0cb90ff04aa67c8965e287b943a695339d8dddc"
+    },
+    {
+      "command": "npm run test:warehouse",
+      "status": "passed",
+      "exitCode": 0,
+      "passed": 32,
+      "failed": 0,
+      "executionLogSha256": "cb49acf634564dc73617fa8384a47ad610d9dcb5c0f9d81cce13d6ed29c366e4"
+    },
+    {
+      "command": "npm run test:open-demos",
+      "status": "passed",
+      "exitCode": 0,
+      "passed": 12,
+      "failed": 0,
+      "executionLogSha256": "c5b1063fcaabae5b60932f3d7e7b16217c486120fbb73b6bdf8723059623831d"
+    },
+    {
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "executionLogSha256": "08366968d5e48329d721f5f0a3db9e301db717fc85f5e6605af7fba4967e739b"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "exitCode": 0
+    }
+  ],
+  "testCountNote": "Commands overlap; pass counts are not additive independent test totals.",
+  "hardwareHttp": {
+    "requests": 1991,
+    "hashedResourceResponses": 1955,
+    "hashedResourceBytes": 5393039085,
+    "hostRoutes": 27,
+    "expectedMissing404": 9,
+    "bytesExcludeRouteAndMissingProbeBodies": true
+  },
+  "hardwareKinematics": {
+    "manifests": 9,
+    "urdfModels": 11,
+    "meshes": 167,
+    "triangles": 3083753,
+    "drivenJoints": 72,
+    "mimicJoints": 10,
+    "motionChecks": 216,
+    "limitChecks": 132,
+    "mimicChecks": 340,
+    "resetChecks": 72
+  },
+  "existingRegression": {
+    "robotics": {
+      "models": 14,
+      "parsedJoints": 510,
+      "exercisedMovableJoints": 289,
+      "httpRequests": 2684,
+      "httpBytes": 101601319,
+      "missingArchiveEntries": 60
+    },
+    "smartWarehouse": {
+      "originalFiles": 55,
+      "httpChecks": 10
+    },
+    "openDemos": {
+      "hashedResources": 87,
+      "routeChecks": 11,
+      "httpChecks": 98
+    },
+    "automotive": {
+      "httpRequests": 34,
+      "httpBytes": 9862908,
+      "allHttp200": true
+    }
+  },
+  "assets": [
+    {
+      "id": "odri",
+      "route": "?workspace=hardware&asset=odri",
+      "originalFiles": 3874,
+      "completeSourceArchives": 2,
+      "models": [
+        {
+          "id": "actuator",
+          "format": "gltf"
+        },
+        {
+          "id": "solo12",
+          "format": "html"
+        },
+        {
+          "id": "leg",
+          "format": "html"
+        },
+        {
+          "id": "body",
+          "format": "html"
+        }
+      ],
+      "httpRequests": 425,
+      "httpBytes": 953677202
+    },
+    {
+      "id": "so101",
+      "route": "?workspace=hardware&asset=so101",
+      "originalFiles": 241,
+      "completeSourceArchives": 1,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf"
+        },
+        {
+          "id": "follower",
+          "format": "urdf"
+        },
+        {
+          "id": "camera",
+          "format": "urdf"
+        },
+        {
+          "id": "leader",
+          "format": "urdf"
+        },
+        {
+          "id": "old-calibration",
+          "format": "urdf"
+        }
+      ],
+      "httpRequests": 71,
+      "httpBytes": 156553305
+    },
+    {
+      "id": "thor",
+      "route": "?workspace=hardware&asset=thor",
+      "originalFiles": 402,
+      "completeSourceArchives": 2,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf"
+        },
+        {
+          "id": "kinematic",
+          "format": "urdf"
+        }
+      ],
+      "httpRequests": 121,
+      "httpBytes": 476730886
+    },
+    {
+      "id": "parol6",
+      "route": "?workspace=hardware&asset=parol6",
+      "originalFiles": 9361,
+      "completeSourceArchives": 2,
+      "models": [
+        {
+          "id": "flange",
+          "format": "urdf"
+        },
+        {
+          "id": "msg",
+          "format": "urdf"
+        },
+        {
+          "id": "msg-tpu",
+          "format": "urdf"
+        },
+        {
+          "id": "ssg48",
+          "format": "urdf"
+        },
+        {
+          "id": "ssg48-stock",
+          "format": "urdf"
+        },
+        {
+          "id": "pneumatic",
+          "format": "urdf"
+        }
+      ],
+      "httpRequests": 538,
+      "httpBytes": 531148201
+    },
+    {
+      "id": "olsk-small-cnc",
+      "route": "?workspace=hardware&asset=olsk-small-cnc",
+      "originalFiles": 147,
+      "completeSourceArchives": 1,
+      "models": [
+        {
+          "id": "original-app",
+          "format": "html"
+        },
+        {
+          "id": "original-assembly",
+          "format": "gltf"
+        }
+      ],
+      "httpRequests": 241,
+      "httpBytes": 881408539
+    },
+    {
+      "id": "olsk-large-cnc",
+      "route": "?workspace=hardware&asset=olsk-large-cnc",
+      "originalFiles": 129,
+      "completeSourceArchives": 1,
+      "models": [
+        {
+          "id": "original-app",
+          "format": "html"
+        },
+        {
+          "id": "original-assembly",
+          "format": "gltf"
+        }
+      ],
+      "httpRequests": 263,
+      "httpBytes": 879281278
+    },
+    {
+      "id": "voron-2.4",
+      "route": "?workspace=hardware&asset=voron-2.4",
+      "originalFiles": 211,
+      "completeSourceArchives": 1,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf"
+        }
+      ],
+      "httpRequests": 32,
+      "httpBytes": 497024459
+    },
+    {
+      "id": "jubilee",
+      "route": "?workspace=hardware&asset=jubilee",
+      "originalFiles": 1329,
+      "completeSourceArchives": 2,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf"
+        }
+      ],
+      "httpRequests": 232,
+      "httpBytes": 989661355
+    },
+    {
+      "id": "opcua-conveyor",
+      "route": "?workspace=hardware&asset=opcua-conveyor",
+      "originalFiles": 49,
+      "completeSourceArchives": 1,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf"
+        },
+        {
+          "id": "cobot",
+          "format": "gltf"
+        }
+      ],
+      "httpRequests": 62,
+      "httpBytes": 26744519
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/hardware-verification.json",
+      "sha256": "13159f3fc69b998331699e8e0e4905fbffb8676f7d02b7b4edbfb5a3fd7441fb"
+    },
+    {
+      "path": "docs/hardware-kinematics-verification.json",
+      "sha256": "ae100e103a8339298b3799fa902f0cd212a0137cad8bcdd746df42c4de276c4d"
+    },
+    {
+      "path": "docs/robotics-verification.json",
+      "sha256": "400fb4d5a3cdd74aeceeaaaea43a877d2e19ca429cdc8abb591e6bbc87cf152e"
+    },
+    {
+      "path": "docs/automotive-http-verification.json",
+      "sha256": "508f6ced06b754dad7882fa6b01af4ce83226ae2e376761d5c53a583c6ceb686"
+    },
+    {
+      "path": "integrations/hardware/devices/verification/existing-scenes-http.json",
+      "sha256": "6d2ff39bccf62c877eacf99ab4124f750b1b33c9d6b820af6f7919386241dd22"
+    },
+    {
+      "path": "integrations/hardware/devices/verification/device-builds.json",
+      "sha256": "ef9d293e2d21dde5af570888a83e78bb295d455f0f22de1124fa5e20583ffed4"
+    },
+    {
+      "path": "integrations/hardware/devices/verification/jubilee-axis.json",
+      "sha256": "889f3dd731c200e3b854d0155809b952795f84239e349415bb81e3cd2dee7cda"
+    },
+    {
+      "path": "integrations/hardware/devices/verification/manual-public-access.json",
+      "sha256": "fb7eab883715c8e82be3cd7b387ada96739dc4a7244a24ac65e0eb0c12ac08c2"
+    }
+  ],
+  "acceptance": {
+    "sourceAndResourceIntegrity": "passed",
+    "typecheckAndUnitTests": "passed",
+    "fullProductionBuild": "passed",
+    "realProductionHttp": "passed",
+    "cpuUrdfKinematics": "passed",
+    "browserWebglVisual": "not-run",
+    "realMobileTouch": "not-run",
+    "cameraAndAudioExperience": "not-run",
+    "measuredGpuAndMemoryRelease": "not-run",
+    "physicalDeviceControl": "not-run",
+    "publicDeployment": "not-verified"
+  },
+  "browserBlockers": [
+    "Connected browser lacked originating browser context.",
+    "Fallback browser could not reach the workspace preview (ERR_CONNECTION_REFUSED)."
+  ],
+  "limitations": [
+    "OLSK Large original H3/H5/H6/H7/H11 model illustrations are absent upstream; text/navigation retained with visible missing status.",
+    "Voron original face 8935 retains its four native triangles; original-precision sampled audit only, no area certification or full-domain error-bound proof.",
+    "Voron original face 9004 is separately recorded as numerically degenerate, not counted as a rendered surface.",
+    "SO-101 contains 11 original Wiring_holder frame-only products; Thor contains three auxiliary infinite datum-plane nodes. Original hierarchy and source files retained.",
+    "Thor root CC-BY-SA-4.0 and native FreeCAD All rights reserved metadata discrepancy is disclosed, not declared resolved.",
+    "60 pre-existing robot archive entries remain missing and return 404; historical synthetic/adapted provenance is explicit.",
+    "CAD/URDF and original application availability do not establish hardware feedback, contact dynamics, locomotion, cutting or printing control."
+  ]
+}

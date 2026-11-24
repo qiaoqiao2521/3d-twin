@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "tests": [
+    {
+      "fixture": "two original occurrences of one original product",
+      "sourceUnchanged": true,
+      "uniqueOriginalLeafProducts": 1,
+      "originalOccurrences": 3,
+      "renderedInstances": 2,
+      "exportedMeshes": 2,
+      "faceOccurrences": 12,
+      "trianglesIncludingInstances": 24,
+      "worldMinimumMetres": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "worldMaximumMetres": [
+        4.0,
+        2.0,
+        3.0
+      ],
+      "status": "passed"
+    },
+    {
+      "sourceUpAxis": "Y",
+      "sourceDimensionsMillimetres": [
+        1000,
+        2000,
+        3000
+      ],
+      "worldMinimumMetres": [
+        0.10000000149011612,
+        0.20000000298023224,
+        0.30000001192092896
+      ],
+      "worldMaximumMetres": [
+        1.100000023841858,
+        2.200000047683716,
+        3.299999952316284
+      ],
+      "worldSpanMetres": [
+        1.0000000223517418,
+        2.0000000447034836,
+        2.9999999403953552
+      ],
+      "expectedWorldSpanMetres": [
+        1,
+        2,
+        3
+      ],
+      "namesPreserved": true,
+      "originalRedMaterialPreserved": true,
+      "triangles": 12,
+      "status": "passed"
+    },
+    {
+      "sourceUpAxis": "Z",
+      "sourceDimensionsMillimetres": [
+        1000,
+        2000,
+        3000
+      ],
+      "worldMinimumMetres": [
+        0.10000000149011612,
+        0.3000000119209285,
+        -2.200000047683717
+      ],
+      "worldMaximumMetres": [
+        1.100000023841858,
+        3.299999952316285,
+        -0.20000000298023235
+      ],
+      "worldSpanMetres": [
+        1.0000000223517418,
+        2.9999999403953566,
+        2.000000044703485
+      ],
+      "expectedWorldSpanMetres": [
+        1,
+        3,
+        2
+      ],
+      "namesPreserved": true,
+      "originalRedMaterialPreserved": true,
+      "triangles": 12,
+      "status": "passed"
+    }
+  ],
+  "successful": true
+}

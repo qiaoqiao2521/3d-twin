@@ -1,0 +1,98 @@
+{
+  "kind": "derived-diagnostic-extract-of-original-CAD-face",
+  "repository": "VoronDesign/Voron-2",
+  "revision": "7b32e405f0719881cca782500c822e01e3b16bf2",
+  "sourceArchive": "CAD/Voron_2.4r2_Assembly_STEP.zip",
+  "sourceFile": "Voron_2.4r2_Assembly.step",
+  "license": "GPL-3.0",
+  "licenseFile": "../../licenses/voron-2.4/LICENSE",
+  "extraction": "OCP STEPCAFControl_Reader followed by BRepTools.Write_s for original TopoDS_Face occurrences that require ordinary local refinement after coarse meshing. Original analytic surface, wires, edges, placement and orientation retained; no reconstructed geometry. Ordinals identify the fixed converter traversal, not upstream part IDs.",
+  "sourceManifest": "../../frozen-sources/voron-2.4.json",
+  "files": [
+    {
+      "path": "face-107578.brep",
+      "sourceFaceOrdinal": 107578,
+      "sha256": "80692f1a99a586396e4d8e4eb174acd36bb94022cebde4fc080b7eaaba291fac",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.7865272488376149
+    },
+    {
+      "path": "face-107580.brep",
+      "sourceFaceOrdinal": 107580,
+      "sha256": "391a09b5f092a162e52561f99098a1d4879bdb127eb80db06fb36143a54c878f",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.7865272488376718
+    },
+    {
+      "path": "face-107581.brep",
+      "sourceFaceOrdinal": 107581,
+      "sha256": "6753d303dd8a9091b92d79ad9b36d6305474863cd73d62f8ef93c09aa2635f43",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.7865272488363644
+    },
+    {
+      "path": "face-82560.brep",
+      "sourceFaceOrdinal": 82560,
+      "sha256": "cd0b33e2e7091ff120dfe6de66c4bcbfe140452aecf3c2f051034f6b2c3b6183",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.7865272488376149
+    },
+    {
+      "path": "face-82562.brep",
+      "sourceFaceOrdinal": 82562,
+      "sha256": "774de3282d995153547f8e74e0f160ba9a67b7cd3b2d7d0e6e3896da69dc2aab",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.7865272488376718
+    },
+    {
+      "path": "face-82563.brep",
+      "sourceFaceOrdinal": 82563,
+      "sha256": "2407b6f77bd91fcb2400d4cbf1eb707d3d905019e5b09e829499ff95c2806476",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.7865272488363644
+    },
+    {
+      "path": "face-83597.brep",
+      "sourceFaceOrdinal": 83597,
+      "sha256": "b41ee2bf4e99b7ca373d28041f72049158b769bba613609d955b51d23bb5781c",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.7865272488376149
+    },
+    {
+      "path": "face-83599.brep",
+      "sourceFaceOrdinal": 83599,
+      "sha256": "981e71bea15e064a22d6fbecb5520b2858db4be6d97a9b21561f6b451b007bb6",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.7865272488376718
+    },
+    {
+      "path": "face-83600.brep",
+      "sourceFaceOrdinal": 83600,
+      "sha256": "8bd78efe669a4947acdc3da927c7d58997f8d5294df544878737893d36cec949",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.7865272488363644
+    },
+    {
+      "path": "face-8935.brep",
+      "sourceFaceOrdinal": 8935,
+      "sha256": "be5f86c02fc5a518ae29d3e6d8ad8b7166fe86b6894c46a4ac1d0855a5f393ac",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_BSplineSurface",
+      "defaultNonAdaptiveAreaSquareMillimetres": -2.3502753576012887e-08
+    },
+    {
+      "path": "face-9019.brep",
+      "sourceFaceOrdinal": 9019,
+      "sha256": "5e2aadd2c825c40aefb4d2803f90bc1215ab2c75b6ea4af037d0a6fb8647e8c5",
+      "surface": "GeomAbs_SurfaceType.GeomAbs_Plane",
+      "defaultNonAdaptiveAreaSquareMillimetres": 0.0005528233351034251
+    }
+  ],
+  "sourceArchiveBytes": 41533391,
+  "sourceArchiveSha256": "36c6c58e096aa89aa05a0ef22f3b49cbceedc950424332772461ab0c779cc1c6",
+  "sourceFileBytes": 241522213,
+  "sourceFileSha256": "06b372e40217caa1a7d1f516cb74887247f809e41e1e389f740f290e98441b55",
+  "sourceUrl": "https://github.com/VoronDesign/Voron-2/blob/7b32e405f0719881cca782500c822e01e3b16bf2/CAD/Voron_2.4r2_Assembly_STEP.zip",
+  "licenseStatement": "These diagnostic BRep files are extracts derived from the original GPL-3.0 Voron CAD. Their original geometry and upstream copyright/license remain applicable. The separate tessellation helper is newly written adapter code, not upstream Voron software.",
+  "extractor": "cadquery-ocp 7.8.1.1.post1; STEPCAFControl_Reader with original assembly locations, TopExp face traversal, BRepTools.Write_s",
+  "areaNote": "Default non-adaptive integration is retained only as a diagnostic observation. Native refinement must compare mesh area to a stable adaptive integral of the original face; the microscopic B-spline requires its own numerical-tolerance analysis."
+}

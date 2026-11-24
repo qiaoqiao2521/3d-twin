@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- LOCAL_GENERATED_DEMONSTRATION_NOT_UPSTREAM: 历史本地生成的示意链，非原厂/上游原件；不可用于真实结构或控制验证。真实来源请从档案目录选择 PRIMARY 文件。 -->
 <!-- =================================================================================== -->
-<!-- 现实基准原件: unitree_ros (robots/h2_plus/H2_Plus.urdf)                                          -->
+<!-- 历史生成示意（非上游原件）: unitree_ros (robots/h2_plus/H2_Plus.urdf)                                          -->
 <!-- 机型描述: 宇树科技官方 ROS URDF 全系库（Go1 / Go2 / B1 / B2 / A1 / Aliengo / Laikago / H1 / G1 29-DOF 灵巧手 / Z1 机械臂）                                                                   -->
-<!-- 运动学拓扑统计: 98 连杆 / 97 关节                                                    -->
+<!-- 历史目录机型统计（并非本示意链）: 98 连杆 / 97 关节                                                    -->
 <!-- =================================================================================== -->
 <robot name="unitree_ros">
   <link name="base_link">

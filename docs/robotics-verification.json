@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "date": "2026-11-24T17:18:09.931Z",
+  "node": "v24.22.3",
+  "archive": {
+    "repositories": 39,
+    "indexedKinematic": 1175,
+    "indexedDocuments": 1538,
+    "availableKinematic": 1175,
+    "availableDocuments": 1478,
+    "missing": 60,
+    "synthetic": 31,
+    "adapted": 3,
+    "localDocuments": 63
+  },
+  "models": [
+    {
+      "id": "sar",
+      "baseline": "01-履带越障搜救机器人/Search-and-Rescue-Robot/urdf/sar_urdf.urdf",
+      "nodes": 37,
+      "meshes": 27,
+      "triangles": 75646,
+      "parsedJoints": 19,
+      "boundJoints": 19,
+      "exercisedMovableJoints": 16,
+      "glbSha256": "1ea17d9c2fa0b57334fbac6cdf2f248f56a8ac1b543945e8a80de83a76056b05"
+    },
+    {
+      "id": "rexrov2",
+      "baseline": "02-水下机器人ROV与深海作业系统/rexrov2/rexrov2_description/robots/rexrov2_oberon7.xacro",
+      "nodes": 74,
+      "meshes": 66,
+      "triangles": 120476,
+      "parsedJoints": 15,
+      "boundJoints": 15,
+      "exercisedMovableJoints": 14,
+      "glbSha256": "00a21346ce25e9120b9cf18016f5bcc8dc2872c993be700be583e77bed9ca90f"
+    },
+    {
+      "id": "bluerov2",
+      "baseline": "02-水下机器人ROV与深海作业系统/bluerov2/bluerov2_description/urdf/thrusters.xacro",
+      "nodes": 27,
+      "meshes": 21,
+      "triangles": 275838,
+      "parsedJoints": 7,
+      "boundJoints": 7,
+      "exercisedMovableJoints": 7,
+      "glbSha256": "5ede0cf2e054feea308d93cb1bcc9e8f8f1914a79fab69fa8d4541d96d0cd74f"
+    },
+    {
+      "id": "unitree_g1",
+      "baseline": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/g1_description/g1_29dof_with_hand_rev_1_0.urdf",
+      "nodes": 55,
+      "meshes": 45,
+      "triangles": 103381,
+      "parsedJoints": 53,
+      "boundJoints": 53,
+      "exercisedMovableJoints": 43,
+      "glbSha256": "7ad8f9e29f6b53f93353a1f5d6484e2077a7bd4a584badb3e731e4866b63ba51"
+    },
+    {
+      "id": "unitree_go2",
+      "baseline": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/go2_description/urdf/go2_description.urdf",
+      "nodes": 43,
+      "meshes": 10,
+      "triangles": 77862,
+      "parsedJoints": 41,
+      "boundJoints": 41,
+      "exercisedMovableJoints": 12,
+      "glbSha256": "404d00fd8ec28347dec8d3271d7edf695292d401ed7f0b3cbcf7f8665fdc771e"
+    },
+    {
+      "id": "unitree_z1",
+      "baseline": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/z1_description/xacro/z1.urdf",
+      "nodes": 11,
+      "meshes": 9,
+      "triangles": 86960,
+      "parsedJoints": 9,
+      "boundJoints": 9,
+      "exercisedMovableJoints": 7,
+      "glbSha256": "e91f88562cc9b013fe04aac40957f6dd68e77cf1572784c0e4382d504faf389e"
+    },
+    {
+      "id": "unitree_h1",
+      "baseline": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/h1_description/urdf/h1_with_hand.urdf",
+      "nodes": 53,
+      "meshes": 42,
+      "triangles": 114362,
+      "parsedJoints": 51,
+      "boundJoints": 51,
+      "exercisedMovableJoints": 45,
+      "glbSha256": "392723a733449ba3ca46cfe15d7163b23cfceb483770cd1ba737c01aaff90189"
+    },
+    {
+      "id": "unitree_b2",
+      "baseline": "03-宇树Unitree四足与人形全系_URDF/unitree_ros/robots/b2_description/urdf/b2_description.urdf",
+      "nodes": 38,
+      "meshes": 10,
+      "triangles": 53914,
+      "parsedJoints": 36,
+      "boundJoints": 36,
+      "exercisedMovableJoints": 12,
+      "glbSha256": "afc69414e21ec395a35ed816623bd067964ccf724552ecf1cf7f114c42f04293"
+    },
+    {
+      "id": "fourier_gr1",
+      "baseline": "06-双足人形具身智能机器人/Wiki-GRx-Models-FourierN1/GRX/GR1/gr1t2/basic_urdf/gr1t2.urdf",
+      "nodes": 38,
+      "meshes": 35,
+      "triangles": 255470,
+      "parsedJoints": 36,
+      "boundJoints": 36,
+      "exercisedMovableJoints": 32,
+      "glbSha256": "1c4a032aee9a7b43221e835b54d6883a960c2d5dbc072db34563131f0d9a68f3"
+    },
+    {
+      "id": "talos_humanoid",
+      "baseline": "06-双足人形具身智能机器人/talos-data/urdf/talos_full_v2.urdf",
+      "nodes": 61,
+      "meshes": 38,
+      "triangles": 121066,
+      "parsedJoints": 59,
+      "boundJoints": 59,
+      "exercisedMovableJoints": 44,
+      "glbSha256": "e9412f4ad05d1f0ba12861c5b30949caa742647beecb3326c10053654ca9ef63"
+    },
+    {
+      "id": "cassie_biped",
+      "baseline": "06-双足人形具身智能机器人/cassie_description/_首选基准原件_PRIMARY/cassie_v4.urdf",
+      "nodes": 18,
+      "meshes": 16,
+      "triangles": 210136,
+      "parsedJoints": 16,
+      "boundJoints": 16,
+      "exercisedMovableJoints": 16,
+      "glbSha256": "8c9ca082dd1ec3bddd391c08336465b1f2a06f801abd594f2d15591b2863ad5a"
+    },
+    {
+      "id": "anymal_c",
+      "baseline": "07-四足越野与移动操作复合机器人/anymal_c_simple_description/_首选基准原件_PRIMARY/anymal.urdf",
+      "nodes": 79,
+      "meshes": 27,
+      "triangles": 46232,
+      "parsedJoints": 77,
+      "boundJoints": 77,
+      "exercisedMovableJoints": 12,
+      "glbSha256": "52475b8b2dff55c74f334cc3cca1b22d0744960cfd7379c920cede3d8977b2e0"
+    },
+    {
+      "id": "baxter_dual_arm",
+      "baseline": "08-工业与协作机械臂及灵巧夹爪/baxter_common/_首选基准原件_PRIMARY/baxter.urdf",
+      "nodes": 50,
+      "meshes": 11,
+      "triangles": 65588,
+      "parsedJoints": 48,
+      "boundJoints": 48,
+      "exercisedMovableJoints": 15,
+      "glbSha256": "ca496a70ad4811ee5f6972576cba2e938add95b99abcb6e0583925b9391f6302"
+    },
+    {
+      "id": "hello_stretch",
+      "baseline": "07-四足越野与移动操作复合机器人/stretch_description/_首选基准原件_PRIMARY/stretch.urdf",
+      "nodes": 45,
+      "meshes": 30,
+      "triangles": 114382,
+      "parsedJoints": 43,
+      "boundJoints": 43,
+      "exercisedMovableJoints": 14,
+      "glbSha256": "abd65918a9da2a7afc48f4566b92a8370e0a76e07e3cef2a831b15ba568d0fe7"
+    }
+  ],
+  "parsedJoints": 510,
+  "exercisedMovableJoints": 289,
+  "http": {
+    "kind": "Vite production preview",
+    "base": "http://127.0.0.1:40551",
+    "requests": 2684,
+    "bytes": 101601319
+  },
+  "scope": "Original GLB decode, exact structural binding, CPU joint transforms, archive source status; no browser rendering, dynamics or hardware validation",
+  "browser": "not-run"
+}

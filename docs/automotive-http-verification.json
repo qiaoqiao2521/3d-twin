@@ -1,0 +1,181 @@
+{
+  "date": "2026-11-24T17:18:06.234Z",
+  "kind": "Vite production preview",
+  "origin": "http://127.0.0.1:44455/",
+  "requests": 34,
+  "bytes": 9862908,
+  "allHttp200": true,
+  "browser": "not-run",
+  "resources": [
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/manifest.json",
+      "status": 200,
+      "bytes": 614
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/index.html",
+      "status": 200,
+      "bytes": 4182
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/auto-atlas/index.html",
+      "status": 200,
+      "bytes": 646
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/v8/index.html",
+      "status": 200,
+      "bytes": 806750
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/v8/integrated.html",
+      "status": 200,
+      "bytes": 811266
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/data/catalog.json",
+      "status": 200,
+      "bytes": 6507
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/data/bindings.json",
+      "status": 200,
+      "bytes": 5177
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/data/relations.json",
+      "status": 200,
+      "bytes": 908
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/data/models.json",
+      "status": 200,
+      "bytes": 2678
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/auto-atlas/models/free_bmw_m3_e30.glb",
+      "status": 200,
+      "bytes": 2975260
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/auto-atlas/models/tesla_2018_model_3.glb",
+      "status": 200,
+      "bytes": 2957832
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/app.js",
+      "status": 200,
+      "bytes": 15623
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/contracts.js",
+      "status": 200,
+      "bytes": 7791
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/style.css",
+      "status": 200,
+      "bytes": 9111
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/LICENSE",
+      "status": 200,
+      "bytes": 1086
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/v8/LICENSE",
+      "status": 200,
+      "bytes": 1359
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/THIRD_PARTY_NOTICES.txt",
+      "status": 200,
+      "bytes": 3355
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/auto-atlas/assets/index-ROocwpTR.js",
+      "status": 200,
+      "bytes": 788516
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/auto-atlas/assets/index-Cy7mri0D.css",
+      "status": 200,
+      "bytes": 46091
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/three.module.js",
+      "status": 200,
+      "bytes": 1314681
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/postprocessing/OutputPass.js",
+      "status": 200,
+      "bytes": 2524
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/shaders/OutputShader.js",
+      "status": 200,
+      "bytes": 1490
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/postprocessing/Pass.js",
+      "status": 200,
+      "bytes": 1706
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/postprocessing/UnrealBloomPass.js",
+      "status": 200,
+      "bytes": 12410
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/shaders/LuminosityHighPassShader.js",
+      "status": 200,
+      "bytes": 1147
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/shaders/CopyShader.js",
+      "status": 200,
+      "bytes": 571
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/postprocessing/RenderPass.js",
+      "status": 200,
+      "bytes": 1941
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/postprocessing/EffectComposer.js",
+      "status": 200,
+      "bytes": 4651
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/postprocessing/MaskPass.js",
+      "status": 200,
+      "bytes": 2231
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/postprocessing/ShaderPass.js",
+      "status": 200,
+      "bytes": 1576
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/renderers/CSS2DRenderer.js",
+      "status": 200,
+      "bytes": 4701
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/utils/BufferGeometryUtils.js",
+      "status": 200,
+      "bytes": 31768
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/geometries/RoundedBoxGeometry.js",
+      "status": 200,
+      "bytes": 4625
+    },
+    {
+      "url": "http://127.0.0.1:44455/twins/automotive/vendor/three/addons/controls/OrbitControls.js",
+      "status": 200,
+      "bytes": 32134
+    }
+  ]
+}

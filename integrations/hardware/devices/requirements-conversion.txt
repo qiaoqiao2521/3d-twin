@@ -1,0 +1,4 @@
+# The OpenCascade Python bindings used by the CAD conversion recipe.
+# Native wheels are available for supported CPython/Linux platforms; a missing
+# compatible wheel is a build failure, never a substitute geometry fallback.
+cadquery-ocp==7.8.1.1.post1

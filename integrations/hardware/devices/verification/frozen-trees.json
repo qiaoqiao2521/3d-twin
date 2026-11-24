@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "completeOriginalFiles": 1865,
+  "sources": [
+    {
+      "id": "jubilee",
+      "revision": "c877bd2e889560c83da2a68479641a4f7f0d9b83",
+      "tree": "5d9a228781509281e5e52885bded06e26d8a7661",
+      "originalFiles": 808,
+      "archiveBytes": 607301523,
+      "archiveSha256": "85a84b50ba0ef8a5079a011d9ffc7158cf6d025ee1af281dcd09e3ffe3d77e20",
+      "archiveFilesVerified": 0,
+      "status": "passed"
+    },
+    {
+      "id": "olsk-large-cnc",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "tree": "ba4aa2a13f2095a222103058782a078646014f05",
+      "originalFiles": 129,
+      "archiveBytes": 386081002,
+      "archiveSha256": "d0a5453913c6e6d6a4036d692c80fe0345d225c54b467a4a01f589165b85cdaa",
+      "archiveFilesVerified": 0,
+      "status": "passed"
+    },
+    {
+      "id": "olsk-small-cnc",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "tree": "c886818baa05066cf2a0d34e4ed1bc18558d4468",
+      "originalFiles": 147,
+      "archiveBytes": 522418005,
+      "archiveSha256": "f731c233c08081fe6338a3363c81b8c6d936bf0e223b779ffcc4802fc079e001",
+      "archiveFilesVerified": 0,
+      "status": "passed"
+    },
+    {
+      "id": "opcua-conveyor",
+      "revision": "d9ab21ced0a26e09a213a218249ac1938340bae6",
+      "tree": "00289ef7e6be66dcc0afef02b5b9e5a85939511b",
+      "originalFiles": 49,
+      "archiveBytes": 9918993,
+      "archiveSha256": "6841f16148f5664d225b5b3a8a8533ea73439a2b699b0752be1851695e09d7f0",
+      "archiveFilesVerified": 0,
+      "status": "passed"
+    },
+    {
+      "id": "science-jubilee",
+      "revision": "bb918fa78f300f57cc379a80731cfca7bdb55c66",
+      "tree": "1828a2949acc239d8def80a51f4e05f77c19a731",
+      "originalFiles": 521,
+      "archiveBytes": 215637523,
+      "archiveSha256": "e69efe2669e9fe8f97f39f5da9e8504fc63c53ba80fc801499e4fce2d53ff9ae",
+      "archiveFilesVerified": 0,
+      "status": "passed"
+    },
+    {
+      "id": "voron-2.4",
+      "revision": "7b32e405f0719881cca782500c822e01e3b16bf2",
+      "tree": "dbc596af45669191e69238510a8c0be8e02617b6",
+      "originalFiles": 211,
+      "archiveBytes": 230128618,
+      "archiveSha256": "20927da42413216a8aaeda9dfec3ab38c468fdf66547868a027ec418982b48e6",
+      "archiveFilesVerified": 0,
+      "status": "passed"
+    }
+  ]
+}

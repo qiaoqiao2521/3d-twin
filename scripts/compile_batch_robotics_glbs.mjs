@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import * as THREE from 'three';
 
-const ASSETS_ROOT = '/home/muqiao/Videos/Studio/Embodied-Robotics-3D-Assets-20261109/github_repos';
+import { requireRoboticsSourceRoot } from './robotics-source-paths.mjs';
+const ASSETS_ROOT = requireRoboticsSourceRoot(['unitree_ros', 'Wiki-GRx-Models-FourierN1', 'talos-data', 'cassie_description', 'anymal_c_simple_description', 'baxter_common', 'stretch_description']);
 const GLB_DIR = path.resolve('public/robotics_glb');
 fs.mkdirSync(GLB_DIR, { recursive: true });
 
@@ -637,7 +638,7 @@ function compileRobot(spec) {
       for (let vIdx = 0; vIdx < link.visuals.length; vIdx++) {
         const vis = link.visuals[vIdx];
         const meshFile = resolveMeshFile(urdfPath, pkgRoots, vis.filename);
-        if (!meshFile) continue;
+        if (!meshFile) throw new Error(`Missing original visual mesh for ${linkName}: ${vis.filename}`);
 
         const ext = path.extname(meshFile).toLowerCase();
         let geom = null;

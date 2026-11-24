@@ -36,6 +36,7 @@ import {
   filterRepositories,
   parseKinematicStats,
   parseUrdfJoints,
+  filterMovableJoints,
   classifyMeshLayer,
   computeGhostMaterialState,
   computeClipPlaneConstant
@@ -308,6 +309,9 @@ const _tmpTransientCamOffset = new THREE.Vector3();
 
 import type { EngineeringMode } from '../utils/workspaceRoutes';
 import { createExactNodeIndex, resolveExactJointNode } from '../utils/jointBinding';
+import { applyRobotJointPose } from '../utils/robotJointPose';
+import { normalizeRoboticsLocation, readRoboticsLocation, roboticsLocationSearch, roboticsAssetUrl, type RoboticsLocation } from '../utils/roboticsRoute';
+const BASELINE_STATUS_LABELS = { missing: '缺失', synthetic: '历史合成示意', adapted: '本仓适配', 'local-document': '本地导览' } as const;
 
 function resolvePlayableCombatMechId(actorId: string): PlayerMechId {
   if (actorId === 'sar_tracked' || actorId === 'sar') return 'sar';
@@ -347,8 +351,9 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
   });
   const sandboxMode = appMode === 'sandbox';
 
-  const [activeTab, setActiveTab] = useState<MainTab>('hangar_3d');
-  const [selectedPack, setSelectedPack] = useState<RobotPack>(ROBOT_PACKS[0]);
+  const [initialRoboticsLocation] = useState(() => readRoboticsLocation(typeof window === 'undefined' ? '' : window.location.search, manifestData));
+  const [activeTab, setActiveTabState] = useState<MainTab>(initialRoboticsLocation.tab);
+  const [selectedPack, setSelectedPackState] = useState<RobotPack>(() => ROBOT_PACKS.find(pack => pack.id === initialRoboticsLocation.robot)!);
   const [activeDrillLevel, setActiveDrillLevel] = useState<DrillLevel>('L0');
   const [explosion, setExplosion] = useState<number>(0);
   const [clipRatio, setClipRatio] = useState<number>(1.0);
@@ -398,6 +403,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
   const [urdfJoints, setUrdfJoints] = useState<UrdfJointDef[]>([]);
   const [jointBindingReport, setJointBindingReport] = useState<{ bound: string[]; missing: string[]; ambiguous: string[] }>({ bound: [], missing: [], ambiguous: [] });
   const [jointAngles, setJointAngles] = useState<Record<string, number>>({});
+  const [jointSearch, setJointSearch] = useState('');
 
   // Projected 3D Spatial Telemetry Callouts
   const [projectedProbes, setProjectedProbes] = useState<ProjectedTelemetryItem[]>([]);
@@ -485,11 +491,36 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
 
   // URDF / XML Baseline Explorer state
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedRepo, setSelectedRepo] = useState<ManifestRepo>(manifestData[0]);
-  const [selectedFileRel, setSelectedFileRel] = useState<string>(
-    manifestData[0]?.primaryBaselineFile || ''
-  );
+  const [fileSearch, setFileSearch] = useState('');
+  const [selectedRepo, setSelectedRepoState] = useState<ManifestRepo>(() => manifestData.find(repo => repo.repository === initialRoboticsLocation.repository)!);
+  const [selectedFileRel, setSelectedFileRelState] = useState(initialRoboticsLocation.file);
   const [fileContent, setFileContent] = useState<string>('正在加载原始基准文件...');
+  const applyRoboticsLocation = useCallback((route: RoboticsLocation) => {
+    setActiveTabState(route.tab);
+    setSelectedPackState(ROBOT_PACKS.find(pack => pack.id === route.robot)!);
+    setSelectedRepoState(manifestData.find(repo => repo.repository === route.repository)!);
+    setSelectedFileRelState(route.file);
+  }, []);
+  const navigateRobotics = useCallback((patch: Partial<RoboticsLocation>) => {
+    const current = readRoboticsLocation(window.location.search, manifestData);
+    const next = normalizeRoboticsLocation({ ...current, ...patch }, manifestData);
+    const search = roboticsLocationSearch(next, window.location.search);
+    if (search !== window.location.search) window.history.pushState(null, '', `${window.location.pathname}${search}${window.location.hash}`);
+    applyRoboticsLocation(next);
+  }, [applyRoboticsLocation]);
+  const setActiveTab = (tab: MainTab) => navigateRobotics({ tab });
+  const setSelectedPack = (pack: RobotPack) => { setJointSearch(''); navigateRobotics({ robot: pack.id }); };
+  const setSelectedFileRel = (file: string) => navigateRobotics({ file });
+  useEffect(() => {
+    const onPopState = () => { setJointSearch(''); setFileSearch(''); applyRoboticsLocation(readRoboticsLocation(window.location.search, manifestData)); };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [applyRoboticsLocation]);
+  const selectedFileIssue = selectedRepo?.fileIssues?.[selectedFileRel];
+  const selectedFileIsImage = /\.(png|jpe?g|webp|gif|svg)$/i.test(selectedFileRel);
+  const selectedFileUrl = selectedRepo ? roboticsAssetUrl(`baselines/${selectedRepo.category}/${selectedRepo.repository}/${selectedFileRel}`) : '';
+  const visibleKinematicFiles = (selectedRepo?.kinematicFiles || []).filter(file => file.toLowerCase().includes(fileSearch.trim().toLowerCase()));
+  const visibleDocFiles = (selectedRepo?.docFiles || []).filter(file => file.toLowerCase().includes(fileSearch.trim().toLowerCase()));
 
   const mountRef = useRef<HTMLDivElement | null>(null);
   const rayTracerRef = useRef<DualGearRayTracingController | null>(null);
@@ -1014,10 +1045,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
       setActiveTab('b737_cfm56');
     } else {
       const matchedPack = ROBOT_PACKS.find((p) => p.id === lastActorId);
-      if (matchedPack) {
-        setSelectedPack(matchedPack);
-      }
-      setActiveTab('hangar_3d');
+      navigateRobotics({ tab: 'hangar_3d', ...(matchedPack ? { robot: matchedPack.id } : {}) });
     }
   };
 
@@ -1083,6 +1111,9 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
   useEffect(() => {
     const urdfPath = `/baselines/${selectedPack.baselineRepo}/${selectedPack.primaryUrdf}`;
     let cancelled = false;
+    urdfJointsRef.current = [];
+    setUrdfJoints([]);
+    setJointAngles({});
     fetchTextAssetResilient(urdfPath)
       .then((xmlText) => {
         if (cancelled) return;
@@ -1106,14 +1137,17 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
   // Load raw URDF/XML/MD file content in Baseline Explorer
   useEffect(() => {
     if (!selectedRepo || !selectedFileRel) return;
-    const rawPath = `/baselines/${selectedRepo.category}/${selectedRepo.repository}/${selectedFileRel}`;
+    const issue = selectedRepo.fileIssues?.[selectedFileRel];
+    if (issue?.status === 'missing') { setFileContent(issue.reason); return; }
+    if (/\.(png|jpe?g|webp|gif|svg)$/i.test(selectedFileRel)) { setFileContent(''); return; }
+    const rawPath = roboticsAssetUrl(`baselines/${selectedRepo.category}/${selectedRepo.repository}/${selectedFileRel}`);
     let cancelled = false;
     setFileContent(`正在读取已归档基准文件: ${rawPath} ...`);
 
     fetchTextAssetResilient(rawPath)
       .then((txt) => {
         if (cancelled) return;
-        setFileContent(txt.slice(0, 120000));
+        setFileContent(txt);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -1354,10 +1388,22 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
 
     const isSoftwareGl = detectSoftwareWebGL();
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: !isSoftwareGl,
-      powerPreference: 'high-performance'
-    });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: !isSoftwareGl,
+        powerPreference: 'high-performance'
+      });
+    } catch {
+      cameraRef.current = null;
+      boundJointsRef.current = [];
+      rebuildSkeletonRef.current = null;
+      setMeshNodes([]);
+      setJointBindingReport({ bound: [], missing: [], ambiguous: [] });
+      setIsLoadingGlb(false);
+      setGlbLoadError('当前浏览器无法创建 WebGL 画面。原始档案与其他工作区仍可使用，启用 WebGL 后可点击重试。');
+      return;
+    }
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setSize(width, height);
     renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
@@ -2058,7 +2104,12 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
         const nodeList: { name: string; tris: number; layer: 'L1' | 'L2' | 'L3' }[] = [];
         const sourceNodes: THREE.Object3D[] = [];
         root.traverse((node) => sourceNodes.push(node));
-        const objectByName = createExactNodeIndex(sourceNodes);
+        const authoredNodeId = (node: THREE.Object3D): string => {
+          const association = gltf.parser.associations.get(node);
+          const name = association?.nodes !== undefined ? gltf.parser.json.nodes?.[association.nodes]?.name : undefined;
+          return typeof name === 'string' ? name : node.name;
+        };
+        const objectByName = createExactNodeIndex(sourceNodes, authoredNodeId);
         const usedNames = new Set<string>();
 
         root.traverse((obj) => {
@@ -2318,7 +2369,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
             const bindings: BoundUrdfJoint[] = [];
             const report = { bound: [] as string[], missing: [] as string[], ambiguous: [] as string[] };
             for (const j of jointsToBind) {
-              const match = resolveExactJointNode(objectByName, j.child);
+              const match = resolveExactJointNode(objectByName, j.child, node => !!node.parent && authoredNodeId(node.parent) === j.parent);
               report[match.status].push(j.name);
               const target = match.node;
               if (target) {
@@ -2870,13 +2921,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
         );
         if (jTorque01 > peakTorqueRatio01) peakTorqueRatio01 = jTorque01;
 
-        if (b.def.type === 'prismatic') {
-          b.targetNode.position.copy(b.basePos).addScaledVector(b.axisVec, b.currentVal);
-        } else {
-          b.targetNode.position.copy(b.basePos);
-          _tmpQuat.setFromAxisAngle(b.axisVec, b.currentVal);
-          b.targetNode.quaternion.copy(b.baseQuat).multiply(_tmpQuat);
-        }
+        applyRobotJointPose(b.targetNode, b.def.type, b.axisVec, b.basePos, b.baseQuat, b.currentVal);
 
         if (
           s.tactileConfig.jointLimitGuardEnabled &&
@@ -3950,6 +3995,15 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
 
     return () => {
       disposed = true;
+      // Late URDF fetches and persistent HTML controls must not rebuild or
+      // address objects belonging to a viewport that has already been left.
+      renderOnceRef.current = null;
+      rebuildSkeletonRef.current = null;
+      skeletonGroupRef.current = null;
+      boundJointsRef.current = [];
+      partsRef.current = [];
+      subAssembliesRef.current = [];
+      cameraRef.current = null;
       cancelAnimationFrame(frameId);
       cancelAnimationFrame(magWheelRaf);
       clearTimeout(frameId);
@@ -4006,6 +4060,8 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
       rayTracerRef.current = null;
       envTex.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
+      if (renderer.domElement.parentElement === container) container.removeChild(renderer.domElement);
     };
   }, [appMode, activeTab, selectedPack, glbReloadNonce]);
 
@@ -4017,19 +4073,8 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
     }
   }, [urdfJoints]);
 
-  const movableJoints = useMemo(() => {
-    const nonFixed = urdfJoints.filter((j) => j.type !== 'fixed');
-    nonFixed.sort((a, b) => {
-      const score = (j: UrdfJointDef) => {
-        const n = j.name.toLowerCase();
-        if (n.includes('f_front') || n.includes('f_back') || n.includes('flipper')) return 0;
-        if (j.type === 'revolute') return 1;
-        return 2;
-      };
-      return score(a) - score(b);
-    });
-    return nonFixed.slice(0, 16);
-  }, [urdfJoints]);
+  const movableJoints = useMemo(() => filterMovableJoints(urdfJoints), [urdfJoints]);
+  const visibleMovableJoints = useMemo(() => filterMovableJoints(urdfJoints, jointSearch), [urdfJoints, jointSearch]);
 
   const filteredRepos = useMemo(
     () => filterRepositories(manifestData, searchQuery),
@@ -4389,7 +4434,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                         >
                           <span className="flex items-center gap-1.5 text-xs font-medium text-slate-200">
                             <Activity className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.5} />
-                            <span>实时遥测波形总线</span>
+                            <span>离线示意波形</span>
                           </span>
                           <ChevronDown
                             className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
@@ -4423,24 +4468,20 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                               </div>
                               {selectedPack.specs.slice(0, 2).map((s) => (
                                 <div key={s.label} className="flex justify-between text-[11px] gap-2">
-                                  <span className="text-slate-400 shrink-0">{s.label}</span>
+                                  <span className="text-slate-400 shrink-0">{s.label === '网格精度' ? '当前网格统计' : s.label}</span>
                                   <span className="text-slate-200 font-mono tabular-nums truncate">
-                                    {s.value}
+                                    {s.label === '网格精度' ? isLoadingGlb ? '正在读取模型…' : `${meshNodes.reduce((sum, node) => sum + node.tris, 0).toLocaleString()} 三角形 / ${meshNodes.length} 网格节点` : s.value}
                                   </span>
                                 </div>
                               ))}
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const found = manifestData.find((r) =>
-                                    selectedPack.baselineRepo.includes(r.repository)
-                                  );
+                                  const found = manifestData.find((r) => selectedPack.baselineRepo === `${r.category}/${r.repository}`);
                                   if (found) {
-                                    setSelectedRepo(found);
-                                    setSelectedFileRel(found.primaryBaselineFile || '');
+                                    navigateRobotics({ tab: 'urdf_explorer', repository: found.repository, file: selectedPack.primaryUrdf });
                                   }
                                   setActiveDrawer(null);
-                                  setActiveTab('urdf_explorer');
                                 }}
                                 className="w-full mt-1 py-1.5 px-2.5 rounded-lg bg-[#161922] hover:border-cyan-400/55 border border-white/[0.08] text-slate-200 text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
                               >
@@ -4463,7 +4504,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                   >
                     <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between gap-2 shrink-0">
                       <span className="text-xs font-semibold text-slate-100">
-                        仿真工况与关节驱动
+                        示意工况与关节驱动
                       </span>
                       <div className="flex items-center gap-1.5">
                         <button
@@ -4475,7 +4516,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                               : 'bg-[#161922] border-white/[0.12] text-slate-300'
                           }`}
                         >
-                          {liveSim ? '实时运行' : '手动驱动'}
+                          {liveSim ? '动作预览' : '手动驱动'}
                         </button>
                         <button
                           type="button"
@@ -4522,7 +4563,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                       <div className="pt-2.5 border-t border-white/[0.06] space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-medium text-slate-200">
-                            URDF 关节驱动 ({movableJoints.length})
+                            URDF 关节预览 ({visibleMovableJoints.length}/{movableJoints.length})
                           </span>
                           <button
                             type="button"
@@ -4536,13 +4577,16 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                           </button>
                         </div>
 
+                        <input aria-label="筛选全部关节" value={jointSearch} onChange={event => setJointSearch(event.target.value)} placeholder="按关节或连杆名筛选全部关节" className="w-full rounded bg-slate-900 border border-white/10 px-2 py-1.5 text-xs" />
+                        <p className="text-[10px] leading-4 text-slate-400">离线 FK / IK 预览；未连接实机，未求解减速器、负载或闭环动力学。{selectedPack.baselineNote}</p>
+
                         <div data-testid="joint-binding-report" className="text-[11px] leading-5 text-slate-400">
                           精确绑定 {jointBindingReport.bound.length}/{urdfJoints.length}
                           {jointBindingReport.missing.length > 0 && <p className="text-amber-300">缺失 {jointBindingReport.missing.length}：{jointBindingReport.missing.slice(0, 3).join('、')}</p>}
                           {jointBindingReport.ambiguous.length > 0 && <p className="text-red-300">重名冲突 {jointBindingReport.ambiguous.length}：{jointBindingReport.ambiguous.slice(0, 3).join('、')}</p>}
                         </div>
                         <div className="space-y-2">
-                          {movableJoints.map((j) => {
+                          {visibleMovableJoints.map((j) => {
                             const isBound = jointBindingReport.bound.includes(j.name);
                             const val = jointAngles[j.name] || 0;
                             const min = j.type === 'continuous' ? -Math.PI : j.lower;
@@ -4682,7 +4726,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                     IMPULSE: {pushCalloutHud.forceN} N · 全身抗扰恢复
                   </div>
                   <div className="text-[10px] font-mono text-cyan-300 truncate max-w-[210px]">
-                    受力连杆: {pushCalloutHud.partName} · 峰值力矩 +{pushTorqueSpikeNm} N·m
+                    连杆演示: {pushCalloutHud.partName} · 程序化力矩示意 +{pushTorqueSpikeNm}（非实测）
                   </div>
                 </div>
               )}
@@ -4823,8 +4867,8 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                   )}
 
                   {glbLoadError && !isLoadingGlb && (
-                    <div className="pointer-events-auto flex items-center gap-2 bg-[#1a1418] border border-amber-500/50 rounded-lg px-3 py-1.5 text-xs text-amber-200">
-                      <span>网格资产加载中断</span>
+                    <div className="pointer-events-auto flex flex-wrap items-center gap-2 max-w-xl bg-[#1a1418] border border-amber-500/50 rounded-lg px-3 py-1.5 text-xs text-amber-200" role="alert">
+                      <span>{glbLoadError}</span>
                       <button
                         type="button"
                         data-testid="hangar-retry-glb-btn"
@@ -5188,18 +5232,18 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
 
         {/* TAB 5: 39 Open-Source Robotics Repositories URDF / XML Reality Baseline Explorer */}
         {activeTab === 'urdf_explorer' && (
-          <div className="flex h-full w-full">
+          <div className="flex h-full w-full flex-col overflow-auto md:flex-row md:overflow-hidden">
             {/* Left Column: 39 Repositories Filterable List */}
-            <aside className="w-80 bg-slate-950 border-r border-slate-800 flex flex-col">
+            <aside className="w-full max-h-52 shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col md:w-72 md:max-h-none">
               <div className="p-3 border-b border-slate-800">
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
                   <input
                     type="text"
-                    aria-label="搜索 39 个机器人库"
+                    aria-label="搜索机器人仓库、型号或归档路径"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="搜索 39 个机器人库 (如 unitree, rov, spot, urdf)..."
+                    placeholder="搜索仓库、型号或归档路径…"
                     className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-400"
                   />
                 </div>
@@ -5211,10 +5255,8 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                     <button
                       key={repo.repository}
                       onClick={() => {
-                        setSelectedRepo(repo);
-                        setSelectedFileRel(
-                          repo.primaryBaselineFile || repo.kinematicFiles?.[0] || repo.docFiles?.[0] || ''
-                        );
+                        setFileSearch('');
+                        navigateRobotics({ repository: repo.repository, file: repo.primaryBaselineFile });
                       }}
                       className={`w-full text-left p-2.5 rounded-xl border transition ${
                         active
@@ -5225,7 +5267,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-xs font-bold text-purple-300">{repo.repository}</span>
                         <span className="text-[10px] text-slate-400 font-mono tabular-nums">
-                          {repo.kinematicFileCount} 基准 · {repo.docFileCount} 文档
+                          {repo.availableCounts?.kinematic ?? repo.kinematicFileCount}/{repo.kinematicFileCount} 描述 · {repo.availableCounts?.documents ?? repo.docFileCount}/{repo.docFileCount} 文档
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-400 line-clamp-2 mt-1">{repo.description}</p>
@@ -5236,7 +5278,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
             </aside>
 
             {/* Middle Column: Untouched URDF / XML / XACRO / README File List */}
-            <aside className="w-80 bg-slate-950/60 border-r border-slate-800 flex flex-col">
+            <aside className="w-full max-h-64 shrink-0 bg-slate-950/60 border-r border-slate-800 flex flex-col md:w-80 md:max-h-none">
               {selectedRepo && (
                 <>
                   <div className="p-3.5 border-b border-slate-800 space-y-1">
@@ -5258,17 +5300,20 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                         首选基准: {selectedRepo.primaryBaselineFile}
                       </div>
                     )}
+                    <input aria-label="筛选完整归档文件" value={fileSearch} onChange={event => setFileSearch(event.target.value)} placeholder="筛选文件名或子目录…" className="mt-2 w-full rounded border border-white/10 bg-slate-900 px-2 py-1.5 text-xs" />
+                    <p className="text-[10px] leading-4 text-slate-400">完整历史清单与 PRIMARY 原件均可查找；缺失、合成和适配文件分别标注，文件存在不代表原项目已可运行。</p>
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-2 space-y-3">
                     <div>
                       <div className="px-2 py-1 text-[11px] font-semibold text-sky-400">
-                        归档运动学基准文件 (.urdf / .xml / .xacro) [{selectedRepo.kinematicFiles?.length || 0}]
+                        归档描述 (.urdf / .xml / .xacro / .sdf) [{visibleKinematicFiles.length}/{selectedRepo.kinematicFiles.length}]
                       </div>
                       <div className="space-y-0.5 mt-1">
-                        {(selectedRepo.kinematicFiles || []).map((f) => (
+                        {visibleKinematicFiles.map((f) => (
                           <button
                             key={f}
+                            title={f}
                             onClick={() => setSelectedFileRel(f)}
                             className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-mono truncate transition ${
                               selectedFileRel === f
@@ -5276,7 +5321,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                                 : 'text-slate-300 hover:bg-slate-900'
                             }`}
                           >
-                            {f}
+                            {selectedRepo.fileIssues?.[f] && <span className="mr-1 text-amber-300">[{BASELINE_STATUS_LABELS[selectedRepo.fileIssues[f].status]}]</span>}{f}
                           </button>
                         ))}
                       </div>
@@ -5284,12 +5329,13 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
 
                     <div>
                       <div className="px-2 py-1 text-[11px] font-semibold text-amber-400">
-                        结构说明文档与关节配置 (README / YAML) [{selectedRepo.docFiles?.length || 0}]
+                        文档、配置与图像 [{visibleDocFiles.length}/{selectedRepo.docFiles.length}]
                       </div>
                       <div className="space-y-0.5 mt-1">
-                        {(selectedRepo.docFiles || []).map((f) => (
+                        {visibleDocFiles.map((f) => (
                           <button
                             key={f}
+                            title={f}
                             onClick={() => setSelectedFileRel(f)}
                             className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-mono truncate transition ${
                               selectedFileRel === f
@@ -5297,7 +5343,7 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
                                 : 'text-slate-300 hover:bg-slate-900'
                             }`}
                           >
-                            {f}
+                            {selectedRepo.fileIssues?.[f] && <span className="mr-1 text-amber-300">[{BASELINE_STATUS_LABELS[selectedRepo.fileIssues[f].status]}]</span>}{f}
                           </button>
                         ))}
                       </div>
@@ -5308,26 +5354,28 @@ export default function TwinWorkbench({ initialMode = 'cad_hub' }: { initialMode
             </aside>
 
             {/* Right Column: Raw Untouched File Code Viewer */}
-            <div className="flex-1 flex flex-col bg-[#080d18] overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
+            <div className="min-h-72 min-w-0 flex-1 flex flex-col bg-[#080d18] overflow-hidden md:min-h-0">
+              <div className="px-4 py-2.5 border-b border-slate-800 flex flex-wrap gap-2 items-center justify-between bg-slate-950/80">
                 <div className="flex items-center gap-2 text-xs font-mono text-sky-300">
                   <FileCode className="w-4 h-4" />
-                  <span>
+                  <span className="break-all">
                     {selectedRepo?.category} / {selectedRepo?.repository} / {selectedFileRel}
                   </span>
                 </div>
                 <div className="flex items-center gap-3 text-[11px]">
                   {fileKinematicStats.format !== 'DOC' && (
                     <span className="text-sky-300 font-mono tabular-nums">
-                      {fileKinematicStats.format} · {fileKinematicStats.linkCount} 连杆 / {fileKinematicStats.jointCount} 关节
+                      {fileKinematicStats.format} · 源码标签 {fileKinematicStats.linkCount} link/body / {fileKinematicStats.jointCount} joint
                     </span>
                   )}
-                  <span className="text-slate-400">100% 原厂运动学基准原件 · 零修改</span>
+                  <span className={selectedFileIssue ? 'text-amber-300' : 'text-slate-400'}>{selectedFileIssue ? BASELINE_STATUS_LABELS[selectedFileIssue.status] : '归档文件 · 上游版本未锁定'}</span>
+                  {selectedFileIssue?.status !== 'missing' && <a href={selectedFileUrl} target="_blank" rel="noreferrer" className="text-sky-300 hover:underline">{selectedFileIssue?.status === 'synthetic' ? '查看历史示意文件（非原件）' : '打开完整文件'}</a>}
                 </div>
               </div>
-              <pre className="flex-1 overflow-auto p-4 text-xs font-mono text-slate-200 leading-relaxed whitespace-pre-wrap">
-                {fileContent}
-              </pre>
+              {selectedFileIssue && <div role="status" className="border-b border-amber-500/20 bg-amber-500/5 px-4 py-2 text-xs leading-5 text-amber-200">{selectedFileIssue.reason}{selectedFileIssue.preferredPath && <button className="ml-2 underline" onClick={() => setSelectedFileRel(selectedFileIssue.preferredPath!)}>查看已有 PRIMARY 原件</button>}</div>}
+              {selectedFileIsImage && selectedFileIssue?.status !== 'missing'
+                ? <div className="flex-1 overflow-auto p-4"><img src={selectedFileUrl} alt={selectedFileRel} className="max-w-full h-auto" /></div>
+                : <pre className="flex-1 overflow-auto p-4 text-xs font-mono text-slate-200 leading-relaxed whitespace-pre-wrap">{fileContent}</pre>}
             </div>
           </div>
         )}

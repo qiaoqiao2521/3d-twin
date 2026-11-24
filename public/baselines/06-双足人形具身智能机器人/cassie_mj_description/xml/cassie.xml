@@ -1,6 +1,7 @@
+<!-- LOCAL_GENERATED_DEMONSTRATION_NOT_UPSTREAM: 历史本地生成的示意链，非原厂/上游原件；不可用于真实结构或控制验证。真实来源请从档案目录选择 PRIMARY 文件。 -->
 <mujoco model="cassie_mj_description">
-  <!-- 现实基准原件索引: cassie_mj_description — Agility Robotics Cassie 双足机器人 MuJoCo XML 基准 -->
-  <!-- 统计特征: 25 连杆 / 23 关节 | 原始路径: xml/cassie.xml -->
+  <!-- 历史生成示意（非上游原件）: cassie_mj_description — Agility Robotics Cassie 双足机器人 MuJoCo XML 基准 -->
+  <!-- 历史目录统计（并非本示意链）: 25 连杆 / 23 关节 | 原始路径: xml/cassie.xml -->
   <compiler angle="radian" meshdir="assets" autolimits="true"/>
   <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast"/>
   <worldbody>

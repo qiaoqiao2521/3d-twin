@@ -17,5 +17,5 @@
     "noEmit": true
   },
   "include": ["**/*.ts", "**/*.tsx", "src/**/*.json"],
-  "exclude": ["node_modules", "dist", ".cache", "public/open-demos", "integrations/smart-warehouse/upstream"]
+  "exclude": ["node_modules", "dist", ".cache", "public/open-demos", "public/hardware", "integrations/smart-warehouse/upstream"]
 }

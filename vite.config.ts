@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { originalPublicAssets } from './scripts/public-assets-plugin.mjs';
 
 const originalDemoProxy = Object.fromEntries([
   ['waretwin', process.env.WARETWIN_PORT || '8101'],
@@ -10,7 +11,11 @@ const originalDemoProxy = Object.fromEntries([
 }]));
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), originalPublicAssets()],
+  build: { copyPublicDir: false },
+  // Upstream HTML and corresponding source are static downloadable originals,
+  // not extra host entry points with dependencies to merge into this app.
+  optimizeDeps: { entries: ['index.html'] },
   assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.urdf', '**/*.xacro', '**/*.wasm'],
   server: {
     port: 5197,

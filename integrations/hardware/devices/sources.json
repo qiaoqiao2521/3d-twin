@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "title": "OLSK Small CNC V3",
+      "kind": "original-assembly-application",
+      "appRoot": "Assembly_Manual",
+      "originalDemo": "https://open-lab-starter-kit.github.io/OLSK-Small-CNC/",
+      "primaryCad": "cad/step/Small CNC V3 ATC Update.step.zip",
+      "previewModel": "Assembly_Manual/public/OLSK_Small_CNC_V3_All_In.glb",
+      "licenses": {
+        "software": "AGPL-3.0-or-later",
+        "cadAndBom": "CERN-OHL-W-2.0",
+        "assemblyModelsAndMedia": "CC-BY-SA-4.0",
+        "mapping": ".reuse/dep5",
+        "fonts": "Assembly_Manual/public/fonts/LICENSE"
+      },
+      "limitations": [
+        "The upstream H3/H5/H6/H7/H11 pages reuse the same FirstTestHowTo.glb placeholder. Original tutorial assets and text are retained; they are not presented as verified topic-specific machine simulations."
+      ]
+    },
+    {
+      "id": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "title": "OLSK Large CNC V3 / original V2-named assembly models",
+      "kind": "original-assembly-application",
+      "appRoot": "Assembly_Manual",
+      "originalDemo": "https://open-lab-starter-kit.github.io/OLSK-Large-CNC/",
+      "primaryCad": "cad/Step/Large CNC V3.step.zip",
+      "previewModel": "Assembly_Manual/public/OLSK_Large_CNC_V2_IN.glb",
+      "licenses": {
+        "software": "AGPL-3.0-or-later",
+        "cadAndBom": "CERN-OHL-W-2.0",
+        "assemblyModelsAndMedia": "CC-BY-SA-4.0",
+        "mapping": ".reuse/dep5",
+        "fonts": "Assembly_Manual/public/fonts/LICENSE"
+      },
+      "limitations": [
+        "The upstream V3 README and CAD coexist with V2-named original GLB files; their filenames and geometry are preserved, not relabelled as a verified V3 runtime twin.",
+        "H3/H5/H6/H7/H11 reference FirstTestHowTo.glb, absent from the fixed source and HTTP 404 on the original author site (2026-11-24). Those topics retain original text/navigation with an explicit unavailable-illustration notice; their 3D tutorials are incomplete upstream."
+      ]
+    },
+    {
+      "id": "voron-2.4",
+      "repository": "VoronDesign/Voron-2",
+      "revision": "7b32e405f0719881cca782500c822e01e3b16bf2",
+      "title": "Voron 2.4r2 original assembly",
+      "kind": "step-assembly",
+      "primaryCad": "CAD/Voron_2.4r2_Assembly_STEP.zip",
+      "sourceUpAxis": "Z",
+      "licenses": {
+        "design": "GPL-3.0",
+        "file": "LICENSE"
+      },
+      "limitations": [
+        "StealthBurner is maintained as a separate upstream project. This view preserves the exact assembly shipped in the pinned Voron-2 CAD, without substituting a different toolhead.",
+        "原 STEP 的第 8935 面是依赖原顶点/边容差闭合的极薄曲面，其精确面积无法认证。该唯一固定来源面保留原 OpenCascade 生成的 4 个三角形，并按原文件自身精度单独审计；没有投影替换、补封边或删除该面，不计入普通闭合面 0.5% 面积核验。详见 source-precision-audit.json 与转换报告的 nativeToleranceLimitedFaces。"
+      ]
+    },
+    {
+      "id": "jubilee",
+      "repository": "machineagency/jubilee",
+      "revision": "c877bd2e889560c83da2a68479641a4f7f0d9b83",
+      "title": "Jubilee V2.2.2 original assembly",
+      "kind": "step-assembly",
+      "primaryCad": "frame/cads/STEP/jubilee.STEP",
+      "sourceUpAxis": "Y",
+      "licenses": {
+        "design": "CC-BY-4.0",
+        "file": "license.txt"
+      },
+      "additionalSources": [
+        "science-jubilee"
+      ],
+      "limitations": [
+        "Original CAD and tool-changing structure are displayed. Python hardware control is retained for separate research and is not executed by the browser."
+      ]
+    },
+    {
+      "id": "science-jubilee",
+      "repository": "machineagency/science-jubilee",
+      "revision": "bb918fa78f300f57cc379a80731cfca7bdb55c66",
+      "title": "Science Jubilee original tools and control code",
+      "kind": "supporting-originals",
+      "licenses": {
+        "software": "MIT",
+        "file": "LICENSE.txt"
+      }
+    },
+    {
+      "id": "opcua-conveyor",
+      "repository": "roshbeng/opcua_fusion_test_servers_and_hardware",
+      "revision": "d9ab21ced0a26e09a213a218249ac1938340bae6",
+      "title": "OPC UA teaching conveyor / feeding mechanism",
+      "kind": "step-assembly",
+      "primaryCad": "CAD models/conveyor_model/conveyor_model_v1.step",
+      "extraCad": [
+        {
+          "id": "cobot",
+          "path": "CAD models/cobot_model/cobot_model_v1.step",
+          "title": "Original companion robotic arm assembly"
+        }
+      ],
+      "sourceUpAxis": "Z",
+      "licenses": {
+        "repository": "MIT",
+        "file": "LICENSE"
+      },
+      "limitations": [
+        "The upstream code drives timed PWM sequences and exposes a timestamp; it does not provide measured position feedback.",
+        "The upstream arm documentation disagrees on its axis count. The original structure is preserved without claiming a verified six-axis cobot.",
+        "The source tree contains no complete BOM or the PDF drawings claimed by its README. Hardware control and host shutdown scripts are not run by this integration."
+      ]
+    }
+  ]
+}

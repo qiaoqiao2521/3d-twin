@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- LOCAL_GENERATED_DEMONSTRATION_NOT_UPSTREAM: 历史本地生成的示意链，非原厂/上游原件；不可用于真实结构或控制验证。真实来源请从档案目录选择 PRIMARY 文件。 -->
 <!-- =================================================================================== -->
-<!-- 现实基准原件: husky (husky_description/urdf/empty.urdf)                                          -->
+<!-- 历史生成示意（非上游原件）: husky (husky_description/urdf/empty.urdf)                                          -->
 <!-- 机型描述: Clearpath Robotics Husky A200 野外四轮差速越野机器人底盘 URDF/XACRO 基准                                                                   -->
-<!-- 运动学拓扑统计: 多机型合集/宏模板                                                    -->
+<!-- 历史目录机型统计（并非本示意链）: 多机型合集/宏模板                                                    -->
 <!-- =================================================================================== -->
 <robot name="husky">
   <link name="base_link">

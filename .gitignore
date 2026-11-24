@@ -5,3 +5,6 @@ dist
 /public/integrations/smart-warehouse/
 /.cache/
 /public/open-demos/
+/public/hardware/
+__pycache__/
+*.pyc

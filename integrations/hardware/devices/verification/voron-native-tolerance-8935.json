@@ -1,0 +1,208 @@
+{
+  "method": "pinned-original-occt-authored-tolerance-micro-face",
+  "sourceSha256": "06b372e40217caa1a7d1f516cb74887247f809e41e1e389f740f290e98441b55",
+  "sourceFaceIndex": 8935,
+  "fixedSourceAudit": "voron-2.4-face-8935.json",
+  "fixedSourceAuditSha256": "9d74caaddc095414cf2b44e0addeaacba5b93f538dd52433027f23c9ef292911",
+  "linearDeflectionMillimetres": 0.001,
+  "angularDeflectionRadians": 0.028460498941515415,
+  "nodes": 6,
+  "triangles": 4,
+  "kernelStatusFlags": 0,
+  "nativeMeshAreaSquareMillimetres": 3.616393490575669e-06,
+  "signedOriginalIntegralNotAnUnsignedAreaReference": -2.350275357601294e-08,
+  "estimatedSignedIntegralRelativeError": 1.955790504429075e-15,
+  "areaCertification": false,
+  "wholeDomainSurfaceErrorBoundClaimed": false,
+  "sampledAuditInterpretation": "At each native boundary chord or triangle sample, interpolate only its actual endpoint/node original entity tolerances with the same linear/barycentric weights. Compare the original kernel point to its original 3D curve or exact original surface. This is a recorded sample audit, not a proved whole-domain bound or face-only tolerance certification.",
+  "originalEdgeChecks": [
+    {
+      "originalEdge": 0,
+      "declaredToleranceMillimetres": 4.05717822155084e-05,
+      "samples": 65,
+      "maxOriginalCurveToSurfaceDeviationMillimetres": 4.0571376501622246e-05
+    },
+    {
+      "originalEdge": 1,
+      "declaredToleranceMillimetres": 0.00033159155100821,
+      "samples": 65,
+      "maxOriginalCurveToSurfaceDeviationMillimetres": 0.0003315882351215944
+    }
+  ],
+  "nodeEntities": {
+    "1": {
+      "kind": "originalVertex",
+      "index": 0,
+      "originalToleranceMillimetres": 0.000636696236452917,
+      "edgeParameters": {
+        "0": 1.47440536365558,
+        "1": -0.122648983008964
+      },
+      "distanceToOriginalEntityMillimetres": 3.1776437161565096e-14,
+      "distanceToOriginalSurfaceAtMeshUVMillimetres": 1.1741437030382257e-06
+    },
+    "2": {
+      "kind": "originalEdge",
+      "index": 0,
+      "originalToleranceMillimetres": 4.05717822155084e-05,
+      "edgeParameters": {
+        "0": 1.4835935321537357
+      },
+      "distanceToOriginalEntityMillimetres": 3.1776437161565096e-14,
+      "distanceToOriginalSurfaceAtMeshUVMillimetres": 1.915143328390575e-05
+    },
+    "3": {
+      "kind": "originalEdge",
+      "index": 0,
+      "originalToleranceMillimetres": 4.05717822155084e-05,
+      "edgeParameters": {
+        "0": 1.4893361374650829
+      },
+      "distanceToOriginalEntityMillimetres": 2.0097183471152322e-14,
+      "distanceToOriginalSurfaceAtMeshUVMillimetres": 3.0196673677437925e-05
+    },
+    "4": {
+      "kind": "originalVertex",
+      "index": 1,
+      "originalToleranceMillimetres": 0.00033159155100821,
+      "edgeParameters": {
+        "0": 1.49507874277643,
+        "1": -0.119095943498723
+      },
+      "distanceToOriginalEntityMillimetres": 3.4809342861069267e-14,
+      "distanceToOriginalSurfaceAtMeshUVMillimetres": 0.00012353628489156115
+    },
+    "5": {
+      "kind": "originalEdge",
+      "index": 1,
+      "originalToleranceMillimetres": 0.00033159155100821,
+      "edgeParameters": {
+        "1": -0.1210698543377458
+      },
+      "distanceToOriginalEntityMillimetres": 2.4613922385709617e-14,
+      "distanceToOriginalSurfaceAtMeshUVMillimetres": 0.00019543181592361023
+    },
+    "6": {
+      "kind": "originalEdge",
+      "index": 1,
+      "originalToleranceMillimetres": 0.00033159155100821,
+      "edgeParameters": {
+        "1": -0.12008289891823438
+      },
+      "distanceToOriginalEntityMillimetres": 3.1776437161565096e-14,
+      "distanceToOriginalSurfaceAtMeshUVMillimetres": 0.0001008957950515089
+    }
+  },
+  "triangleSampleAudits": [
+    {
+      "triangle": 1,
+      "nodes": [
+        6,
+        2,
+        5
+      ],
+      "samples": 861,
+      "maxSampledSurfaceDeviationMillimetres": 0.00019543181592756678,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.5893751373741366
+    },
+    {
+      "triangle": 2,
+      "nodes": [
+        4,
+        3,
+        6
+      ],
+      "samples": 861,
+      "maxSampledSurfaceDeviationMillimetres": 0.00012353628488137721,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.7442777228313616
+    },
+    {
+      "triangle": 3,
+      "nodes": [
+        2,
+        1,
+        5
+      ],
+      "samples": 861,
+      "maxSampledSurfaceDeviationMillimetres": 0.00019543181592756678,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.5893751373741366
+    },
+    {
+      "triangle": 4,
+      "nodes": [
+        3,
+        2,
+        6
+      ],
+      "samples": 861,
+      "maxSampledSurfaceDeviationMillimetres": 0.00010089579505171378,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.7906284779783227
+    }
+  ],
+  "originalBoundarySegmentAudits": [
+    {
+      "nodes": [
+        5,
+        6
+      ],
+      "originalEdge": 1,
+      "samples": 65,
+      "maxSampledChordToOriginalCurveDeviationMillimetres": 6.200426300115706e-06,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.018698987598638143
+    },
+    {
+      "nodes": [
+        3,
+        4
+      ],
+      "originalEdge": 0,
+      "samples": 65,
+      "maxSampledChordToOriginalCurveDeviationMillimetres": 0.00012244328500874305,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.3692593633234987
+    },
+    {
+      "nodes": [
+        4,
+        6
+      ],
+      "originalEdge": 1,
+      "samples": 65,
+      "maxSampledChordToOriginalCurveDeviationMillimetres": 0.00016585165593913903,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.5001685218904527
+    },
+    {
+      "nodes": [
+        1,
+        2
+      ],
+      "originalEdge": 0,
+      "samples": 65,
+      "maxSampledChordToOriginalCurveDeviationMillimetres": 1.563107733019292e-05,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.06259235829941663
+    },
+    {
+      "nodes": [
+        1,
+        5
+      ],
+      "originalEdge": 1,
+      "samples": 65,
+      "maxSampledChordToOriginalCurveDeviationMillimetres": 0.0003329997836881179,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.5230120183264862
+    },
+    {
+      "nodes": [
+        2,
+        3
+      ],
+      "originalEdge": 0,
+      "samples": 65,
+      "maxSampledChordToOriginalCurveDeviationMillimetres": 6.104637563699424e-06,
+      "maxSampledDeviationOverInterpolatedOriginalEntityTolerance": 0.1504651072825179
+    }
+  ],
+  "originalKernelNodesAndTrianglesUnchanged": true,
+  "noProjectionOrAddedClosingEdges": true,
+  "originalGeometryTopologyAndPlacementUnchanged": true,
+  "limitation": "One original microscopic face is retained with the unchanged original OCCT mesh under its authored edge/vertex precision. It is not certified to the normal 0.5% area criterion and is not silently deleted, enlarged, reprojected or given reconstructed closing edges."
+}

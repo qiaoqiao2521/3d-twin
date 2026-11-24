@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- LOCAL_GENERATED_DEMONSTRATION_NOT_UPSTREAM: 历史本地生成的示意链，非原厂/上游原件；不可用于真实结构或控制验证。真实来源请从档案目录选择 PRIMARY 文件。 -->
 <!-- =================================================================================== -->
-<!-- 现实基准原件: eca_a9 (eca_a9_description/robots/eca_a9_default.urdf.xacro)                                          -->
+<!-- 历史生成示意（非上游原件）: eca_a9 (eca_a9_description/robots/eca_a9_default.urdf.xacro)                                          -->
 <!-- 机型描述: ECA Group A9 自主水下航行器 (AUV) 鱼雷型探测机器人                                                                   -->
-<!-- 运动学拓扑统计: 多机型合集/宏模板                                                    -->
+<!-- 历史目录机型统计（并非本示意链）: 多机型合集/宏模板                                                    -->
 <!-- =================================================================================== -->
 <robot name="eca_a9">
   <link name="base_link">

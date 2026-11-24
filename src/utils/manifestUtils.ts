@@ -9,6 +9,9 @@ export interface ManifestRepo {
   docFileCount: number;
   kinematicFiles: string[];
   docFiles: string[];
+  archiveCounts?: { kinematic: number; documents: number };
+  availableCounts?: { kinematic: number; documents: number };
+  fileIssues?: Record<string, { status: 'missing' | 'synthetic' | 'adapted' | 'local-document'; reason: string; preferredPath?: string }>;
 }
 
 export interface RobotPack {
@@ -22,13 +25,14 @@ export interface RobotPack {
   primaryUrdf: string;
   upstreamUrl: string;
   specs: { label: string; value: string }[];
+  baselineNote?: string;
 }
 
 export interface KinematicStats {
   linkCount: number;
   jointCount: number;
   actuatorCount: number;
-  format: 'URDF' | 'MJCF_XML' | 'XACRO' | 'SDF' | 'DOC';
+  format: 'URDF' | 'MJCF_XML' | 'XACRO' | 'SDF' | 'XML' | 'DOC';
   sampleJoints: string[];
 }
 
@@ -97,6 +101,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     previewUrl: '/robotics_glb/rexrov2_oberon7_subsea_rov.png',
     baselineRepo: '02-水下机器人ROV与深海作业系统/rexrov2',
     primaryUrdf: 'rexrov2_description/robots/rexrov2_oberon7.xacro',
+    baselineNote: '本仓按原推进器与 Oberon7 描述展开的适配文件；原件另见档案，不是原仓逐字节文件。',
     upstreamUrl: 'https://github.com/uuvsimulator/uuv_simulator',
     specs: [
       { label: '网格精度', value: '127,418 Tris / 72 CAD 部件 (Draco 0.52MB)' },
@@ -113,6 +118,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     previewUrl: '/robotics_glb/bluerov2_underwater_rov.png',
     baselineRepo: '02-水下机器人ROV与深海作业系统/bluerov2',
     primaryUrdf: 'bluerov2_description/urdf/thrusters.xacro',
+    baselineNote: '本仓展开的推进器与 Ping360 关节适配文件；原件另见档案。',
     upstreamUrl: 'https://github.com/CentraleNantesROV/bluerov2',
     specs: [
       { label: '网格精度', value: '286,968 Tris / 25 CAD 部件 (Draco 1.79MB)' },
@@ -161,6 +167,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     previewUrl: '/robotics_glb/unitree_z1_manipulator.png',
     baselineRepo: '03-宇树Unitree四足与人形全系_URDF/unitree_ros',
     primaryUrdf: 'robots/z1_description/xacro/z1.urdf',
+    baselineNote: '本仓在原 Z1 描述上补入原夹爪节点的适配文件；未接入减速器或内部传动求解。',
     upstreamUrl: 'https://github.com/unitreerobotics/unitree_ros',
     specs: [
       { label: '运动关节', value: '6-DOF 串联旋转关节 + Gripper 夹爪' },
@@ -208,12 +215,13 @@ export const ROBOT_PACKS: RobotPack[] = [
     glbUrl: '/robotics_glb/fourier_gr1_humanoid.glb',
     previewUrl: '/robotics_glb/fourier_gr1_humanoid.png',
     baselineRepo: '06-双足人形具身智能机器人/Wiki-GRx-Models-FourierN1',
-    primaryUrdf: '_首选基准原件_PRIMARY/gr1t1_fourier_hand_6dof.urdf',
+    primaryUrdf: 'GRX/GR1/gr1t2/basic_urdf/gr1t2.urdf',
+    baselineNote: 'GR1T2 描述与现有 GR1T2 GLB 对齐；GR1T1 灵巧手版本作为独立档案保留。',
     upstreamUrl: 'https://github.com/FFTAI/Wiki-GRx-Models',
     specs: [
       { label: '网格精度', value: '255,470 Tris / 35 STL 部件 (Draco 1.66MB)' },
       { label: '驱动结构', value: '全身多自由度双足 + 上肢' },
-      { label: '现实基准', value: 'gr1t2.urdf / gr1t1_fourier_hand_6dof.urdf' }
+      { label: '现实基准', value: 'GR1T2 basic_urdf/gr1t2.urdf（与当前模型一致）' }
     ]
   },
   {
@@ -240,7 +248,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     glbUrl: '/robotics_glb/cassie_biped_robot.glb',
     previewUrl: '/robotics_glb/cassie_biped_robot.png',
     baselineRepo: '06-双足人形具身智能机器人/cassie_description',
-    primaryUrdf: 'urdf/cassie_v4.urdf',
+    primaryUrdf: '_首选基准原件_PRIMARY/cassie_v4.urdf',
     upstreamUrl: 'https://github.com/robot-descriptions/cassie_description',
     specs: [
       { label: '网格精度', value: '211,478 Tris / 17 STL 部件 (Draco 0.96MB)' },
@@ -256,7 +264,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     glbUrl: '/robotics_glb/anymal_c_quadruped.glb',
     previewUrl: '/robotics_glb/anymal_c_quadruped.png',
     baselineRepo: '07-四足越野与移动操作复合机器人/anymal_c_simple_description',
-    primaryUrdf: 'urdf/anymal.urdf',
+    primaryUrdf: '_首选基准原件_PRIMARY/anymal.urdf',
     upstreamUrl: 'https://github.com/ANYbotics/anymal_c_simple_description',
     specs: [
       { label: '网格精度', value: '58,294 Tris / 45 DAE 部件 (Draco 0.35MB)' },
@@ -272,7 +280,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     glbUrl: '/robotics_glb/baxter_dual_arm_robot.glb',
     previewUrl: '/robotics_glb/baxter_dual_arm_robot.png',
     baselineRepo: '08-工业与协作机械臂及灵巧夹爪/baxter_common',
-    primaryUrdf: 'baxter_description/urdf/baxter.urdf',
+    primaryUrdf: '_首选基准原件_PRIMARY/baxter.urdf',
     upstreamUrl: 'https://github.com/RethinkRobotics/baxter_common',
     specs: [
       { label: '网格精度', value: '100,949 Tris / 18 DAE 部件 (Draco 1.15MB)' },
@@ -288,7 +296,7 @@ export const ROBOT_PACKS: RobotPack[] = [
     glbUrl: '/robotics_glb/hello_stretch_mobile_manipulator.glb',
     previewUrl: '/robotics_glb/hello_stretch_mobile_manipulator.png',
     baselineRepo: '07-四足越野与移动操作复合机器人/stretch_description',
-    primaryUrdf: 'urdf/stretch.urdf',
+    primaryUrdf: '_首选基准原件_PRIMARY/stretch.urdf',
     upstreamUrl: 'https://github.com/robot-descriptions/stretch_description',
     specs: [
       { label: '网格精度', value: '114,382 Tris / 30 STL 部件 (Draco 0.49MB)' },
@@ -532,7 +540,9 @@ export function filterRepositories(
       r.repository.toLowerCase().includes(q) ||
       r.description.toLowerCase().includes(q) ||
       r.category.toLowerCase().includes(q) ||
-      (r.primaryBaselineFile && r.primaryBaselineFile.toLowerCase().includes(q))
+      (r.primaryBaselineFile && r.primaryBaselineFile.toLowerCase().includes(q)) ||
+      r.kinematicFiles.some(file => file.toLowerCase().includes(q)) ||
+      r.docFiles.some(file => file.toLowerCase().includes(q))
     );
   });
 }
@@ -543,7 +553,7 @@ export function parseKinematicStats(content: string, filePath: string): Kinemati
   if (lowerPath.endsWith('.xacro')) format = 'XACRO';
   else if (lowerPath.endsWith('.urdf')) format = 'URDF';
   else if (lowerPath.endsWith('.sdf')) format = 'SDF';
-  else if (lowerPath.endsWith('.xml')) format = 'MJCF_XML';
+  else if (lowerPath.endsWith('.xml')) format = /<mujoco\b/i.test(content) ? 'MJCF_XML' : 'XML';
 
   const linkMatches = content.match(/<(link|body)\b[^>]*>/gi) || [];
   const jointMatches = content.match(/<joint\b[^>]*>/gi) || [];
@@ -681,6 +691,18 @@ export function parseUrdfJoints(xmlContent: string): UrdfJointDef[] {
     });
   }
   return results;
+}
+
+/** Every movable joint remains discoverable; a filter never silently truncates a model. */
+export function filterMovableJoints(joints: UrdfJointDef[], query = ''): UrdfJointDef[] {
+  const needle = query.trim().toLowerCase();
+  const score = (joint: UrdfJointDef) => {
+    if (/f_front|f_back|flipper/.test(joint.name.toLowerCase())) return 0;
+    return joint.type === 'revolute' ? 1 : 2;
+  };
+  return joints.filter(joint => joint.type !== 'fixed' && (!needle ||
+    [joint.name, joint.parent, joint.child].some(value => value.toLowerCase().includes(needle))))
+    .sort((a, b) => score(a) - score(b));
 }
 
 /**

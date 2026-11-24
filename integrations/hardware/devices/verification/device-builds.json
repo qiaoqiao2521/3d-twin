@@ -1,0 +1,500 @@
+{
+  "schemaVersion": 1,
+  "completedAtUtc": "2026-11-24T17:16:21.243579+00:00",
+  "buildCommand": "node scripts/hardware/build-devices.mjs voron-2.4 jubilee opcua-conveyor olsk-small-cnc olsk-large-cnc",
+  "buildExitCode": 0,
+  "readOnlyArtifactValidation": {
+    "status": "passed",
+    "definition": "Recomputed the real current recipe SHA, exact published file set, byte count and SHA-256 for every file; no builds or files were mutated by this check.",
+    "filesExcludingFiveCacheMarkers": 805,
+    "bytesIncludingImmutableHardlinks": 3273974775
+  },
+  "originalFileCount": 1865,
+  "items": [
+    {
+      "id": "olsk-small-cnc",
+      "modelCount": 2,
+      "originalFileCount": 147,
+      "sources": [
+        {
+          "id": "olsk-small-cnc",
+          "repository": "https://github.com/Open-Lab-Starter-Kit/OLSK-Small-CNC",
+          "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+          "tree": "c886818baa05066cf2a0d34e4ed1bc18558d4468",
+          "license": "AGPL-3.0-or-later / CERN-OHL-W-2.0 / CC-BY-SA-4.0"
+        }
+      ],
+      "actualPublishedFileCountExcludingCacheMarker": 236,
+      "publishedFileBytesIncludingHardlinks": 881368269,
+      "recipeHash": "019a664389f3cd0e8eb551e062989da107ea8c7b97d3a7ecc0e2297dd0759b06",
+      "buildStatus": "passed",
+      "readOnlyRecipeAndEveryArtifactSha256Validation": "passed",
+      "models": [
+        {
+          "id": "original-app",
+          "label": "原始交互装配手册",
+          "format": "html",
+          "path": "app/index.html",
+          "unit": "m",
+          "up": "Y",
+          "role": "original-app",
+          "source": {
+            "id": "olsk-small-cnc",
+            "path": "Assembly_Manual/src/index.html"
+          },
+          "limitations": [
+            "原始装配、零件点选、说明与镜头；不连接真实 CNC，不执行加工或控制指令。"
+          ]
+        },
+        {
+          "id": "original-assembly",
+          "label": "原始完整装配模型",
+          "format": "gltf",
+          "path": "app/OLSK_Small_CNC_V3_All_In.glb",
+          "unit": "m",
+          "up": "Y",
+          "role": "assembly",
+          "source": {
+            "id": "olsk-small-cnc",
+            "path": "Assembly_Manual/public/OLSK_Small_CNC_V3_All_In.glb"
+          },
+          "limitations": [
+            "这是原作者手册的装配模型；模型原件未修改，没有添加运动求解或设备状态。"
+          ]
+        }
+      ],
+      "originalRuntimeValidationReport": "public/hardware/olsk-small-cnc/original-runtime-validation.json",
+      "nativeAssemblyAppBuiltIndependently": true,
+      "originalModel": {
+        "bytes": 32769484,
+        "sha256": "2bf52ddb10c991fc2f36096e6d7b3b1c57819a3f4adfbea38634e6600565b677",
+        "nodes": 1024,
+        "meshes": 961,
+        "assemblyNodes": 63,
+        "animations": 0,
+        "materials": 0,
+        "primitives": 31999,
+        "extensionsRequired": [
+          "KHR_draco_mesh_compression"
+        ]
+      },
+      "cadConversions": []
+    },
+    {
+      "id": "olsk-large-cnc",
+      "modelCount": 2,
+      "originalFileCount": 129,
+      "sources": [
+        {
+          "id": "olsk-large-cnc",
+          "repository": "https://github.com/Open-Lab-Starter-Kit/OLSK-Large-CNC",
+          "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+          "tree": "ba4aa2a13f2095a222103058782a078646014f05",
+          "license": "AGPL-3.0-or-later / CERN-OHL-W-2.0 / CC-BY-SA-4.0"
+        }
+      ],
+      "actualPublishedFileCountExcludingCacheMarker": 258,
+      "publishedFileBytesIncludingHardlinks": 879237341,
+      "recipeHash": "019a664389f3cd0e8eb551e062989da107ea8c7b97d3a7ecc0e2297dd0759b06",
+      "buildStatus": "passed",
+      "readOnlyRecipeAndEveryArtifactSha256Validation": "passed",
+      "models": [
+        {
+          "id": "original-app",
+          "label": "原始交互装配手册",
+          "format": "html",
+          "path": "app/index.html",
+          "unit": "m",
+          "up": "Y",
+          "role": "original-app",
+          "source": {
+            "id": "olsk-large-cnc",
+            "path": "Assembly_Manual/src/index.html"
+          },
+          "limitations": [
+            "原始装配、零件点选、说明与镜头；不连接真实 CNC，不执行加工或控制指令。"
+          ]
+        },
+        {
+          "id": "original-assembly",
+          "label": "原始完整装配模型",
+          "format": "gltf",
+          "path": "app/OLSK_Large_CNC_V2_IN.glb",
+          "unit": "m",
+          "up": "Y",
+          "role": "assembly",
+          "source": {
+            "id": "olsk-large-cnc",
+            "path": "Assembly_Manual/public/OLSK_Large_CNC_V2_IN.glb"
+          },
+          "limitations": [
+            "这是原作者手册的装配模型；模型原件未修改，没有添加运动求解或设备状态。"
+          ]
+        }
+      ],
+      "originalRuntimeValidationReport": "public/hardware/olsk-large-cnc/original-runtime-validation.json",
+      "nativeAssemblyAppBuiltIndependently": true,
+      "originalModel": {
+        "bytes": 47875744,
+        "sha256": "2b05f2d737d40cd71e9188d473325a4a329337efe67c1f390853237c54e8232e",
+        "nodes": 3429,
+        "meshes": 3315,
+        "assemblyNodes": 114,
+        "animations": 0,
+        "materials": 0,
+        "primitives": 50213,
+        "extensionsRequired": [
+          "KHR_draco_mesh_compression"
+        ]
+      },
+      "cadConversions": []
+    },
+    {
+      "id": "voron-2.4",
+      "modelCount": 1,
+      "originalFileCount": 211,
+      "sources": [
+        {
+          "id": "voron-2.4",
+          "repository": "https://github.com/VoronDesign/Voron-2",
+          "revision": "7b32e405f0719881cca782500c822e01e3b16bf2",
+          "tree": "dbc596af45669191e69238510a8c0be8e02617b6",
+          "license": "GPL-3.0"
+        }
+      ],
+      "actualPublishedFileCountExcludingCacheMarker": 27,
+      "publishedFileBytesIncludingHardlinks": 497019337,
+      "recipeHash": "65a07d6f671826b556316ece6461d295f4d2da878f48bdb677d6f5e8b57763b2",
+      "buildStatus": "passed",
+      "readOnlyRecipeAndEveryArtifactSha256Validation": "passed",
+      "models": [
+        {
+          "id": "assembly",
+          "label": "原 CAD 完整装配",
+          "format": "gltf",
+          "path": "assembly.glb",
+          "unit": "m",
+          "up": "Y",
+          "role": "assembly",
+          "source": {
+            "id": "voron-2.4",
+            "path": "CAD/Voron_2.4r2_Assembly_STEP.zip"
+          },
+          "limitations": [
+            "从原 STEP 装配逐部件网格化，保留名称、放置矩阵和可读取的原颜色；没有推定关节、惯量、碰撞或设备遥测。",
+            "原第 8935 微薄面仅能按原 CAD 自身容差保留原内核 4 个三角形，其面积未认证；未删除、投影替换或补封原边。详见 source-precision-audit.json 与 nativeToleranceLimitedFaces。"
+          ]
+        }
+      ],
+      "cadConversions": [
+        {
+          "sourceFile": "Voron_2.4r2_Assembly.step",
+          "sourceSha256": "06b372e40217caa1a7d1f516cb74887247f809e41e1e389f740f290e98441b55",
+          "sourceBytes": 241522213,
+          "sourceUpAxis": "Z",
+          "outputUpAxis": "Y",
+          "outputUnit": "metre",
+          "assemblyOccurrences": 1685,
+          "uniqueOriginalLeafProducts": 1314,
+          "faceOccurrences": 107855,
+          "trianglesIncludingInstances": 2380917,
+          "exportedOriginalNodes": 1685,
+          "exportedMeshes": 1428,
+          "exportedMaterials": 74,
+          "outputBytes": 68111168,
+          "outputSha256": "827540dc565c7178adad23fd4aeb7f4d1b8e4bc084c06159a682bed39d785eec",
+          "unmeshedNondegenerateFaces": [],
+          "degenerateFacesWithoutTriangles": 1,
+          "degenerateFaceDetails": [
+            {
+              "root": 1,
+              "face": 9004,
+              "adaptiveAreaSquareMillimetres": 2.363221922839498e-18
+            }
+          ],
+          "report": "public/hardware/voron-2.4/assembly-conversion.json",
+          "locallyRefinedOriginalFaceCount": 109,
+          "localMethods": {
+            "original-complete-apex-cone-triangulation": 76,
+            "original-occt-native-local-refinement": 10,
+            "original-periodic-cone-uv-triangulation": 7,
+            "original-segmented-periodic-cone-triangulation": 16
+          },
+          "nativeToleranceLimitedFaces": [
+            {
+              "face": 8935,
+              "triangles": 4,
+              "fixedSourceAuditSha256": "9d74caaddc095414cf2b44e0addeaacba5b93f538dd52433027f23c9ef292911",
+              "areaCertification": false,
+              "wholeDomainSurfaceErrorBoundClaimed": false,
+              "originalKernelNodesAndTrianglesUnchanged": true,
+              "originalFaceOccurrences": [
+                {
+                  "root": 1,
+                  "face": 8935
+                }
+              ],
+              "limitation": "One original microscopic face is retained with the unchanged original OCCT mesh under its authored edge/vertex precision. It is not certified to the normal 0.5% area criterion and is not silently deleted, enlarged, reprojected or given reconstructed closing edges."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jubilee",
+      "modelCount": 1,
+      "originalFileCount": 1329,
+      "sources": [
+        {
+          "id": "jubilee",
+          "repository": "https://github.com/machineagency/jubilee",
+          "revision": "c877bd2e889560c83da2a68479641a4f7f0d9b83",
+          "tree": "5d9a228781509281e5e52885bded06e26d8a7661",
+          "license": "CC-BY-4.0"
+        },
+        {
+          "id": "science-jubilee",
+          "repository": "https://github.com/machineagency/science-jubilee",
+          "revision": "bb918fa78f300f57cc379a80731cfca7bdb55c66",
+          "tree": "1828a2949acc239d8def80a51f4e05f77c19a731",
+          "license": "MIT"
+        }
+      ],
+      "actualPublishedFileCountExcludingCacheMarker": 227,
+      "publishedFileBytesIncludingHardlinks": 989616766,
+      "recipeHash": "65a07d6f671826b556316ece6461d295f4d2da878f48bdb677d6f5e8b57763b2",
+      "buildStatus": "passed",
+      "readOnlyRecipeAndEveryArtifactSha256Validation": "passed",
+      "models": [
+        {
+          "id": "assembly",
+          "label": "原 CAD 完整装配",
+          "format": "gltf",
+          "path": "assembly.glb",
+          "unit": "m",
+          "up": "Y",
+          "role": "assembly",
+          "source": {
+            "id": "jubilee",
+            "path": "frame/cads/STEP/jubilee.STEP"
+          },
+          "limitations": [
+            "从原 STEP 装配逐部件网格化，保留名称、放置矩阵和可读取的原颜色；没有推定关节、惯量、碰撞或设备遥测。"
+          ]
+        }
+      ],
+      "cadConversions": [
+        {
+          "sourceFile": "jubilee.STEP",
+          "sourceSha256": "533417712183775a544802ae29a6f94d50ef0839bc2f24f68bce7a048798afea",
+          "sourceBytes": 45857044,
+          "sourceUpAxis": "Y",
+          "outputUpAxis": "Y",
+          "outputUnit": "metre",
+          "assemblyOccurrences": 819,
+          "uniqueOriginalLeafProducts": 127,
+          "faceOccurrences": 40536,
+          "trianglesIncludingInstances": 2115956,
+          "exportedOriginalNodes": 819,
+          "exportedMeshes": 755,
+          "exportedMaterials": 22,
+          "outputBytes": 10508524,
+          "outputSha256": "35d1b404f30e5d85b561bbd4b921ba7235860b5db109c1b8f571f1175dba6647",
+          "unmeshedNondegenerateFaces": [],
+          "degenerateFacesWithoutTriangles": 0,
+          "degenerateFaceDetails": [],
+          "report": "public/hardware/jubilee/assembly-conversion.json",
+          "locallyRefinedOriginalFaceCount": 0,
+          "localMethods": {},
+          "nativeToleranceLimitedFaces": []
+        }
+      ]
+    },
+    {
+      "id": "opcua-conveyor",
+      "modelCount": 2,
+      "originalFileCount": 49,
+      "sources": [
+        {
+          "id": "opcua-conveyor",
+          "repository": "https://github.com/roshbeng/opcua_fusion_test_servers_and_hardware",
+          "revision": "d9ab21ced0a26e09a213a218249ac1938340bae6",
+          "tree": "00289ef7e6be66dcc0afef02b5b9e5a85939511b",
+          "license": "MIT"
+        }
+      ],
+      "actualPublishedFileCountExcludingCacheMarker": 57,
+      "publishedFileBytesIncludingHardlinks": 26733062,
+      "recipeHash": "65a07d6f671826b556316ece6461d295f4d2da878f48bdb677d6f5e8b57763b2",
+      "buildStatus": "passed",
+      "readOnlyRecipeAndEveryArtifactSha256Validation": "passed",
+      "models": [
+        {
+          "id": "assembly",
+          "label": "原 CAD 完整装配",
+          "format": "gltf",
+          "path": "assembly.glb",
+          "unit": "m",
+          "up": "Y",
+          "role": "assembly",
+          "source": {
+            "id": "opcua-conveyor",
+            "path": "CAD models/conveyor_model/conveyor_model_v1.step"
+          },
+          "limitations": [
+            "从原 STEP 装配逐部件网格化，保留名称、放置矩阵和可读取的原颜色；没有推定关节、惯量、碰撞或设备遥测。"
+          ]
+        },
+        {
+          "id": "cobot",
+          "label": "Original companion robotic arm assembly",
+          "format": "gltf",
+          "path": "cobot.glb",
+          "unit": "m",
+          "up": "Y",
+          "role": "assembly",
+          "source": {
+            "id": "opcua-conveyor",
+            "path": "CAD models/cobot_model/cobot_model_v1.step"
+          },
+          "limitations": [
+            "从原 STEP 装配逐部件网格化，保留名称、放置矩阵和可读取的原颜色；没有推定关节、惯量、碰撞或设备遥测。"
+          ]
+        }
+      ],
+      "cadConversions": [
+        {
+          "sourceFile": "conveyor_model_v1.step",
+          "sourceSha256": "b906c521cba00b8d69d677281a32d07428634bacea4d5e5e466ce78385a600ef",
+          "sourceBytes": 516720,
+          "sourceUpAxis": "Z",
+          "outputUpAxis": "Y",
+          "outputUnit": "metre",
+          "assemblyOccurrences": 5,
+          "uniqueOriginalLeafProducts": 4,
+          "faceOccurrences": 137,
+          "trianglesIncludingInstances": 10058,
+          "exportedOriginalNodes": 5,
+          "exportedMeshes": 4,
+          "exportedMaterials": 1,
+          "outputBytes": 307444,
+          "outputSha256": "96e9d80613393549c41dd41b280e1d794549f1c3d86f0d96881dda7360c696dc",
+          "unmeshedNondegenerateFaces": [],
+          "degenerateFacesWithoutTriangles": 0,
+          "degenerateFaceDetails": [],
+          "report": "public/hardware/opcua-conveyor/assembly-conversion.json",
+          "locallyRefinedOriginalFaceCount": 0,
+          "localMethods": {},
+          "nativeToleranceLimitedFaces": []
+        },
+        {
+          "sourceFile": "cobot_model_v1.step",
+          "sourceSha256": "c96ba8178805a75396a5cd169215c2d7a75a855e0a737395f7d1f49740f72cfd",
+          "sourceBytes": 2742824,
+          "sourceUpAxis": "Z",
+          "outputUpAxis": "Y",
+          "outputUnit": "metre",
+          "assemblyOccurrences": 9,
+          "uniqueOriginalLeafProducts": 8,
+          "faceOccurrences": 443,
+          "trianglesIncludingInstances": 10618,
+          "exportedOriginalNodes": 9,
+          "exportedMeshes": 8,
+          "exportedMaterials": 1,
+          "outputBytes": 331112,
+          "outputSha256": "c183a66667d280d7ebd7c33ec0b9ca364bc6cf708c48532efdfd9365ddc7ae2f",
+          "unmeshedNondegenerateFaces": [],
+          "degenerateFacesWithoutTriangles": 0,
+          "degenerateFaceDetails": [],
+          "report": "public/hardware/opcua-conveyor/cobot-conversion.json",
+          "locallyRefinedOriginalFaceCount": 0,
+          "localMethods": {},
+          "nativeToleranceLimitedFaces": []
+        }
+      ]
+    }
+  ],
+  "jubileeOriginalFourFeetMatrixCheck": {
+    "schemaVersion": 1,
+    "status": "passed",
+    "sourceSha256": "533417712183775a544802ae29a6f94d50ef0839bc2f24f68bce7a048798afea",
+    "outputSha256": "35d1b404f30e5d85b561bbd4b921ba7235860b5db109c1b8f571f1175dba6647",
+    "sourceUpAxis": "Y",
+    "outputUpAxis": "Y",
+    "fourOriginalFeet": [
+      {
+        "instanceName": "NAUO734",
+        "originalProductName": "budget_foot_Back Right Foot",
+        "originalWorldOriginMetres": [
+          0.4977847581447554,
+          0.31841339871313346,
+          0.19808628729796582
+        ],
+        "exportedWorldOriginMetres": [
+          0.4977847581447554,
+          0.3184133987131335,
+          0.19808628729796582
+        ],
+        "maximumMatrixDifference": 2.220446049250313e-16
+      },
+      {
+        "instanceName": "NAUO730",
+        "originalProductName": "budget_foot_Back Left Foot",
+        "originalWorldOriginMetres": [
+          0.04878475814494839,
+          0.318413398713174,
+          0.19808628729796848
+        ],
+        "exportedWorldOriginMetres": [
+          0.0487847581449484,
+          0.318413398713174,
+          0.19808628729796846
+        ],
+        "maximumMatrixDifference": 3.3306690738754696e-16
+      },
+      {
+        "instanceName": "NAUO726",
+        "originalProductName": "budget_foot_Front Right Foot",
+        "originalWorldOriginMetres": [
+          0.49778475814475537,
+          0.3184133986962754,
+          0.6870862872980241
+        ],
+        "exportedWorldOriginMetres": [
+          0.4977847581447554,
+          0.3184133986962754,
+          0.6870862872980241
+        ],
+        "maximumMatrixDifference": 5.551115123125783e-17
+      },
+      {
+        "instanceName": "NAUO722",
+        "originalProductName": "budget_foot_Front Left Foot",
+        "originalWorldOriginMetres": [
+          0.04878475814494593,
+          0.31841339871316793,
+          0.6870862872980269
+        ],
+        "exportedWorldOriginMetres": [
+          0.04878475814494594,
+          0.31841339871316793,
+          0.6870862872980269
+        ],
+        "maximumMatrixDifference": 2.220446049250313e-16
+      }
+    ],
+    "worldOriginSpanMetres": [
+      0.4489999999998095,
+      1.6898593635517045e-11,
+      0.48900000000006105
+    ],
+    "originalLocalAndWorldMatricesPreserved": true,
+    "scope": "Original four foot origins and full world matrices; CPU coordinate verification, not WebGL visual acceptance"
+  },
+  "acceptanceBoundaries": {
+    "productionHttp": "Handled separately by the root project validation; this report does not claim an HTTP run.",
+    "webglVisualAndRealMobile": "Not performed by this agent. A native-app build, decoded sample or CPU geometry audit is not visual acceptance.",
+    "physicalMachines": "No hardware, controller, GPIO, OPC UA server or machine motion was connected or executed.",
+    "voronOriginalPrecision": "One original microscopic face is preserved under its authored precision, with no area or whole-domain error-bound certification; one numerical zero-area original face is listed separately. All raw CAD originals remain available."
+  }
+}

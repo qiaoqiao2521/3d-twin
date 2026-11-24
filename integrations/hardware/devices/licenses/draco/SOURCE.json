@@ -1,0 +1,6 @@
+{
+  "source": "https://raw.githubusercontent.com/google/draco/1.5.5/LICENSE",
+  "license": "Apache-2.0",
+  "sha256": "d3709b0fb4b8a94bbb1d02b8a2e484f258b0d9c5c5a01f940391f3fe662cd1a4",
+  "runtime": "The unmodified decoder files come from the integrity-pinned three@0.148.0 npm package; its bundled Draco README declares Apache-2.0."
+}

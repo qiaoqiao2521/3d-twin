@@ -1,3 +1,4 @@
+import { roboticsSourceFile } from './robotics-source-paths.mjs';
 import fs from 'fs';
 import path from 'path';
 import * as THREE from 'three';
@@ -744,7 +745,7 @@ console.log('1. Compiling indexed rexrov2_oberon7_subsea_rov.glb...');
   nodesDef.push({ name: 'rexrov2_base_link', children: [] });
   nodesDef[0].children.push(baseIdx);
 
-  const rexGeoms = parseColladaDae('/tmp/repos/rexrov2/rexrov2_description/meshes/RexROV2_no_props.dae');
+  const rexGeoms = parseColladaDae(roboticsSourceFile('rexrov2/rexrov2_description/meshes/RexROV2_no_props.dae'));
   for (let i = 0; i < rexGeoms.length; i++) {
     const g = ensureMinTriangles(rexGeoms[i], 640);
     totalTris += g.numTris;
@@ -761,7 +762,7 @@ console.log('1. Compiling indexed rexrov2_oberon7_subsea_rov.glb...');
     nodesDef[baseIdx].children.push(cIdx);
   }
 
-  const propRaw = mergeGeometriesList(parseColladaDae('/tmp/repos/rexrov2/rexrov2_description/meshes/Propeller.dae'));
+  const propRaw = mergeGeometriesList(parseColladaDae(roboticsSourceFile('rexrov2/rexrov2_description/meshes/Propeller.dae')));
   const propGeom = ensureMinTriangles(propRaw, 1200);
   const d2r = Math.PI / 180;
   const rexThrusters = [
@@ -788,7 +789,7 @@ console.log('1. Compiling indexed rexrov2_oberon7_subsea_rov.glb...');
   }
 
   function loadOberonMesh(relPath) {
-    const full = path.join('/tmp/repos/uuv_manipulators/oberon7/oberon7_description/meshes', relPath);
+    const full = path.join(roboticsSourceFile('uuv_manipulators/oberon7/oberon7_description/meshes'), relPath);
     const parts = parseColladaDae(full);
     return ensureMinTriangles(mergeGeometriesList(parts), 1200);
   }
@@ -858,14 +859,14 @@ console.log('1. Compiling indexed rexrov2_oberon7_subsea_rov.glb...');
 // 2. Rebuild unitree_g1_humanoid.glb as compact indexed GLB
 console.log('2. Compiling indexed unitree_g1_humanoid.glb...');
 {
-  const g1Urdf = fs.readFileSync('/tmp/repos/unitree_ros/robots/g1_description/g1_29dof_with_hand_rev_1_0.urdf', 'utf8');
+  const g1Urdf = fs.readFileSync(roboticsSourceFile('unitree_ros/robots/g1_description/g1_29dof_with_hand_rev_1_0.urdf'), 'utf8');
   const outPath = path.join(GLB_DIR, 'unitree_g1_humanoid.glb');
   const g1Res = compileUrdfToIndexedGlb(
     g1Urdf,
     outPath,
     (filename, linkName) => {
       const base = path.basename(filename);
-      const stlPath = path.join('/tmp/repos/unitree_ros/robots/g1_description/meshes', base);
+      const stlPath = path.join(roboticsSourceFile('unitree_ros/robots/g1_description/meshes'), base);
       if (!fs.existsSync(stlPath)) return null;
       const raw = parseBinaryStl(stlPath);
       const stem = path.basename(base, path.extname(base));

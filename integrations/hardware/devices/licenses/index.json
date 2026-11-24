@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "sourceId": "science-jubilee",
+      "repository": "machineagency/science-jubilee",
+      "revision": "bb918fa78f300f57cc379a80731cfca7bdb55c66",
+      "originalPath": "LICENSE.txt",
+      "sha256": "b1c8d936576bb06445708b88991a18024d77afb7223f89ce63d772f1fef1bd9a",
+      "localPath": "licenses/science-jubilee/LICENSE.txt"
+    },
+    {
+      "sourceId": "science-jubilee",
+      "repository": "machineagency/science-jubilee",
+      "revision": "bb918fa78f300f57cc379a80731cfca7bdb55c66",
+      "originalPath": "docs/license.md",
+      "sha256": "6f6accafd8e883d3a9c16f54de17fb23098c544dc1af30a3ec54c94e7389114c",
+      "localPath": "licenses/science-jubilee/docs/license.md"
+    },
+    {
+      "sourceId": "opcua-conveyor",
+      "repository": "roshbeng/opcua_fusion_test_servers_and_hardware",
+      "revision": "d9ab21ced0a26e09a213a218249ac1938340bae6",
+      "originalPath": "LICENSE",
+      "sha256": "6144fd8afc4d2c905690a82f0ab5d0e9a98104f5b357c07fd7907865ed224e65",
+      "localPath": "licenses/opcua-conveyor/LICENSE"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": ".reuse/dep5",
+      "sha256": "c5b5dad3d9836738eece83a55c76c29077a3c82f1258a810f92e9f5e86b338a6",
+      "localPath": "licenses/olsk-small-cnc/.reuse/dep5"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "Assembly_Manual/public/fonts/LICENSE",
+      "sha256": "18296c8acc17d5de9db2ff87327288a6a391d0e77db3ce8f01e0013058241283",
+      "localPath": "licenses/olsk-small-cnc/Assembly_Manual/public/fonts/LICENSE"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "Assembly_Manual/public/fonts/helvetiker_regular.typeface.json.license",
+      "sha256": "d883ae2da91a7111c19f2536e475b02dc17ecebf33766f013be831268a24acbe",
+      "localPath": "licenses/olsk-small-cnc/Assembly_Manual/public/fonts/helvetiker_regular.typeface.json.license"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "LICENSES/AGPL-3.0-or-later.txt",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "localPath": "licenses/olsk-small-cnc/LICENSES/AGPL-3.0-or-later.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "LICENSES/CC-BY-SA-4.0.txt",
+      "sha256": "cde7883b9050a1104f4ac19a1572aafd6e5d7323b68351aaf51fbf4beba54966",
+      "localPath": "licenses/olsk-small-cnc/LICENSES/CC-BY-SA-4.0.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "LICENSES/CC0-1.0.txt",
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "localPath": "licenses/olsk-small-cnc/LICENSES/CC0-1.0.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "LICENSES/CERN-OHL-W-2.0.txt",
+      "sha256": "c1432111d0aeefc9d1ced8105d2d4ed07d5dcb1fd43abb5d4616c4f9ef96e08f",
+      "localPath": "licenses/olsk-small-cnc/LICENSES/CERN-OHL-W-2.0.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "LICENSES/LicenseRef-Magenta.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "localPath": "licenses/olsk-small-cnc/LICENSES/LicenseRef-Magenta.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "LICENSES/LicenseRef-Unkown.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "localPath": "licenses/olsk-small-cnc/LICENSES/LicenseRef-Unkown.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "LICENSE_CC_BY_SA_4.0.txt",
+      "sha256": "3b2890eacd851373001c4a14623458e3adaf1b1967939aa9c38a318e28d61c00",
+      "localPath": "licenses/olsk-small-cnc/LICENSE_CC_BY_SA_4.0.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "LICENSE_CERN_OHL_W_V2.txt",
+      "sha256": "9682f98d4fe43f33e618a14da9b324f7b4c170fdc811ea261041898e4e0744ce",
+      "localPath": "licenses/olsk-small-cnc/LICENSE_CERN_OHL_W_V2.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "OLSK_Small_CNC_V1/LICENSE_CC_BY_SA_4.0.txt",
+      "sha256": "3b2890eacd851373001c4a14623458e3adaf1b1967939aa9c38a318e28d61c00",
+      "localPath": "licenses/olsk-small-cnc/OLSK_Small_CNC_V1/LICENSE_CC_BY_SA_4.0.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "OLSK_Small_CNC_V1/LICENSE_CERN_OHL_W_V2.txt",
+      "sha256": "9682f98d4fe43f33e618a14da9b324f7b4c170fdc811ea261041898e4e0744ce",
+      "localPath": "licenses/olsk-small-cnc/OLSK_Small_CNC_V1/LICENSE_CERN_OHL_W_V2.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "OLSK_Small_CNC_V2/LICENSE_CC_BY_SA_4.0.txt",
+      "sha256": "3b2890eacd851373001c4a14623458e3adaf1b1967939aa9c38a318e28d61c00",
+      "localPath": "licenses/olsk-small-cnc/OLSK_Small_CNC_V2/LICENSE_CC_BY_SA_4.0.txt"
+    },
+    {
+      "sourceId": "olsk-small-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Small-CNC",
+      "revision": "cae066fa5b78b596743e1f2e432b93539cba8c24",
+      "originalPath": "OLSK_Small_CNC_V2/LICENSE_CERN_OHL_W_V2.txt",
+      "sha256": "9682f98d4fe43f33e618a14da9b324f7b4c170fdc811ea261041898e4e0744ce",
+      "localPath": "licenses/olsk-small-cnc/OLSK_Small_CNC_V2/LICENSE_CERN_OHL_W_V2.txt"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": ".reuse/dep5",
+      "sha256": "30ede4cd91fde1d84ff9456647ce0fb3025facb8731654a7be09b0eccbe4b5e3",
+      "localPath": "licenses/olsk-large-cnc/.reuse/dep5"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "Assembly_Manual/public/fonts/LICENSE",
+      "sha256": "18296c8acc17d5de9db2ff87327288a6a391d0e77db3ce8f01e0013058241283",
+      "localPath": "licenses/olsk-large-cnc/Assembly_Manual/public/fonts/LICENSE"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "Assembly_Manual/public/fonts/helvetiker_regular.typeface.json.license",
+      "sha256": "1a27c49259d0c2922c258c0cbdeae03b42ff35b29d72680aaded159c52155ae4",
+      "localPath": "licenses/olsk-large-cnc/Assembly_Manual/public/fonts/helvetiker_regular.typeface.json.license"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "LICENSES/AGPL-3.0-or-later.txt",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "localPath": "licenses/olsk-large-cnc/LICENSES/AGPL-3.0-or-later.txt"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "LICENSES/CC-BY-SA-4.0.txt",
+      "sha256": "cde7883b9050a1104f4ac19a1572aafd6e5d7323b68351aaf51fbf4beba54966",
+      "localPath": "licenses/olsk-large-cnc/LICENSES/CC-BY-SA-4.0.txt"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "LICENSES/CC0-1.0.txt",
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "localPath": "licenses/olsk-large-cnc/LICENSES/CC0-1.0.txt"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "LICENSES/CERN-OHL-W-2.0.txt",
+      "sha256": "c1432111d0aeefc9d1ced8105d2d4ed07d5dcb1fd43abb5d4616c4f9ef96e08f",
+      "localPath": "licenses/olsk-large-cnc/LICENSES/CERN-OHL-W-2.0.txt"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "LICENSES/LicenseRef-Magenta.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "localPath": "licenses/olsk-large-cnc/LICENSES/LicenseRef-Magenta.txt"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "LICENSE_CC_BY_SA_4.0.txt",
+      "sha256": "3b2890eacd851373001c4a14623458e3adaf1b1967939aa9c38a318e28d61c00",
+      "localPath": "licenses/olsk-large-cnc/LICENSE_CC_BY_SA_4.0.txt"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "LICENSE_CERN_OHL_W_V2.txt",
+      "sha256": "9682f98d4fe43f33e618a14da9b324f7b4c170fdc811ea261041898e4e0744ce",
+      "localPath": "licenses/olsk-large-cnc/LICENSE_CERN_OHL_W_V2.txt"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "OLSK_Large_CNC_V1/LICENSE_CC_BY_SA_4.0.txt",
+      "sha256": "3b2890eacd851373001c4a14623458e3adaf1b1967939aa9c38a318e28d61c00",
+      "localPath": "licenses/olsk-large-cnc/OLSK_Large_CNC_V1/LICENSE_CC_BY_SA_4.0.txt"
+    },
+    {
+      "sourceId": "olsk-large-cnc",
+      "repository": "Open-Lab-Starter-Kit/OLSK-Large-CNC",
+      "revision": "e7081c49c582b732ea6ab3c160bf557609754cfc",
+      "originalPath": "OLSK_Large_CNC_V1/LICENSE_CERN_OHL_W_V2.txt",
+      "sha256": "9682f98d4fe43f33e618a14da9b324f7b4c170fdc811ea261041898e4e0744ce",
+      "localPath": "licenses/olsk-large-cnc/OLSK_Large_CNC_V1/LICENSE_CERN_OHL_W_V2.txt"
+    },
+    {
+      "sourceId": "jubilee",
+      "repository": "machineagency/jubilee",
+      "revision": "c877bd2e889560c83da2a68479641a4f7f0d9b83",
+      "originalPath": "license.txt",
+      "sha256": "d67b7c0f5b52096ce0aaa90fabb99b1c5ba87e1a239c97bc470fc74e91375ae4",
+      "localPath": "licenses/jubilee/license.txt"
+    },
+    {
+      "sourceId": "voron-2.4",
+      "repository": "VoronDesign/Voron-2",
+      "revision": "7b32e405f0719881cca782500c822e01e3b16bf2",
+      "originalPath": "LICENSE",
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "localPath": "licenses/voron-2.4/LICENSE"
+    }
+  ]
+}

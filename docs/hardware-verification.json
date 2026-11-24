@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-24T17:17:14.563Z",
+  "root": "dist",
+  "http": true,
+  "visualAcceptance": false,
+  "host": {
+    "decoderSource": "three@0.170.0/examples/jsm/libs/draco/gltf",
+    "resources": 6,
+    "httpRequests": 6,
+    "httpBytes": 809341
+  },
+  "assets": [
+    {
+      "id": "odri",
+      "sources": 2,
+      "originalFiles": 3874,
+      "directlyAvailableFiles": 412,
+      "httpRequests": 425,
+      "httpBytes": 953677202,
+      "models": [
+        {
+          "id": "actuator",
+          "format": "gltf",
+          "nodes": 52,
+          "meshes": 43,
+          "primitives": 49
+        },
+        {
+          "id": "solo12",
+          "format": "html",
+          "independentApplication": true
+        },
+        {
+          "id": "leg",
+          "format": "html",
+          "independentApplication": true
+        },
+        {
+          "id": "body",
+          "format": "html",
+          "independentApplication": true
+        }
+      ]
+    },
+    {
+      "id": "so101",
+      "sources": 1,
+      "originalFiles": 241,
+      "directlyAvailableFiles": 61,
+      "httpRequests": 71,
+      "httpBytes": 156553305,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf",
+          "nodes": 395,
+          "meshes": 259,
+          "primitives": 329
+        },
+        {
+          "id": "follower",
+          "format": "urdf",
+          "referencedResources": 34,
+          "movableJoints": 6
+        },
+        {
+          "id": "camera",
+          "format": "urdf",
+          "referencedResources": 38,
+          "movableJoints": 6
+        },
+        {
+          "id": "leader",
+          "format": "urdf",
+          "referencedResources": 36,
+          "movableJoints": 6
+        },
+        {
+          "id": "old-calibration",
+          "format": "urdf",
+          "referencedResources": 34,
+          "movableJoints": 6
+        }
+      ]
+    },
+    {
+      "id": "thor",
+      "sources": 2,
+      "originalFiles": 402,
+      "directlyAvailableFiles": 101,
+      "httpRequests": 121,
+      "httpBytes": 476730886,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf",
+          "nodes": 981,
+          "meshes": 890,
+          "primitives": 933
+        },
+        {
+          "id": "kinematic",
+          "format": "urdf",
+          "referencedResources": 14,
+          "movableJoints": 12
+        }
+      ]
+    },
+    {
+      "id": "parol6",
+      "sources": 2,
+      "originalFiles": 9361,
+      "directlyAvailableFiles": 529,
+      "httpRequests": 538,
+      "httpBytes": 531148201,
+      "models": [
+        {
+          "id": "flange",
+          "format": "urdf",
+          "referencedResources": 17,
+          "movableJoints": 6
+        },
+        {
+          "id": "msg",
+          "format": "urdf",
+          "referencedResources": 33,
+          "movableJoints": 8
+        },
+        {
+          "id": "msg-tpu",
+          "format": "urdf",
+          "referencedResources": 37,
+          "movableJoints": 8
+        },
+        {
+          "id": "ssg48",
+          "format": "urdf",
+          "referencedResources": 31,
+          "movableJoints": 8
+        },
+        {
+          "id": "ssg48-stock",
+          "format": "urdf",
+          "referencedResources": 31,
+          "movableJoints": 8
+        },
+        {
+          "id": "pneumatic",
+          "format": "urdf",
+          "referencedResources": 36,
+          "movableJoints": 8
+        }
+      ]
+    },
+    {
+      "id": "olsk-small-cnc",
+      "sources": 1,
+      "originalFiles": 147,
+      "directlyAvailableFiles": 88,
+      "httpRequests": 241,
+      "httpBytes": 881408539,
+      "models": [
+        {
+          "id": "original-app",
+          "format": "html",
+          "independentApplication": true
+        },
+        {
+          "id": "original-assembly",
+          "format": "gltf",
+          "nodes": 1024,
+          "meshes": 961,
+          "primitives": 31999
+        }
+      ]
+    },
+    {
+      "id": "olsk-large-cnc",
+      "sources": 1,
+      "originalFiles": 129,
+      "directlyAvailableFiles": 95,
+      "httpRequests": 263,
+      "httpBytes": 879281278,
+      "models": [
+        {
+          "id": "original-app",
+          "format": "html",
+          "independentApplication": true
+        },
+        {
+          "id": "original-assembly",
+          "format": "gltf",
+          "nodes": 3429,
+          "meshes": 3315,
+          "primitives": 50213
+        }
+      ]
+    },
+    {
+      "id": "voron-2.4",
+      "sources": 1,
+      "originalFiles": 211,
+      "directlyAvailableFiles": 20,
+      "httpRequests": 32,
+      "httpBytes": 497024459,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf",
+          "nodes": 1686,
+          "meshes": 1428,
+          "primitives": 1591
+        }
+      ]
+    },
+    {
+      "id": "jubilee",
+      "sources": 2,
+      "originalFiles": 1329,
+      "directlyAvailableFiles": 220,
+      "httpRequests": 232,
+      "httpBytes": 989661355,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf",
+          "nodes": 819,
+          "meshes": 755,
+          "primitives": 807
+        }
+      ]
+    },
+    {
+      "id": "opcua-conveyor",
+      "sources": 1,
+      "originalFiles": 49,
+      "directlyAvailableFiles": 49,
+      "httpRequests": 62,
+      "httpBytes": 26744519,
+      "models": [
+        {
+          "id": "assembly",
+          "format": "gltf",
+          "nodes": 6,
+          "meshes": 4,
+          "primitives": 4
+        },
+        {
+          "id": "cobot",
+          "format": "gltf",
+          "nodes": 10,
+          "meshes": 8,
+          "primitives": 8
+        }
+      ]
+    }
+  ]
+}

@@ -11,8 +11,8 @@ import {
   classifyMeshLayer,
   computeGhostMaterialState,
   computeClipPlaneConstant,
-  ManifestRepo
-} from './manifestUtils';
+  type ManifestRepo
+} from './manifestUtils.ts';
 
 describe('manifestUtils pure logic suite', () => {
   it('exposes all 14 flagship robot packs with valid .glb and .png asset paths on disk', () => {

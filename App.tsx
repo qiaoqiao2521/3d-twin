@@ -5,6 +5,7 @@ const TwinWorkbench = lazy(() => import('./src/components/TwinWorkbench'));
 const IronWorkspace = lazy(() => import('./src/components/IronWorkspace'));
 const WarehouseWorkspace = lazy(() => import('./src/components/WarehouseWorkspace'));
 const OpenDemosWorkspace = lazy(() => import('./src/components/OpenDemosWorkspace'));
+const HardwareWorkspace = lazy(() => import('./src/components/HardwareWorkspace'));
 
 export default function App() {
   const [route, setRoute] = useState<WorkspaceRoute>(() => resolveWorkspaceLocation(window.location.search));
@@ -28,6 +29,11 @@ export default function App() {
       <header className="shrink-0 flex flex-wrap items-center gap-2 border-b border-white/10 bg-[#10151d] px-3 py-2">
         <span className="mr-2 shrink-0 whitespace-nowrap text-sm font-semibold tracking-wide">3D 孪生</span>
         <nav aria-label="工作空间" className="order-last flex w-full min-w-0 flex-wrap gap-1 rounded-lg bg-black/20 p-1 sm:order-none sm:w-auto">
+          <button type="button" onClick={() => navigate({ workspace: 'hardware' })}
+            aria-current={route.workspace === 'hardware' ? 'page' : undefined}
+            className={`min-h-11 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs sm:flex-none ${route.workspace === 'hardware' ? 'bg-cyan-500/15 text-cyan-200' : 'text-slate-400 hover:text-white'}`}>
+            机器人与真实设备
+          </button>
           <button type="button" onClick={() => navigate({ workspace: 'engineering', mode: 'cad_hub' })}
             aria-current={engineering ? 'page' : undefined}
             className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs sm:flex-none ${engineering ? 'bg-cyan-500/15 text-cyan-200' : 'text-slate-400 hover:text-white'}`}>
@@ -71,7 +77,9 @@ export default function App() {
       </header>
       <main className="min-h-0 flex-1 overflow-hidden">
         <Suspense fallback={<div role="status" className="flex h-full items-center justify-center text-sm text-slate-400">正在打开工作空间…</div>}>
-          {route.workspace === 'engineering'
+          {route.workspace === 'hardware'
+            ? <HardwareWorkspace route={route} navigate={navigate} />
+            : route.workspace === 'engineering'
             ? <TwinWorkbench key={route.mode} initialMode={route.mode} />
             : route.workspace === 'warehouse'
               ? <WarehouseWorkspace />

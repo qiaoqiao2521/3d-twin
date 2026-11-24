@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "automotive:build": "node scripts/build-automotive.mjs",
-    "predev": "npm run automotive:build && npm run build:warehouse && npm run build:open-demos",
+    "predev": "npm run automotive:build && npm run build:warehouse && npm run build:open-demos && npm run build:hardware",
     "dev": "vite --port=5197 --host=0.0.0.0",
-    "prebuild": "npm run automotive:build && npm run build:warehouse && npm run build:open-demos",
+    "prebuild": "npm run automotive:build && npm run build:warehouse && npm run build:open-demos && npm run build:hardware",
     "build": "vite build",
     "lint": "tsc --noEmit",
     "test": "bun test",
@@ -26,7 +26,15 @@
     "install:demo-backends": "node scripts/start-open-demo.mjs waretwin --setup-only && node scripts/start-open-demo.mjs rftwin --setup-only",
     "start:waretwin": "node scripts/start-open-demo.mjs waretwin",
     "start:rftwin": "node scripts/start-open-demo.mjs rftwin",
-    "verify:demo-backends": "node scripts/verify-open-demo-backends.mjs"
+    "verify:demo-backends": "node scripts/verify-open-demo-backends.mjs",
+    "install:hardware": "node scripts/hardware/toolchain.mjs",
+    "build:hardware": "node scripts/build-hardware.mjs",
+    "verify:hardware": "node scripts/verify-hardware.mjs",
+    "test:hardware": "node --test src/utils/hardware.test.ts src/utils/hardwareDraco.test.ts src/utils/workspaceRoutes.test.ts integrations/hardware/host.test.mjs integrations/hardware/devices/test_lifecycle.mjs integrations/hardware/robots/source-cache.test.mjs",
+    "verify:robotics": "node scripts/verify-robotics.mjs",
+    "test:hardware:cad": "node scripts/test-hardware-cad.mjs",
+    "verify:hardware:kinematics": "node scripts/verify-hardware-kinematics.mjs",
+    "test:hardware:opcua": "python3 -m unittest discover -s research/hardware/opcua -p 'test_*.py' -v"
   },
   "dependencies": {
     "lucide-react": "^0.454.0",
@@ -35,7 +43,8 @@
     "react-dom": "^18.3.1",
     "three": "^0.170.0",
     "three-gpu-pathtracer": "^0.0.23",
-    "three-mesh-bvh": "^0.9.18"
+    "three-mesh-bvh": "^0.9.18",
+    "urdf-loader": "0.13.1"
   },
   "devDependencies": {
     "@fontsource/inter": "5.3.0",
@@ -50,6 +59,7 @@
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.6.2",
     "draco3dgltf": "^1.5.9",
+    "linkedom": "0.18.12",
     "postcss": "^8.5.33",
     "tailwindcss": "^3.4.15",
     "typescript": "~5.6.2",

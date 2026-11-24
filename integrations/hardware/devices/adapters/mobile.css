@@ -1,0 +1,27 @@
+/* Layout adaptation only; all original panels, controls and geometry remain. */
+@media (max-width: 850px) {
+  html, body { min-height: 100%; height: auto; overflow: auto; }
+  #root { position: relative; top: auto; left: auto; min-height: 100vh; height: auto; overflow: visible; }
+  .header header { flex-wrap: wrap; height: auto; min-height: 56px; gap: 8px; }
+  .Title { display: block; margin-left: 0; font-size: 19px; }
+  .navMenu { width: 100%; margin-left: 0; }
+  .navMenu ul { display: flex; flex-wrap: wrap; }
+  .navMenu li { margin: 0; }
+  .navMenu li a { padding: 10px 14px; }
+  .hamburger { display: none; }
+  #app { height: auto; margin-top: 8px; }
+  .stepNavi { position: relative; width: 100% !important; height: auto; max-height: 170px; padding: 8px 12px; overflow: auto; }
+  .stepNavi ul { max-height: 140px; }
+  #currentStepArea, #HowToArea { margin: 0 10px; width: auto; height: auto; }
+  .currentStepBar { height: auto; min-height: 90px; }
+  #stepTitleArea { font-size: 20px; overflow-wrap: anywhere; }
+  #stepControl { float: none; display: flex; flex-wrap: wrap; padding: 6px 0; }
+  .infoColumn { position: relative; float: none; width: 100%; height: auto; max-height: 230px; overflow: auto; padding-right: 0; }
+  .stepPartsArea { margin-top: 8px; }
+  .stepRemarksArea { margin-top: 12px; }
+  .viewArea, #viewArea { position: relative; float: none; width: 100% !important; margin: 12px 0 0 !important; height: 62vh; min-height: 360px; }
+  #HowToImgArea { width: 100%; min-height: 360px; height: 55vh; }
+  #HowToTextArea { width: 100%; height: auto; }
+  button, .stepNaviBtn, .parts { min-height: 42px; }
+  canvas { touch-action: none; }
+}

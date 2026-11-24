@@ -1,0 +1,6 @@
+# Preserve upstream license/source bytes and native OpenCascade fixture records.
+# Their authored trailing whitespace is not host-code formatting to rewrite.
+integrations/hardware/devices/fixtures/**/*.brep -text -diff
+integrations/hardware/devices/licenses/** -text -whitespace
+integrations/hardware/robots/licenses/** -text -whitespace
+research/hardware/opcua/upstream/** -text -whitespace

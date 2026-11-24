@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "sourceSha256": "533417712183775a544802ae29a6f94d50ef0839bc2f24f68bce7a048798afea",
+  "outputSha256": "35d1b404f30e5d85b561bbd4b921ba7235860b5db109c1b8f571f1175dba6647",
+  "sourceUpAxis": "Y",
+  "outputUpAxis": "Y",
+  "fourOriginalFeet": [
+    {
+      "instanceName": "NAUO734",
+      "originalProductName": "budget_foot_Back Right Foot",
+      "originalWorldOriginMetres": [
+        0.4977847581447554,
+        0.31841339871313346,
+        0.19808628729796582
+      ],
+      "exportedWorldOriginMetres": [
+        0.4977847581447554,
+        0.3184133987131335,
+        0.19808628729796582
+      ],
+      "maximumMatrixDifference": 2.220446049250313e-16
+    },
+    {
+      "instanceName": "NAUO730",
+      "originalProductName": "budget_foot_Back Left Foot",
+      "originalWorldOriginMetres": [
+        0.04878475814494839,
+        0.318413398713174,
+        0.19808628729796848
+      ],
+      "exportedWorldOriginMetres": [
+        0.0487847581449484,
+        0.318413398713174,
+        0.19808628729796846
+      ],
+      "maximumMatrixDifference": 3.3306690738754696e-16
+    },
+    {
+      "instanceName": "NAUO726",
+      "originalProductName": "budget_foot_Front Right Foot",
+      "originalWorldOriginMetres": [
+        0.49778475814475537,
+        0.3184133986962754,
+        0.6870862872980241
+      ],
+      "exportedWorldOriginMetres": [
+        0.4977847581447554,
+        0.3184133986962754,
+        0.6870862872980241
+      ],
+      "maximumMatrixDifference": 5.551115123125783e-17
+    },
+    {
+      "instanceName": "NAUO722",
+      "originalProductName": "budget_foot_Front Left Foot",
+      "originalWorldOriginMetres": [
+        0.04878475814494593,
+        0.31841339871316793,
+        0.6870862872980269
+      ],
+      "exportedWorldOriginMetres": [
+        0.04878475814494594,
+        0.31841339871316793,
+        0.6870862872980269
+      ],
+      "maximumMatrixDifference": 2.220446049250313e-16
+    }
+  ],
+  "worldOriginSpanMetres": [
+    0.4489999999998095,
+    1.6898593635517045e-11,
+    0.48900000000006105
+  ],
+  "originalLocalAndWorldMatricesPreserved": true,
+  "scope": "Original four foot origins and full world matrices; CPU coordinate verification, not WebGL visual acceptance"
+}

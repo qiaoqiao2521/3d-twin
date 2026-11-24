@@ -1,0 +1,18 @@
+[
+  {
+    "package": "urdf-loader",
+    "version": "0.13.1",
+    "license": "Apache-2.0",
+    "source": "https://github.com/gkjohnson/urdf-loaders/blob/24feef2c267496d22d17bbbb5c1bf5b86dcf174f/LICENSE",
+    "file": "urdf-loader-Apache-2.0.txt",
+    "sha256": "12ab00e5637ce70e16be1f6693dfa5f9b7a4fe0f5f976a0329477d0c32d53e86"
+  },
+  {
+    "package": "Draco browser glTF codec",
+    "version": "byte-identical to Three.js 0.170.0 vendored glTF codec",
+    "license": "Apache-2.0",
+    "source": "https://raw.githubusercontent.com/google/draco/d6c1acf366a9c8745e6f1e96d94c2ddcad279e21/LICENSE",
+    "file": "draco-Apache-2.0.txt",
+    "sha256": "d3709b0fb4b8a94bbb1d02b8a2e484f258b0d9c5c5a01f940391f3fe662cd1a4"
+  }
+]

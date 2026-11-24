@@ -1,0 +1,403 @@
+{
+  "schemaVersion": 1,
+  "id": "opcua-conveyor",
+  "repository": "roshbeng/opcua_fusion_test_servers_and_hardware",
+  "revision": "d9ab21ced0a26e09a213a218249ac1938340bae6",
+  "tree": "00289ef7e6be66dcc0afef02b5b9e5a85939511b",
+  "archiveSha256": "6841f16148f5664d225b5b3a8a8533ea73439a2b699b0752be1851695e09d7f0",
+  "archiveSize": 9918993,
+  "files": [
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/ARM I v5.step",
+      "size": 24192,
+      "sha256": "53d55b33afffdfa5407f36b21f01e429af768a5bf770f17d9d17f50af5689e33",
+      "gitBlob": "8cdb11fd3d94bb92bfd485e716d0cd4908443971",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/ARM II v7.step",
+      "size": 21027,
+      "sha256": "bec5d0188498890aa870af69fecf96c68af002f095982a86733e6af902671fb8",
+      "gitBlob": "bf7d244219aea7e27a341c694f56970593980fc4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/ARM JOINT PLATE v3.step",
+      "size": 23103,
+      "sha256": "b299b54bacda9c1fb1b80d547c3347f84c6821ae3ac137f1ab1e47f728fddde3",
+      "gitBlob": "d812d6a5e9e5f3ce83ff13dff3bc62144cd4f0fe",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/BASE SUPPORT v8.step",
+      "size": 30118,
+      "sha256": "895711043f907bd27a7cced1d1211891ce18d726dc900831fef7e517d7c7effe",
+      "gitBlob": "5eca2ad7e94c842e57d5fc6b373107ad0923a1e8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/BASE v4.step",
+      "size": 47940,
+      "sha256": "53de2225e277faf97a4e7eb9f7549ebab8949b95c098c2fb485972bbb8e258b6",
+      "gitBlob": "0b2e45c78fb844d34939c963fb342df6c3e5f0e5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/COBOT'S FOOT.step",
+      "size": 32940,
+      "sha256": "b4bf483b86db2eaf418974fa38424cdf39c8c0cff6a34240539d3ce8b6cab6eb",
+      "gitBlob": "cbeb2bd1dfc1f32a2e81153bf84aa6d150165547",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/GRIPPER BASE v2.step",
+      "size": 14091,
+      "sha256": "79398832a8948500f90ff6f193a2ab333ece61bfcc805e4cf1cfc69228a4a592",
+      "gitBlob": "72ce4753c8aaa35d265c3e01c17f2d15cb3f996c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/GRIPPER CLAW v2.step",
+      "size": 2516473,
+      "sha256": "e5569a63082879a55819c3f371578098f53c4270751aa9d0a287dca43ddeb0a3",
+      "gitBlob": "733ceff6bac2b402c655bce71858c357938a092c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/GRIPPER SUPPORTS I, II & III v5.step",
+      "size": 18666,
+      "sha256": "fcbe5478eacf8de9c55fc3d35432918ff525c33ea1c2975f75a18ae067dbe187",
+      "gitBlob": "4645a79cb02993896cdad14fdc42c2065a1272f0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot individual components in step format/ring v3.step",
+      "size": 8401,
+      "sha256": "602a6759effb96127b3693f5ebb654f0afcfa09d0b518e535e5f798f7189c30a",
+      "gitBlob": "54a6663d12c5e95985667ed17add51ea019018e0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1.f3d",
+      "size": 5350473,
+      "sha256": "4cbd7330565f7a649b61b391128e775d9850e67b5bfd8fc8dcf0d834abfccb93",
+      "gitBlob": "70564bc2edf8929fcff9274f2c4ec61d147305a1",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1.step",
+      "size": 2742824,
+      "sha256": "c96ba8178805a75396a5cd169215c2d7a75a855e0a737395f7d1f49740f72cfd",
+      "gitBlob": "d3db389bbd2c3d7c88edc0d89ee3ec7f2751d0ae",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/Part16.ipt",
+      "size": 735232,
+      "sha256": "4d2652f67cb17f3245d9f86f6545a4c0c1e9c2070bfd443fa5fade894628bb3e",
+      "gitBlob": "13dccca56b3a38ed3aa81eea12580119ca04689c",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/arm1.ipt",
+      "size": 119296,
+      "sha256": "e2dab687a3eee2dee87f5b11da612f9e3b0b565c7e0f95d3685a15b13693151c",
+      "gitBlob": "381f5f5543bdcc3e68a87b958c792ec1eb0063f0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/arm2.ipt",
+      "size": 111616,
+      "sha256": "77614190bde838794952b1162a0229333280b4cffd01f9e9974f163df7f1b295",
+      "gitBlob": "8259a802b48c36c14b52010c76d511ba718c477b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/base1 (1).ipt",
+      "size": 122880,
+      "sha256": "805316c5f360389bd6f873eea854cc7435231c37bb0133a48c6f874e2b8a44de",
+      "gitBlob": "0d2733dbcf2bd84aab727a51ff0bea7ecb72f877",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/base1.ipt",
+      "size": 79872,
+      "sha256": "3761227329cedeab64818c01b81c90ae8fbb694b67c5b6de9268eee208a98733",
+      "gitBlob": "076791d854b0cd7823d5bfb374c28352bd308c66",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/base2.ipt",
+      "size": 103936,
+      "sha256": "e75efa9e6a5c518f4c41b864e104714a0aab1a0cb946537cc18f1b23bc8351e7",
+      "gitBlob": "57585aff8bfd1e82f060dd7f68919f0d2fcae450",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/base_support.ipt",
+      "size": 102400,
+      "sha256": "69af9ffe329991b15ebf20b7efcbc15ed650423c23cc977825d3a79b34d05ba3",
+      "gitBlob": "8281b0857ca8dbb1d407b0f60a652ee72f88a74f",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/gripper_assembly.iam",
+      "size": 61440,
+      "sha256": "ed5b6abb53cec5f28102be24f1d0f4882b9c32b7454234d37c3717daaf54d6c3",
+      "gitBlob": "c780b2d7995ace2ded7d2c74db30600b2ce1ecc6",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/robotic_arm.iam",
+      "size": 73728,
+      "sha256": "b992f0c28a69f94f87041626a8e4c79f8c922d52d05a1637b1c1873a5b6f0e9e",
+      "gitBlob": "d0c06b017af8e8bbe97614440b23ea6261794678",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/cobot_model/cobot_model_v1_inventor/shoulder.ipt",
+      "size": 91136,
+      "sha256": "8e7e5fd680c7194224013454b66b251753082084ce80b1ba86b639888ec9d9a8",
+      "gitBlob": "02519867683a2d44ed4d29df5444c6b6583a7eb2",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor individual components in step format/base_and_support v3.step",
+      "size": 81111,
+      "sha256": "2b03446f045574681860127ec6a44f4d9e9c69b11edabeee1df59e860ed88a01",
+      "gitBlob": "b612fe49e2891559767bccc6fa18e1d34890ab18",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor individual components in step format/box v2.step",
+      "size": 16503,
+      "sha256": "c6050776b8b6b3fda5c480e27257aa73176b967902b8203f0102c87bd435da37",
+      "gitBlob": "c4c95a66e76ba535ce516981b67944c7bbdf6a20",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor individual components in step format/pick v2.step",
+      "size": 39713,
+      "sha256": "deb16f424479f104647ee5cee59d439014aecb0039031f400117c0fec18ca07b",
+      "gitBlob": "edcf16d545462f2b32343c7cb0793314adabf75d",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor individual components in step format/rail v2.step",
+      "size": 380817,
+      "sha256": "e4a0d2c5f2d3d26bdc0098cd0c58890a7dc4f8c5ebb1a682d669a4038289423e",
+      "gitBlob": "6b7b9007bc02b23cd18b7a0fdec95c1b95fd7d6e",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor_model_v1.f3d",
+      "size": 696203,
+      "sha256": "9032c584d5f4a5d4455abf81f95ade6358c71b7da0eb0045a4bb435a2b51e675",
+      "gitBlob": "5310036d4994bd4f535f44a7b129a4e65c7f92fe",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor_model_v1.step",
+      "size": 516720,
+      "sha256": "b906c521cba00b8d69d677281a32d07428634bacea4d5e5e466ce78385a600ef",
+      "gitBlob": "d3d2f78cbc421e8afc32fbd4ac2db990eaf0639b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor_model_v1/box.ipt",
+      "size": 75264,
+      "sha256": "59829490a42a4391027f42ef8b0ba321ba8fa023a011b06c646fdedee41f1965",
+      "gitBlob": "affb11c7ce52977b52bfb349106cbeb2fdda9712",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor_model_v1/conveyor_model.iam",
+      "size": 66048,
+      "sha256": "a2db0b7a6cda924b1e01ec182b663071242003576cdd3d2085779f8ab768f2a3",
+      "gitBlob": "4bda73248838d0f5830a0d2abaceb9b019bfd3fc",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor_model_v1/part.ipt",
+      "size": 92160,
+      "sha256": "72aee9aa6f6f40f926ef4b043ffabd38767a5f14e48cb20fea57f2a20d4aa427",
+      "gitBlob": "c47107dbf18ab06f7a3a68fe3805fae714bced98",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor_model_v1/rail.ipt",
+      "size": 238592,
+      "sha256": "83cc80e7be6475e0ea25dead62e184234e03e1b1793c02400deb1c6b033b2a46",
+      "gitBlob": "f9dd400502156ac6e22b5cbb25fd921e21ca3da0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "CAD models/conveyor_model/conveyor_model_v1/support.ipt",
+      "size": 144384,
+      "sha256": "586f196475c215347b4002106c11a790bfd8ebc352f7525746217aadb9b3cdf7",
+      "gitBlob": "dcfe9db9f7d9563e46d9c6196bfc482da33ae3b4",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "LICENSE",
+      "size": 1065,
+      "sha256": "6144fd8afc4d2c905690a82f0ab5d0e9a98104f5b357c07fd7907865ed224e65",
+      "gitBlob": "e0f4381b533c39559ab5833f0ebf3e6af82f5127",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "size": 9685,
+      "sha256": "48ab5a758f54b4e0fa9bdc935a40d7330d05073658a0438d7d48d7b70ae2e8d1",
+      "gitBlob": "fa676d2d6d8d558b3e967284db311615006d3b00",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcua_sample_servers/cnc_concept_turn_155_one.py",
+      "size": 13187,
+      "sha256": "c0b7d9077e147ae05835dd56e22cbab72feb65bce110bd4dce7210d3f75f4486",
+      "gitBlob": "8745ba7abf577687ab6b7a82b54e5b9d5415b9f7",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcua_sample_servers/cnc_concept_turn_155_two.py",
+      "size": 13187,
+      "sha256": "6d664d1758b5b5d724369a1d436d10db5e36bc13bf595c750cd71cf7b91f6968",
+      "gitBlob": "1272ee505325751831b447960e74293dbbeafcdf",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcua_sample_servers/sample_gcode.txt",
+      "size": 2447,
+      "sha256": "4ea2791679e464427af6d22c3d46067d99558f1b8620bb7bad3e1be22f3d8b81",
+      "gitBlob": "2006e02ef7e5897ea9747420746d68ce4b726ee8",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectcobot/cobot_model_3d_cad_design.png",
+      "size": 507559,
+      "sha256": "770768a55f73507eb52ae158d60d4e33ea9cc62e7bff9ec784f8ae29aa1b56f2",
+      "gitBlob": "cafbaab506ef310c45a0fa76c218fe7fddd01c4b",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectcobot/initialze.py",
+      "size": 1017,
+      "sha256": "ee5542ca3ea7af1c28ce986bfadeed5cbd28ac6ef5702dad60e8dd58e10d453d",
+      "gitBlob": "4c6edd5159c43ca256cc46f89ffc01cc8dcda465",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectcobot/opcua_cobot_server.py",
+      "size": 6755,
+      "sha256": "6faba4d53963e6d4968f8c03c608501ddc5a075d08a8d3b94a839b092c1de3b9",
+      "gitBlob": "4354284d07ee56310f07d0b2441fcd51db1857fe",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectcobot/robo_arm_without_opc.py",
+      "size": 1612,
+      "sha256": "b8970e8a5948cec80d22bc1341868587d5a3bf510bfd873ba199f2eef5ab5809",
+      "gitBlob": "0a1a6c44ee27154cc8b75adac2325130714a6d72",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectcobot/shutdownbutton.py",
+      "size": 487,
+      "sha256": "c50a629319cf007790c50d5892f4836d5b186bc26849e8c889478ed754d436ba",
+      "gitBlob": "ea5997daa231ab4f91edc2a9c1ad731f6425aef3",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectcobot/the_electronic_circuit_of_the_cobot_model.PNG",
+      "size": 161564,
+      "sha256": "3ae28c746df1ca1aec184d3335640506689633ad683bf958fef0317044dbd873",
+      "gitBlob": "d5c1f74c8807f0c7e2abb325f066d7255d4768c5",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectconveyor/conveyor_model_3d_cad_design.png",
+      "size": 565344,
+      "sha256": "184ddc42a7295df3afd34f162ce1bdb9018152cab393f7a540383a3abd000d52",
+      "gitBlob": "a58c1fa461bbbab12ffe34c9ca46f38108907cb0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectconveyor/opcua_conveyor_server.py",
+      "size": 3604,
+      "sha256": "232cd5c00d8a5810732e68fc92efe106984edfad118707e0f7329f107b0749ab",
+      "gitBlob": "f8bc842cf75a87e98bbf3d05427471e2bb1af871",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectconveyor/shutdownbutton.py",
+      "size": 446,
+      "sha256": "066b933ebe87a3430cca9e7e22c770e11f432c984b203f371b4e75f6bafdba85",
+      "gitBlob": "efa3af35aa1f32d88a07c789d11829953cef20ea",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "opcuaprojectconveyor/the_electronic_circuit_of_the_conveyor_model.PNG",
+      "size": 71944,
+      "sha256": "08f659b15f71330bae9df514e4fd28d1923ae2db132a806c9c32688853b6d0f2",
+      "gitBlob": "c4d5d8012932f822ab2b459171578101c524c8d0",
+      "mode": "100644",
+      "type": "file"
+    },
+    {
+      "path": "requirements.txt",
+      "size": 16,
+      "sha256": "eb0f85c6c3454d1ce4b30a4192943682267e9ec2c8312186af4537b8574c06b9",
+      "gitBlob": "f7b9afb16ae4337a821978b9c12c339990ded25d",
+      "mode": "100644",
+      "type": "file"
+    }
+  ]
+}
