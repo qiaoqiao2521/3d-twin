@@ -40,3 +40,33 @@ test('automotive workspace supports direct links and navigation without stale sa
   assert.equal(new URLSearchParams(next).has('sandbox'), false);
   assert.equal(new URLSearchParams(next).has('autostart'), false);
 });
+
+test('every original warehouse demo has refreshable local and live links and returns through the directory', () => {
+  for (const demo of ['warehouse-journey', 'waretwin', 'rftwin'] as const) {
+    for (const source of ['local', 'live'] as const) {
+      const route = { workspace: 'open-demos', demo, source } as const;
+      const url = workspaceSearch(route, '?mode=warehouse&autostart=1&actor=sar');
+      assert.deepEqual(resolveWorkspaceLocation(url), { ...route, source: demo === 'warehouse-journey' ? 'local' : source });
+      assert.equal(new URLSearchParams(url).get('actor'), 'sar');
+      const directory = workspaceSearch({ workspace: 'open-demos' }, url);
+      assert.deepEqual(resolveWorkspaceLocation(directory), { workspace: 'open-demos' });
+      assert.equal(new URLSearchParams(directory).has('demo'), false);
+      assert.equal(new URLSearchParams(directory).has('source'), false);
+      for (const workspace of ['warehouse', 'automotive'] as const) {
+        const original = workspaceSearch({ workspace }, url);
+        assert.deepEqual(resolveWorkspaceLocation(original), { workspace });
+        assert.equal(new URLSearchParams(original).has('demo'), false);
+        assert.equal(new URLSearchParams(original).has('source'), false);
+        assert.deepEqual(resolveWorkspaceLocation(workspaceSearch(route, original)), {
+          ...route, source: demo === 'warehouse-journey' ? 'local' : source,
+        });
+      }
+    }
+  }
+});
+
+test('demo URLs cannot supply arbitrary iframe destinations or unknown runtime modes', () => {
+  assert.deepEqual(resolveWorkspaceLocation('?workspace=open-demos&demo=https://example.com'), { workspace: 'open-demos' });
+  assert.deepEqual(resolveWorkspaceLocation('?workspace=open-demos&demo=../../other'), { workspace: 'open-demos' });
+  assert.deepEqual(resolveWorkspaceLocation('?workspace=open-demos&demo=rftwin&source=anything'), { workspace: 'open-demos', demo: 'rftwin', source: 'local' });
+});

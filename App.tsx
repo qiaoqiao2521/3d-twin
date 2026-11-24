@@ -4,6 +4,7 @@ import { resolveWorkspaceLocation, workspaceSearch, type WorkspaceRoute } from '
 const TwinWorkbench = lazy(() => import('./src/components/TwinWorkbench'));
 const IronWorkspace = lazy(() => import('./src/components/IronWorkspace'));
 const WarehouseWorkspace = lazy(() => import('./src/components/WarehouseWorkspace'));
+const OpenDemosWorkspace = lazy(() => import('./src/components/OpenDemosWorkspace'));
 
 export default function App() {
   const [route, setRoute] = useState<WorkspaceRoute>(() => resolveWorkspaceLocation(window.location.search));
@@ -15,6 +16,7 @@ export default function App() {
 
   const navigate = (next: WorkspaceRoute) => {
     const search = workspaceSearch(next, window.location.search);
+    if (search === window.location.search) return;
     window.history.pushState(null, '', `${window.location.pathname}${search}${window.location.hash}`);
     setRoute(next);
   };
@@ -47,6 +49,11 @@ export default function App() {
             className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs sm:flex-none ${automotive ? 'bg-cyan-500/15 text-cyan-200' : 'text-slate-400 hover:text-white'}`}>
             汽车整车 · V8
           </button>
+          <button type="button" onClick={() => navigate({ workspace: 'open-demos' })}
+            aria-current={route.workspace === 'open-demos' ? 'page' : undefined}
+            className={`min-h-11 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs sm:flex-none ${route.workspace === 'open-demos' ? 'bg-emerald-500/15 text-emerald-200' : 'text-slate-400 hover:text-white'}`}>
+            仓储与工厂场景
+          </button>
         </nav>
         <details className="relative ml-auto shrink-0 text-xs">
           <summary className="cursor-pointer rounded-md px-2 py-1.5 text-slate-400 hover:text-white">实验</summary>
@@ -70,7 +77,8 @@ export default function App() {
               ? <WarehouseWorkspace />
               : automotive
                 ? <iframe title="汽车整车拆解与 5.7L V8 发动机数字孪生" className="h-full w-full border-0" src={`${import.meta.env.BASE_URL}twins/automotive/index.html`} />
-                : <IronWorkspace />}
+                : route.workspace === 'open-demos'
+                  ? <OpenDemosWorkspace route={route} navigate={navigate} /> : <IronWorkspace />}
         </Suspense>
       </main>
     </div>

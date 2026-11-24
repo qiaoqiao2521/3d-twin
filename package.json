@@ -5,20 +5,28 @@
   "type": "module",
   "scripts": {
     "automotive:build": "node scripts/build-automotive.mjs",
-    "predev": "npm run automotive:build && npm run build:warehouse",
+    "predev": "npm run automotive:build && npm run build:warehouse && npm run build:open-demos",
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "prebuild": "npm run automotive:build && npm run build:warehouse",
+    "prebuild": "npm run automotive:build && npm run build:warehouse && npm run build:open-demos",
     "build": "vite build",
     "lint": "tsc --noEmit",
     "test": "bun test",
     "remaster:assets": "node scripts/remaster_glb_assets.mjs",
     "preview": "vite preview",
-    "postinstall": "npm run install:warehouse",
+    "postinstall": "npm run install:warehouse && npm run install:open-demos",
     "install:warehouse": "npm ci --prefix integrations/smart-warehouse/upstream --no-audit --no-fund",
     "build:warehouse": "node scripts/build-smart-warehouse.mjs",
     "verify:warehouse": "node scripts/verify-smart-warehouse.mjs",
     "test:warehouse": "node --test src/utils/workspaceRoutes.test.ts src/utils/ironBridge.test.ts src/shared/inspection/sceneInspection.test.ts integrations/smart-warehouse/lifecycle.test.ts research/smart-warehouse/agvStudy.test.ts",
-    "study:warehouse": "node scripts/study-warehouse-agv.mjs"
+    "study:warehouse": "node scripts/study-warehouse-agv.mjs",
+    "install:open-demos": "node scripts/open-demos.mjs install",
+    "build:open-demos": "node scripts/open-demos.mjs build",
+    "verify:open-demos": "node scripts/verify-open-demos.mjs",
+    "test:open-demos": "node --test src/utils/workspaceRoutes.test.ts integrations/open-demos/host.test.mjs",
+    "install:demo-backends": "node scripts/start-open-demo.mjs waretwin --setup-only && node scripts/start-open-demo.mjs rftwin --setup-only",
+    "start:waretwin": "node scripts/start-open-demo.mjs waretwin",
+    "start:rftwin": "node scripts/start-open-demo.mjs rftwin",
+    "verify:demo-backends": "node scripts/verify-open-demo-backends.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.454.0",
@@ -30,6 +38,8 @@
     "three-mesh-bvh": "^0.9.18"
   },
   "devDependencies": {
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
     "@gltf-transform/core": "^4.5.1",
     "@gltf-transform/extensions": "^4.5.1",
     "@gltf-transform/functions": "^4.5.1",

@@ -1,0 +1,22 @@
+/** Select original replay or original connection manager; no production logic here. */
+import { start as startOriginal, useTwin } from './state/store';
+import { loadDemo, startDemo, stopDemo } from './state/demo';
+
+const localReplay = new URLSearchParams(location.search).get('source') === 'local';
+// Child panel effects can run before App's startup effect. Set the original
+// replay mode before the first render so they wait for fixture data instead
+// of briefly calling a backend from an explicitly local entry.
+if (localReplay) useTwin.setState({ mode: 'LOCAL_DEMO', connected: false, livePrompt: false, demoTouched: false });
+
+export function start(): () => void {
+  if (!localReplay) return startOriginal();
+  let stopped = false;
+  useTwin.setState({ mode: 'LOCAL_DEMO', connected: false, livePrompt: false, demoTouched: false });
+  void loadDemo().then((ready) => {
+    if (stopped) return;
+    if (!ready) { useTwin.setState({ mode: 'ERROR' }); return; }
+    startDemo();
+    useTwin.setState({ mode: 'LOCAL_DEMO', connected: false });
+  });
+  return () => { stopped = true; stopDemo(); };
+}

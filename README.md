@@ -2,6 +2,14 @@
 
 ## 当前 Web 工作台
 
+当前规范仓库为 [qiaoqiao2521/3d-twin](https://github.com/qiaoqiao2521/3d-twin)，原仓库名为 `digital-twin-and-robotics-baseline`。
+
+顶部新增 **仓储与工厂场景**（`?workspace=open-demos`）：从正常界面进入 **Warehouse Journey 3D**、**WareTwin**、**RFTwin** 的完整原版场景，再可靠返回目录。三个应用固定上游提交、分别安装构建，以独立 iframe 按需启动和销毁；根 `npm ci` 与 `npm run build` 会准备全部场景，缺失或构建失败不会跳过。原智慧仓储、汽车和机器人工作空间继续保留。
+
+Journey 是原预设流程，WareTwin 提供原浏览器实时引擎与独立 Python 后台，RFTwin 提供原 Local Demo 回放与独立 Python 工厂后台；页面明确显示真实数据来源。桌面、手机入口、深链接、后台启动、资源许可与验收方法见 [原版仓储与工厂场景说明](docs/open-warehouse-demos.md)，固定来源见 [SOURCE](integrations/open-demos/SOURCE.md)，行为复用边界见 [研究记录](docs/warehouse-behavior-research.md)。
+
+常用命令：`npm run test:open-demos`、`npm run verify:open-demos -- --dist --serve`；需要真实后台时分别运行 `npm run start:waretwin` 与 `npm run start:rftwin`，并用 `npm run verify:demo-backends` 验证原协议与同源代理。构建和 HTTP 通过不能替代视觉、触屏与实机资源释放验收。
+
 默认入口为**现实工程**（兼容 `?mode=hangar`）；**iron · 虚拟角色**通过 `?mode=iron` 独立进入。动作沙盒与赤星战区保留在“实验”菜单，不再默认打开游戏。iron 继续独立运行，站点地址需配置，虚拟形体不被视为实体或制造模型。
 
 顶部的 **智慧仓储**（`?mode=warehouse`）保留 Smart Warehouse 的原始仓储场景、设备交互和物流循环，随本仓库安装与构建，无需另配演示地址。来源版本、运行方式及独立行为研究入口见 [智慧仓储说明](docs/smart-warehouse.md)。

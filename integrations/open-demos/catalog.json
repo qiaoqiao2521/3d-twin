@@ -1,0 +1,40 @@
+[
+  {
+    "id": "warehouse-journey",
+    "name": "Warehouse Journey 3D",
+    "repository": "https://github.com/hiobuy/warehouse-journey-3d.git",
+    "revision": "48d9c57803239ff0ef0763ba4ce0b8be6445d399",
+    "tree": "f9065543ee88f8a2b411d2b8ff1d166308ee2b13",
+    "license": "MIT",
+    "licenseBlob": "3158c3feacebaf93525f407ea168b27244256e64",
+    "frontend": ".",
+    "originalDemo": "https://warehouse.demo.hiobuy.com",
+    "capability": "Original scripted fulfillment journey; synthetic data, no live warehouse connection."
+  },
+  {
+    "id": "waretwin",
+    "name": "WareTwin",
+    "repository": "https://github.com/WayneChou-bot/WareTwin.git",
+    "revision": "81f365f323e1a097e5819ca9045637544163f219",
+    "tree": "77248f4037d06704d8cd2be277e08cad1f9f29b8",
+    "license": "MIT",
+    "licenseBlob": "71dc9d69ce51a5ad6ea536c1a450c24d8cb3906c",
+    "frontend": "frontend",
+    "originalDemo": "https://ware-twin.vercel.app",
+    "capability": "Original local TypeScript simulation or original FastAPI engine via same-origin proxy; synthetic warehouse.",
+    "backend": { "cwd": "backend", "app": "app.main:app", "requirements": "backend/requirements.lock", "port": 8101, "portEnv": "WARETWIN_PORT" }
+  },
+  {
+    "id": "rftwin",
+    "name": "RFTwin",
+    "repository": "https://github.com/WayneChou-bot/RFTwin.git",
+    "revision": "006a20362eb4886b161ee38e634b99ac7876a785",
+    "tree": "d2036952f5f60d76f0f998c6fb35f8f327231787",
+    "license": "MIT",
+    "licenseBlob": "71dc9d69ce51a5ad6ea536c1a450c24d8cb3906c",
+    "frontend": "frontend",
+    "originalDemo": "https://rf-twin.vercel.app",
+    "capability": "Original deterministic Local Demo replay or authoritative Python engine; replay does not run production rules.",
+    "backend": { "cwd": ".", "app": "apps.factory_backend.main:app", "requirements": "requirements.txt", "port": 8102, "portEnv": "RFTWIN_PORT" }
+  }
+]
