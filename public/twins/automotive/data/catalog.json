@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "systems": [
+    {
+      "id": "structure.body",
+      "name": "车身结构"
+    },
+    {
+      "id": "running.wheels",
+      "name": "车轮"
+    },
+    {
+      "id": "running.brakes",
+      "name": "制动"
+    },
+    {
+      "id": "cabin.interior",
+      "name": "座舱内饰"
+    },
+    {
+      "id": "visibility.glazing",
+      "name": "玻璃与视野"
+    },
+    {
+      "id": "electrical.lighting",
+      "name": "照明"
+    },
+    {
+      "id": "powertrain.engine",
+      "name": "发动机"
+    },
+    {
+      "id": "electrical.ignition",
+      "name": "点火电气"
+    }
+  ],
+  "parts": [
+    {
+      "id": "vehicle.assembly",
+      "name": "整车",
+      "structuralParent": null,
+      "systems": [],
+      "description": "从真实模型中选择零件；可见结构随模型来源而不同。"
+    },
+    {
+      "id": "body.assembly",
+      "name": "车身总成",
+      "structuralParent": "vehicle.assembly",
+      "systems": [
+        "structure.body"
+      ],
+      "description": "车身模型的覆盖件和结构网格；部分网格不能继续细分。"
+    },
+    {
+      "id": "body.roof",
+      "name": "车顶",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "structure.body"
+      ],
+      "description": "车身顶部覆盖件。"
+    },
+    {
+      "id": "body.door.fl",
+      "name": "左前车门",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "structure.body"
+      ],
+      "description": "同一扇车门可由车漆、玻璃和饰件等多个网格共同组成。"
+    },
+    {
+      "id": "body.door.fr",
+      "name": "右前车门",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "structure.body"
+      ],
+      "description": "同一扇车门可由车漆、玻璃和饰件等多个网格共同组成。"
+    },
+    {
+      "id": "body.door.rl",
+      "name": "左后车门",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "structure.body"
+      ],
+      "description": "同一扇车门可由车漆、玻璃和饰件等多个网格共同组成。"
+    },
+    {
+      "id": "body.door.rr",
+      "name": "右后车门",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "structure.body"
+      ],
+      "description": "同一扇车门可由车漆、玻璃和饰件等多个网格共同组成。"
+    },
+    {
+      "id": "body.trunk",
+      "name": "后备箱",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "structure.body"
+      ],
+      "description": "原模型中标记为后备箱的覆盖件与饰件。"
+    },
+    {
+      "id": "body.bumpers",
+      "name": "保险杠与包围",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "structure.body"
+      ],
+      "description": "保险杠、前脸和装饰网格；不代表碰撞计算模型。"
+    },
+    {
+      "id": "body.glass",
+      "name": "车窗玻璃",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "structure.body",
+        "visibility.glazing"
+      ],
+      "description": "透明或半透明的车窗与风挡。"
+    },
+    {
+      "id": "body.mirror",
+      "name": "后视镜",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "structure.body",
+        "visibility.glazing"
+      ],
+      "description": "外后视镜外壳和镜面，模型可能将两者合并。"
+    },
+    {
+      "id": "wheel.assembly",
+      "name": "车轮总成",
+      "structuralParent": "vehicle.assembly",
+      "systems": [
+        "running.wheels"
+      ],
+      "description": "车轮及轮辋网格；本批不凭名称猜测左右方位。"
+    },
+    {
+      "id": "wheel.tire",
+      "name": "轮胎",
+      "structuralParent": "wheel.assembly",
+      "systems": [
+        "running.wheels"
+      ],
+      "description": "接触路面的轮胎网格；不附带真实材料或受力参数。"
+    },
+    {
+      "id": "wheel.rim",
+      "name": "轮辋",
+      "structuralParent": "wheel.assembly",
+      "systems": [
+        "running.wheels"
+      ],
+      "description": "支撑轮胎的轮辋网格。"
+    },
+    {
+      "id": "brake.disc",
+      "name": "制动盘",
+      "structuralParent": "wheel.assembly",
+      "systems": [
+        "running.wheels",
+        "running.brakes"
+      ],
+      "description": "由原始模型名称明确标记的制动盘。"
+    },
+    {
+      "id": "brake.caliper",
+      "name": "制动卡钳",
+      "structuralParent": "wheel.assembly",
+      "systems": [
+        "running.wheels",
+        "running.brakes"
+      ],
+      "description": "由原始模型名称明确标记的卡钳；不推断轮位。"
+    },
+    {
+      "id": "cabin.assembly",
+      "name": "座舱内饰",
+      "structuralParent": "vehicle.assembly",
+      "systems": [
+        "cabin.interior"
+      ],
+      "description": "座舱装饰与内部网格。"
+    },
+    {
+      "id": "cabin.seat",
+      "name": "座椅",
+      "structuralParent": "cabin.assembly",
+      "systems": [
+        "cabin.interior"
+      ],
+      "description": "整车模型中的座椅网格。"
+    },
+    {
+      "id": "lighting.assembly",
+      "name": "车灯",
+      "structuralParent": "body.assembly",
+      "systems": [
+        "electrical.lighting"
+      ],
+      "description": "外部灯组、灯罩和反光片。"
+    },
+    {
+      "id": "engine.assembly",
+      "name": "发动机原理",
+      "structuralParent": "vehicle.assembly",
+      "systems": [
+        "powertrain.engine"
+      ],
+      "description": "独立教学概念入口；当前整车没有已经核实并绑定的发动机内部节点。"
+    },
+    {
+      "id": "engine.piston",
+      "name": "活塞",
+      "structuralParent": "engine.assembly",
+      "systems": [
+        "powertrain.engine"
+      ],
+      "description": "在气缸内往复运动，通过连杆向曲轴传递作用。"
+    },
+    {
+      "id": "engine.crankshaft",
+      "name": "曲轴",
+      "structuralParent": "engine.assembly",
+      "systems": [
+        "powertrain.engine"
+      ],
+      "description": "通过连杆与活塞相连，将往复运动与旋转运动联系起来。"
+    },
+    {
+      "id": "engine.spark_plug",
+      "name": "火花塞",
+      "structuralParent": "engine.assembly",
+      "systems": [
+        "powertrain.engine",
+        "electrical.ignition"
+      ],
+      "description": "点火部件，物理上装配于发动机，功能上也属于点火电气系统。"
+    }
+  ]
+}

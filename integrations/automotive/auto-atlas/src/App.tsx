@@ -1,0 +1,288 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MODELS, MODEL_BY_ID } from "./data/models";
+import { GlbCarScene, type PartInfo, type ModelStats, type BindingRule } from "./three/glb-scene";
+import { useI18n } from "./i18n";
+import { connectAtlasBridge } from "./atlas-bridge";
+import Sidebar from "./components/Sidebar";
+import DetailPanel from "./components/DetailPanel";
+
+export type Theme = "light" | "dark";
+
+export default function App() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<GlbCarScene | null>(null);
+  const { lang, t, toggleLang } = useI18n();
+  const [modelId, setModelId] = useState(MODELS[0].id);
+  const [theme, setTheme] = useState<Theme>("light"); // 默认日间模式
+  const [parts, setParts] = useState<PartInfo[]>([]);
+  const [stats, setStats] = useState<ModelStats>({ parts: 0, tris: 0, verts: 0 });
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [hostMask, setHostMask] = useState<Set<string> | null>(null);
+  const [isolate, setIsolate] = useState(false);
+  const [explode, setExplode] = useState(0);
+  const [query, setQuery] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const bridgeRef = useRef<ReturnType<typeof connectAtlasBridge> | null>(null);
+  const bridgeState = useRef<unknown>(null);
+  bridgeState.current = { modelId, loading, error, filtered: hostMask !== null, selected: parts.find(p => p.id === selectedId) ?? null,
+    parts: parts.map(p => ({ id: p.id, sourcePath: p.sourcePath, name: p.name, group: p.group })) };
+  useEffect(() => {
+    const bridge = connectAtlasBridge({ active: active => sceneRef.current?.setActive(active),
+      filter: paths => {
+        const current = bridgeState.current as { parts: { id: string; sourcePath: string }[] };
+        if (paths === null) { setHostMask(null); return; }
+        const ids = current.parts.filter(part => paths.includes(part.sourcePath)).map(part => part.id);
+        if (ids.length) { setHostMask(new Set(ids)); setIsolate(false); setSelectedId(ids[0]); }
+        else bridgeRef.current?.publish('vehicle.warning', { message: '当前车型没有匹配网格，保留原视图。' });
+      },
+      bindings: (id, rules) => {
+        const current = bridgeState.current as { modelId: string; loading: boolean };
+        if (current.modelId === id && !current.loading && sceneRef.current?.getRuntimeState().loadedModelId === id) {
+          sceneRef.current.setBindingRules(rules as BindingRule[]);
+        }
+      },
+      state: () => ({ ...(bridgeState.current as object), runtime: sceneRef.current?.getRuntimeState() }) });
+    bridgeRef.current = bridge;
+    return () => { bridgeRef.current = null; bridge.dispose(); };
+  }, []);
+  useEffect(() => {
+    bridgeRef.current?.publish('vehicle.state', { ...(bridgeState.current as object), runtime: sceneRef.current?.getRuntimeState() });
+  }, [modelId, selectedId, parts, loading, error, hostMask]);
+
+  // 初始化场景
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const scene = new GlbCarScene(containerRef.current, {
+      onLoaded: (p, s) => {
+        setParts(p);
+        setHostMask(null);
+        setStats(s);
+        setLoading(false);
+        setProgress(1);
+        setHidden(new Set());
+        setSelectedId(null);
+        setIsolate(false);
+        setExplode(0);
+      },
+      onProgress: (r) => setProgress(r),
+      onError: (err) => {
+        console.error(err);
+        setError(String(err));
+        setLoading(false);
+      },
+      onSelect: (id) => setSelectedId(id),
+    });
+    sceneRef.current = scene;
+    return () => {
+      scene.dispose();
+      sceneRef.current = null;
+    };
+  }, []);
+
+  // 切换车型
+  useEffect(() => {
+    const def = MODEL_BY_ID.get(modelId);
+    if (!def || !sceneRef.current) return;
+    setLoading(true);
+    setProgress(0);
+    setError(null);
+    sceneRef.current.loadModel(def);
+  }, [modelId]);
+
+  // 主题同步到场景与 <html>
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    sceneRef.current?.setTheme(theme);
+  }, [theme]);
+
+  // 状态同步到场景
+  useEffect(() => {
+    const combinedHidden = new Set(hidden);
+    if (hostMask) for (const p of parts) if (!hostMask.has(p.id)) combinedHidden.add(p.id);
+    sceneRef.current?.update({ selected: selectedId, hidden: combinedHidden, isolate, explode });
+  }, [selectedId, hidden, isolate, explode, hostMask, parts]);
+
+  const groups = useMemo(() => {
+    // 以中文名为稳定键聚合（来自 GLB 路径推导，与语言无关）
+    const map = new Map<string, PartInfo[]>();
+    for (const p of parts) {
+      if (!map.has(p.group.zh)) map.set(p.group.zh, []);
+      map.get(p.group.zh)!.push(p);
+    }
+    return [...map.entries()].map(([, list]) => ({ name: list[0].group, parts: list }));
+  }, [parts]);
+
+  const togglePart = (id: string) => {
+    setIsolate(false);
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleGroup = (list: PartInfo[]) => {
+    setIsolate(false);
+    setHidden((prev) => {
+      const allHidden = list.every((p) => prev.has(p.id));
+      const next = new Set(prev);
+      for (const p of list) {
+        if (allHidden) next.delete(p.id);
+        else next.add(p.id);
+      }
+      return next;
+    });
+  };
+
+  const selectPart = (id: string) => {
+    setSelectedId(id);
+    setSidebarOpen(false);
+  };
+
+  const model = MODEL_BY_ID.get(modelId) ?? null;
+  const selected = selectedId ? (parts.find((p) => p.id === selectedId) ?? null) : null;
+
+  const sidebar = (
+    <Sidebar
+      models={MODELS}
+      currentModel={modelId}
+      onModelChange={setModelId}
+      loading={loading}
+      progress={progress}
+      groups={groups}
+      totalParts={stats.parts}
+      hidden={hidden}
+      onTogglePart={togglePart}
+      onToggleGroup={toggleGroup}
+      selectedId={selectedId}
+      onSelectPart={selectPart}
+      query={query}
+      onQueryChange={setQuery}
+      onClose={() => setSidebarOpen(false)}
+    />
+  );
+
+  const detail = (
+    <DetailPanel
+      part={selected}
+      model={model}
+      isolate={isolate}
+      onToggleIsolate={() => setIsolate((v) => !v)}
+      onClose={() => {
+        setIsolate(false);
+        setSelectedId(null);
+      }}
+    />
+  );
+
+  return (
+    <div className="flex h-full overflow-hidden text-[var(--text)]" style={{ background: "var(--bg)" }}>
+      {/* 桌面侧栏 */}
+      <div className="hidden lg:flex">{sidebar}</div>
+
+      {/* 移动端侧栏抽屉 */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-30 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <div className="absolute inset-y-0 left-0 flex">{sidebar}</div>
+        </div>
+      )}
+
+      <main className="relative min-w-0 flex-1">
+        <div ref={containerRef} className="absolute inset-0" />
+
+        {/* 移动端工具条 */}
+        <button
+          className="absolute left-3 top-3 z-10 rounded-md border px-3 py-1.5 text-sm backdrop-blur lg:hidden"
+          style={{ borderColor: "var(--border)", background: "var(--panel)", color: "var(--text)" }}
+          onClick={() => setSidebarOpen(true)}
+        >
+          {t("partsButton")}
+        </button>
+
+        {/* 语言 + 主题切换 */}
+        <div className="absolute right-3 top-3 z-10 flex gap-2">
+          <button
+            className="rounded-full border px-3 py-1.5 text-sm backdrop-blur transition hover:opacity-80"
+            style={{ borderColor: "var(--border)", background: "var(--panel)", color: "var(--text)" }}
+            onClick={toggleLang}
+            title={lang === "zh" ? t("toEn") : t("toZh")}
+          >
+            {lang === "zh" ? "EN" : "中文"}
+          </button>
+          <button
+            className="rounded-full border px-3 py-1.5 text-sm backdrop-blur transition hover:opacity-80"
+            style={{ borderColor: "var(--border)", background: "var(--panel)", color: "var(--text)" }}
+            onClick={() => setTheme((v) => (v === "light" ? "dark" : "light"))}
+            title={theme === "light" ? t("toDark") : t("toLight")}
+          >
+            {theme === "light" ? t("themeLight") : t("themeDark")}
+          </button>
+        </div>
+
+        {/* 加载遮罩 */}
+        {loading && !error && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-sm" style={{ background: "var(--overlay)" }}>
+            <div className="w-64 text-center">
+              <p className="text-sm text-[var(--text-soft)]">{t("loadingModel")}</p>
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded bg-[var(--hover)]">
+                <div
+                  className="h-full rounded bg-[var(--accent)] transition-all"
+                  style={{ width: `${Math.max(4, progress * 100)}%` }}
+                />
+              </div>
+              <p className="mt-2 text-xs text-[var(--muted)]">{t("loadingHint")}</p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div
+            className="absolute inset-x-0 top-16 z-10 mx-auto w-fit rounded-md border px-4 py-2 text-sm"
+            style={{ background: "var(--error-bg)", color: "var(--error-text)", borderColor: "var(--error-text)" }}
+          >
+            {t("loadFailed")}：{error}
+          </div>
+        )}
+
+        {/* 爆炸滑块 */}
+        <div
+          className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-full border px-4 py-2 backdrop-blur"
+          style={{ borderColor: "var(--border)", background: "var(--panel)" }}
+        >
+          <span className="text-xs text-[var(--muted)]">{t("explode")}</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={Math.round(explode * 100)}
+            onChange={(e) => setExplode(Number(e.target.value) / 100)}
+            className="w-40 accent-[var(--accent)] md:w-56"
+            aria-label={t("explodeAria")}
+          />
+          <span className="w-8 text-right text-xs tabular-nums text-[var(--muted)]">
+            {Math.round(explode * 100)}%
+          </span>
+        </div>
+
+        {/* 移动端底部详情 */}
+        {selected && (
+          <div className="absolute inset-x-0 bottom-16 z-10 lg:hidden">
+            <div className="mx-3 overflow-hidden rounded-xl border backdrop-blur" style={{ borderColor: "var(--border)", background: "var(--panel-solid)" }}>
+              {detail}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* 桌面详情面板 */}
+      <div className="hidden lg:flex">{detail}</div>
+    </div>
+  );
+}

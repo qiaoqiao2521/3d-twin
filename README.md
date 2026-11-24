@@ -8,6 +8,8 @@
 
 仓储验收可运行 `npm run test:warehouse`（Node 24）及构建后的 `npm run verify:warehouse -- --dist --serve`：分别检查进入/返回相关契约、退出释放、独立 AGV 时间控制，以及 55 个冻结原文件、原模型和实际 HTTP 资源。`npm run study:warehouse -- 60 0.55` 使用明确标记的实验参数输出 AGV 状态，和正式场景分开。自动检查不代表 WebGL 或手机实机已验收，当前证据和未完成项见仓储说明。
 
+**汽车整车拆解与 5.7L V8 发动机数字孪生**可从顶部「汽车整车 · V8」或 `?mode=automotive` 进入：查看两款商用许可汽车（BMW M3 E30 / Tesla Model 3）的拆解、部件目录与独立 V8 的运动、剖面和统一控制。`npm run dev` 和 `npm run build` 会自动构建汽车静态资源，无需额外端口。源码、模型与录音署名见 [汽车整合说明](integrations/automotive/README.md) 和 [资产清单](public/twins/automotive/manifest.json)。
+
 使用方式、修订锁与实际验收状态见 [iron 工作空间说明](docs/iron-workspace.md)。页面的程序仪表和受力着色属于演示，当前没有实机连接；下文保留历史归档说明。
 
 本归档包位于 `/home/muqiao/Videos/Studio/`，包含以下两大核心部分：

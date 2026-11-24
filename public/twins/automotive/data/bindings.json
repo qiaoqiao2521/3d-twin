@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "pathConvention": "semantic-root-relative, slash-separated Three.js sanitized node names; captured before flattening",
+  "bindings": [
+    {
+      "id": "bmw-m3-e30--body.assembly",
+      "modelId": "bmw-m3-e30",
+      "partIds": [
+        "body.assembly"
+      ],
+      "selectors": [
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_BODY_0/Object_4",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_BODY_0/Object_5",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_BODY_0/Object_7",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_BODY_0/Object_10",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_BODY_0/Object_12",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_BODY_0/Object_13",
+          "match": "exact"
+        }
+      ],
+      "granularity": "exact",
+      "explode": {
+        "mode": "inherit"
+      },
+      "sourceEvidence": {
+        "file": "../auto-atlas/models/free_bmw_m3_e30.glb",
+        "method": "GLB JSON node hierarchy; Three.js node-name sanitization; existing models.ts semantic labels"
+      }
+    },
+    {
+      "id": "bmw-m3-e30--wheel.rim",
+      "modelId": "bmw-m3-e30",
+      "partIds": [
+        "wheel.rim"
+      ],
+      "selectors": [
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_RIM_1/Object_15",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_RIM002_6/Object_25",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_RIM001_11/Object_35",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_RIM003_16/Object_45",
+          "match": "exact"
+        }
+      ],
+      "granularity": "exact",
+      "explode": {
+        "mode": "inherit"
+      },
+      "sourceEvidence": {
+        "file": "../auto-atlas/models/free_bmw_m3_e30.glb",
+        "method": "GLB JSON node hierarchy; Three.js node-name sanitization; existing models.ts semantic labels"
+      }
+    },
+    {
+      "id": "bmw-m3-e30--wheel.tire",
+      "modelId": "bmw-m3-e30",
+      "partIds": [
+        "wheel.tire"
+      ],
+      "selectors": [
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_TIRE_2/Object_17",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_TIRE002_7/Object_27",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_TIRE001_12/Object_37",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "BMW_E30_M3_TIRE003_17/Object_47",
+          "match": "exact"
+        }
+      ],
+      "granularity": "exact",
+      "explode": {
+        "mode": "inherit"
+      },
+      "sourceEvidence": {
+        "file": "../auto-atlas/models/free_bmw_m3_e30.glb",
+        "method": "GLB JSON node hierarchy; Three.js node-name sanitization; existing models.ts semantic labels"
+      }
+    },
+    {
+      "id": "bmw-m3-e30--brake.disc",
+      "modelId": "bmw-m3-e30",
+      "partIds": [
+        "brake.disc"
+      ],
+      "selectors": [
+        {
+          "type": "path",
+          "value": "Brake_disc_3/Object_19",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "Brake_disc002_8/Object_29",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "Brake_disc001_13/Object_39",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "Brake_disc003_18/Object_49",
+          "match": "exact"
+        }
+      ],
+      "granularity": "exact",
+      "explode": {
+        "mode": "inherit"
+      },
+      "sourceEvidence": {
+        "file": "../auto-atlas/models/free_bmw_m3_e30.glb",
+        "method": "GLB JSON node hierarchy; Three.js node-name sanitization; existing models.ts semantic labels"
+      }
+    },
+    {
+      "id": "bmw-m3-e30--brake.caliper",
+      "modelId": "bmw-m3-e30",
+      "partIds": [
+        "brake.caliper"
+      ],
+      "selectors": [
+        {
+          "type": "path",
+          "value": "Brembo_Calipers_5/Object_21",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "Brembo_Calipers002_10/Object_31",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "Brembo_Calipers001_15/Object_41",
+          "match": "exact"
+        },
+        {
+          "type": "path",
+          "value": "Brembo_Calipers003_20/Object_51",
+          "match": "exact"
+        }
+      ],
+      "granularity": "exact",
+      "explode": {
+        "mode": "inherit"
+      },
+      "sourceEvidence": {
+        "file": "../auto-atlas/models/free_bmw_m3_e30.glb",
+        "method": "GLB JSON node hierarchy; Three.js node-name sanitization; existing models.ts semantic labels"
+      }
+    }
+  ]
+}

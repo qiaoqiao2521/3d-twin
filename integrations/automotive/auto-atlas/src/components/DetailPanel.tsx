@@ -1,0 +1,81 @@
+import type { ModelDef } from "../data/models";
+import type { PartInfo } from "../three/glb-scene";
+import { useI18n, tr } from "../i18n";
+
+interface DetailPanelProps {
+  part: PartInfo | null;
+  model: ModelDef | null;
+  isolate: boolean;
+  onToggleIsolate: () => void;
+  onClose: () => void;
+}
+
+export default function DetailPanel(props: DetailPanelProps) {
+  const { lang, t } = useI18n();
+  const part = props.part;
+  return (
+    <aside className="flex w-80 shrink-0 flex-col border-l bg-[var(--panel)] backdrop-blur" style={{ borderColor: "var(--border)" }}>
+      {part ? (
+        <>
+          <header className="flex items-start justify-between border-b px-4 py-3" style={{ borderColor: "var(--border)" }}>
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text)]">{tr(part.name, lang)}</h2>
+              <span className="mt-1 inline-block rounded-full bg-[var(--active)] px-2 py-0.5 text-xs text-[var(--accent-text)]">
+                {tr(part.group, lang)}
+              </span>
+            </div>
+            <button
+              className="rounded p-1 text-[var(--muted)] hover:bg-[var(--hover)]"
+              onClick={props.onClose}
+              aria-label={t("closeDetail")}
+            >
+              ✕
+            </button>
+          </header>
+          <div className="flex-1 px-4 py-3">
+            <dl className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <dt className="text-[var(--muted)]">{t("tris")}</dt>
+                <dd className="tabular-nums text-[var(--text-soft)]">{part.tris.toLocaleString()}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-[var(--muted)]">{t("verts")}</dt>
+                <dd className="tabular-nums text-[var(--text-soft)]">{part.verts.toLocaleString()}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-[var(--muted)]">{t("material")}</dt>
+                <dd className="max-w-40 truncate text-right text-[var(--text-soft)]">
+                  {part.materials.map((m) => m || t("unnamedMaterial")).join(", ")}
+                </dd>
+              </div>
+            </dl>
+            {props.model && (
+              <p className="mt-4 text-[10px] leading-relaxed text-[var(--muted)]">
+                {t("source", { credit: tr(props.model.credit, lang), license: tr(props.model.license, lang) })}
+              </p>
+            )}
+          </div>
+          <div className="border-t px-4 py-3" style={{ borderColor: "var(--border)" }}>
+            <button
+              className={
+                "w-full rounded-md px-3 py-2 text-sm transition " +
+                (props.isolate
+                  ? "bg-[var(--accent-strong)] text-white hover:opacity-90"
+                  : "border text-[var(--text-soft)] hover:text-[var(--accent-text)] hover:border-[var(--accent)]")
+              }
+              style={props.isolate ? undefined : { borderColor: "var(--border)" }}
+              onClick={props.onToggleIsolate}
+            >
+              {props.isolate ? t("isolateOn") : t("isolateOff")}
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+          <p className="text-sm text-[var(--text-soft)]">{t("noPart")}</p>
+          <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">{t("noPartHint")}</p>
+        </div>
+      )}
+    </aside>
+  );
+}

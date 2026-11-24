@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "relations": [
+    {
+      "id": "engine-to-v8-principle",
+      "fromPartId": "engine.assembly",
+      "kind": "principle",
+      "targetModelId": "v8-engine-explorer",
+      "label": "查看通用 V8 原理",
+      "description": "独立教学演示，非当前车型实配发动机。"
+    },
+    {
+      "id": "vehicle-to-external-reference",
+      "fromPartId": "vehicle.assembly",
+      "kind": "external",
+      "targetModelId": "car-anatomy",
+      "label": "打开汽车系统参考",
+      "description": "原作者在线页面，需要联网。"
+    },
+    {
+      "id": "wheel-to-power-principle",
+      "fromPartId": "wheel.tire",
+      "kind": "principle",
+      "targetModelId": "v8-engine-explorer",
+      "label": "观察动力来源：V8 原理",
+      "description": "从车轮了解动力来源的独立示意，非当前车型的配套发动机。"
+    }
+  ]
+}

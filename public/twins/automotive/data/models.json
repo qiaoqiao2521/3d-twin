@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "id": "bmw-m3-e30",
+      "name": "BMW M3 E30",
+      "viewId": "vehicle",
+      "source": "https://github.com/ahnuchen/auto-atlas",
+      "codeLicense": {
+        "label": "MIT",
+        "status": "owner_designated",
+        "source": "https://github.com/ahnuchen/auto-atlas"
+      },
+      "assetLicense": {
+        "label": "CC BY 4.0",
+        "status": "embedded",
+        "source": "https://sketchfab.com/3d-models/free-bmw-m3-e30-ac3c7013434e403e8faff87948caf422",
+        "attribution": "Martin Trafas (TinoD2)"
+      },
+      "brandPresence": "branded",
+      "status": "local_reference"
+    },
+    {
+      "id": "tesla-model-3",
+      "name": "Tesla Model 3",
+      "viewId": "vehicle",
+      "source": "https://github.com/ahnuchen/auto-atlas",
+      "codeLicense": {
+        "label": "MIT",
+        "status": "owner_designated",
+        "source": "https://github.com/ahnuchen/auto-atlas"
+      },
+      "assetLicense": {
+        "label": "CC BY 4.0",
+        "status": "embedded",
+        "source": "https://sketchfab.com/3d-models/tesla-2018-model-3-5ef9b845aaf44203b6d04e2c677e444f",
+        "attribution": "Ameer Studio (uchiha.321abc)"
+      },
+      "brandPresence": "branded",
+      "status": "local_reference"
+    },
+    {
+      "id": "v8-engine-explorer",
+      "name": "独立 V8 发动机原理",
+      "viewId": "engine",
+      "source": "https://github.com/ssabeeth/v8-engine-explorer",
+      "codeLicense": {
+        "label": "MIT",
+        "status": "declared",
+        "source": "https://github.com/ssabeeth/v8-engine-explorer"
+      },
+      "assetLicense": {
+        "label": "MIT (procedural geometry)",
+        "status": "declared",
+        "source": "https://github.com/ssabeeth/v8-engine-explorer"
+      },
+      "brandPresence": "unbranded",
+      "status": "local_reference",
+      "audioLicense": {
+        "label": "CC BY-SA 3.0",
+        "status": "declared",
+        "attribution": "Edvvc",
+        "source": "https://commons.wikimedia.org/wiki/File:Ferrari_458_Italia.ogg",
+        "additionalSource": "https://commons.wikimedia.org/wiki/File:Ferrari_F430_(2010).ogg",
+        "modifications": "trimmed, looped and pitch-matched"
+      }
+    },
+    {
+      "id": "car-anatomy",
+      "name": "Car Anatomy 外部参考",
+      "viewId": "systems",
+      "source": "https://www.underthehood.online/explore/",
+      "codeLicense": {
+        "label": "外部链接",
+        "status": "external_link"
+      },
+      "assetLicense": {
+        "label": "外部链接",
+        "status": "external_link"
+      },
+      "brandPresence": "unknown",
+      "status": "external_reference"
+    }
+  ]
+}

@@ -19,6 +19,7 @@ export default function App() {
     setRoute(next);
   };
   const engineering = route.workspace === 'engineering';
+  const automotive = route.workspace === 'automotive';
 
   return (
     <div className="h-screen h-[100dvh] flex flex-col bg-[#0d1017] text-slate-100 overflow-hidden">
@@ -40,6 +41,12 @@ export default function App() {
             className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs sm:flex-none ${route.workspace === 'warehouse' ? 'bg-emerald-500/15 text-emerald-200' : 'text-slate-400 hover:text-white'}`}>
             智慧仓储
           </button>
+          <button type="button" onClick={() => navigate({ workspace: 'automotive' })}
+            aria-current={automotive ? 'page' : undefined}
+            title="汽车整车拆解与 5.7L V8 发动机数字孪生"
+            className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs sm:flex-none ${automotive ? 'bg-cyan-500/15 text-cyan-200' : 'text-slate-400 hover:text-white'}`}>
+            汽车整车 · V8
+          </button>
         </nav>
         <details className="relative ml-auto shrink-0 text-xs">
           <summary className="cursor-pointer rounded-md px-2 py-1.5 text-slate-400 hover:text-white">实验</summary>
@@ -59,7 +66,11 @@ export default function App() {
         <Suspense fallback={<div role="status" className="flex h-full items-center justify-center text-sm text-slate-400">正在打开工作空间…</div>}>
           {route.workspace === 'engineering'
             ? <TwinWorkbench key={route.mode} initialMode={route.mode} />
-            : route.workspace === 'warehouse' ? <WarehouseWorkspace /> : <IronWorkspace />}
+            : route.workspace === 'warehouse'
+              ? <WarehouseWorkspace />
+              : automotive
+                ? <iframe title="汽车整车拆解与 5.7L V8 发动机数字孪生" className="h-full w-full border-0" src={`${import.meta.env.BASE_URL}twins/automotive/index.html`} />
+                : <IronWorkspace />}
         </Suspense>
       </main>
     </div>

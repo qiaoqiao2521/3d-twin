@@ -4,7 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "automotive:build": "node scripts/build-automotive.mjs",
+    "predev": "npm run automotive:build && npm run build:warehouse",
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "prebuild": "npm run automotive:build && npm run build:warehouse",
     "build": "vite build",
     "lint": "tsc --noEmit",
     "test": "bun test",
@@ -15,9 +18,7 @@
     "build:warehouse": "node scripts/build-smart-warehouse.mjs",
     "verify:warehouse": "node scripts/verify-smart-warehouse.mjs",
     "test:warehouse": "node --test src/utils/workspaceRoutes.test.ts src/utils/ironBridge.test.ts src/shared/inspection/sceneInspection.test.ts integrations/smart-warehouse/lifecycle.test.ts research/smart-warehouse/agvStudy.test.ts",
-    "study:warehouse": "node scripts/study-warehouse-agv.mjs",
-    "predev": "npm run build:warehouse",
-    "prebuild": "npm run build:warehouse"
+    "study:warehouse": "node scripts/study-warehouse-agv.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.454.0",

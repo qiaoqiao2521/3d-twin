@@ -5,7 +5,8 @@ export default {
     './index.html',
     './index.tsx',
     './App.tsx',
-    './src/**/*.{ts,tsx}'
+    './src/**/*.{ts,tsx}',
+    './integrations/automotive/auto-atlas/src/**/*.{ts,tsx}'
   ],
   theme: {
     extend: {

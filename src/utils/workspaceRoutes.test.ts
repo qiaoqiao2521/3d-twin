@@ -31,3 +31,12 @@ test('warehouse opens directly and remains distinct from iron and engineering on
   const engineering = workspaceSearch({ workspace: 'engineering', mode: 'cad_hub' }, warehouse);
   assert.deepEqual(resolveWorkspaceLocation(engineering), { workspace: 'engineering', mode: 'cad_hub' });
 });
+
+test('automotive workspace supports direct links and navigation without stale sandbox flags', () => {
+  assert.deepEqual(resolveWorkspaceLocation('?mode=automotive'), { workspace: 'automotive' });
+  assert.deepEqual(resolveWorkspaceLocation('?workspace=automotive'), { workspace: 'automotive' });
+  const next = workspaceSearch({ workspace: 'automotive' }, '?sandbox=1&autostart=1');
+  assert.deepEqual(resolveWorkspaceLocation(next), { workspace: 'automotive' });
+  assert.equal(new URLSearchParams(next).has('sandbox'), false);
+  assert.equal(new URLSearchParams(next).has('autostart'), false);
+});

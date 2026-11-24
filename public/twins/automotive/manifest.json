@@ -1,0 +1,21 @@
+{
+  "id": "automotive-atlas-v8",
+  "name": "汽车整车拆解与 5.7L V8 发动机数字孪生",
+  "entry": "./index.html",
+  "views": {
+    "autoAtlas": "./auto-atlas/index.html",
+    "v8": "./v8/index.html",
+    "v8Embedded": "./v8/integrated.html"
+  },
+  "contracts": [
+    "./data/catalog.json",
+    "./data/bindings.json",
+    "./data/relations.json",
+    "./data/models.json"
+  ],
+  "models": [
+    { "id": "bmw-m3-e30", "path": "./auto-atlas/models/free_bmw_m3_e30.glb" },
+    { "id": "tesla-model-3", "path": "./auto-atlas/models/tesla_2018_model_3.glb" }
+  ],
+  "licenseMetadata": "./data/models.json"
+}
