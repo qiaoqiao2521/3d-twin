@@ -13,7 +13,7 @@ export default defineConfig({
   plugins: [react()],
   assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.urdf', '**/*.xacro', '**/*.wasm'],
   server: {
-    port: 3000,
+    port: 5197,
     host: '0.0.0.0',
     allowedHosts: true,
     hmr: false,
@@ -24,7 +24,7 @@ export default defineConfig({
   },
   preview: {
     proxy: originalDemoProxy,
-    port: 3000,
+    port: 5197,
     host: '0.0.0.0',
     allowedHosts: true
   }

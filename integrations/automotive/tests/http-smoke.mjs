@@ -1,5 +1,5 @@
 // Run against the dev server or a static server rooted at dist/.
-const site = new URL(process.argv[2] || 'http://127.0.0.1:3000/');
+const site = new URL(process.argv[2] || 'http://127.0.0.1:5197/');
 const root = new URL('twins/automotive/', site);
 const checked = new Map();
 

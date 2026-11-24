@@ -6,7 +6,7 @@
   "scripts": {
     "automotive:build": "node scripts/build-automotive.mjs",
     "predev": "npm run automotive:build && npm run build:warehouse && npm run build:open-demos",
-    "dev": "vite --port=3000 --host=0.0.0.0",
+    "dev": "vite --port=5197 --host=0.0.0.0",
     "prebuild": "npm run automotive:build && npm run build:warehouse && npm run build:open-demos",
     "build": "vite build",
     "lint": "tsc --noEmit",

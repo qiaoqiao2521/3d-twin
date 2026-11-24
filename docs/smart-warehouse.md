@@ -75,7 +75,7 @@ npm run build
 npm run verify:warehouse -- --dist --serve
 ```
 
-`--serve` 在同一进程内启动本地产物预览并进行 HTTP 检查，完成后关闭服务。检查宿主、`?mode=warehouse`、原 Vue 页面、JS/CSS、完整 GLB、许可证及来源记录，拒绝用宿主 HTML 回退页冒充模型或场景。也可用 `npm run verify:warehouse -- --http http://127.0.0.1:3000/` 检查已运行的服务；部署在子目录时把对应子目录保留在 URL 中并以 `/` 结尾。需要单独查看产物时运行 `npm run preview -- --host 127.0.0.1 --port 4174`。
+`--serve` 在同一进程内启动本地产物预览并进行 HTTP 检查，完成后关闭服务。检查宿主、`?mode=warehouse`、原 Vue 页面、JS/CSS、完整 GLB、许可证及来源记录，拒绝用宿主 HTML 回退页冒充模型或场景。也可用 `npm run verify:warehouse -- --http http://127.0.0.1:5197/` 检查已运行的服务；部署在子目录时把对应子目录保留在 URL 中并以 `/` 结尾。需要单独查看产物时运行 `npm run preview -- --host 127.0.0.1 --port 4174`。
 
 ### 2026-11-24 复核与最小加固
 
