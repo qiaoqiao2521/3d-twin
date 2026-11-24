@@ -13,6 +13,9 @@
     "postinstall": "npm run install:warehouse",
     "install:warehouse": "npm ci --prefix integrations/smart-warehouse/upstream --no-audit --no-fund",
     "build:warehouse": "node scripts/build-smart-warehouse.mjs",
+    "verify:warehouse": "node scripts/verify-smart-warehouse.mjs",
+    "test:warehouse": "node --test src/utils/workspaceRoutes.test.ts src/utils/ironBridge.test.ts src/shared/inspection/sceneInspection.test.ts integrations/smart-warehouse/lifecycle.test.ts research/smart-warehouse/agvStudy.test.ts",
+    "study:warehouse": "node scripts/study-warehouse-agv.mjs",
     "predev": "npm run build:warehouse",
     "prebuild": "npm run build:warehouse"
   },

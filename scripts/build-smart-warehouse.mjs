@@ -2,11 +2,13 @@ import { spawnSync } from 'node:child_process';
 import { copyFile, readFile, access } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { verifyWarehouseSources } from './verify-smart-warehouse.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const upstream = resolve(root, 'integrations/smart-warehouse/upstream');
 const output = resolve(root, 'public/integrations/smart-warehouse');
 const compiler = resolve(upstream, 'node_modules/vue-tsc/bin/vue-tsc.js');
+await verifyWarehouseSources();
 
 try {
   await access(compiler);
@@ -27,6 +29,13 @@ await build({
     name: 'warehouse-local-resource-base',
     enforce: 'pre',
     transform(code, id) {
+      if (id.replaceAll('\\', '/').endsWith('/src/main.ts')) {
+        if (!code.includes("app.mount('#app');")) throw new Error('Smart Warehouse Vue 入口已变化，请更新生命周期适配。');
+        return {
+          code: `import { installWarehouseLifecycle } from ${JSON.stringify(resolve(root, 'integrations/smart-warehouse/lifecycle.ts'))};\n${code}\ninstallWarehouseLifecycle(app);`,
+          map: null
+        };
+      }
       if (!id.replaceAll('\\', '/').endsWith('/src/core/WarehouseScene.ts')) return;
       // Adapt only deployment paths. Keep every checked-in upstream source byte intact.
       const request = "fetch('/smart_warehouse.glb?v=2.3.0', { signal })";

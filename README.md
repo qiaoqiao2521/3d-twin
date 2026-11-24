@@ -6,6 +6,8 @@
 
 顶部的 **智慧仓储**（`?mode=warehouse`）保留 Smart Warehouse 的原始仓储场景、设备交互和物流循环，随本仓库安装与构建，无需另配演示地址。来源版本、运行方式及独立行为研究入口见 [智慧仓储说明](docs/smart-warehouse.md)。
 
+仓储验收可运行 `npm run test:warehouse`（Node 24）及构建后的 `npm run verify:warehouse -- --dist --serve`：分别检查进入/返回相关契约、退出释放、独立 AGV 时间控制，以及 55 个冻结原文件、原模型和实际 HTTP 资源。`npm run study:warehouse -- 60 0.55` 使用明确标记的实验参数输出 AGV 状态，和正式场景分开。自动检查不代表 WebGL 或手机实机已验收，当前证据和未完成项见仓储说明。
+
 使用方式、修订锁与实际验收状态见 [iron 工作空间说明](docs/iron-workspace.md)。页面的程序仪表和受力着色属于演示，当前没有实机连接；下文保留历史归档说明。
 
 本归档包位于 `/home/muqiao/Videos/Studio/`，包含以下两大核心部分：
