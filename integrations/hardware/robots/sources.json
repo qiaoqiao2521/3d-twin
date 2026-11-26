@@ -54,5 +54,23 @@
     "tree": "3202cc31d72cd7cf9f288a9255056da826616821",
     "licensePath": "license.txt",
     "licenseBlob": "fca612b5087fb6d1b6efe5bb7fce4adeed4b4184"
+  },
+  {
+    "id": "motoman-weld",
+    "repository": "https://github.com/Yaskawa-Global/motoman_ros2_support_packages.git",
+    "revision": "a77f186048bd3c35fc3bb5142f9d9270dbebe69f",
+    "tree": "a5ad5c1d65671e0f4789c4003c196fce5ba77e89",
+    "licensePath": "motoman_ma2010_support/package.xml",
+    "licenseBlob": "91bad0156e1c901fd1a5ea28c9d00bbcb01b6b45",
+    "paths": [
+      "motoman_ma2010_support",
+      "motoman_motopos_d500_support",
+      "motoman_resources"
+    ],
+    "licenseDeclarations": {
+      "motoman_ma2010_support/package.xml": "91bad0156e1c901fd1a5ea28c9d00bbcb01b6b45",
+      "motoman_motopos_d500_support/package.xml": "aa1f87f361067d4e72f8399c4cdb915e93d80422",
+      "motoman_resources/package.xml": "71c2b7512eb57c2c15a247a476c5e0c32911b9b3"
+    }
   }
 ]

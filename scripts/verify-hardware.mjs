@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { sha256, safeRelative } from './hardware/common.mjs';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const hardwareIds = ['odri', 'so101', 'thor', 'parol6', 'olsk-small-cnc', 'olsk-large-cnc', 'voron-2.4', 'jubilee', 'opcua-conveyor'];
+export const hardwareIds = ['odri', 'so101', 'thor', 'parol6', 'olsk-small-cnc', 'olsk-large-cnc', 'voron-2.4', 'jubilee', 'opcua-conveyor', 'motoman-weld'];
 const readJson = async file => JSON.parse(await fs.readFile(file, 'utf8'));
 export async function readGlb(file) {
   const fd = await fs.open(file, 'r');
@@ -138,7 +138,20 @@ export async function verifyHardware({ root = path.join(repo, 'public'), ids, or
       urls.set(source.archive, digest);
       const members = index.files.filter(file => file.sourceId === source.id);
       assert.equal(members.length, source.fileCount, `${id}: complete per-source original index`);
-      assert.ok(members.some(file => /license|copying|\.reuse\/dep5/i.test(file.path)), `${id}: original licensing retained`);
+      if (pin.licenseDeclarations) {
+        assert.deepEqual(source.scope, pin.paths, `${id}: published source scope`);
+        assert.ok(members.every(file => pin.paths.some(scope => file.path.startsWith(scope + '/'))), `${id}: no files outside licensed source scope`);
+        for (const relative of Object.keys(pin.licenseDeclarations)) {
+          const declaration = members.find(file => file.path === relative);
+          assert.ok(declaration?.url, `${id}: original package license declaration retained`);
+          const bytes = await fs.readFile(path.join(directory, safeRelative(declaration.url)));
+          assert.match(bytes.toString('utf8'), /<license>\s*BSD-3-Clause\s*<\/license>/, `${id}: package license declaration`);
+          const blob = createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+          assert.equal(blob, pin.licenseDeclarations[relative], `${id}: frozen declaration blob`);
+        }
+      } else {
+        assert.ok(members.some(file => /license|copying|\.reuse\/dep5/i.test(file.path)), `${id}: original licensing retained`);
+      }
     }
     for (const file of index.files) {
       safeRelative(file.path); assert.ok(asset.sources.some(source => source.id === file.sourceId), `${id}: original source exists`);

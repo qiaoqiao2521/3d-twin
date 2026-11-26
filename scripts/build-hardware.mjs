@@ -12,7 +12,7 @@ export async function buildHardware({ ids } = {}) {
   const { buildRobots } = await import('./hardware/build-robots.mjs');
   const { buildDevices } = await import('./hardware/build-devices.mjs');
   // Large CAD conversions deliberately run sequentially to limit peak memory.
-  const robots = selected.filter(id => ['odri', 'so101', 'thor', 'parol6'].includes(id));
+  const robots = selected.filter(id => ['odri', 'so101', 'thor', 'parol6', 'motoman-weld'].includes(id));
   const devices = selected.filter(id => !robots.includes(id));
   if (robots.length) await buildRobots({ repoRoot, ids: robots });
   if (devices.length) await buildDevices({ repoRoot, ids: devices });

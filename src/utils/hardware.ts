@@ -8,11 +8,12 @@ export const HARDWARE_CATALOG = [
   { id: 'voron-2.4', title: 'Voron 2.4', kind: 'machine', category: '3D 打印机', description: '查看原始 CoreXY 整机装配、零件文件与安装手册。', detail: '整机 STEP / Fusion / STL' },
   { id: 'jubilee', title: 'Jubilee', kind: 'machine', category: '自动换工具平台', description: '研究 CoreXY 结构、自动换工具机构及原始机械设计。', detail: 'SolidWorks / STEP / BOM' },
   { id: 'opcua-conveyor', title: 'OPC UA 输送与供料', kind: 'machine', category: '工业实验设备', description: '查看原输送机结构、设计原件及独立的 OPC UA 控制程序。', detail: 'STEP / Fusion / 控制源码' },
+  { id: 'motoman-weld', title: '安川 MA2010 + D500B', kind: 'robot', category: '焊接机械臂与变位机', description: '原六轴机械臂与两轴变位机，可独立检查原件或在同一示例工位调整八个关节。', detail: '原 URDF / 视觉与碰撞 STL / 组合工位' },
 ] as const;
 export type HardwareId = typeof HARDWARE_CATALOG[number]['id'];
 export type HardwareRoute = { workspace: 'hardware'; asset?: HardwareId; view?: 'structure' | 'files' | 'about'; model?: string; file?: string };
 export interface HardwareSource {
-  id: string; repository: string; revision: string; tree?: string; license: string; root?: string;
+  id: string; repository: string; revision: string; tree?: string; license: string; root?: string; scope?: string[];
   archive?: string; archiveSize?: number; archiveSha256?: string; fileCount?: number;
 }
 export interface HardwareModel {

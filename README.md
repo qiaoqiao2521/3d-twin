@@ -2,7 +2,7 @@
 
 规范仓库：[qiaoqiao2521/3d-twin](https://github.com/qiaoqiao2521/3d-twin)。原仓库名为 `digital-twin-and-robotics-baseline`。
 
-项目保留已有机器人机库、智慧仓储、汽车与工厂应用，并新增九套开放硬件的结构展示和完整原件入口。原始文件、CAD 衍生网格、关节运动学、原版装配应用和未连接的控制能力分别说明；工程展示不代表真机测量或动力学验收。
+项目保留已有机器人机库、智慧仓储、汽车与工厂应用，并新增十项硬件的结构展示和完整原件入口。原始文件、CAD 衍生网格、关节运动学、原版装配应用和未连接的控制能力分别说明；工程展示不代表真机测量或动力学验收。
 
 ## 启动与构建
 
@@ -16,7 +16,7 @@ npm run dev
 
 默认开发与预览端口沿用最新 main 的 `5197`。开发服务启动后，设备目录为 `http://localhost:5197/?workspace=hardware`。
 
-`npm run dev` 与 `npm run build` 在启动前准备汽车、智慧仓储、三个原版工厂应用及九项硬件。首次运行会下载固定版本的完整原件，并执行 CAD 转换，耗时与磁盘占用明显高于普通网页项目。后续使用本地缓存。缺失资源、转换失败或未满足的依赖会使构建失败，不会静默省略某一项。
+`npm run dev` 与 `npm run build` 在启动前准备汽车、智慧仓储、三个原版工厂应用及十项硬件。首次运行会下载固定版本的完整原件，并执行 CAD 转换，耗时与磁盘占用明显高于普通网页项目。后续使用本地缓存。缺失资源、转换失败或未满足的依赖会使构建失败，不会静默省略某一项。
 
 ```sh
 npm run lint
@@ -39,7 +39,7 @@ npm run verify:open-demos -- --dist --serve
 
 | 正常入口 | 深链接 | 实际内容 |
 | --- | --- | --- |
-| 机器人与真实设备 | `?workspace=hardware` | 九项开放硬件目录、结构展示、关节和原始文件 |
+| 机器人与真实设备 | `?workspace=hardware` | 十项硬件目录、结构展示、关节和原始文件 |
 | 现实工程 | `?mode=hangar` | 已有机器人机库与完整档案索引 |
 | 智慧仓储 | `?mode=warehouse` | Smart Warehouse 原场景 |
 | 汽车整车 · V8 | `?mode=automotive` | 汽车拆解与独立 V8 工作台 |
@@ -47,7 +47,7 @@ npm run verify:open-demos -- --dist --serve
 | iron · 虚拟角色 | `?mode=iron` | 独立虚拟角色应用，需要配置其站点 |
 | 实验菜单 | `?mode=sandbox` / `?mode=mars_combat` | 原动作沙盒与赤星战区 |
 
-### 九项真实结构
+### 十项真实结构
 
 所有设备均从顶部“机器人与真实设备”进入。下表链接附加 `&view=files` 可直达原件目录，附加 `&view=about` 可查来源与能力；文件选择和模型选择会保留到浏览器历史及刷新后的 URL 中。
 
@@ -62,10 +62,13 @@ npm run verify:open-demos -- --dist --serve
 | Voron 2.4 | `?workspace=hardware&asset=voron-2.4` | 原整机 STEP 转换展示、Fusion、STL 和安装手册 |
 | Jubilee | `?workspace=hardware&asset=jubilee` | 原整机 STEP 转换展示、SolidWorks、BOM、工具更换结构与独立控制源码 |
 | OPC UA 输送与供料 | `?workspace=hardware&asset=opcua-conveyor` | 原输送机及配套机械臂 CAD、原 Python 服务源码 |
+| 安川 MA2010 + D500B | `?workspace=hardware&asset=motoman-weld` | 原厂 ROS 模型、六轴与两轴独立展示、示例组合工位 |
 
 完整原件包在同源 `hardware/<id>/originals/` 提供下载，逐文件索引保留原路径。主要 CAD、URDF、网格、图纸和说明还可单独读取；未单独展开的文件明确显示“完整原件包内”。原件不被转换结果替换，页面也不会把源代码链接算作运行中的模型。
 
 详细来源、许可证边界、安装依赖、转换方法与验收步骤见 [硬件接入说明](docs/hardware-integration.md)。本轮的实际测试、完整生产构建、资源与运动学结果、未完成验收见 [交付与验收记录](docs/hardware-acceptance.md)。固定来源在 [机器人清单](integrations/hardware/robots/sources.json) 与 [设备清单](integrations/hardware/devices/sources.json)。
+
+安川本次新增代码以固定上游提交为准，组合工位仅为运动学示例。单独准备：`node scripts/build-hardware.mjs motoman-weld`，验收：`node scripts/verify-hardware-kinematics.mjs --asset=motoman-weld`。当前提交尚未执行完整联网构建或浏览器验收，详见 [首批工业设备接入](docs/industrial-twins-wave1.md)。
 
 ## 已有机器人机库的修正
 

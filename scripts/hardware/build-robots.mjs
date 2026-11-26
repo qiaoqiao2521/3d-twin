@@ -10,8 +10,9 @@ import { ensureHardwarePython } from './toolchain.mjs';
 
 const exec = promisify(execFile);
 const ownRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const robotIds = ['odri', 'so101', 'thor', 'parol6'];
+const robotIds = ['odri', 'so101', 'thor', 'parol6', 'motoman-weld'];
 const sourceLicenses = {
+  'motoman-weld': 'BSD-3-Clause declared in each of the three original package.xml files; archive contains only MA2010, MotoPos D500 and shared materials packages, not the entire upstream repository. Original declarations retained.',
   odri: 'BSD-3-Clause; retain all upstream notices.',
   'odri-web': 'BSD-3-Clause for the website; original generated eDrawings HTML retains embedded Dassault Systèmes copyright and bundled third-party notices. These notices are not relicensed as BSD.',
   so101: 'Apache-2.0; original notices retained.',
@@ -99,14 +100,19 @@ export async function ensureRobotSource(repoRoot, pin) {
   if (actual !== `${pin.revision}\n${pin.tree}`) throw new Error(`Frozen source mismatch for ${pin.id}: ${actual}`);
   if (await command('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: root })) throw new Error(`Original source ${pin.id} has local changes or extra files; restore them explicitly before building.`);
   if (await command('git', ['rev-parse', `HEAD:${pin.licensePath}`], { cwd: root }) !== pin.licenseBlob) throw new Error(`Frozen license changed for ${pin.id}`);
+  for (const [relative, blob] of Object.entries(pin.licenseDeclarations || {})) {
+    if (await command('git', ['rev-parse', `HEAD:${relative}`], { cwd: root }) !== blob) throw new Error(`Frozen package license declaration changed: ${relative}`);
+    const xml = await fs.readFile(path.join(root, relative), 'utf8');
+    if (!/<license>\s*BSD-3-Clause\s*<\/license>/.test(xml)) throw new Error(`Missing BSD-3-Clause declaration: ${relative}`);
+  }
   return root;
 }
 
 async function sourceIndex(repoRoot, sourceRoot, pin) {
   const cache = path.join(repoRoot, '.cache/hardware-source-index', `${pin.id}-${pin.revision}.json`);
   const previous = await readJson(cache);
-  if (previous?.tree === pin.tree && previous?.schemaVersion === 1) return previous.files;
-  const { stdout } = await exec('git', ['ls-tree', '-rlz', pin.revision], { cwd: sourceRoot, maxBuffer: 32 * 1024 * 1024 });
+  if (previous?.tree === pin.tree && previous?.schemaVersion === 1 && JSON.stringify(previous.scope || []) === JSON.stringify(pin.paths || [])) return previous.files;
+  const { stdout } = await exec('git', ['ls-tree', '-rlz', pin.revision, ...(pin.paths ? ['--', ...pin.paths] : [])], { cwd: sourceRoot, maxBuffer: 32 * 1024 * 1024 });
   const files = [];
   for (const entry of stdout.split('\0').filter(Boolean)) {
     const tab = entry.indexOf('\t');
@@ -122,7 +128,7 @@ async function sourceIndex(repoRoot, sourceRoot, pin) {
     if (gitHash.digest('hex') !== blob) throw new Error(`Original content differs from Git: ${pin.id}/${relative}`);
     files.push({ path: relative, size, sha256: digest.digest('hex') });
   }
-  await writeJson(cache, { schemaVersion: 1, tree: pin.tree, files });
+  await writeJson(cache, { schemaVersion: 1, tree: pin.tree, scope: pin.paths || [], files });
   return files;
 }
 
@@ -130,10 +136,10 @@ async function sourceArchive(repoRoot, sourceRoot, pin, files) {
   const archive = path.join(repoRoot, '.cache/hardware-archives', `${pin.id}-${pin.revision}.tar.gz`);
   const metadataPath = `${archive}.json`;
   const previous = await readJson(metadataPath);
-  if (previous?.tree === pin.tree && await exists(archive) && await sha256(archive) === previous.sha256) return archive;
+  if (previous?.tree === pin.tree && JSON.stringify(previous.scope || []) === JSON.stringify(pin.paths || []) && await exists(archive) && await sha256(archive) === previous.sha256) return archive;
   await fs.mkdir(path.dirname(archive), { recursive: true });
   const temporary = `${archive}.tmp`;
-  const git = spawn('git', ['archive', '--format=tar', `--prefix=${pin.id}/`, pin.revision], { cwd: sourceRoot, stdio: ['ignore', 'pipe', 'pipe'] });
+  const git = spawn('git', ['archive', '--format=tar', `--prefix=${pin.id}/`, pin.revision, ...(pin.paths || [])], { cwd: sourceRoot, stdio: ['ignore', 'pipe', 'pipe'] });
   const gzip = spawn('gzip', ['-n', '-6'], { stdio: ['pipe', 'pipe', 'pipe'] });
   const complete = child => new Promise((resolve, reject) => {
     let error = ''; child.stderr.on('data', data => error += data);
@@ -147,7 +153,7 @@ async function sourceArchive(repoRoot, sourceRoot, pin, files) {
   const expected = files.map(({ path, size }) => ({ path, size })).sort((a, b) => a.path.localeCompare(b.path));
   if (JSON.stringify(archived) !== JSON.stringify(expected)) throw new Error(`Incomplete source archive: ${pin.id}`);
   await fs.rename(temporary, archive);
-  await writeJson(metadataPath, { schemaVersion: 1, tree: pin.tree, sha256: await sha256(archive), files: files.length });
+  await writeJson(metadataPath, { schemaVersion: 1, tree: pin.tree, scope: pin.paths || [], sha256: await sha256(archive), files: files.length });
   return archive;
 }
 
@@ -159,7 +165,7 @@ async function prepareSource(context, id, paths) {
   const archivePath = await sourceArchive(context.repoRoot, sourceRoot, pin, files);
   const result = await publishSource({
     assetDir: context.assetDir, sourceRoot, archivePath, paths, fileIndex: files,
-    source: { id, repository: pin.repository.replace(/\.git$/, ''), revision: pin.revision, tree: pin.tree, license: sourceLicenses[id] },
+    source: { id, repository: pin.repository.replace(/\.git$/, ''), revision: pin.revision, tree: pin.tree, license: sourceLicenses[id], ...(pin.paths ? { scope: pin.paths } : {}) },
   });
   context.sources.push(result.source); context.files.push(...result.files);
   return { root: sourceRoot, pin };
@@ -339,11 +345,43 @@ async function buildParol(context) {
   };
 }
 
+async function buildMotomanWeld(context) {
+  const source = await prepareSource(context, 'motoman-weld', ['motoman_ma2010_support', 'motoman_motopos_d500_support', 'motoman_resources']);
+  const cache = path.join(context.repoRoot, '.cache/hardware-converted/motoman-weld');
+  await fs.mkdir(cache, { recursive: true });
+  await runLogged(process.env.HARDWARE_PYTHON || 'python3', [
+    path.join(context.repoRoot, 'integrations/hardware/robots/expand-motoman-weld.py'), source.root, cache,
+  ], { log: path.join(cache, 'xacro-expansion.log') });
+  for (const name of ['ma2010.urdf', 'motopos-d500.urdf', 'weld-cell.urdf']) {
+    await linkOrCopy(path.join(cache, name), path.join(context.assetDir, 'models', name));
+  }
+  await linkOrCopy(path.join(cache, 'expansion.json'), path.join(context.assetDir, 'reports/expansion.json'));
+  const packages = Object.fromEntries(source.pin.paths.map(pkg => [pkg, `originals/motoman-weld/${pkg}/`]));
+  const model = (id, label, filename, sourcePath, limitations = []) => ({
+    id, label, format: 'urdf', path: `models/${filename}`, unit: 'm', up: 'Z', role: 'kinematic',
+    source: { id: 'motoman-weld', path: sourcePath }, packages, limitations,
+  });
+  const arm = 'motoman_ma2010_support/urdf/ma2010.xacro';
+  const positioner = 'motoman_motopos_d500_support/urdf/motopos_d500.xacro';
+  return {
+    title: '安川 MA2010 + MOTOPOS D500B',
+    description: '原版六轴机械臂与两轴变位机，同一工作台查看各自原件、运动链、法兰及组合工位。',
+    models: [
+      model('cell', '组合工位 · 6 + 2 轴', 'weld-cell.urdf', arm, ['组合模型同时使用 MA2010 和 D500B 原描述，详见展开报告。两个基座间距 2 m 是本地演示布局，不是标定或碰撞验证结果。']),
+      model('ma2010', 'MA2010 · 原六轴', 'ma2010.urdf', arm),
+      model('d500', 'MOTOPOS D500B · 原两轴', 'motopos-d500.urdf', positioner),
+    ],
+    capabilities: { structure: '原始视觉与碰撞 STL，组合与单机可独立查看。', motion: '八个独立关节的原始轴、原点、限位；组合工位支持逐轴调整。', live: '未连接控制器；没有真实焊接轨迹、焊枪、工件标定或协调运动验证。' },
+    limitations: ['保留两个原 Xacro 及其 STL；组合模型仅添加两个固定安装关节和命名前缀。', '示例布局不是现场安装，未验证碰撞、工件坐标标定、TCP、焊接轨迹、动力学或真机联动。', '原件归档仅覆盖三个 BSD-3-Clause 声明的相关 ROS 包；未将其它型号或控制程序纳入。'],
+    verificationReports: [{ path: 'reports/expansion.json', label: '原件展开与组合坐标来源' }],
+  };
+}
+
 export async function buildRobots({ repoRoot = ownRoot, ids = robotIds } = {}) {
   const selected = ids.filter(id => robotIds.includes(id));
   if (ids.some(id => !robotIds.includes(id))) throw new Error(`Unknown robot ids: ${ids.filter(id => !robotIds.includes(id)).join(', ')}`);
   const pins = await readJson(path.join(repoRoot, 'integrations/hardware/robots/sources.json'));
-  const builders = { odri: buildOdri, so101: buildSo101, thor: buildThor, parol6: buildParol };
+  const builders = { odri: buildOdri, so101: buildSo101, thor: buildThor, parol6: buildParol, 'motoman-weld': buildMotomanWeld };
   const result = [];
   for (const id of selected) {
     console.log(`[hardware:${id}] Preparing frozen originals and original models`);

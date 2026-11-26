@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { HARDWARE_CATALOG, hardwareUrl, validateHardwareAsset, fileCategory, disposeHardwareFrame } from './hardware.ts';
 import { resolveWorkspaceLocation, workspaceSearch } from './workspaceRoutes.ts';
 
-test('all nine requested assets have refreshable structure, original-file and provenance routes', () => {
-  assert.deepEqual(HARDWARE_CATALOG.map(entry => entry.id), ['odri', 'so101', 'thor', 'parol6', 'olsk-small-cnc', 'olsk-large-cnc', 'voron-2.4', 'jubilee', 'opcua-conveyor']);
+test('all catalog assets have refreshable structure, original-file and provenance routes', () => {
+  assert.deepEqual(HARDWARE_CATALOG.map(entry => entry.id), ['odri', 'so101', 'thor', 'parol6', 'olsk-small-cnc', 'olsk-large-cnc', 'voron-2.4', 'jubilee', 'opcua-conveyor', 'motoman-weld']);
   for (const entry of HARDWARE_CATALOG) for (const view of ['structure', 'files', 'about'] as const) {
     const route = { workspace: 'hardware', asset: entry.id, view, model: 'original', file: 'source:CAD/整机.step' } as const;
     const url = workspaceSearch(route, '?mode=sandbox&autostart=1&robot=unitree_g1');
